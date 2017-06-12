@@ -1,0 +1,8 @@
+[include]
+    path = ~/.gitconfig.user
+[core]
+	editor = vim
+	excludesfile = /Users/shepabashi/.gitignore_global
+[color]
+	ui = auto
+    diff = true
