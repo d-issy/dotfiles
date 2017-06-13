@@ -26,6 +26,7 @@ if has("autocmd")
   autocmd FileType css        setlocal sw=4 sts=4 ts=4 et
   autocmd FileType diff       setlocal sw=4 sts=4 ts=4 et
   autocmd FileType eruby      setlocal sw=2 sts=2 ts=2 et
+  autocmd FileType go         setlocal sw=4 sts=4 ts=4 noet
   autocmd FileType haml       setlocal sw=2 sts=2 ts=2 et
   autocmd FileType html       setlocal sw=2 sts=2 ts=2 et
   autocmd FileType java       setlocal sw=4 sts=4 ts=4 et
@@ -65,6 +66,13 @@ call plug#end()
 "================================
 " Plugin Settings
 "================================
+" neocomplete
+let g:neocomplete#enable_at_startup = 1
+let g:neocomplete#sources#dictionary#dictionaries = {
+      \ 'default' : '',
+      \ 'go' : '~/.vim/dict/go.dict',
+      \}
+
 " snippet
 imap <C-k> <Plug>(neosnippet_expand_or_jump)
 smap <C-k> <Plug>(neosnippet_expand_or_jump)
