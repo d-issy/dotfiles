@@ -6,3 +6,5 @@
 [color]
 	ui = auto
     diff = true
+[ghq]
+	root = /Users/shepabashi/go/src
