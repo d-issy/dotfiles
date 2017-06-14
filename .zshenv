@@ -1,5 +1,5 @@
 # GoLang
-export GOPATH=$HOME/.go
+export GOPATH=$HOME/go
 
 #  Path
 typeset -gx -U path PATH
