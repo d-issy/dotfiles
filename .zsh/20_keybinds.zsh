@@ -14,6 +14,15 @@ function peco-history-selection() {
 }
 zle -N peco-history-selection
 
+function peco-src() {
+    local src=$(ghq list --full-path | peco --query "$LBUFFER")
+    if [ -n "$src" ]; then
+        cd $src
+        zle reset-prompt
+    fi
+}
+zle -N peco-src
+
 function fore-ground() {
     fg > /dev/null 2>&1
     zle reset-prompt
@@ -27,4 +36,4 @@ bindkey '^J' self-insert
 bindkey '^[[1~' beginning-of-line
 bindkey '^[[4~' end-of-liine
 bindkey '^[[3~' delete-char
-bindkey '^@' backward-delete-char
+bindkey '^@' peco-src
