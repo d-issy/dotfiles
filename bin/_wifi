@@ -1,0 +1,10 @@
+#!/bin/bash
+if type 'networksetup' > /dev/null 2>&1; then
+    wifi="`networksetup -getairportnetwork en0`"
+    if [[ $(echo $wifi | grep -e ':') ]] ; then
+        echo ${wifi#*: }
+    else
+        echo No Connection
+    fi
+fi
+exit 0
