@@ -8,7 +8,7 @@ function cdup() {
 zle -N cdup
 
 function peco-history-selection() {
-    BUFFER=$(history -n 1 | tail -r  | awk '!a[$0]++' | fzf --height 40% --reverse)
+    BUFFER=$(history -n 1 | tail -r  | awk '!a[$0]++' | fzf --height 40% --reverse --no-sort)
     CURSOR=$#BUFFER
     zle reset-prompt
 }
