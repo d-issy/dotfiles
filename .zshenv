@@ -7,6 +7,7 @@ typeset -gx -U path PATH
 path=(
     $HOME/.anyenv/bin(N-/)
     /usr/local/bin(N-/)
+    /usr/local/sbin(N-/)
     $HOME/bin(N-/)
     $GOPATH/bin(N-/)
     $path
