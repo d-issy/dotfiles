@@ -67,7 +67,7 @@ call plug#end()
 " Plugin Settings
 "================================
 " neocomplete
-let g:neocomplete#enable_at_startup = 1
+" let g:neocomplete#enable_at_startup = 1
 let g:neocomplete#sources#dictionary#dictionaries = {
       \ 'default' : '',
       \ 'go' : '~/.vim/dict/go.dict',
