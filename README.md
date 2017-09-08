@@ -3,12 +3,12 @@ My dotfiles
 
 ## install
 ```
-./install.sh
+make install
 ```
 
 ## uninstall
 ```
-./uninstall.sh
+make uninstall
 ```
 
 ## user gitconfig
