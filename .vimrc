@@ -9,6 +9,7 @@ call plug#begin('~/.vim/plugged')
 Plug 'Shougo/neocomplete'
 Plug 'Shougo/neosnippet'
 Plug 'Shougo/neosnippet-snippets'
+Plug 'davidhalter/jedi-vim', {'for': 'python'}
 Plug 'fatih/vim-go', {'do': ':GoInstallBinaries', 'for': 'go'}
 Plug 'itchyny/lightline.vim'
 Plug 'mattn/emmet-vim', {'for': ['html', 'css']}
