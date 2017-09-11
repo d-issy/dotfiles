@@ -6,15 +6,31 @@ endif
 " Plugins
 "================================
 call plug#begin('~/.vim/plugged')
+
+" General
 Plug 'Shougo/neocomplete'
 Plug 'Shougo/neosnippet'
 Plug 'Shougo/neosnippet-snippets'
-Plug 'davidhalter/jedi-vim', {'for': 'python'}
-Plug 'fatih/vim-go', {'do': ':GoInstallBinaries', 'for': 'go'}
 Plug 'itchyny/lightline.vim'
-Plug 'mattn/emmet-vim', {'for': ['html', 'css']}
 Plug 'scrooloose/nerdtree'
 Plug 'thinca/vim-quickrun'
+Plug 'tpope/vim-surround'
+
+" Go
+Plug 'fatih/vim-go', {'do': ':GoInstallBinaries', 'for': 'go'}
+
+" HTML5
+Plug 'mattn/emmet-vim', {'for': ['html', 'css', 'jsx']}
+Plug 'othree/html5.vim', {'for': 'html'}
+Plug 'hail2u/vim-css3-syntax', {'for': ['html', 'css']}
+
+" Javascript
+Plug 'pangloss/vim-javascript', {'for': ['javascript', 'jsx']}
+Plug 'maxmellon/vim-jsx-pretty', {'for': ['javascript', 'jsx']}
+
+" Python
+Plug 'davidhalter/jedi-vim', {'for': 'python'}
+
 call plug#end()
 
 "================================
