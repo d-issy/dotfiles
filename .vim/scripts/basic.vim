@@ -2,15 +2,18 @@ set backspace=indent,eol,start
 set laststatus=2
 set t_Co=256
 
-set cindent
-set smarttab
 set expandtab
+set autoindent
+set smartindent
+
 set tabstop=4
-set softtabstop=4
 set shiftwidth=4
+set softtabstop=0
 
 set ignorecase
 set smartcase
+
+set ambiwidth=double
 
 set completeopt=longest,menuone
 

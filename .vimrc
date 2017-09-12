@@ -25,7 +25,7 @@ Plug 'othree/html5.vim', {'for': 'html'}
 Plug 'hail2u/vim-css3-syntax', {'for': ['html', 'css']}
 
 " Javascript
-Plug 'pangloss/vim-javascript', {'for': ['javascript', 'jsx']}
+Plug 'pangloss/vim-javascript', {'for': ['html', 'javascript', 'jsx']}
 Plug 'maxmellon/vim-jsx-pretty', {'for': ['javascript', 'jsx']}
 
 " Python
