@@ -12,6 +12,9 @@ uninstall:
 	@echo uninstall
 	@$(foreach val, $(DOTFILES), rm -vrf $(HOME)/$(val);)
 
+update:
+	git pull origin master
+
 help:
 	@echo Usage
 	@echo - make install
