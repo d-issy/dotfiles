@@ -17,7 +17,7 @@ Plug 'thinca/vim-quickrun'
 Plug 'tpope/vim-surround'
 
 " Go
-Plug 'fatih/vim-go', {'do': ':GoInstallBinaries', 'for': 'go'}
+Plug 'fatih/vim-go', {'for': 'go', 'do': ':GoInstallBinaries'}
 
 " HTML5
 Plug 'mattn/emmet-vim', {'for': ['html', 'css', 'jsx']}
@@ -27,7 +27,7 @@ Plug 'hail2u/vim-css3-syntax', {'for': ['html', 'css']}
 " Javascript
 Plug 'pangloss/vim-javascript', {'for': ['html', 'javascript', 'jsx']}
 Plug 'maxmellon/vim-jsx-pretty', {'for': ['javascript', 'jsx']}
-Plug 'ternjs/tern_for_vim', { 'for': ['javascript', 'javascript.jsx'], 'do': 'npm install' }
+Plug 'ternjs/tern_for_vim', {'for': ['javascript', 'javascript.jsx'], 'do': 'npm install'}
 
 " Python
 Plug 'davidhalter/jedi-vim', {'for': 'python'}
