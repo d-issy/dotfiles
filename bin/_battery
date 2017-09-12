@@ -1,0 +1,17 @@
+#!/bin/bash
+if type 'pmset' > /dev/null 2>&1; then
+    echo -ne "#[fg=colour32]"
+    echo -en `pmset -g ps | grep -o '[0-9]\+%'`
+    echo -ne "#[fg=default]"
+
+    pmset -g ps | grep -E 'Battery Power|charged' >/dev/null 2>&1
+    if [ $? -eq 0  ]; then
+        echo -ne ' ('`pmset -g ps | grep -o '[0-9]\+:[0-9]\+'`')'
+    else
+	echo ' C'
+    fi
+else
+    echo "(--)%"
+fi
+
+exit 0
