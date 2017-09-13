@@ -16,6 +16,9 @@ Plug 'scrooloose/nerdtree'
 Plug 'thinca/vim-quickrun'
 Plug 'tpope/vim-surround'
 
+" Git
+Plug 'tpope/vim-fugitive'
+
 " Go
 Plug 'fatih/vim-go', {'for': 'go', 'do': ':GoInstallBinaries'}
 
