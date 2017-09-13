@@ -17,3 +17,9 @@ let g:user_emmet_settings = {
       \    'lang': 'ja',
       \  },
       \}
+
+" NERDCommenter
+let g:NERDCreateDefaultMappings = 0
+let g:NERDSpaceDelims = 1
+let g:NERDCompactSexyComs = 1
+let g:NERDDefaultAlign = 'left'
