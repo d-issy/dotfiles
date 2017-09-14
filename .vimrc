@@ -11,12 +11,19 @@ call plug#begin('~/.vim/plugged')
 Plug 'Shougo/neocomplete'
 Plug 'Shougo/neosnippet'
 Plug 'Shougo/neosnippet-snippets'
-Plug 'airblade/vim-gitgutter'
+
 Plug 'bling/vim-airline'
-Plug 'scrooloose/nerdcommenter'
+Plug 'vim-airline/vim-airline-themes'
+
+
 Plug 'scrooloose/nerdtree'
-Plug 'thinca/vim-quickrun'
+Plug 'scrooloose/nerdcommenter'
+
+Plug 'kien/ctrlp.vim'
+Plug 'airblade/vim-gitgutter'
+Plug 'osyo-manga/vim-over'
 Plug 'tpope/vim-surround'
+Plug 'thinca/vim-quickrun'
 
 " Git
 Plug 'tpope/vim-fugitive'
@@ -33,6 +40,10 @@ Plug 'hail2u/vim-css3-syntax', {'for': ['html', 'css']}
 Plug 'pangloss/vim-javascript', {'for': ['html', 'javascript', 'jsx']}
 Plug 'maxmellon/vim-jsx-pretty', {'for': ['javascript', 'jsx']}
 Plug 'ternjs/tern_for_vim', {'for': ['javascript', 'javascript.jsx'], 'do': 'npm install'}
+
+" Markdown
+Plug 'plasticboy/vim-markdown', {'for': 'markdown'}
+Plug 'kannokanno/previm', {'for': 'markdown'}
 
 " Python
 Plug 'davidhalter/jedi-vim', {'for': 'python'}

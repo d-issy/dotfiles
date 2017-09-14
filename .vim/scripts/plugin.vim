@@ -17,6 +17,8 @@ let g:user_emmet_settings = {
       \    'lang': 'ja',
       \  },
       \}
+" CtrlP
+let g:ctrlp_map = ',,'
 
 " NERDCommenter
 let g:NERDCreateDefaultMappings = 0
