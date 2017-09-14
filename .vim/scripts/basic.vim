@@ -17,5 +17,7 @@ set ambiwidth=double
 
 set completeopt=longest,menuone
 
+set directory=/tmp
+
 syntax on
 filetype plugin indent on
