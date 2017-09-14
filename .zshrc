@@ -5,6 +5,13 @@ source $ZPLUG_HOME/init.zsh
 zplug "zsh-users/zsh-syntax-highlighting", defer:2
 zplug "mollifier/anyframe"
 
+if ! zplug check --verbose; then
+    printf "Install? [y/N]: "
+    if read -q; then
+        echo; zplug install
+    fi
+fi
+
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 zplug load
 

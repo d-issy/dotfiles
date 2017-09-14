@@ -15,6 +15,9 @@ uninstall:
 update:
 	git pull origin master
 
+deploy:
+	@$(MAKE) setup -C ./etc
+
 help:
 	@echo Usage
 	@echo - make install
