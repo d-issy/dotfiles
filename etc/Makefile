@@ -15,8 +15,8 @@ brew/cleanup:
 	brew cleanup
 
 go:
-	which ghq > /dev/null | go get -u github.com/motemen/ghq
-	which gore > /dev/null | go get -u github.com/motemen/gore
+	which ghq > /dev/null || go get -u github.com/motemen/ghq
+	which gore > /dev/null || go get -u github.com/motemen/gore
 
 refresh:
 	exec $$SHELL -l
