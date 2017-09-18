@@ -25,6 +25,9 @@ Plug 'osyo-manga/vim-over'
 Plug 'tpope/vim-surround'
 Plug 'thinca/vim-quickrun'
 
+" for Arduino
+Plug 'sudar/vim-arduino-syntax'
+
 " Git
 Plug 'tpope/vim-fugitive'
 
