@@ -42,7 +42,6 @@ Plug 'hail2u/vim-css3-syntax', {'for': ['html', 'css']}
 " Javascript
 Plug 'pangloss/vim-javascript', {'for': ['html', 'javascript', 'jsx']}
 Plug 'maxmellon/vim-jsx-pretty', {'for': ['javascript', 'jsx']}
-Plug 'ternjs/tern_for_vim', {'for': ['javascript', 'javascript.jsx'], 'do': 'npm install'}
 
 " Markdown
 Plug 'plasticboy/vim-markdown', {'for': 'markdown'}
