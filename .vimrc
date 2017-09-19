@@ -15,7 +15,6 @@ Plug 'Shougo/neosnippet-snippets'
 Plug 'bling/vim-airline'
 Plug 'vim-airline/vim-airline-themes'
 
-
 Plug 'scrooloose/nerdtree'
 Plug 'scrooloose/nerdcommenter'
 
@@ -49,6 +48,7 @@ Plug 'kannokanno/previm', {'for': 'markdown'}
 
 " Python
 Plug 'davidhalter/jedi-vim', {'for': 'python'}
+Plug 'shepabashi/vim-pyenv', {'for': 'python'}
 
 call plug#end()
 
