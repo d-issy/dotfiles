@@ -41,6 +41,9 @@ let g:NERDSpaceDelims = 1
 let g:NERDCompactSexyComs = 1
 let g:NERDDefaultAlign = 'left'
 
+" GitGutter
+set updatetime=250
+
 " jedi-vim
 let g:jedi#goto_command = "<C-]>"
 let g:jedi#goto_definitions_command = ""
