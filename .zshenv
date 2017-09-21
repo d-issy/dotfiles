@@ -3,7 +3,6 @@ export GOPATH=$HOME/go
 
 #  Path
 typeset -gx -U path PATH
-
 path=(
     $HOME/.anyenv/bin(N-/)
     /usr/local/bin(N-/)
@@ -13,12 +12,35 @@ path=(
     $path
 )
 
+# fpath
 typeset -gx -U fpath
 fpath=(
     /usr/local/share/zsh-completions(N-/)
     $fpath
 )
 eval "$(anyenv init -)"
+
+# for MPI
+export MPIPATH=/usr/local/opt/open-mpi
+export TMPDIR=/tmp
+
+typeset -gx -U C_INCLUDE_PATH
+C_INCLUDE_PATH=(
+    $MPIPATH/include(N-/)
+    $c_include_path
+)
+
+typeset -gx -U CPLUS_INCLUDE_PATH
+CPLUS_INCLUDE_PATH=(
+    $MPIPATH/include(N-/)
+    $cplus_include_path
+)
+
+typeset -gx -U LIBRARY_PATH
+LIBRARY_PATH=(
+    $MPIPATH/lib(N-/)
+    $library_path
+)
 
 # LANGUAGE must be en_US for ssh connection
 export LANGUAGE="en_US.UTF-8"
