@@ -11,6 +11,7 @@ path=(
     $GOPATH/bin(N-/)
     $path
 )
+eval "$(anyenv init -)"
 
 # fpath
 typeset -gx -U fpath
@@ -18,7 +19,6 @@ fpath=(
     /usr/local/share/zsh-completions(N-/)
     $fpath
 )
-eval "$(anyenv init -)"
 
 # for MPI
 export MPIPATH=/usr/local/opt/open-mpi
@@ -43,7 +43,7 @@ LIBRARY_PATH=(
 )
 
 # LANGUAGE must be en_US for ssh connection
-export LANGUAGE="en_US.UTF-8"
+export LANGUAGE="ja_JP.UTF-8"
 export LANG="${LANGUAGE}"
 export LC_ALL="${LANGUAGE}"
 export LC_CTYPE="${LANGUAGE}"
