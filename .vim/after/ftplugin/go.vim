@@ -1,6 +1,6 @@
 setlocal noexpandtab
 
-set completeopt-=preview
+setlocal completeopt-=preview
 
 let g:go_fmt_command = "goimports"
 let g:go_gocode_unimported_packages = 1
@@ -18,3 +18,5 @@ let g:go_highlight_build_constraints = 1
 let g:go_highlight_string_spellcheck = 1
 let g:go_highlight_format_strings = 1
 let g:go_highlight_generate_tags = 1
+
+nnoremap <buffer> <Leader>r :GoRename<CR>
