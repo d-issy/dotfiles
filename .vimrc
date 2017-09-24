@@ -8,9 +8,8 @@ endif
 call plug#begin('~/.vim/plugged')
 
 " General
-Plug 'Shougo/neocomplete'
-Plug 'Shougo/neosnippet'
-Plug 'Shougo/neosnippet-snippets'
+Plug 'sirver/ultisnips'
+Plug 'honza/vim-snippets'
 
 Plug 'bling/vim-airline'
 Plug 'vim-airline/vim-airline-themes'
