@@ -22,8 +22,10 @@ Plug 'kien/ctrlp.vim'
 Plug 'airblade/vim-gitgutter'
 Plug 'osyo-manga/vim-over'
 Plug 'tpope/vim-surround'
-Plug 'vim-syntastic/syntastic'
 Plug 'thinca/vim-quickrun'
+
+" for C/C++
+Plug 'justmao945/vim-clang'
 
 " for Arduino
 Plug 'sudar/vim-arduino-syntax'
