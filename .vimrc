@@ -22,6 +22,7 @@ Plug 'airblade/vim-gitgutter'
 Plug 'osyo-manga/vim-over'
 Plug 'tpope/vim-surround'
 Plug 'thinca/vim-quickrun'
+Plug 'godlygeek/tabular'
 
 " for C/C++
 Plug 'justmao945/vim-clang'
