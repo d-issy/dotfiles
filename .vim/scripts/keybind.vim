@@ -20,10 +20,8 @@ vmap <silent><Leader>c <Plug>NERDCommenterToggle
 
 
 " Tabular
-if exists(":Tabularize")
-  nmap <silent> <Leader>a= :Tabularize /=<CR>
-  vmap <silent> <Leader>a= :Tabularize /=<CR>
-  nmap <silent> <Leader>a: :Tabularize /:\zs<CR>
-  vmap <silent> <Leader>a: :Tabularize /:\zs<CR>
-endif
+nmap <silent> <Leader>a= :Tabularize /=<CR>
+vmap <silent> <Leader>a= :Tabularize /=<CR>
+nmap <silent> <Leader>a: :Tabularize /:\zs<CR>
+vmap <silent> <Leader>a: :Tabularize /:\zs<CR>
 
