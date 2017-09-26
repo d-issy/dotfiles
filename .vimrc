@@ -38,13 +38,15 @@ Plug 'tpope/vim-fugitive'
 Plug 'fatih/vim-go', {'for': 'go', 'do': ':GoInstallBinaries'}
 
 " HTML5
-Plug 'mattn/emmet-vim', {'for': ['html', 'css', 'jsx']}
-Plug 'othree/html5.vim', {'for': 'html'}
-Plug 'hail2u/vim-css3-syntax', {'for': ['html', 'css']}
+Plug 'mattn/emmet-vim'
+Plug 'othree/html5.vim'
+Plug 'hail2u/vim-css3-syntax'
 
 " Javascript
-Plug 'pangloss/vim-javascript', {'for': ['html', 'javascript', 'jsx']}
-Plug 'maxmellon/vim-jsx-pretty', {'for': ['javascript', 'jsx']}
+Plug 'othree/yajs.vim'
+Plug 'mxw/vim-jsx'
+Plug 'othree/javascript-libraries-syntax.vim'
+Plug 'ternjs/tern_for_vim', {'do': 'npm install'}
 
 " Markdown
 Plug 'plasticboy/vim-markdown', {'for': 'markdown'}

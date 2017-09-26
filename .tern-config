@@ -1,0 +1,18 @@
+{
+  "libs": [
+    "browser",
+    "ecmascript",
+    "jquery"
+  ],
+  "plugins": {
+    "angular": {},
+    "commonjs": {},
+    "complete_strings": {},
+    "es_modules": {},
+    "modules": {},
+    "node": {},
+    "node_resolve": {},
+    "requirejs": {},
+    "webpack": {}
+  }
+}
