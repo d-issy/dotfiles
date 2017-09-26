@@ -48,6 +48,9 @@ Plug 'mxw/vim-jsx'
 Plug 'othree/javascript-libraries-syntax.vim'
 Plug 'ternjs/tern_for_vim', {'do': 'npm install'}
 
+" Java
+Plug 'vim-scripts/javacomplete', {'do': 'javac autoload/Reflection.java'}
+
 " Markdown
 Plug 'plasticboy/vim-markdown', {'for': 'markdown'}
 Plug 'kannokanno/previm', {'for': 'markdown'}
