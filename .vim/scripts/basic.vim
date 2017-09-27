@@ -19,5 +19,7 @@ set completeopt=longest,menuone
 
 set directory=/tmp
 
+set hidden
+
 syntax on
 filetype plugin indent on
