@@ -26,21 +26,23 @@ setopt notify
 zstyle ':completion:*' menu select interactive
 setopt menucomplete
 
-# cd -[tab]で過去のディレクトリにひとっ飛びできるようにする
-setopt auto_pushd
 
-# ディレクトリ名を入力するだけでcdできるようにする
+# -------------------------------------
+#  Directory Move
+# -------------------------------------
 setopt auto_cd
+setopt auto_pushd
+setopt pushd_ignore_dups
 
 # -------------------------------------
 #  History
 # -------------------------------------
-
-# 直前と同じコマンドは履歴に追加しない
+setopt hist_expire_dups_first
 setopt hist_ignore_dups
-
-# 余分なスペースを削除して履歴に保存する
+setopt hist_ignore_all_dups
+setopt hist_no_store
 setopt hist_reduce_blanks
+setopt hist_save_no_dups
 
 # -------------------------------------
 #  Prompt
