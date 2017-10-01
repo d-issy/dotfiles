@@ -1,3 +1,16 @@
+export ZPLUG_HOME=/usr/local/opt/zplug
+source $ZPLUG_HOME/init.zsh
+
+if type zplug >/dev/null 2>&1 ; then
+    source $ZSHHOME/plugins.zsh
+
+    if ! zplug check --verbose; then
+        zplug install
+        exec $SHELL -l
+    fi
+    zplug load
+fi
+
 # loading tmux
 # if [[ ! -n $TMUX && $- == *l* ]]; then
 #     ID="`tmux ls`"
@@ -14,3 +27,5 @@
 #         fi
 #     fi
 # fi
+
+
