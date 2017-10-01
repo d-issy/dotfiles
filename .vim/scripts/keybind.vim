@@ -18,10 +18,7 @@ nnoremap <silent><Leader>gs :Gstatus<CR>
 nmap <silent><Leader>c <Plug>NERDCommenterToggle
 vmap <silent><Leader>c <Plug>NERDCommenterToggle
 
-
-" Tabular
-nmap <silent> <Leader>a= :Tabularize /=<CR>
-vmap <silent> <Leader>a= :Tabularize /=<CR>
-nmap <silent> <Leader>a: :Tabularize /:\zs<CR>
-vmap <silent> <Leader>a: :Tabularize /:\zs<CR>
+" vim-easy-align
+xmap ga <Plug>(EasyAlign)
+nmap ga <Plug>(EasyAlign)
 
