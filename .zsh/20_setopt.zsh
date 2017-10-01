@@ -1,5 +1,5 @@
 # -------------------------------------
-# zshのオプション
+#  Basic Options
 # -------------------------------------
 
 ## 補完機能の強化
@@ -32,7 +32,7 @@ setopt auto_pushd
 setopt auto_cd
 
 # -------------------------------------
-# 履歴
+#  History
 # -------------------------------------
 
 # 直前と同じコマンドは履歴に追加しない
@@ -42,7 +42,7 @@ setopt hist_ignore_dups
 setopt hist_reduce_blanks
 
 # -------------------------------------
-# プロンプト
+#  Prompt
 # -------------------------------------
 
 autoload -U promptinit; promptinit
@@ -50,53 +50,11 @@ autoload -Uz colors; colors
 autoload -Uz vcs_info
 autoload -Uz is-at-least
 
-# begin VCS
-zstyle ":vcs_info:*" enable git svn hg bzr
-zstyle ":vcs_info:*" formats "(%s)-[%b]"
-zstyle ":vcs_info:*" actionformats "(%s)-[%b|%a]"
-zstyle ":vcs_info:(svn|bzr):*" branchformat "%b:r%r"
-zstyle ":vcs_info:bzr:*" use-simple true
-
-zstyle ":vcs_info:*" max-exports 6
-
-if is-at-least 4.3.10; then
-    zstyle ":vcs_info:git:*" check-for-changes true # commitしていないのをチェック
-    zstyle ":vcs_info:git:*" stagedstr "<S>"
-    zstyle ":vcs_info:git:*" unstagedstr "<U>"
-    zstyle ":vcs_info:git:*" formats "(%b) %c%u"
-    zstyle ":vcs_info:git:*" actionformats "(%s)-[%b|%a] %c%u"
-fi
-
-function vcs_prompt_info() {
-    LANG=ja_JP.UTF-8 vcs_info
-    [[ -n "$vcs_info_msg_0_" ]] && echo -n " %{$fg[yellow]%}$vcs_info_msg_0_%f"
-}
-# end VCS
-
-PROMPT=""
-#PROMPT+="%F{yellow}%*%f "
-PROMPT+="%(?,%F{green},%F{red})%(!,#,>)%f "
-
-RPROMPT="\$(vcs_prompt_info)"
-RPROMPT+="[%~]"
-
+prompt mytheme
 
 # -------------------------------------
-# その他
+#  Other
 # -------------------------------------
 
 # cdしたあとで、自動的に ls する
 function chpwd() { ls }
-
-function setproxy() {
-    export http_proxy=http://wwwproxy.kanazawa-it.ac.jp:8080/
-    export https_proxy=http://wwwproxy.kanazawa-it.ac.jp:8080/
-    export all_proxy=http://wwwproxy.kanazawa-it.ac.jp:8080/
-}
-
-function noproxy() {
-    unset http_proxy;
-    unset https_proxy;
-    unset all_proxy;
-}
-

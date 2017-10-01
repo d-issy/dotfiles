@@ -26,3 +26,15 @@ fd() {
   local dir
   dir=$(find ${1:-.} -type d 2> /dev/null | fzf +m --reverse) && cd "$dir"
 }
+
+function setproxy() {
+    export http_proxy=http://wwwproxy.kanazawa-it.ac.jp:8080/
+    export https_proxy=http://wwwproxy.kanazawa-it.ac.jp:8080/
+    export all_proxy=http://wwwproxy.kanazawa-it.ac.jp:8080/
+}
+
+function noproxy() {
+    unset http_proxy;
+    unset https_proxy;
+    unset all_proxy;
+}

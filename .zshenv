@@ -16,6 +16,7 @@ eval "$(anyenv init -)"
 # fpath
 typeset -gx -U fpath
 fpath=(
+    $HOME/.zsh/themes(N-/)
     /usr/local/share/zsh-completions(N-/)
     $fpath
 )

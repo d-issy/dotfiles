@@ -1,0 +1,29 @@
+# Auther: shepabashi
+
+prompt_mytheme_setup () {
+    # begin vcs_info
+    if is-at-least 4.3.11; then
+        zstyle ":vcs_info:*" enable git
+        zstyle ":vcs_info:git:*" check-for-changes true
+        zstyle ":vcs_info:git:*" unstagedstr "%F{red}+ "
+        zstyle ":vcs_info:git:*" stagedstr "%F{yellow}! "
+        zstyle ":vcs_info:git:*" formats "(%F{cyan}%b%f) %u%c%f"
+        zstyle ":vcs_info:git:*" actionformats "(%F{cyan}%b%f|%a) %u%c%f"
+        vcs_prompt_info() {
+            vcs_info
+            [[ -n "$vcs_info_msg_0_" ]] && echo -n "$vcs_info_msg_0_"
+        }
+    fi
+    # end vcs_info
+
+    PROMPT="%F{green}%B%~%b%f "
+    PROMPT+="%B\$(vcs_prompt_info) %b"
+    PROMPT+=$'\n%B%(?|%F{green}|%F{red})>%f%b '
+    RPROMPT='%B%w %T%b'
+
+    precmd() {
+        print ""
+    }
+}
+
+prompt_mytheme_setup "$@"
