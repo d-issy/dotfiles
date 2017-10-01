@@ -43,7 +43,7 @@ LIBRARY_PATH=(
 )
 
 # LANGUAGE must be en_US for ssh connection
-export LANGUAGE="ja_JP.UTF-8"
+export LANGUAGE="en_US.UTF-8"
 export LANG="${LANGUAGE}"
 export LC_ALL="${LANGUAGE}"
 export LC_CTYPE="${LANGUAGE}"

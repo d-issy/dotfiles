@@ -19,11 +19,12 @@ setopt prompt_subst
 setopt ignoreeof
 
 ## バックグラウンドジョブが終了したらすぐに知らせる。
-setopt no_tify
+setopt notify
 
 # 補完
 ## タブによるファイルの順番切り替えをしない
-unsetopt auto_menu
+zstyle ':completion:*' menu select interactive
+setopt menucomplete
 
 # cd -[tab]で過去のディレクトリにひとっ飛びできるようにする
 setopt auto_pushd
