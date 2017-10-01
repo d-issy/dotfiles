@@ -1,27 +1,38 @@
 tap "caskroom/cask"
+tap "caskroom/versions"
 tap "homebrew/bundle"
 tap "homebrew/core"
+cask "java"
+brew "ctags"
 brew "curl"
 brew "fzf"
+brew "gcc"
 brew "git"
 brew "go"
 brew "jq"
 brew "mas"
 brew "openconnect"
-brew "peco"
 brew "python3"
 brew "reattach-to-user-namespace"
 brew "ruby"
+brew "the_silver_searcher"
 brew "tig"
 brew "tmux"
-brew "vim", args: ["with-gettext", "with-override-system-vi", "with-lua", "with-python3"]
+brew "tree"
+brew "vim", args: ["with-python3"]
 brew "watch"
+brew "wget"
 brew "wget"
 brew "zplug"
 brew "zsh", args: ["without-etcdir"]
+cask "alfred"
+cask "dash"
+cask "google-chrome"
+cask "karabiner-elements"
+cask "shiftit"
+cask "visual-studio-code"
 mas "Affinity Designer", id: 824171161
 mas "Apple Configurator 2", id: 1037126344
-mas "Controllers Lite", id: 673660806
 mas "Keynote", id: 409183694
 mas "Numbers", id: 409203825
 mas "Pages", id: 409201541
