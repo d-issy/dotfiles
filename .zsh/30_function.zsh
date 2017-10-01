@@ -1,39 +1,45 @@
-# fe [FUZZY PATTERN] - Open the selected file with the default editor
-#   - Bypass fuzzy finder if there's only one match (--select-1)
-#   - Exit if there's no match (--exit-0)
-fe() {
-    local files
-    IFS=$'\n' files=($(fzf-tmux --query="$1" --multi --select-1 --exit-0 --reverse))
-    [[ -n "$files" ]] && ${EDITOR:-vim} "${files[@]}"
+# cdup 
+cdup() {
+    echo
+    cd ..
+    zle reset-prompt
 }
+zle -N cdup
 
+ # history-selection - history incremental search by using fzf
+history-selection() {
+    BUFFER=$(history -n 1 | awk '!a[$0]++' | fzf --tac --height 40% --reverse --no-sort)
+    CURSOR=$#BUFFER
+    zle reset-prompt
+}
+zle -N history-selection
 
-# Modified version where you can press
-#   - CTRL-O to open with `open` command,
-#   - CTRL-E or Enter key to open with the $EDITOR
-fo() {
-    local out file key
-    IFS=$'\n' out=($(fzf-tmux --query="$1" --exit-0 --expect=ctrl-o,ctrl-e))
-    key=$(head -1 <<< "$out")
-    file=$(head -2 <<< "$out" | tail -1)
-    if [ -n "$file" ]; then
-        [ "$key" = ctrl-o ] && open "$file" || ${EDITOR:-vim} "$file"
+# peco-src - gopath src incremental search
+ghq-src() {
+    local src=$(ghq list | fzf --query "$1" --reverse)
+    if [ -n "$src" ]; then
+        cd $GOPATH/src/$src
+        zle reset-prompt
     fi
 }
+zle -N ghq-src
 
-# fda - including hidden directories
-fd() {
-  local dir
-  dir=$(find ${1:-.} -type d 2> /dev/null | fzf +m --reverse) && cd "$dir"
+# fore-ground - foreground function
+fore-ground() {
+    fg > /dev/null 2>&1
+    zle reset-prompt
+}
+zle -N fore-ground
+
+# proxy setting function
+setproxy() {
+    local proxy=http://wwwproxy.kanazawa-it.ac.jp:8080/
+    export http_proxy=$proxy
+    export https_proxy=$proxy
+    export all_proxy=$proxy
 }
 
-function setproxy() {
-    export http_proxy=http://wwwproxy.kanazawa-it.ac.jp:8080/
-    export https_proxy=http://wwwproxy.kanazawa-it.ac.jp:8080/
-    export all_proxy=http://wwwproxy.kanazawa-it.ac.jp:8080/
-}
-
-function noproxy() {
+noproxy() {
     unset http_proxy;
     unset https_proxy;
     unset all_proxy;
