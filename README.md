@@ -5,20 +5,31 @@ My dotfiles
 - macOS latest
 - xcode-select --install
 
-## Deploy
-For the first time, you need to deploy
+## init
+For the first time, you need to run init endopoint. 
+
+This endpoint install dependences software and do config.
+
 ```
-make deploy
+make init
 ```
 
-## install
+## link 
+This endpoint create a symbolic link of dotfiles in your HOME directory.
+
+Please note that duplicate files are removed.
+
 ```
-make install
+make link
 ```
 
-## uninstall
+## unlink
+This endpoint remove the symbolic links of dotfiles from the HOME directory.
+
+Please note that all dotfiles under monitoring in this repository will be deleted.
+
 ```
-make uninstall
+make unlink
 ```
 
 ## user gitconfig
