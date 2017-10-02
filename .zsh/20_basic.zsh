@@ -2,6 +2,8 @@
 #  Basic Options
 # -------------------------------------
 
+umask 022
+
 ## 補完機能の強化
 autoload -U compinit
 compinit

@@ -1,17 +1,19 @@
-# GoLang
-export GOPATH=$HOME/go
-
 #  Path
 typeset -gx -U path PATH
 path=(
-    $HOME/.anyenv/bin(N-/)
-    /usr/local/bin(N-/)
-    /usr/local/sbin(N-/)
     $HOME/bin(N-/)
-    $GOPATH/bin(N-/)
+    $HOME/.anyenv/bin(N-/)
+    /usr/local/sbin(N-/)
+    /usr/local/bin(N-/)
     $path
 )
 eval "$(anyenv init -)"
+
+# GoLang
+if [[ -d "${HOME}/go" ]]; then
+    export GOPATH=$HOME/go
+    path=(${GOPATH}/bin(N-/) $path)
+fi
 
 # fpath
 typeset -gx -U fpath
@@ -21,26 +23,28 @@ fpath=(
 )
 
 # for MPI
-export MPIPATH=/usr/local/opt/open-mpi
-export TMPDIR=/tmp
+if [[ -d /usr/local/opt/open-mpi ]]; then
+    export MPIPATH=/usr/local/opt/open-mpi
+    export TMPDIR=/tmp
 
-typeset -gx -U C_INCLUDE_PATH
-C_INCLUDE_PATH=(
-    $MPIPATH/include(N-/)
-    $c_include_path
-)
+    typeset -gx -U C_INCLUDE_PATH
+    C_INCLUDE_PATH=(
+        $MPIPATH/include(N-/)
+        $c_include_path
+    )
 
-typeset -gx -U CPLUS_INCLUDE_PATH
-CPLUS_INCLUDE_PATH=(
-    $MPIPATH/include(N-/)
-    $cplus_include_path
-)
+    typeset -gx -U CPLUS_INCLUDE_PATH
+    CPLUS_INCLUDE_PATH=(
+        $MPIPATH/include(N-/)
+        $cplus_include_path
+    )
 
-typeset -gx -U LIBRARY_PATH
-LIBRARY_PATH=(
-    $MPIPATH/lib(N-/)
-    $library_path
-)
+    typeset -gx -U LIBRARY_PATH
+    LIBRARY_PATH=(
+        $MPIPATH/lib(N-/)
+        $library_path
+    )
+fi
 
 # LANGUAGE must be en_US for ssh connection
 export LANGUAGE="en_US.UTF-8"
