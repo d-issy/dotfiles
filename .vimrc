@@ -59,6 +59,9 @@ Plug 'kannokanno/previm', {'for': 'markdown'}
 Plug 'davidhalter/jedi-vim', {'for': 'python'}
 Plug 'shepabashi/vim-pyenv', {'for': 'python'}
 
+" Vim Processing
+Plug 'sophacles/vim-processing'
+
 call plug#end()
 
 "================================
