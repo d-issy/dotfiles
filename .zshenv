@@ -18,6 +18,7 @@ fi
 # fpath
 typeset -gx -U fpath
 fpath=(
+    $HOME/.zsh/completions(N-/)
     $HOME/.zsh/themes(N-/)
     $fpath
 )

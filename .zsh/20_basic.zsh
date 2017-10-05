@@ -5,7 +5,7 @@
 umask 022
 
 ## 補完機能の強化
-autoload -U compinit
+autoload -Uz compinit
 compinit
 
 ## 入力しているコマンド名が間違っている場合にもしかして：を出す。
