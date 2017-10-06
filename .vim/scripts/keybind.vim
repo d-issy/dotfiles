@@ -19,6 +19,6 @@ nmap <silent><Leader>c <Plug>NERDCommenterToggle
 vmap <silent><Leader>c <Plug>NERDCommenterToggle
 
 " vim-easy-align
-xmap ga <Plug>(EasyAlign)
-nmap ga <Plug>(EasyAlign)
+xmap <leader>. <Plug>(EasyAlign)
+nmap <leader>. <Plug>(EasyAlign)
 
