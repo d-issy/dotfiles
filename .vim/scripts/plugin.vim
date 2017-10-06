@@ -49,6 +49,11 @@ let g:user_emmet_settings = {
 " javascript-libraries-syntax.vim
 let g:used_javascript_libs = 'jquery,underscore,backbone,gularjs,angularui,angularuirouter,requirejs,sugar,jasmine,chai,ramda,react,flux,handlebars,d3,vue'
 
+" jedi-vim
+let g:jedi#popup_on_dot = 0
+let g:jedi#goto_command = "<C-]>"
+let g:jedi#goto_definitions_command = ""
+
 " markdown
 let g:vim_markdown_folding_disabled = 1
 let g:vim_markdown_new_list_item_indent = 2
