@@ -2,6 +2,7 @@ EXCLUSIONS := .DS_Store .ex.gitconfig.user .git .gitignore .gitmodules
 CANDIDATES := $(wildcard .??*) bin
 DOTFILES   := $(filter-out $(EXCLUSIONS), $(CANDIDATES))
 
+.PHONY: all init link unlink update help
 all: help
 
 init:
