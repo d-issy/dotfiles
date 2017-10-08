@@ -1,5 +1,5 @@
 NODE_VER   := v8.5.0
-PYTHON_VER := 3.6.2
+PYTHON_VER := 3.6.3
 RUBY_VER   := 2.4.2
 
 setup: brew anyenv go vim refresh
