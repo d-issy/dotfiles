@@ -6,6 +6,7 @@ call plug#begin('~/.vim/plugged')
 " General
 Plug 'sirver/ultisnips'
 Plug 'honza/vim-snippets'
+Plug 'shepabashi/vim-mysnippets'
 
 Plug 'bling/vim-airline'
 Plug 'vim-airline/vim-airline-themes'
