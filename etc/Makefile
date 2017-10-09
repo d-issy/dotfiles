@@ -20,6 +20,7 @@ brew/install:
 
 brew/cleanup:
 	brew cleanup
+	brew cask cleanup
 
 .PHONY: anyenv anyenv/setup anyenv/install
 anyenv: anyenv/setup anyenv/install
