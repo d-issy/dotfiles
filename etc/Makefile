@@ -62,8 +62,7 @@ vim/plugin:
 	@vim -u $(abspath ../.vimrc) -c "PlugInstall | quitall"
 
 ../.vim/autoload/plug.vim:
-	@cat $(abspath $@) > /dev/null || \
-		curl -fLo $(abspath $@) --create-dirs \
+	curl -fLo $(abspath $@) --create-dirs \
 		https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
 
 .PHONY: refresh
