@@ -6,11 +6,4 @@ if [ -d $ZSHHOME ]; then
             source "$f"
         fi
     done
-
-    for f in ${ZSHHOME}/plugins/*; do
-        if [[ $f =~ ".*\.(sh|zsh)" ]]; then
-            source "$f"
-        fi
-    done
 fi
-
