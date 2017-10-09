@@ -1,6 +1,6 @@
 " UtiSnip
 let g:UltiSnipsExpandTrigger = "<c-k>"
-let g:UltiSnipsJumpForwardTrigger = "<c-n>"
+let g:UltiSnipsJumpForwardTrigger = "<c-j>"
 
 " CtrlP
 let g:ctrlp_map = ',,'
