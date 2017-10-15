@@ -22,7 +22,6 @@ brew "tree"
 brew "vim", args: ["with-python3"]
 brew "watch"
 brew "wget"
-brew "wget"
 brew "zplug"
 brew "zsh", args: ["without-etcdir"]
 cask "alfred"
