@@ -1,4 +1,4 @@
-#  Path
+# Path
 typeset -gx -U path PATH
 path=(
     $HOME/bin(N-/)
