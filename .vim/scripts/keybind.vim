@@ -11,6 +11,10 @@ nnoremap N Nzz
 nnoremap * *zz
 nnoremap # #zz
 
+if empty(glob('~/.vim/autoload/plug.vim'))
+  finish
+endif
+
 " Plugin Key Bind
 nnoremap <silent><Leader>d :NERDTreeToggle<CR>
 nnoremap <silent><Leader>gs :Gstatus<CR>
