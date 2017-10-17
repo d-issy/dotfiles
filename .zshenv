@@ -9,12 +9,6 @@ path=(
 )
 eval "$(anyenv init -)"
 
-# GoLang
-if [[ -d "${HOME}/go" ]]; then
-    export GOPATH=$HOME/go
-    path=(${GOPATH}/bin(N-/) $path)
-fi
-
 # fpath
 typeset -gx -U fpath
 fpath=(
@@ -22,6 +16,17 @@ fpath=(
     $HOME/.zsh/themes(N-/)
     $fpath
 )
+
+# GoLang
+if [[ -d "${HOME}/go" ]]; then
+    export GOPATH=$HOME/go
+    path=(${GOPATH}/bin(N-/) $path)
+fi
+
+# Java
+if [[ -d "${HOME}/java" ]]; then
+    export CLASSPATH=$HOME/java
+fi
 
 # for MPI
 if [[ -d /usr/local/opt/open-mpi ]]; then
