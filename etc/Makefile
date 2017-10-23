@@ -54,12 +54,9 @@ go:
 	which gore > /dev/null || go get -u github.com/motemen/gore
 
 .PHONY: vim vim/setup vim/plugin
-vim: vim/setup vim/plugin
+vim: vim/setup
 
 vim/setup: ../.vim/autoload/plug.vim
-
-vim/plugin:
-	@vim -u $(abspath ../.vimrc) -c "PlugInstall | quitall"
 
 ../.vim/autoload/plug.vim:
 	curl -fLo $(abspath $@) --create-dirs \
