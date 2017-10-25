@@ -1,0 +1,53 @@
+{
+    'env': {
+        'browser': true,
+        'node': true,
+        'es6': true,
+    },
+    'parserOptions': {
+        'ecmaVersion': 6,
+        'sourceType': 'module',
+        'ecmaFeatures': {
+            'jsx': true,
+        }
+    },
+    'rules': {
+        // Posible Errors
+        'no-compare-neg-zero': 2,
+        'no-dupe-args': 2,
+        'no-dupe-keys': 2,
+        'no-duplicate-case': 2,
+        // Best Practice
+        'curly': 2,
+        'eqeqeq': [1, 'smart'],
+        'no-fallthrough': 1,
+        'no-global-assign': 2,
+        // Variables
+        'no-delete-var': 2,
+        'no-undef': 2,
+        'no-unused-vars': 1,
+        // Stylistic Issues
+        'block-spacing': 2,
+        'brace-style': 2,
+        'camelcase': 1,
+        'comma-spacing': 2,
+        'func-call-spacing': 2,
+        'key-spacing': [2, {beforeColon: false, afterColon: true}],
+        'keyword-spacing': 2,
+        'no-alert': 2,
+        'no-mixed-spaces-and-tabs': 2,
+        'no-multi-spaces': 2,
+        'no-multiple-empty-lines': [2, {max: 2, maxEOF: 0}],
+        // 'semi': [2, 'never'],
+        'semi-spacing': 2,
+        'space-before-blocks': 2,
+        'space-infix-ops': 2,
+        'space-unary-ops': 2,
+        'switch-colon-spacing': 2,
+        // ECMAScript6
+        'arrow-body-style': [2, 'as-needed'],
+        'arrow-spacing': 2,
+        'no-const-assign': 2,
+        'no-var': 2,
+    }
+}
