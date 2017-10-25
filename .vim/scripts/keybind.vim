@@ -26,3 +26,5 @@ vmap <silent><Leader>c <Plug>NERDCommenterToggle
 xmap <leader>. <Plug>(EasyAlign)
 nmap <leader>. <Plug>(EasyAlign)
 
+" autofix
+nnoremap <silent><Leader>f :ALEFix<CR>

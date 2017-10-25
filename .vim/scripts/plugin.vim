@@ -15,6 +15,8 @@ Plug 'sirver/ultisnips'
 Plug 'honza/vim-snippets'
 Plug 'shepabashi/vim-snippets-extra'
 
+Plug 'w0rp/ale'
+
 Plug 'bling/vim-airline'
 Plug 'vim-airline/vim-airline-themes'
 
@@ -98,15 +100,27 @@ let g:NERDSpaceDelims = 1
 let g:NERDCompactSexyComs = 1
 let g:NERDDefaultAlign = 'left'
 
-" syntastic
-let g:syntastic_always_populate_loc_list = 1
-let g:syntastic_auto_loc_list = 1
-let g:syntastic_check_on_open = 1
-let g:syntastic_check_on_wq = 0
-let g:syntastic_mode_map = {
-      \ "mode": "passive",
-      \ "active_filetypes": [],
-      \ "passive_filetypes": [] }
+" ALE
+let g:ale_lint_on_text_changed = 'never'
+let g:ale_lint_delay = 0
+let g:ale_set_loclist = 0
+let g:ale_set_quickfix = 1
+let g:ale_open_list = 1
+
+let g:ale_fixers = {
+      \ 'c':          ['clang-format'],
+      \ 'cpp':        ['clang-format'],
+      \ 'javascript': ['eslint'],
+      \ 'python':     ['autopep8', 'isort'],
+      \ }
+
+let g:ale_linters = {
+      \ 'c':          [],
+      \ 'cpp':        [],
+      \ 'go':         [],
+      \ 'javascript': [],
+      \ 'python':     ['flake8'],
+      \ }
 
 " GitGutter
 set updatetime=250
