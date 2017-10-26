@@ -13,6 +13,9 @@ set softtabstop=0
 set ignorecase
 set smartcase
 
+set incsearch
+set hlsearch
+
 set ambiwidth=double
 
 set completeopt=longest,menuone
@@ -20,6 +23,8 @@ set completeopt=longest,menuone
 set directory=/tmp
 
 set hidden
+
+set nrformats=hex
 
 syntax on
 filetype plugin indent on
