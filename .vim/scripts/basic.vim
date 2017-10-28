@@ -5,6 +5,7 @@ set t_Co=256
 set expandtab
 set autoindent
 set smartindent
+set breakindent
 
 set tabstop=4
 set shiftwidth=4
