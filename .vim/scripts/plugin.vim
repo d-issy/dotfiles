@@ -15,12 +15,9 @@ Plug 'sirver/ultisnips'
 Plug 'honza/vim-snippets'
 Plug 'shepabashi/vim-snippets-extra'
 
-Plug 'w0rp/ale'
-
-Plug 'bling/vim-airline'
-Plug 'vim-airline/vim-airline-themes'
-
 Plug 'flazz/vim-colorschemes'
+
+Plug 'w0rp/ale'
 
 Plug 'scrooloose/nerdtree'
 Plug 'scrooloose/nerdcommenter'

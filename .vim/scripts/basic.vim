@@ -1,7 +1,17 @@
+" encoding
+set encoding=utf-8
+set fileencoding=utf-8
+
+" break code
+set fileformats=unix,dos,mac
+
+" back space
 set backspace=indent,eol,start
-set laststatus=2
+
+" color
 set t_Co=256
 
+" indent
 set expandtab
 set autoindent
 set smartindent
@@ -11,21 +21,24 @@ set tabstop=4
 set shiftwidth=4
 set softtabstop=0
 
+" search
 set ignorecase
 set smartcase
-
 set incsearch
 set hlsearch
 
+" multibyte
 set ambiwidth=double
 
+" complete
 set completeopt=longest,menuone
 
+" backup
 set directory=/tmp
 
-set hidden
-
+" ctrl-a
 set nrformats=hex
 
+" syntax
 syntax on
 filetype plugin indent on
