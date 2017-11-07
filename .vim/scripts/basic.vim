@@ -27,6 +27,10 @@ set smartcase
 set incsearch
 set hlsearch
 
+" no bell
+set visualbell t_vb=
+set noerrorbells
+
 " multibyte
 set ambiwidth=double
 
