@@ -11,6 +11,9 @@ set backspace=indent,eol,start
 " color
 set t_Co=256
 
+" defualt colorscheme
+colorscheme badwolf
+
 " indent
 set expandtab
 set autoindent
