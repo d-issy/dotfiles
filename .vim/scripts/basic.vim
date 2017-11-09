@@ -46,6 +46,10 @@ set directory=/tmp
 " ctrl-a
 set nrformats=hex
 
+" window
+set splitright
+set splitbelow
+
 " syntax
 syntax on
 filetype plugin indent on
