@@ -34,6 +34,10 @@ set hlsearch
 set visualbell t_vb=
 set noerrorbells
 
+" set font
+set guifont=CamingoCode\ Regular:h16
+set guifontwide=Hiragino\ Sans\ W2:h16
+
 " multibyte
 set ambiwidth=double
 
