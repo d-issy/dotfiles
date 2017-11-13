@@ -26,7 +26,6 @@ Plug 'tpope/tpope-vim-abolish'
 Plug 'rhysd/accelerated-jk'
 Plug 'kien/ctrlp.vim'
 Plug 'airblade/vim-gitgutter'
-" Plug 'osyo-manga/vim-over'
 Plug 'tpope/vim-surround'
 Plug 'thinca/vim-quickrun'
 Plug 'junegunn/vim-easy-align'
@@ -41,7 +40,7 @@ Plug 'sudar/vim-arduino-syntax'
 Plug 'tpope/vim-fugitive'
 
 " Go
-Plug 'fatih/vim-go', {'for': 'go', 'do': ':GoInstallBinaries'}
+Plug 'fatih/vim-go', {'do': ':GoInstallBinaries'}
 
 " HTML5
 Plug 'mattn/emmet-vim'
