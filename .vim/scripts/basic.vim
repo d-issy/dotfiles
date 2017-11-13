@@ -24,6 +24,13 @@ set tabstop=4
 set shiftwidth=4
 set softtabstop=0
 
+" fold
+set foldmethod=indent
+set foldcolumn=2
+set foldlevel=99
+set foldnestmax=2
+set foldminlines=2
+
 " search
 set ignorecase
 set smartcase
@@ -43,6 +50,11 @@ set ambiwidth=double
 
 " complete
 set completeopt=longest,menuone
+set wildmenu
+set wildmode=longest,list
+
+" showcmd
+set showcmd
 
 " backup
 set directory=/tmp
