@@ -5,6 +5,7 @@ path=(
     $HOME/.anyenv/bin(N-/)
     /usr/local/sbin(N-/)
     /usr/local/bin(N-/)
+    /usr/local/opt/openssl/bin(N-/)
     $path
 )
 eval "$(anyenv init -)"
