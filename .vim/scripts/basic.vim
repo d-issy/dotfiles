@@ -12,7 +12,7 @@ set backspace=indent,eol,start
 set t_Co=256
 
 " defualt colorscheme
-colorscheme badwolf
+colorscheme gruvbox
 
 " indent
 set expandtab
@@ -26,16 +26,18 @@ set softtabstop=0
 
 " fold
 set foldmethod=indent
-set foldcolumn=2
 set foldlevel=99
 set foldnestmax=2
-set foldminlines=2
+set foldminlines=1
+autocmd FileType c setlocal foldmethod=syntax
+autocmd FileType cpp setlocal foldmethod=syntax
 
 " search
 set ignorecase
 set smartcase
 set incsearch
 set hlsearch
+nohlsearch
 
 " no bell
 set visualbell t_vb=
@@ -55,6 +57,9 @@ set wildmode=longest,list
 
 " showcmd
 set showcmd
+
+" showbreak
+set showbreak=/
 
 " backup
 set directory=/tmp
