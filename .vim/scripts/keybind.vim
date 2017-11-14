@@ -13,7 +13,7 @@ nnoremap # #zz
 
 " terminal mode
 tnoremap <ESC> <C-\><C-n>
-tnoremap <C-]> <C-\><C-n>
+tnoremap <C-[> <C-\><C-n>
 
 if empty(glob('~/.vim/autoload/plug.vim'))
   finish
