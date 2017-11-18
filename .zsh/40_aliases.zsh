@@ -1,10 +1,10 @@
 # ls
 if [[ -x `which exa` ]]; then
-    alias ls="exa"
-    alias la="exa -a"
-    alias ll="exa -l"
-    alias lla="exa -la"
-    alias l1="exa -1"
+    alias ls="exa -F"
+    alias la="exa -aF"
+    alias ll="exa -lhgF"
+    alias lla="exa -lahgF"
+    alias l1="exa -1F"
 else
     alias la="ls -A"
     alias ll="ls -l"
