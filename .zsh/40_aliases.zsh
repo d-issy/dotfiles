@@ -1,15 +1,17 @@
-# ls
+# ls and tree
 if [[ -x `which exa` ]]; then
     alias ls="exa -F"
     alias la="exa -aF"
     alias ll="exa -lhgF"
     alias lla="exa -lahgF"
     alias l1="exa -1F"
+    alias tree="exa -TF"
 else
     alias la="ls -A"
     alias ll="ls -l"
     alias lla="ls -lA"
     alias l1="ls -1"
+    alias tree="tree -NC"
 fi
 
 # grc
@@ -37,8 +39,6 @@ alias gpl="git pull origin HEAD"
 alias gr="git reset HEAD"
 alias gs="git status"
 
-# tree
-alias tree="tree -NC"
 
 # glut
 alias ccgl='g++ -I/usr/local/Cellar/freeglut/2.8.1/include -L/usr/local/Cellar/freeglut/2.8.1/lib -w -framework OpenGL -lGLUT'
