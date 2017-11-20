@@ -115,6 +115,7 @@ let g:ale_fixers = {
       \ 'cpp':        ['clang-format'],
       \ 'javascript': ['eslint'],
       \ 'python':     ['autopep8', 'isort'],
+      \ 'typescript': ['eslint'],
       \ }
 
 let g:ale_linters = {
