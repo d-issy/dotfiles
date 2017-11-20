@@ -52,6 +52,7 @@ Plug 'othree/yajs.vim'
 Plug 'mxw/vim-jsx'
 Plug 'othree/javascript-libraries-syntax.vim'
 Plug 'ternjs/tern_for_vim', {'do': 'npm install'}
+Plug 'leafgarland/typescript-vim'
 
 " Java
 Plug 'vim-scripts/javacomplete', {'do': 'javac autoload/Reflection.java'}
@@ -137,6 +138,9 @@ let g:user_emmet_settings = {
 
 " javascript-libraries-syntax.vim
 let g:used_javascript_libs = 'jquery,underscore,backbone,gularjs,angularui,angularuirouter,requirejs,sugar,jasmine,chai,ramda,react,flux,handlebars,d3,vue'
+
+" typescript
+autocmd BufNewFile,BufRead *.tsx set filetype=typescript.jsx
 
 " jedi-vim
 let g:jedi#popup_on_dot = 0
