@@ -22,6 +22,21 @@ if [[ -x `which grc` ]]; then
     alias traceroute="grc traceroute"
 fi
 
+# git
+alias g="git"
+alias ga="git add"
+alias gc="git checkout"
+alias gcf="git checkout --"
+alias gco="git commit"
+alias gd="git diff --color"
+alias gdc="git diff --color --cached"
+alias gf="git fetch --prune"
+alias gl="git log --oneline --graph --decorate"
+alias gp="git push origin HEAD"
+alias gpl="git pull origin HEAD"
+alias gr="git reset HEAD"
+alias gs="git status"
+
 # tree
 alias tree="tree -NC"
 

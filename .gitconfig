@@ -2,9 +2,9 @@
     path = ~/.gitconfig.user
 [core]
     editor = vim
-    excludesfile = /Users/shepabashi/.gitignore_global
+    excludesfile = ~/.gitignore_global
 [color]
     ui = auto
     diff = true
 [ghq]
-    root = /Users/shepabashi/go/src
+    root = ~/go/src
