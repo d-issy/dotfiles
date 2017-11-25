@@ -3,6 +3,7 @@ setlocal noexpandtab
 setlocal completeopt-=preview
 
 let g:go_fmt_command = "goimports"
+
 let g:go_gocode_unimported_packages = 1
 let g:go_highlight_array_whitespace_error = 1
 let g:go_highlight_chan_whitespace_error = 1
@@ -20,3 +21,4 @@ let g:go_highlight_format_strings = 1
 let g:go_highlight_generate_tags = 1
 
 nnoremap <buffer> <Leader>r :GoRename<CR>
+nnoremap <buffer> <Leader>s :GoInfo<CR>
