@@ -9,7 +9,11 @@ path=(
     /usr/local/opt/go/libexec/bin(N-/)
     $path
 )
-eval "$(anyenv init -)"
+
+if [ -z $ZSH_ENV_LOADED ]; then
+  eval "$(anyenv init -)"
+  export ZSH_ENV_LOADED=1
+fi
 
 # fpath
 typeset -gx -U fpath
