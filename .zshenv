@@ -11,7 +11,7 @@ path=(
 )
 
 if [ -z $ZSH_ENV_LOADED ]; then
-  eval "$(anyenv init -)"
+  eval "$(anyenv init - --no-rehash)"
   export ZSH_ENV_LOADED=1
 fi
 
