@@ -15,12 +15,10 @@ fi
 
 # Tmux
 if [[ ! -n $TMUX && $- == *l* ]]; then
-    ID="`tmux ls`"
-    option=""
 
     # confirm
     function confirm {
-        MSG=$1
+        MSG="exit?"
         while :
         do
             echo -n "${MSG} [Y/n]: "
@@ -35,18 +33,18 @@ if [[ ! -n $TMUX && $- == *l* ]]; then
         done
     }
 
+    ID="`tmux ls`"
     if [[ -z "$ID" ]]; then
-        option="new-session"
+        tmux new-session && confirm && exit
     else
         create_new_session="New"
         ID="${create_new_session}: create new session\n$ID"
         ID="`echo $ID | fzf --reverse | cut -d: -f1`"
 
         if [[ "$ID" = "${create_new_session}" ]]; then
-            option="new"
+            tmux new-session && confirm && exit
         elif [[ -n "$ID" ]]; then
-            option="a -t $ID"
+            tmux a -t "$ID" && confirm && exit
         fi
     fi
-    tmux $option && confirm "exit?" && exit
 fi
