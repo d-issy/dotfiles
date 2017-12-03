@@ -19,7 +19,6 @@ prompt_mytheme_setup () {
     PROMPT="%F{green}%B%~%b%f "
     PROMPT+="%B\$(vcs_prompt_info) %b"
     PROMPT+=$'\n%B%(?|%F{green}|%F{red})>%f%b '
-    RPROMPT='%B%w %T%b'
 
     precmd() {
         print ""

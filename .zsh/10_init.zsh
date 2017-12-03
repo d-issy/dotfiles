@@ -13,21 +13,40 @@ if [[ -e $ZPLUG_HOME/init.zsh ]]; then
     fi
 fi
 
-# loading tmux
-# if [[ ! -n $TMUX && $- == *l* ]]; then
-#     ID="`tmux ls`"
-#     if [[ -z "$ID" ]]; then
-#         tmux new-session
-#     else
-#         create_new_session="New"
-#         ID="$ID\n${create_new_session}: create new session"
-#             ID="`echo $ID | peco | cut -d: -f1`"
-#         if [[ "$ID" = "${create_new_session}" ]]; then
-#                 tmux new
-#         elif [[ -n "$ID" ]]; then
-#             tmux a -t "$ID"
-#         fi
-#     fi
-# fi
+# Tmux
+if [[ ! -n $TMUX && $- == *l* ]]; then
+    ID="`tmux ls`"
+    option=""
 
+    # confirm
+    function confirm {
+        MSG=$1
+        while :
+        do
+            echo -n "${MSG} [Y/n]: "
+            read ans
+            if [ -z "$ans" ]; then
+                ans="y"
+            fi
+            case $ans in
+                [yY]) return 0 ;;
+                [nN]) return 1 ;;
+            esac
+        done
+    }
 
+    if [[ -z "$ID" ]]; then
+        option="new-session"
+    else
+        create_new_session="New"
+        ID="$ID\n${create_new_session}: create new session"
+        ID="`echo $ID | fzf --reverse | cut -d: -f1`"
+
+        if [[ "$ID" = "${create_new_session}" ]]; then
+            option="new"
+        elif [[ -n "$ID" ]]; then
+            option="a -t $ID"
+        fi
+    fi
+    tmux $option && confirm "exit?" && exit
+fi

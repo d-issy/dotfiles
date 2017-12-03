@@ -39,6 +39,8 @@ alias gpl="git pull origin HEAD"
 alias gr="git reset HEAD"
 alias gs="git status"
 
+# exit
+alias q='exit'
 
 # glut
 alias ccgl='g++ -I/usr/local/Cellar/freeglut/2.8.1/include -L/usr/local/Cellar/freeglut/2.8.1/lib -w -framework OpenGL -lGLUT'
