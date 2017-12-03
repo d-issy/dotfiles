@@ -29,7 +29,7 @@ if [[ ! -n $TMUX && $- == *l* ]]; then
                 ans="y"
             fi
             case $ans in
-                [yY]) return 0 ;;
+                [yYqQ]) return 0 ;;
                 [nN]) return 1 ;;
             esac
         done
@@ -39,7 +39,7 @@ if [[ ! -n $TMUX && $- == *l* ]]; then
         option="new-session"
     else
         create_new_session="New"
-        ID="$ID\n${create_new_session}: create new session"
+        ID="${create_new_session}: create new session\n$ID"
         ID="`echo $ID | fzf --reverse | cut -d: -f1`"
 
         if [[ "$ID" = "${create_new_session}" ]]; then
