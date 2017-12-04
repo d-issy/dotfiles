@@ -45,10 +45,10 @@ brew "zsh", args: ["without-etcdir"]
 cask "alfred"
 cask "dash"
 cask "google-chrome"
+cask "hammerspoon"
 cask "intellij-idea"
 cask "karabiner-elements"
 cask "macvim"
-cask "spectacle"
 cask "visual-studio-code"
 
 mas "Affinity Designer", id: 824171161
