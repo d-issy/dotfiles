@@ -81,5 +81,10 @@ local eikanaEventTap = hs.eventtap.new({
 }, eikanaEvent)
 eikanaEventTap:start()
 
+-- App Switcher: Vivaldi
+hs.hotkey.bind({'cmd', 'ctrl'}, 'V', function()
+	hs.application.launchOrFocus('Vivaldi')
+end)
+
 -- loaded: if debug
 hs.alert.show('config loaded')
