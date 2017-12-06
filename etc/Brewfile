@@ -34,7 +34,7 @@ brew "the_silver_searcher"
 brew "tig"
 brew "tmux"
 brew "tree"
-brew "vim", args: ["with-python3"]
+brew "vim", args: ["with-override-system-vi ", "with-python3"]
 brew "w3m"
 brew "watch"
 brew "wget"
@@ -46,10 +46,11 @@ cask "alfred"
 cask "dash"
 cask "google-chrome"
 cask "hammerspoon"
-cask "intellij-idea"
-cask "karabiner-elements"
+cask "iterm2"
 cask "macvim"
+cask "postman"
 cask "visual-studio-code"
+cask "vivaldi"
 
 mas "Affinity Designer", id: 824171161
 mas "Apple Configurator 2", id: 1037126344
