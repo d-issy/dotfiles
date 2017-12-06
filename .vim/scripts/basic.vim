@@ -14,6 +14,28 @@ set t_Co=256
 " defualt colorscheme
 colorscheme gruvbox
 
+augroup change_colors
+  au!
+
+  " select
+  au VimEnter * hi Visual ctermfg=NONE ctermbg=237 cterm=NONE
+
+  " search
+  au VimEnter * hi Search ctermfg=NONE ctermbg=237 cterm=NONE
+
+  " statusline
+  au VimEnter * hi StatusLine    ctermfg=255 ctermbg=237 cterm=NONE
+  au VimEnter * hi StatusLineNC  ctermfg=245 ctermbg=237 cterm=NONE
+  au InsertEnter * hi StatusLine ctermfg=214 ctermbg=236 cterm=bold
+  au InsertLeave * hi StatusLine ctermfg=255 ctermbg=237 cterm=NONE
+
+  " tabbar
+  au VimEnter * hi TabLine     ctermfg=15 ctermbg=237 cterm=NONE
+  au VimEnter * hi TabLineFill ctermfg=243 ctermbg=237 cterm=underline
+  au VimEnter * hi TabLineSel  ctermfg=243 ctermbg=235 cterm=NONE
+
+augroup END
+
 " indent
 set expandtab
 set autoindent
@@ -57,6 +79,9 @@ set wildmode=longest,list
 
 " showcmd
 set showcmd
+
+" showmode
+set noshowmode
 
 " showbreak
 set showbreak=/

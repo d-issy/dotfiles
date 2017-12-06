@@ -11,6 +11,8 @@ nnoremap N Nzz
 nnoremap * *zz
 nnoremap # #zz
 
+nnoremap <silent><C-[><C-[> :noh<CR><C-[>
+
 " terminal mode
 tnoremap <ESC> <C-\><C-n>
 tnoremap <C-[> <C-\><C-n>
@@ -26,12 +28,16 @@ nnoremap <silent><Leader>gs :Gstatus<CR>
 nmap <silent><Leader>c <Plug>NERDCommenterToggle
 vmap <silent><Leader>c <Plug>NERDCommenterToggle
 
+" autofix
+nnoremap <silent><Leader>f :ALEFix<CR>
+
+" QuickRun
+nnoremap <silent><Leader>q :QuickRun<CR>
+
 " vim-easy-align
 xmap <leader>. <Plug>(EasyAlign)
 nmap <leader>. <Plug>(EasyAlign)
 
-" autofix
-nnoremap <silent><Leader>f :ALEFix<CR>
 
 " accelerated_jk
 nmap j <Plug>(accelerated_jk_gj)

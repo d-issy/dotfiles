@@ -1,6 +1,6 @@
 " default statusline
 set statusline=%F\ %m%r
-set statusline+=%=%l/%L\ [%{&ff}][%{&fileencoding}]%y
+set statusline+=%=%l/%L\ %y
 
 " laststatus
 set laststatus=2
