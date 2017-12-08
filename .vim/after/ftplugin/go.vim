@@ -20,5 +20,5 @@ let g:go_highlight_string_spellcheck = 1
 let g:go_highlight_format_strings = 1
 let g:go_highlight_generate_tags = 1
 
-nnoremap <buffer> <Leader>r :GoRename<CR>
-nnoremap <buffer> <Leader>s :GoInfo<CR>
+nnoremap <buffer> <silent><Leader>r :GoRename<CR>
+nnoremap <buffer> <silent><Leader>s :GoInfo<CR>
