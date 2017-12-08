@@ -55,7 +55,7 @@ local singleCmd = false
 
 local function eikanaEvent(event)
     local eventType = event:getType()
-    if eventType == hs.eventtap.event.types.keyDown and singleCmd then
+    if eventType == hs.eventtap.event.types.keyDown then
         singleCmd = false
     elseif eventType == hs.eventtap.event.types.flagsChanged then
         local flags = event:getFlags()
