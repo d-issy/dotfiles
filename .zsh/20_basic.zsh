@@ -50,8 +50,3 @@ zstyle ':completion:*' group-name ''
 
 zstyle ':completion:*' menu select interactive
 setopt menucomplete
-
-# -------------------------------------
-#  Other
-# -------------------------------------
-function chpwd() { ls }
