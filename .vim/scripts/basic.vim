@@ -11,8 +11,6 @@ set backspace=indent,eol,start
 " color
 set t_Co=256
 
-" defualt colorscheme
-colorscheme gruvbox
 
 augroup change_colors
   au!

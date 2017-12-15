@@ -78,7 +78,7 @@ let g:UltiSnipsExpandTrigger = "<c-k>"
 let g:UltiSnipsJumpForwardTrigger = "<c-j>"
 
 " CtrlP
-let g:ctrlp_map = ',,'
+let g:ctrlp_map = ""
 let g:ctrlp_show_hidden = 1
 let g:ctrlp_custom_ignore = {
       \ 'dir':  '\v[\/](\.git|\.hg|\.idea|\.svn|plugged|node_modules|vendor)$',
@@ -99,6 +99,9 @@ let g:NERDCreateDefaultMappings = 0
 let g:NERDSpaceDelims = 1
 let g:NERDCompactSexyComs = 1
 let g:NERDDefaultAlign = 'left'
+
+" colorscheme
+colorscheme gruvbox
 
 " ALE
 let g:ale_lint_on_text_changed = 'never'
