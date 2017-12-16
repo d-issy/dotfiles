@@ -49,6 +49,7 @@ brew "zsh", args: ["without-etcdir"]
 
 cask "adobe-acrobat-reader"
 cask "alfred"
+cask "appcleaner"
 cask "dash"
 cask "filezilla"
 cask "firefox"
