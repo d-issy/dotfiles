@@ -1,8 +1,3 @@
--- reload
-hs.hotkey.bind({'cmd', 'alt', 'ctrl'}, 'R', function() 
-    hs.reload()
-end)
-
 -- KeyCode
 local Escape = 0x35
 local RightCmd = 0x36
@@ -55,22 +50,43 @@ local singleCmd = false
 
 local function eikanaEvent(event)
     local eventType = event:getType()
+    local keyCode = event:getKeyCode()
+
+    -- keyDown Event
     if eventType == hs.eventtap.event.types.keyDown then
         singleCmd = false
-    elseif eventType == hs.eventtap.event.types.flagsChanged then
-        local flags = event:getFlags()
-        if flags['cmd'] then
-            singleCmd = true
-        else
-            local keyCode = event:getKeyCode()
-            if singleCmd then
-                if keyCode == RightCmd then
-                    hs.eventtap.keyStroke({}, Kana)
-                elseif keyCode == LeftCmd then
-                    hs.eventtap.keyStroke({}, Eisuu)
-                end
-                singleCmd = false
-            end
+
+        if keyCode == Escape then
+            hs.eventtap.keyStroke({}, Eisuu)
+        end
+        return
+    end
+
+    -- flagsChanged Event
+    if eventType ~= hs.eventtap.event.types.flagsChanged then
+        return
+    end
+
+    local flags = event:getFlags()
+    if flags['cmd'] then
+        singleCmd = true
+        return
+    end
+
+    local activeApplication = hs.application.frontmostApplication()
+
+    if singleCmd then
+        singleCmd = false
+
+        -- except VMWare Fusion
+        if activeApplication:bundleID() == 'com.vmware.fusion' then
+            return
+        end
+
+        if keyCode == RightCmd then
+            hs.eventtap.keyStroke({}, Kana)
+        elseif keyCode == LeftCmd then
+            hs.eventtap.keyStroke({}, Eisuu)
         end
     end
 end
@@ -83,8 +99,13 @@ eikanaEventTap:start()
 
 -- App Switcher: Vivaldi
 hs.hotkey.bind({'cmd', 'ctrl'}, 'V', function()
-	hs.application.launchOrFocus('Vivaldi')
+    hs.application.launchOrFocus('Vivaldi')
 end)
 
--- loaded: if debug
+--- reload
+hs.hotkey.bind({'cmd', 'alt', 'ctrl'}, 'R', function() 
+    hs.reload()
+end)
+
+--- show config loaded
 hs.alert.show('config loaded')
