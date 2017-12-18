@@ -55,14 +55,14 @@ Plug 'ternjs/tern_for_vim', {'do': 'npm install'}
 Plug 'leafgarland/typescript-vim'
 
 " Java
-Plug 'vim-scripts/javacomplete', {'do': 'javac autoload/Reflection.java'}
+Plug 'vim-scripts/javacomplete', {'do': 'which javac > /dev/null 2>&1 && javac autoload/Reflection.java'}
 
 " Markdown
 Plug 'plasticboy/vim-markdown', {'for': 'markdown'}
 Plug 'kannokanno/previm', {'for': 'markdown'}
 
 " Python
-Plug 'davidhalter/jedi-vim', {'for': 'python'}
+Plug 'davidhalter/jedi-vim', {'for': 'python', 'do': 'which pip3 > /dev/null 2>&1 && pip3 install jedi'}
 Plug 'shepabashi/vim-pyenv', {'for': 'python'}
 
 " Vim Processing
