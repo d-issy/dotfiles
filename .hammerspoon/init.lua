@@ -133,7 +133,23 @@ end
 
 wifiWatcher:start()
 
--- App Switcher: Vivaldi
+-- App Switcher
+hs.hotkey.bind({'cmd', 'ctrl'}, 'D', function()
+    hs.application.launchOrFocus('Dash')
+end)
+
+hs.hotkey.bind({'cmd', 'ctrl'}, 'K', function()
+    hs.application.launchOrFocus('Keynote')
+end)
+
+hs.hotkey.bind({'cmd', 'ctrl'}, 'N', function()
+    hs.application.launchOrFocus('Numi')
+end)
+
+hs.hotkey.bind({'cmd', 'ctrl'}, 'P', function()
+    hs.application.launchOrFocus('Microsoft PowerPoint')
+end)
+
 hs.hotkey.bind({'cmd', 'ctrl'}, 'V', function()
     hs.application.launchOrFocus('Vivaldi')
 end)
