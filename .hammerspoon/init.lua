@@ -47,8 +47,10 @@ end)
 
 -- eikana
 local singleCmd = false
-
-local function eikanaEvent(event)
+local eikanaEventTap = hs.eventtap.new({
+    hs.eventtap.event.types.flagsChanged,
+    hs.eventtap.event.types.keyDown
+}, function(event)
     local eventType = event:getType()
     local keyCode = event:getKeyCode()
 
@@ -74,7 +76,6 @@ local function eikanaEvent(event)
     end
 
     local activeApplication = hs.application.frontmostApplication()
-
     if singleCmd then
         singleCmd = false
 
@@ -89,12 +90,8 @@ local function eikanaEvent(event)
             hs.eventtap.keyStroke({}, Eisuu)
         end
     end
-end
+end)
 
-local eikanaEventTap = hs.eventtap.new({
-    hs.eventtap.event.types.flagsChanged,
-    hs.eventtap.event.types.keyDown
-}, eikanaEvent)
 eikanaEventTap:start()
 
 -- wifiWatcher
