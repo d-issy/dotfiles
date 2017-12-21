@@ -13,9 +13,10 @@ nnoremap # #zz
 
 nnoremap <silent><C-[><C-[> :noh<CR><C-[>
 
-" terminal mode
-tnoremap <ESC> <C-\><C-n>
-tnoremap <C-[> <C-\><C-n>
+if v:version >= 800
+  tnoremap <ESC> <C-\><C-n>
+  tnoremap <C-[> <C-\><C-n>
+endif
 
 if empty(glob('~/.vim/autoload/plug.vim'))
   finish

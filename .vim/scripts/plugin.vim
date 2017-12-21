@@ -40,7 +40,9 @@ Plug 'sudar/vim-arduino-syntax'
 Plug 'tpope/vim-fugitive'
 
 " Go
+if v:version >= 800
 Plug 'fatih/vim-go', {'do': ':GoInstallBinaries'}
+endif
 
 " HTML5
 Plug 'mattn/emmet-vim'
