@@ -11,6 +11,9 @@ set backspace=indent,eol,start
 " color
 set t_Co=256
 
+if g:plug.is_enabled('vim-colorschemes')
+  colorscheme gruvbox
+endif
 
 augroup change_colors
   au!
@@ -68,10 +71,6 @@ let g:netrw_liststyle=3
 " no bell
 set visualbell t_vb=
 set noerrorbells
-
-" set font
-set guifont=CamingoCode\ Regular:h16
-set guifontwide=Hiragino\ Sans\ W2:h16
 
 " multibyte
 set ambiwidth=double

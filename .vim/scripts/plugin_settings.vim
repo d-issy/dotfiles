@@ -1,80 +1,6 @@
 "=====================================================
-" vim-plug init if no exists
-"=====================================================
-if empty(glob('~/.vim/autoload/plug.vim'))
-  silent !curl -fLo ~/.vim/autoload/plug.vim --create-dirs
-        \ https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
-  autocmd VimEnter * PlugInstall --sync | source $MYVIMRC
-endif
-
-"=====================================================
-" vim-plug
-"=====================================================
-call plug#begin('~/.vim/plugged')
-Plug 'sirver/ultisnips'
-Plug 'honza/vim-snippets'
-Plug 'shepabashi/vim-snippets-extra'
-
-Plug 'flazz/vim-colorschemes'
-
-Plug 'w0rp/ale'
-
-Plug 'scrooloose/nerdtree'
-Plug 'scrooloose/nerdcommenter'
-
-Plug 'tpope/tpope-vim-abolish'
-Plug 'rhysd/accelerated-jk'
-Plug 'kien/ctrlp.vim'
-Plug 'airblade/vim-gitgutter'
-Plug 'tpope/vim-surround'
-Plug 'thinca/vim-quickrun'
-Plug 'junegunn/vim-easy-align'
-
-" for C/C++
-Plug 'justmao945/vim-clang'
-
-" for Arduino
-Plug 'sudar/vim-arduino-syntax'
-
-" Git
-Plug 'tpope/vim-fugitive'
-
-" Go
-if v:version >= 800
-Plug 'fatih/vim-go', {'do': ':GoInstallBinaries'}
-endif
-
-" HTML5
-Plug 'mattn/emmet-vim'
-Plug 'othree/html5.vim'
-Plug 'hail2u/vim-css3-syntax'
-
-" Javascript
-Plug 'othree/yajs.vim'
-Plug 'mxw/vim-jsx'
-Plug 'othree/javascript-libraries-syntax.vim'
-Plug 'ternjs/tern_for_vim', {'do': 'npm install'}
-Plug 'leafgarland/typescript-vim'
-
-" Java
-Plug 'vim-scripts/javacomplete', {'do': 'which javac > /dev/null 2>&1 && javac autoload/Reflection.java'}
-
-" Markdown
-Plug 'plasticboy/vim-markdown', {'for': 'markdown'}
-Plug 'kannokanno/previm', {'for': 'markdown'}
-
-" Python
-Plug 'davidhalter/jedi-vim', {'for': 'python', 'do': 'which pip3 > /dev/null 2>&1 && pip3 install jedi'}
-Plug 'shepabashi/vim-pyenv', {'for': 'python'}
-
-" Vim Processing
-Plug 'sophacles/vim-processing'
-call plug#end()
-
-"=====================================================
 " plugin settings
 "=====================================================
-
 " UtiSnip
 let g:UltiSnipsExpandTrigger = "<c-k>"
 let g:UltiSnipsJumpForwardTrigger = "<c-j>"
@@ -101,9 +27,6 @@ let g:NERDCreateDefaultMappings = 0
 let g:NERDSpaceDelims = 1
 let g:NERDCompactSexyComs = 1
 let g:NERDDefaultAlign = 'left'
-
-" colorscheme
-colorscheme gruvbox
 
 " ALE
 let g:ale_lint_on_text_changed = 'never'

@@ -1,6 +1,6 @@
 let mapleader = "\<Space>"
 
-" Bassic
+" Basic
 noremap <Down> <Nop>
 noremap <Up> <Nop>
 noremap <Left> <Nop>
@@ -11,6 +11,7 @@ nnoremap N Nzz
 nnoremap * *zz
 nnoremap # #zz
 
+nnoremap <silent><Leader>w :w<CR>
 nnoremap <silent><C-[><C-[> :noh<CR><C-[>
 
 if v:version >= 800
@@ -18,28 +19,29 @@ if v:version >= 800
   tnoremap <C-[> <C-\><C-n>
 endif
 
-if empty(glob('~/.vim/autoload/plug.vim'))
-  finish
+" Plugins Key Bind
+if g:plug.is_enabled('nerdtree')
+  nnoremap <silent><Leader>d :NERDTreeToggle<CR>
 endif
 
-" Save
-nnoremap <silent><Leader>w :w<CR>
+if g:plug.is_enabled('nerdcommenter')
+  nmap <silent><Leader>/ <Plug>NERDCommenterToggle
+  vmap <silent><Leader>/ <Plug>NERDCommenterToggle
+endif
 
-" Plugin Key Bind
-nnoremap <silent><Leader>d :NERDTreeToggle<CR>
-nnoremap <silent><Leader>gs :Gstatus<CR>
+if g:plug.is_enabled('ctrlp.vim')
+  nnoremap <silent><Leader><Leader> :CtrlP<CR>
+endif
 
-nnoremap <silent><Leader><Leader> :CtrlP<CR>
+if g:plug.is_enabled('ale')
+  nnoremap <silent><Leader>f :ALEFix<CR>
+endif
 
-nmap <silent><Leader>c <Plug>NERDCommenterToggle
-vmap <silent><Leader>c <Plug>NERDCommenterToggle
+if g:plug.is_enabled('vim-quickrun')
+  nnoremap <silent><Leader>q :QuickRun<CR>
+endif
 
-" autofix
-nnoremap <silent><Leader>f :ALEFix<CR>
-
-" QuickRun
-nnoremap <silent><Leader>q :QuickRun<CR>
-
-" accelerated_jk
-nmap j <Plug>(accelerated_jk_gj)
-nmap k <Plug>(accelerated_jk_gk)
+if g:plug.is_enabled('accelerated-jk')
+  nmap j <Plug>(accelerated_jk_gj)
+  nmap k <Plug>(accelerated_jk_gk)
+endif
