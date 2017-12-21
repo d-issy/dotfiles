@@ -57,15 +57,15 @@ local eikanaEventTap = hs.eventtap.new({
     -- keyDown Event
     if eventType == hs.eventtap.event.types.keyDown then
         singleCmd = false
-
         if keyCode == Escape then
             hs.eventtap.keyStroke({}, Eisuu)
         end
         return
     end
-
-    -- flagsChanged Event
-    if eventType ~= hs.eventtap.event.types.flagsChanged then
+    
+    -- except VMWare Fusion
+    local activeApplication = hs.application.frontmostApplication()
+    if activeApplication:bundleID() == 'com.vmware.fusion' then
         return
     end
 
@@ -75,15 +75,8 @@ local eikanaEventTap = hs.eventtap.new({
         return
     end
 
-    local activeApplication = hs.application.frontmostApplication()
     if singleCmd then
         singleCmd = false
-
-        -- except VMWare Fusion
-        if activeApplication:bundleID() == 'com.vmware.fusion' then
-            return
-        end
-
         if keyCode == RightCmd then
             hs.eventtap.keyStroke({}, Kana)
         elseif keyCode == LeftCmd then
