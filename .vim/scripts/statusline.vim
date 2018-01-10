@@ -1,5 +1,5 @@
 " default statusline
-set statusline=%F\ %m%r
+set statusline=%f\ %m%r
 set statusline+=%=%l/%L\ %y
 
 " laststatus
