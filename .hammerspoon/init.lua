@@ -1,13 +1,13 @@
 -- KeyCode
-local Escape = 0x35
-local RightCmd = 0x36
-local LeftCmd = 0x37
-local Eisuu = 0x66
-local Kana = 0x68
+Escape = 0x35
+RightCmd = 0x36
+LeftCmd = 0x37
+Eisuu = 0x66
+Kana = 0x68
 
 -- Option
 hs.window.animationDuration = 0
-local rightSpace = 3
+rightSpace = 3
 
 -- Window move: up
 hs.hotkey.bind({'cmd', 'ctrl'}, 'Up', function()
@@ -46,8 +46,8 @@ hs.hotkey.bind({'cmd', 'ctrl'}, 'F', function()
 end)
 
 -- eikana
-local singleCmd = false
-local eikanaEventTap = hs.eventtap.new({
+singleCmd = false
+eikanaEventTap = hs.eventtap.new({
     hs.eventtap.event.types.flagsChanged,
     hs.eventtap.event.types.keyDown
 }, function(event)
@@ -84,25 +84,24 @@ local eikanaEventTap = hs.eventtap.new({
         end
     end
 end)
-
 eikanaEventTap:start()
 
 -- wifiWatcher
-local netConfig = hs.network.configuration.open()
-local proxy = false
-local interface = 'en0'
+netConfig = hs.network.configuration.open()
+proxy = false
+interface = 'en0'
 
-local function setProxy()
+function setProxy()
     proxy = true
     netConfig:setLocation('school')
 end
 
-local function unsetProxy()
+function unsetProxy()
     proxy = false
     netConfig:setLocation('local')
 end
 
-local wifiWatcher = hs.wifi.watcher.new(function(watcher, message, _) 
+wifiWatcher = hs.wifi.watcher.new(function(watcher, message, _) 
     if message ~= 'SSIDChange' then
         return
     end
