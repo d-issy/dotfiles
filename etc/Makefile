@@ -4,7 +4,6 @@ RUBY_VER   := 2.4.3
 
 uname := $(shell uname)
 
-.PHONY: setup
 ifeq ($(uname),Darwin)
 setup: brew anyenv go vim refresh
 endif
@@ -13,7 +12,6 @@ ifeq ($(uname),Linux)
 setup: anyenv go vim
 endif
 
-.PHONY: brew brew/setup brew/update brew/cleanup
 brew: brew/setup brew/update brew/install brew/cleanup
 brew/setup:
 	@which brew > /dev/null || \
@@ -29,20 +27,20 @@ brew/cleanup:
 	brew cleanup
 	brew cask cleanup
 
-.PHONY: anyenv anyenv/setup anyenv/install
 anyenv: anyenv/setup anyenv/install
 
 anyenv/setup: $(HOME)/.anyenv
 	@anyenv install -s ndenv
 	@anyenv install -s pyenv
 	@anyenv install -s rbenv
+	@exec $$SHELL -l
 
 $(HOME)/.anyenv:
 	git clone https://github.com/riywo/anyenv $@
+	@exec $$SHELL -l
 
 anyenv/install: ndenv pyenv rbenv
 
-.PHONY: ndenv pyenv rbenv
 ndenv:
 	ndenv install -s $(NODE_VER)
 	@ndenv global $(NODE_VER)
@@ -55,12 +53,10 @@ rbenv:
 	rbenv install -s $(RUBY_VER)
 	@rbenv global $(RUBY_VER)
 
-.PHONY: go
 go:
 	which ghq > /dev/null 2>&1 || go get -u github.com/motemen/ghq
 	which gore > /dev/null 2>&1 || go get -u github.com/motemen/gore
 
-.PHONY: vim vim/setup vim/plugin
 vim: vim/setup
 
 vim/setup: $(abspath ../.vim/autoload/plug.vim)
@@ -69,6 +65,5 @@ $(abspath ../.vim/autoload/plug.vim):
 	curl -fLo $@ --create-dirs \
 		https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
 
-.PHONY: refresh
 refresh:
 	exec $$SHELL -l

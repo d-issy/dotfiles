@@ -20,7 +20,6 @@ brew "git"
 brew "go"
 brew "grc"
 brew "grep"
-brew "htop"
 brew "jp2a"
 brew "jq"
 brew "mas"
@@ -39,7 +38,7 @@ brew "the_silver_searcher"
 brew "tig"
 brew "tmux"
 brew "tree"
-brew "vim", args: ["with-override-system-vi ", "with-python3"]
+brew "vim", args: ["with-override-system-vi", "with-python3"]
 brew "w3m"
 brew "watch"
 brew "wget"
@@ -54,11 +53,10 @@ cask "dash"
 cask "filezilla"
 cask "firefox"
 cask "google-chrome"
+cask "google-japanese-ime"
 cask "hammerspoon"
 cask "iterm2"
 cask "mysqlworkbench"
-cask "ngrok"
-cask "opera"
 cask "postman"
 cask "quitter"
 cask "sequel-pro"
@@ -72,6 +70,4 @@ mas "Apple Configurator 2", id: 1037126344
 mas "Keynote", id: 409183694
 mas "Numbers", id: 409203825
 mas "Pages", id: 409201541
-mas "Pixelmator", id: 407963104
 mas "Tweetbot", id: 557168941
-mas "Xcode", id: 497799835
