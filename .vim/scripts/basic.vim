@@ -1,8 +1,8 @@
-" encoding
+" encoding {{1
 set encoding=utf-8
 set fileencoding=utf-8
 
-" break code
+" break code {{1
 set fileformats=unix,dos,mac
 
 " back space
@@ -46,14 +46,6 @@ set breakindent
 set tabstop=4
 set shiftwidth=4
 set softtabstop=0
-
-" fold
-set foldmethod=indent
-set foldlevel=99
-set foldnestmax=2
-set foldminlines=1
-autocmd FileType c setlocal foldmethod=syntax
-autocmd FileType cpp setlocal foldmethod=syntax
 
 " search
 set ignorecase
