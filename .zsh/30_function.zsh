@@ -6,9 +6,9 @@ cdup() {
 }
 zle -N cdup
 
- # history-selection - history incremental search by using fzf
+# history-selection - history incremental search by using fzf
 history-selection() {
-    BUFFER=$(history -n 1 | awk '!a[$0]++' | fzf --tac --height 40% --reverse --no-sort)
+    BUFFER=$(history -n 1 | fzf --tac --height 40% --reverse --no-sort)
     CURSOR=$#BUFFER
     zle reset-prompt
 }
@@ -30,6 +30,20 @@ fore-ground() {
     zle reset-prompt
 }
 zle -N fore-ground
+
+# condition when adding history
+zshaddhistory() {
+    local line=${1%%$'\n'}
+    local cmd=${line%% *}
+
+    [[ ${#line} -ge 5
+        && ${cmd} != (l|l[sal]|lsa)
+        && ${cmd} != (mkdir|cd|mv|rm)
+        && ${cmd} != (less|grep)
+        && ${cmd} != (vi|vim)
+        && ${cmd} != (man)
+    ]]
+}
 
 # proxy setting function
 setproxy() {
