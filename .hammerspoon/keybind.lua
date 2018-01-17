@@ -1,21 +1,32 @@
+-- launchOrFocus does not work for multiscreen
+-- this is an alternative method
+function focusApp(name)
+    local app = hs.appfinder.appFromName(name)
+    if app ~= nil and  app:isRunning() then
+        app:activate()
+    else
+        hs.application.open(name)
+    end
+end
+
+hs.hotkey.bind({'cmd', 'ctrl'}, 'A', function()
+    focusApp('Affinity Designer')
+end)
+
 hs.hotkey.bind({'cmd', 'ctrl'}, 'D', function()
-    hs.application.launchOrFocus('Dash')
+    focusApp('Finder')
 end)
 
 hs.hotkey.bind({'cmd', 'ctrl'}, 'K', function()
-    hs.application.launchOrFocus('Keynote')
-end)
-
-hs.hotkey.bind({'cmd', 'ctrl'}, 'N', function()
-    hs.application.launchOrFocus('Numi')
+    focusApp('Keynote')
 end)
 
 hs.hotkey.bind({'cmd', 'ctrl'}, 'P', function()
-    hs.application.launchOrFocus('Microsoft PowerPoint')
+    focusApp('Microsoft PowerPoint')
 end)
 
 hs.hotkey.bind({'cmd', 'ctrl'}, 'V', function()
-    hs.application.launchOrFocus('Vivaldi')
+    focusApp('Vivaldi')
 end)
 
 --- reload
