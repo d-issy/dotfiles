@@ -1,7 +1,4 @@
-"------------------------------------
-" Scripts Loader Functions
-"------------------------------------
-
+" Scripts Loader Functions {{ 1
 let g:false = 0
 let g:true = 1
 
@@ -42,11 +39,9 @@ function! s:load(...)
 
   return l:found
 endfunction
+"end }}
 
-"------------------------------------
-" Scripts Load
-"------------------------------------
-
+" Scripts Load {{ 1
 call s:load('env.vim')
 
 if s:load('plug.vim')
@@ -56,10 +51,9 @@ endif
 call s:load('basic.vim')
 call s:load('keybind.vim')
 call s:load('statusline.vim')
+call s:load('fold.vim')
 
 if g:env.gui
   call s:load('gui.vim')
 endif
-
-" __END__ {{{1
-" vi:set ts=2 sw=2 sts=2:
+"end }}

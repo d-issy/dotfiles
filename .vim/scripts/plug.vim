@@ -2,9 +2,7 @@ if !exists('g:env')
   finish
 endif
 
-"=====================================================
-" vim-plug object
-"=====================================================
+" vim-plug object {{ 1
 let g:plug = {
       \ "path":   expand(g:env.vimpath) . "/autoload/plug.vim",
       \ "base":   expand(g:env.vimpath) . "/plugged",
@@ -27,18 +25,16 @@ endfunction
 function! g:plug.is_enabled(plug_name)
   return g:plug.is_installed(a:plug_name) && g:plug.is_runtimepath(a:plug_name)
 endfunction
+"}}
 
-"=====================================================
-" vim-plug init if no exists
-"=====================================================
+" vim-plug init if no exists {{
 if !g:plug.ready()
   execute printf("!curl -fLo %s --create-dirs %s", g:plug.path, g:plug.url)
   autocmd VimEnter * PlugInstall --sync
 endif
+"}}
 
-"=====================================================
-" vim-plug
-"=====================================================
+" vim-plug {{
 call plug#begin(g:plug.base)
 Plug 'sirver/ultisnips'
 Plug 'honza/vim-snippets'
