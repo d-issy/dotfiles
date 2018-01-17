@@ -3,7 +3,9 @@ set statusline=%f\ %m%r
 set statusline+=%=%l/%L\ %y
 
 " laststatus
-set laststatus=2
+set laststatus=1
 
-" filetype
-autocmd FileType nerdtree setlocal statusline=NerdTree
+augroup statusline
+  au!
+  autocmd FileType nerdtree setlocal statusline=NerdTree
+augroup END
