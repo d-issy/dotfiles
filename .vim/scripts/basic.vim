@@ -1,8 +1,8 @@
-" encoding {{1
+" encoding
 set encoding=utf-8
 set fileencoding=utf-8
 
-" break code {{1
+" break code
 set fileformats=unix,dos,mac
 
 " back space
@@ -71,6 +71,9 @@ set ambiwidth=double
 set completeopt=longest,menuone
 set wildmenu
 set wildmode=longest,list
+
+" hidden
+set hidden
 
 " showcmd
 set showcmd
