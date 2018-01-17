@@ -3,5 +3,6 @@ require('keybind')
 require('proxy')
 require('eikana')
 
---- show config loaded
-hs.alert.show('config loaded')
+--- config loaded
+local logger = hs.logger.new('dotfile', 'debug')
+logger:d('config loaded')

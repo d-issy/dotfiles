@@ -1,6 +1,6 @@
 -- Option
 hs.window.animationDuration = 0
-rightSpace = 3
+rightSpace = 4
 
 -- Window move: up
 hs.hotkey.bind({'cmd', 'ctrl'}, 'Up', function()

@@ -3,12 +3,12 @@ local netConfig = hs.network.configuration.open()
 local proxy = false
 local interface = 'en0'
 
-function setProxy()
+local function setProxy()
     proxy = true
     netConfig:setLocation('school')
 end
 
-function unsetProxy()
+local function unsetProxy()
     proxy = false
     netConfig:setLocation('local')
 end
