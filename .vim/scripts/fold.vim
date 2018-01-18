@@ -1,10 +1,8 @@
-" set foldmethod=indent
-
 set foldmethod=marker
 set foldmarker={{,}}
 set foldlevel=99
 set foldnestmax=2
-set foldminlines=10
+set foldminlines=3
 
 augroup fold
   au!
