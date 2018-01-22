@@ -70,9 +70,7 @@ set ambiwidth=double
 " complete
 set completeopt=longest,menuone
 set wildmenu
-set wildmode=longest,list
-
-" hidden
+set wildmode=longest:list,full
 set hidden
 
 " showcmd
