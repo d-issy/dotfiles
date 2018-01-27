@@ -21,6 +21,10 @@ hs.hotkey.bind({'cmd', 'ctrl'}, 'K', function()
     focusApp('Keynote')
 end)
 
+hs.hotkey.bind({'cmd', 'ctrl'}, 'M', function()
+    focusApp('MacVim')
+end)
+
 hs.hotkey.bind({'cmd', 'ctrl'}, 'P', function()
     focusApp('Microsoft PowerPoint')
 end)
