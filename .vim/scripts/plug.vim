@@ -34,9 +34,11 @@ if !g:plug.ready()
 endif
 "}}
 
-" vim-plug {{
+" vim-plug
 call plug#begin(g:plug.base)
+if !has('gui_macvim')
 Plug 'sirver/ultisnips'
+endif
 Plug 'honza/vim-snippets'
 Plug 'shepabashi/vim-snippets-extra'
 
