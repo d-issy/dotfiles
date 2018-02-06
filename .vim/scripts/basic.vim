@@ -11,7 +11,7 @@ set backspace=indent,eol,start
 " color
 set t_Co=256
 
-if g:plug.is_enabled('vim-colorschemes')
+if g:plug.is_enabled('gruvbox')
   colorscheme gruvbox
 endif
 
@@ -27,8 +27,10 @@ augroup change_colors
   " statusline
   au VimEnter * hi StatusLine    ctermfg=255 ctermbg=237 cterm=NONE
   au VimEnter * hi StatusLineNC  ctermfg=245 ctermbg=237 cterm=NONE
-  au InsertEnter * hi StatusLine ctermfg=214 ctermbg=236 cterm=bold
-  au InsertLeave * hi StatusLine ctermfg=255 ctermbg=237 cterm=NONE
+  if v:version >= 800
+    au VimEnter * hi StatusLineTerm    ctermfg=255 ctermbg=237 cterm=NONE
+    au VimEnter * hi StatusLineTermNC  ctermfg=245 ctermbg=237 cterm=NONE
+  endif
 
   " tabbar
   au VimEnter * hi TabLine     ctermfg=15 ctermbg=237 cterm=NONE
@@ -56,9 +58,10 @@ nohlsearch
 
 " netrw
 let g:netrw_banner=0
-let g:netrw_browse_split=4
-let g:netrw_altv=1
 let g:netrw_liststyle=3
+augroup NetrwSetting
+  autocmd FileType netrw setlocal bufhidden=delete
+augroup END
 
 " no bell
 set visualbell t_vb=

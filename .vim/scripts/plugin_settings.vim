@@ -42,7 +42,7 @@ let g:ale_fixers = {
       \ 'c':          ['clang-format'],
       \ 'cpp':        ['clang-format'],
       \ 'javascript': ['eslint'],
-      \ 'python':     ['autopep8', 'isort'],
+      \ 'python':     ['isort', 'autopep8'],
       \ 'typescript': ['eslint'],
       \ }
 
@@ -50,7 +50,7 @@ let g:ale_linters = {
       \ 'c':          [],
       \ 'cpp':        [],
       \ 'go':         [],
-      \ 'javascript': [],
+      \ 'javascript': ['eslint'],
       \ 'python':     ['flake8'],
       \ }
 

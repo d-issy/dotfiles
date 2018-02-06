@@ -36,17 +36,17 @@ endif
 
 " vim-plug
 call plug#begin(g:plug.base)
+
 if !has('gui_macvim')
-Plug 'sirver/ultisnips'
+  Plug 'sirver/ultisnips'
 endif
+
 Plug 'honza/vim-snippets'
 Plug 'shepabashi/vim-snippets-extra'
 
-Plug 'flazz/vim-colorschemes'
+Plug 'morhetz/gruvbox'
 
 Plug 'w0rp/ale'
-
-Plug 'scrooloose/nerdtree'
 Plug 'scrooloose/nerdcommenter'
 
 Plug 'tpope/tpope-vim-abolish'
