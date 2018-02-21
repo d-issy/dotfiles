@@ -10,6 +10,7 @@ set backspace=indent,eol,start
 
 " color
 set t_Co=256
+set background=dark
 
 if g:plug.is_enabled('gruvbox')
   colorscheme gruvbox
