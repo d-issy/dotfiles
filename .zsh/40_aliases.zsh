@@ -39,6 +39,11 @@ alias gpl="git pull origin HEAD"
 alias gr="git reset HEAD"
 alias gs="git status"
 
+# aliases
+alias v='vim'
+alias nis='npm install --save'
+alias nid='npm install --save-dev'
+
 # exit
 alias q='exit'
 
