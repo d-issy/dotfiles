@@ -1,17 +1,28 @@
 #!/bin/bash
 if type 'pmset' > /dev/null 2>&1; then
-    echo -ne "#[fg=colour32]"
-    echo -en `pmset -g ps | grep -o '[0-9]\+%'`
+    # battery percentage
+    battery=$((`pmset -g ps | sed -n 2p | cut -f 2 | cut -f 1 -d %`))
+    if [[ $battery -ge 60 ]]; then
+        echo -ne "#[fg=colour32]"
+    elif [[ $battery -ge 30 ]]; then
+        echo -ne "#[fg=colour220]"
+    else
+        echo -ne "#[fg=colour197]"
+    fi
+    echo -ne "${battery}%"
     echo -ne "#[fg=default]"
 
-    pmset -g ps | grep -E 'Battery Power|charged' >/dev/null 2>&1
-    if [ $? -eq 0  ]; then
-        echo -ne ' ('`pmset -g ps | grep -o '[0-9]\+:[0-9]\+'`')'
-    else
-	echo ' C'
+    # remain time
+    time=`pmset -g ps | grep -o '[0-9]\+:[0-9]\+'`
+    if [[ $? -eq 0 ]]; then
+        echo -ne " (${time})"
     fi
-else
-    echo "(--)%"
+
+    # is charging
+    pmset -g ps | grep -E 'AC Power' > /dev/null 2>&1
+    if [[ $? -eq 0 ]]; then
+        echo ' C'
+    fi
 fi
 
 exit 0
