@@ -1,13 +1,12 @@
 -- Option
 hs.window.animationDuration = 0
-rightSpace = 4
 
 -- Window move: up
 hs.hotkey.bind({'cmd', 'ctrl'}, 'Up', function()
     local win = hs.window.focusedWindow()
     local screen = win:screen()
     local max = screen:frame()
-    win:setFrame(hs.geometry.rect(0, 0, max.w + rightSpace, max.h))
+    win:setFrame(hs.geometry.rect(0, 0, max.w, max.h))
 end)
 
 -- Window move: left
@@ -23,7 +22,7 @@ hs.hotkey.bind({'cmd', 'ctrl'}, 'Right', function()
     local win = hs.window.focusedWindow()
     local screen = win:screen()
     local max = screen:frame()
-    win:setFrame(hs.geometry.rect(max.w/2, 0, max.w/2 + rightSpace, max.h))
+    win:setFrame(hs.geometry.rect(max.w/2, 0, max.w/2, max.h))
 end)
 
 -- Window move: center
