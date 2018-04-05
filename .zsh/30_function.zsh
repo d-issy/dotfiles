@@ -40,7 +40,7 @@ zshaddhistory() {
         && ${cmd} != (l|l[sal]|lsa)
         && ${cmd} != (mkdir|cd|mv|rm)
         && ${cmd} != (less|grep)
-        && ${cmd} != (vi|vim)
+        && ${cmd} != (v|vi|vim)
         && ${cmd} != (man)
     ]]
 }
