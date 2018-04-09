@@ -65,10 +65,12 @@ let g:user_emmet_settings = {
       \  },
       \}
 
-" javascript-libraries-syntax.vim
-let g:used_javascript_libs = 'jquery,underscore,backbone,gularjs,angularui,angularuirouter,requirejs,sugar,jasmine,chai,ramda,react,flux,handlebars,d3,vue'
+" jsx
+autocmd BufNewFile,BufRead *.js set filetype=javascript.jsx
+autocmd BufNewFile,BufRead *.jsx set filetype=javascript.jsx
 
 " typescript
+autocmd BufNewFile,BufRead *.ts set filetype=typescript.jsx
 autocmd BufNewFile,BufRead *.tsx set filetype=typescript.jsx
 
 " jedi-vim
