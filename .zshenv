@@ -31,6 +31,7 @@ typeset -gx -U fpath
 fpath=(
     $HOME/.zsh/completions(N-/)
     $HOME/.zsh/themes(N-/)
+    /usr/local/share/zsh/functions/(N-/)
     $fpath
 )
 
