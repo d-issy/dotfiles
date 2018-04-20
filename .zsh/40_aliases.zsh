@@ -19,8 +19,6 @@ if [[ -x `which grc` ]]; then
     alias diff="grc diff"
     alias netstat="grc netstat"
     alias ping="grc ping"
-    alias ps="grc ps"
-    alias tail="grc tail"
     alias traceroute="grc traceroute"
 fi
 
@@ -46,6 +44,3 @@ alias nid='npm install --save-dev'
 
 # exit
 alias q='exit'
-
-# glut
-alias ccgl='g++ -I/usr/local/Cellar/freeglut/2.8.1/include -L/usr/local/Cellar/freeglut/2.8.1/lib -w -framework OpenGL -lGLUT'
