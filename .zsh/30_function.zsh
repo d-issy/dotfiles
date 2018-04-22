@@ -8,7 +8,7 @@ zle -N cdup
 
 # history-selection - history incremental search by using fzf
 history-selection() {
-    BUFFER=$(history -n 1 | fzf --tac --height 40% --reverse --no-sort)
+    BUFFER=$(history -n 1 | fzf --tac --height 40% --reverse --no-sort -q "$LBUFFER")
     CURSOR=$#BUFFER
     zle reset-prompt
 }
@@ -16,9 +16,10 @@ zle -N history-selection
 
 # peco-src - gopath src incremental search
 ghq-src() {
-    local src=$(ghq list | fzf --query "$1" --reverse)
+    local src=$(ghq list | fzf --query "$1" --reverse -q "$LBUFFER" -1)
     if [ -n "$src" ]; then
         cd $GOPATH/src/$src
+        BUFFER=""
         zle reset-prompt
     fi
 }
