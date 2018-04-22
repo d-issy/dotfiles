@@ -1,5 +1,5 @@
 #!/bin/bash
-if type 'pmset' > /dev/null 2>&1; then
+if _command_exists 'pmset'; then
     # battery percentage
     battery=$((`pmset -g ps | sed -n 2p | cut -f 2 | cut -f 1 -d %`))
     if [[ $battery -ge 60 ]]; then

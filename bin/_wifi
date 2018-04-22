@@ -1,5 +1,5 @@
 #!/bin/bash
-if type 'networksetup' > /dev/null 2>&1; then
+if _command_exists 'networksetup'; then
     wifi="`networksetup -getairportnetwork en0`"
     if [[ $(echo $wifi | grep -e ':') ]] ; then
         echo ${wifi#*: }
