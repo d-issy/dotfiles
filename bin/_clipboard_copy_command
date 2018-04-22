@@ -8,5 +8,5 @@ if _command_exists "pbcopy"; then
 elif _command_exists "xclip"; then
     echo -n "xclip -i -sel clip > /dev/null"
 elif _command_exists "xsel"; then
-    echo "xsel -op | xsel -ib"
+    echo -n "xsel -op | xsel -ib"
 fi
