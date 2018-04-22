@@ -2,7 +2,6 @@
 #  Basic Options
 # -------------------------------------
 umask 022
-
 setopt correct
 setopt nobeep
 setopt prompt_subst
@@ -30,7 +29,6 @@ setopt hist_save_no_dups
 # -------------------------------------
 #  Prompt
 # -------------------------------------
-
 autoload -U promptinit; promptinit
 autoload -Uz colors; colors
 autoload -Uz vcs_info

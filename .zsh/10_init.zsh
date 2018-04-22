@@ -1,6 +1,5 @@
 # Tmux
 if [[ ! -n $TMUX && $- == *l* ]]; then
-
     # confirm
     function confirm {
         MSG="exit?"

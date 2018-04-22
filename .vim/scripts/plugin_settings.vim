@@ -12,16 +12,6 @@ let g:ctrlp_custom_ignore = {
       \ 'dir':  '\v[\/](\.git|\.hg|\.idea|\.svn|plugged|node_modules|vendor)$',
       \ }
 
-" NERDTree
-let g:NERDTreeQuitOnOpen = 1
-let g:NERDTreeShowHidden = 1
-let g:NERDTreeIgnore = [
-      \ '.git',
-      \ '.hg',
-      \ '.svn',
-      \ '.idea',
-      \ ]
-
 " NERDCommenter
 let g:NERDCreateDefaultMappings = 0
 let g:NERDSpaceDelims = 1
