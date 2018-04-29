@@ -49,6 +49,7 @@ set breakindent
 set tabstop=4
 set shiftwidth=4
 set softtabstop=0
+set shiftround
 
 " search
 set ignorecase
