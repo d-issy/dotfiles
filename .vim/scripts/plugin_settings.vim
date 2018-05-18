@@ -6,10 +6,12 @@ let g:UltiSnipsExpandTrigger = "<c-k>"
 let g:UltiSnipsJumpForwardTrigger = "<c-j>"
 
 " fzf
-let $FZF_DEFAULT_COMMAND = 'ag --hidden --ignore .git  -g ""'
+let $FZF_DEFAULT_COMMAND = 'ag --hidden -g ""'
 if g:plug.is_enabled('fzf.vim')
   command! -bang -nargs=? -complete=dir Files
         \ call fzf#vim#files(<q-args>, fzf#vim#with_preview(), <bang>0)
+  command! -bang -nargs=? -complete=dir Ag
+        \ call fzf#vim#ag(<q-args>, '--hidden', fzf#vim#with_preview(), <bang>0)
   command! -bang Colors
         \ call fzf#vim#colors({'left': '15%', 'options': '--reverse'}, <bang>0)
   command! -bang Filetypes
