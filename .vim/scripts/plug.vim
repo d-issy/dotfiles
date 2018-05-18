@@ -44,6 +44,9 @@ endif
 Plug 'honza/vim-snippets'
 Plug 'shepabashi/vim-snippets-extra'
 
+Plug '/usr/local/opt/fzf'
+Plug 'junegunn/fzf.vim'
+
 Plug 'morhetz/gruvbox'
 
 Plug 'w0rp/ale'
@@ -51,7 +54,6 @@ Plug 'scrooloose/nerdcommenter'
 
 Plug 'tpope/tpope-vim-abolish'
 Plug 'rhysd/accelerated-jk'
-Plug 'kien/ctrlp.vim'
 Plug 'airblade/vim-gitgutter'
 Plug 'tpope/vim-surround'
 Plug 'thinca/vim-quickrun'

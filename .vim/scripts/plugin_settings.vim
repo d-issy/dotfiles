@@ -5,12 +5,16 @@
 let g:UltiSnipsExpandTrigger = "<c-k>"
 let g:UltiSnipsJumpForwardTrigger = "<c-j>"
 
-" CtrlP
-let g:ctrlp_map = ""
-let g:ctrlp_show_hidden = 1
-let g:ctrlp_custom_ignore = {
-      \ 'dir':  '\v[\/](\.git|\.hg|\.idea|\.svn|plugged|node_modules|vendor)$',
-      \ }
+" fzf
+let $FZF_DEFAULT_COMMAND = 'ag --hidden --ignore .git  -g ""'
+if g:plug.is_enabled('fzf.vim')
+  command! -bang -nargs=? -complete=dir Files
+        \ call fzf#vim#files(<q-args>, fzf#vim#with_preview(), <bang>0)
+  command! -bang Colors
+        \ call fzf#vim#colors({'left': '15%', 'options': '--reverse'}, <bang>0)
+  command! -bang Filetypes
+        \ call fzf#vim#filetypes({'left': '15%', 'options': '--reverse'}, <bang>0)
+endif
 
 " NERDCommenter
 let g:NERDCreateDefaultMappings = 0
