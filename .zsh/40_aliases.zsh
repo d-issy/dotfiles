@@ -2,8 +2,8 @@
 if [[ -x `which exa` ]]; then
     alias ls="exa -F"
     alias la="exa -aF"
-    alias ll="exa -lhgF"
-    alias lla="exa -lahgF"
+    alias ll="exa -lhgF --git"
+    alias lla="exa -lahgF --git"
     alias l1="exa -1F"
     alias tree="exa -TF"
 else
