@@ -228,3 +228,6 @@ xcuserdata/
 .dropbox
 .dropbox.attr
 .dropbox.cache
+
+# editorconfig
+.editorconfig
