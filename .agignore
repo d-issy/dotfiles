@@ -1,7 +1,5 @@
-*.bak*
 *.csv
 *.gemtags*
-*.js
 *.json
 *.log
 *.old
@@ -12,6 +10,8 @@
 *.tmp*
 *.tsv
 *.xml
+*bak*
+*~
 .git
 lib
 libs
