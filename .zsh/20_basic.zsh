@@ -43,10 +43,14 @@ autoload -Uz compinit
 compinit
 
 zstyle ':completion:*' verbose yes
-zstyle ':completion:*' format '%B%d%b'
-zstyle ':completion:*:warnings' format 'No matches for: %d'
+zstyle ':completion:*' completer _complete _ignored
+zstyle ':completion:*' format '%B%F{yellow}%d%f%b'
 zstyle ':completion:*' group-name ''
-zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}'
+zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"
+zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z} r:|[-_.]=**'
+
+zstyle ':completion:*:default' menu select=2
+zstyle ':completion:*:warnings' format 'No matched..'
 
 zstyle ':completion:*' menu select interactive
 setopt menucomplete
