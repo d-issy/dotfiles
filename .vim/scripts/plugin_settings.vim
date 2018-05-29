@@ -2,8 +2,9 @@
 " plugin settings
 "=====================================================
 " UtiSnip
-let g:UltiSnipsExpandTrigger = "<c-k>"
+let g:UltiSnipsExpandTrigger = "<c-l>"
 let g:UltiSnipsJumpForwardTrigger = "<c-j>"
+let g:UltiSnipsJumpBackwardTrigger = "<c-k>"
 
 " fzf
 let $FZF_DEFAULT_COMMAND = 'ag --hidden -g ""'
