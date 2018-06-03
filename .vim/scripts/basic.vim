@@ -1,4 +1,5 @@
 " encoding
+scriptencoding=utf-8
 set encoding=utf-8
 set fileencoding=utf-8
 
@@ -57,6 +58,10 @@ set smartcase
 set incsearch
 set hlsearch
 nohlsearch
+
+" list
+set list
+set listchars=trail:.
 
 " netrw
 let g:netrw_banner=0
