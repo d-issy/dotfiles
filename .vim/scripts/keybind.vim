@@ -1,10 +1,12 @@
 let mapleader = "\<Space>"
 
-" Basic
 noremap <Down> <Nop>
 noremap <Up> <Nop>
 noremap <Left> <Nop>
 noremap <Right> <Nop>
+
+nnoremap Q <Nop>
+noremap Y y$
 
 nnoremap n nzz
 nnoremap N Nzz
@@ -15,7 +17,6 @@ nnoremap <silent><Leader>d :Ex<CR>
 nnoremap <silent><Leader>w :w<CR>
 nnoremap <silent><C-[><C-[> :noh<CR><C-[>
 
-" Plugins Key Bind
 if g:plug.is_enabled('nerdcommenter')
   nmap <silent><Leader>/ <Plug>NERDCommenterToggle
   vmap <silent><Leader>/ <Plug>NERDCommenterToggle
