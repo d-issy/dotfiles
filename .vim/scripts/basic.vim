@@ -61,7 +61,7 @@ nohlsearch
 
 " list
 set list
-set listchars=tab:\ \ ,trail:.
+set listchars=tab:\ \ ,trail:•
 
 " netrw
 let g:netrw_banner=0
@@ -70,9 +70,6 @@ let g:netrw_liststyle=3
 " no bell
 set visualbell t_vb=
 set noerrorbells
-
-" multibyte
-set ambiwidth=double
 
 " complete
 set completeopt=longest,menuone
