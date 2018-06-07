@@ -17,6 +17,8 @@ nnoremap <silent><Leader>d :Ex<CR>
 nnoremap <silent><Leader>w :w<CR>
 nnoremap <silent><C-[><C-[> :noh<CR><C-[>
 
+nnoremap / /\v
+
 if g:plug.is_enabled('nerdcommenter')
   nmap <silent><Leader>/ <Plug>NERDCommenterToggle
   vmap <silent><Leader>/ <Plug>NERDCommenterToggle
