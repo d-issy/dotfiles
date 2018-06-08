@@ -14,9 +14,9 @@ if g:plug.is_enabled('fzf.vim')
   command! -bang -nargs=? -complete=dir Ag
         \ call fzf#vim#ag(<q-args>, '--hidden', fzf#vim#with_preview(), <bang>0)
   command! -bang Colors
-        \ call fzf#vim#colors({'left': '15%', 'options': '--reverse'}, <bang>0)
+        \ call fzf#vim#colors({'left': '25%', 'options': '--reverse'}, <bang>0)
   command! -bang Filetypes
-        \ call fzf#vim#filetypes({'left': '15%', 'options': '--reverse'}, <bang>0)
+        \ call fzf#vim#filetypes({'left': '25%', 'options': '--reverse'}, <bang>0)
 endif
 
 " NERDCommenter
@@ -61,14 +61,6 @@ let g:user_emmet_settings = {
       \    'lang': 'ja',
       \  },
       \}
-
-" jsx
-autocmd BufNewFile,BufRead *.js set filetype=javascript.jsx
-autocmd BufNewFile,BufRead *.jsx set filetype=javascript.jsx
-
-" typescript
-autocmd BufNewFile,BufRead *.ts set filetype=typescript.jsx
-autocmd BufNewFile,BufRead *.tsx set filetype=typescript.jsx
 
 " jedi-vim
 let g:jedi#popup_on_dot = 0
