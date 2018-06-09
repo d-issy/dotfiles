@@ -90,14 +90,16 @@ function! GetJavascriptIndent()
   if pline =~ '^default:'
     let level += 1
   endif
-  if pline =~ 'break' && GetTrimLine(SearchPair('B')) =~ '^switch'
+  if pline =~ 'break' && GetTrimLine(SearchPair('B')) =~ '^\<switch\>'
     let level -= 1
   endif
   " dot
-  if pline[0] !~ '^\.' && pline[-1:] == ')' && line[0] =~ '^\.'
+  if pline !~ '^\.' && pline[-1:] == ')' && line[0] =~ '^\.'
     let level += 1
   endif
   if pline =~ '^[}\]]*)[\.]*$' && IsDotChain(lnum)
+    let level -= 1
+  elseif pline =~ '^\.[^)]*)$' && line !~ '^[})]*\.'
     let level -= 1
   endif
   " jsx

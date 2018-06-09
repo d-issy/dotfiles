@@ -5,99 +5,130 @@ endif
 let s:cpo_save = &cpo
 set cpo&vim
 
-syn keyword jsCommentTodo TODO FIXME XXX contained
-syn match   jsLineComment "\/\/.*" contains=@Spell,jsCommentTodo
-syn match   jsCommentSkip "^[ \t]*\*\($\|[ \t]\+\)"
-syn region  jsComment     start="/\*"  end="\*/" contains=@Spell,jsCommentTodo
-syn match   jsSpecial     "\\\(0\|[^xu\d]\|x\x\x\|u\x\x\x\x\|u{\x\+}\)"
-syn region  jsString      start=+\z(['"]\)+ skip=+\\\\\|\\\z1+ end=+\z1+ contains=jsSpecial,@htmlPreproc
-syn match   jsNumber       "\c\<\(\(\(0\|[1-9]\d*\)\.\d*\|\.\d*\|0\|[1-9]\d*\)\(e[+-]\=[1-9]\d*\)\=\|0b[01]\+\|0o\o\+\|0x\x\+\)\>"
-syn region  jsRegexpString start=+/[^/*]+ skip=+\\\\\|\\/+ end=+/[gimuys]\{,6\}+ contains=@htmlPreproc oneline
-syn keyword jsStorageClass var let const
-syn keyword jsConditional  if else switch
-syn keyword jsRepeat       while for do in
-syn keyword jsBranch       break continue
-syn keyword jsOperator     new delete instanceof typeof
-syn keyword jsType         Array Boolean Date Function Number Object String RegExp
-syn keyword jsStatement    return with
-syn keyword jsBoolean      true false
-syn keyword jsNull         null undefined
-syn keyword jsIdentifier   arguments
-syn keyword jsThis         this
-syn keyword jsLabel        case default
-syn keyword jsException    try catch finally throw
-syn keyword jsMessage      alert confirm prompt status
-syn keyword jsGlobal       self top parent window console
-syn keyword jsMember       document event location
-syn keyword jsDebug        debugger
-syn keyword jsReserved     abstract async await boolean byte char class constructor double enum function export extends final float from function goto implements import int interface long native package private protected public short static super synchronized throws transient volatile
 
-syn sync fromstart
-syn sync maxlines=100
+" comment
+syn keyword javascriptCommentTodo TODO FIXME XXX BUG contained
+syn match   javascriptLineComment "\/\/.*" contains=@Spell,javascriptCommentTodo
+syn region  javascriptComment     start="/\*"  end="\*/" contains=@Spell,javascriptCommentTodo
+hi def link javascriptCommentTodo Todo
+hi def link javascriptLineComment Comment
+hi def link javascriptComment     Comment
+" variable
+syn keyword javascriptVariable var let const
+hi def link javascriptVariable Identifier
+" constant
+syn keyword javascriptNull null undefined
+hi def link javascriptNull Keyword
+" string
+syn match   javascriptSpecial "\\\(0\|[^xu0-9]\|x\x\x\|u\x\{4}\|u{\x\+}\)"
+syn region  javascriptString  start=+\z(['"]\)+ skip=+\\\\\|\\\z1+ end=+\z1+ contains=@Spell,javascriptSpecial
+hi def link javascriptSpecial Special
+hi def link javascriptString  String
+" regexp
+syn region  javascriptRegexpString start=+/[^/*]+ skip=+\\\\\|\\/+ end=+/[gimuys]\{,6\}+ oneline
+hi def link javascriptRegexpString String
+" number
+syn match   javascriptNumber  "\c\<\(\(\(0\|[1-9]\d*\)\.\d*\|\.\d*\|0\|[1-9]\d*\)\(e[+-]\=[1-9]\d*\)\=\|0b[01]\+\|0o\o\+\|0x\x\+\)\>"
+syn keyword javascriptNumber  Nan Infinity
+hi def link javascriptNumber  Number
+" boolean
+syn keyword javascriptBoolean true false
+hi def link javascriptBoolean Boolean
+" condition
+syn keyword javascriptConditional if else switch
+hi def link javascriptConditional Conditional
+" repeat
+syn keyword javascriptRepeat while for do
+hi def link javascriptRepeat Repeat
+" operator
+syn keyword javascriptOperator delete instanceof new typeof
+syn keyword javascriptForOperator in
+hi def link javascriptOperator Operator
+hi def link javascriptForOperator Operator
+" exception
+syn keyword javascriptExceptions try catch finally throw
+hi def link javascriptExceptions Exception
+" class
+syn keyword javascriptClassKeyword   class nextgroup=javascriptClassName skipwhite
+syn keyword javascriptClassExtends   extends nextgroup=javascriptClassSuperName skipwhite
+syn keyword javascriptClassStatic    static
+syn keyword javascriptClassSuper     super
+syn match   javascriptClassName      /\<[a-zA-Z$_][0-9a-zA-Z$_]\+\>/ skipwhite contained
+syn match   javascriptClassSuperName /\<[a-zA-Z$_][0-9a-zA-Z$_\.]\+\>/ skipwhite contained
+hi def link javascriptClassKeyword   Keyword
+hi def link javascriptClassExtends   Keyword
+hi def link javascriptClassStatic    Keyword
+hi def link javascriptClassSuper     Keyword
+hi def link javascriptClassName      Identifier
+hi def link javascriptClassSuperName Identifier
+" function
+syn match javascriptFunction    /\<[a-zA-z$_][0-9a-zA-Z$_]*/ contained skipwhite
+syn match javascriptFunctionDef /\<[a-zA-z$_][0-9a-zA-Z$_]*(/ contains=javascriptFunction
+hi def link javascriptFunction Function
+" this
+syn keyword javascriptIdentifier  this
+hi def link javascriptIdentifier  Identifier
+" global
+syn keyword javascriptType Object Function Boolean Symbol Number Date String RegExp Array Int8Array Uint8Array Uint8ClampedArray Int16Array Uint16Array Int32Array Uint32Array Float32Array Float64Array Error EvalError InternalError RangeError ReferenceError SyntaxError TypeError URIError Map Set WeakMap WeakSet ArrayBuffer DataView Promise Generator GeneratorFunction Reflect Proxy
+syn keyword javascriptGlobalObject Math JSON
+syn keyword javascriptGlobal console
+syn keyword javascriptDebugger debugger
+hi def link javascriptType         Type
+hi def link javascriptGlobalObject Constant
+hi def link javascriptGlobal       Special
+hi def link javascriptDebugger     Keyword
 
-hi def link jsComment          Comment
-hi def link jsLineComment      Comment
-hi def link jsCommentTodo      Todo
-hi def link jsSpecial          Special
-hi def link jsThis             Special
-hi def link jsString           String
-hi def link jsTemplate         String
-hi def link jsCharacter        Character
-hi def link jsNumber           Number
-hi def link jsConditional      Conditional
-hi def link jsRepeat           Repeat
-hi def link jsBranch           Conditional
-hi def link jsOperator         Operator
-hi def link jsType             Type
-hi def link jsStorageClass     StorageClass
-hi def link jsStatement        Statement
-hi def link jsFunction         Function
-hi def link jsBraces           Function
-hi def link jsError            Error
-hi def link jsParenError       Error
-hi def link jsNull             Keyword
-hi def link jsBoolean          Boolean
-hi def link jsRegexpString     String
-hi def link jsIdentifier       Identifier
-hi def link jsLabel            Label
-hi def link jsException        Exception
-hi def link jsMessage          Keyword
-hi def link jsGlobal           Special
-hi def link jsMember           Special
-hi def link jsReserved         Keyword
-hi def link jsDebug            Debug
-hi def link jsConstant         Label
-hi def link jsDecorator        Special
 
+""""""""""""""
 " es6 syntax
-syn region jsTemplateExp  start=+${+ end=+}+ contained contains=@jsExpression
-syn region jsTemplate     start=+`+ skip=+\\`+ end=+`+ contains=jsTemplateExp
+""""""""""""""
+" template
+syn region javascriptTemplateExp start=+${+ end=+}+ contained contains=@javascriptExpressions
+syn region javascriptTemplate    start=+`+ skip=+\\`+ end=+`+ contains=javascriptTemplateExp
+hi def link javascriptTemplate   String
+" decorator
+syn match  javascriptDecorator /@\%(\a[0-9A-Za-z]*\)/
+hi def link javascriptDecorator Function
+" allow func
+syn match  javascriptArrowFunc    /=>/
+syn match  javascriptArrowFuncDef /[a-zA-Z$_][0-9a-zA-Z$_]*\ze\s*=.\+=>/ contains=javascriptFunction
+hi def link javascriptArrowFunc Operator
 
-syn match  jsDecorator "@\@<=\%(\a[0-9A-Za-z]*\)"
-
-" jsx
-syn match  jsxTagName "\%(</\=\)\@<=\%(\a[-0-9A-Za-z]*\)" contained
-syn match  jsxArg     "\a[-:0-9A-Za-z]*\(=\)\@="          contained
+""""""""""""""
+" jsx syntax
+""""""""""""""
+syn match  jsxTagName "\%(</\=\)\zs\%(\a[-0-9A-Za-z]*\)" contained
+syn match  jsxArg     "\%(\<\a[-:0-9A-Za-z]*\)\ze="      contained
 syn region jsxRegion
       \ contained
-      \ contains=@jsExpression,jsxRegion
+      \ contains=@javascriptExpressions,jsxRegion
       \ start=+{+
       \ end=+}+
-
 syn region jsxTag
-      \ contains=jsxTagName,jsxArg,jsString,jsTemplate,jsxRegion
+      \ contains=jsxTagName,jsxArg,javascriptString,javascriptTemplate,jsxRegion
       \ start=+<\a[-:0-9A-Za-z]*+
       \ end=+>+
-
-syn match jsxEndTag "</\a[-0-9A-Za-z]*>" contains=jsxTagName
-
+syn match  jsxEndTag "</\a[-0-9A-Za-z]*>" contains=javascriptxTagName
 hi def link jsxTagName   htmlTagName
 hi def link jsxArg       htmlArg
 hi def link jsxTag       htmlTag
 hi def link jsxEndTag    htmlTag
 
-syn cluster jsExpression contains=jsBoolean,jsBraces,jsBranch,jsCharacter,jsComment,jsCommentTodo,jsConditional,jsConstant,jsDebug,jsError,jsException,jsFunction,jsGlobal,jsIdentifier,jsLabel,jsLineComment,jsMember,jsMessage,jsNull,jsNumber,jsOperator,jsParenError,jsRegexpString,jsRepeat,jsReserved,jsSpecial,jsStatement,jsStorageClass,jsString,jsTemplate,jsThis,jsType,
+""""""""""""""
+" reserved
+""""""""""""""
+syn keyword javascriptReserved abstract arguments as async await boolean break byte case char constructor continue default function double enum eval export final float from goto implements import int interface long native package private protected public return short synchronized throws transient void volatile with yield
 
+
+""""""""""""""
+" expression
+""""""""""""""
+syn cluster javascriptExpressions contains=javascriptBoolean,javascriptComment,javascriptIdentifier,javascriptLabel,javascriptLineComment,javascriptNull,javascriptNumber,javascriptOperator,javascriptRegexpString,javascriptRepeat,javascriptReserved,javascriptSpecial,javascriptStorageClass,javascriptString,javascriptTemplate,javascriptType,javascriptExceptions
+
+
+hi def link javascriptReserved Keyword
+syn sync fromstart
+syn sync maxlines=100
 
 let b:current_syntax = "javascript"
 
