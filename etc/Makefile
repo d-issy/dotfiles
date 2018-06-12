@@ -30,6 +30,7 @@ brew/cleanup:
 anyenv: anyenv/setup anyenv/install
 
 anyenv/setup: $(HOME)/.anyenv
+	@eval "$$(anyenv init -)"
 	@anyenv install -s ndenv
 	@anyenv install -s pyenv
 	@anyenv install -s rbenv

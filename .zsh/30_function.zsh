@@ -59,3 +59,8 @@ noproxy() {
     unset https_proxy;
     unset all_proxy;
 }
+
+# anyenv initalizer
+envinit() {
+    eval "$(anyenv init -)"
+}

@@ -12,19 +12,17 @@ fi
 typeset -gx -U path PATH
 path=(
     $HOME/bin(N-/)
-    $HOME/.anyenv/bin(N-/)
     $GOPATH/bin(N-/)
+    $HOME/.anyenv/bin(N-/)
+    $HOME/.anyenv/envs/pyenv/shims(N-/)
+    $HOME/.anyenv/envs/rbenv/shims(N-/)
+    $HOME/.anyenv/envs/ndenv/shims(N-/)
     /usr/local/sbin(N-/)
     /usr/local/bin(N-/)
     /usr/local/opt/openssl/bin(N-/)
     /usr/local/opt/go/libexec/bin(N-/)
     $path
 )
-
-if [ -z $ZSH_ENV_LOADED ]; then
-  eval "$(anyenv init - --no-rehash)"
-  export ZSH_ENV_LOADED=1
-fi
 
 # fpath
 typeset -gx -U fpath
