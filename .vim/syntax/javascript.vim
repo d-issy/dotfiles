@@ -63,7 +63,7 @@ hi def link javascriptClassName      Identifier
 hi def link javascriptClassSuperName Identifier
 " function
 syn match javascriptFunction    /\<[a-zA-z$_][0-9a-zA-Z$_]*/ contained skipwhite
-syn match javascriptFunctionDef /\<[a-zA-z$_][0-9a-zA-Z$_]*(/ contains=javascriptFunction
+syn match javascriptFunctionDef /\<[a-zA-z$_][0-9a-zA-Z$_]*\s*(/ contains=javascriptFunction
 hi def link javascriptFunction Function
 " this
 syn keyword javascriptIdentifier  this
