@@ -54,12 +54,13 @@ Plug 'morhetz/gruvbox'
 Plug 'w0rp/ale'
 Plug 'scrooloose/nerdcommenter'
 
-Plug 'tpope/tpope-vim-abolish'
-Plug 'rhysd/accelerated-jk'
 Plug 'airblade/vim-gitgutter'
-Plug 'tpope/vim-surround'
-Plug 'thinca/vim-quickrun'
 Plug 'junegunn/vim-easy-align'
+Plug 'mattn/emmet-vim'
+Plug 'rhysd/accelerated-jk'
+Plug 'thinca/vim-quickrun'
+Plug 'tpope/tpope-vim-abolish'
+Plug 'tpope/vim-surround'
 
 " for C/C++
 Plug 'justmao945/vim-clang'
@@ -74,11 +75,6 @@ Plug 'tpope/vim-fugitive'
 if v:version >= 800
   Plug 'fatih/vim-go', {'do': ':GoInstallBinaries'}
 endif
-
-" HTML5
-Plug 'mattn/emmet-vim'
-Plug 'othree/html5.vim'
-Plug 'hail2u/vim-css3-syntax'
 
 " Javascript
 Plug 'ternjs/tern_for_vim', {'do': 'npm install'}
