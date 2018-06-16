@@ -83,7 +83,6 @@ Plug 'hail2u/vim-css3-syntax'
 " Javascript
 Plug 'ternjs/tern_for_vim', {'do': 'npm install'}
 Plug 'leafgarland/typescript-vim'
-Plug 'posva/vim-vue'
 
 " Java
 Plug 'vim-scripts/javacomplete', {'do': 'which javac > /dev/null 2>&1 && javac autoload/Reflection.java'}
