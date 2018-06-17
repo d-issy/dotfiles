@@ -5,6 +5,7 @@ endif
 let s:cpo_save = &cpo
 set cpo&vim
 
+syn case match
 
 " comment
 syn keyword javascriptCommentTodo TODO FIXME XXX BUG contained
