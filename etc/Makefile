@@ -1,4 +1,4 @@
-NODE_VER   := v9.3.0
+NODE_VER   := v8.11.3
 PYTHON_VER := 3.6.5
 RUBY_VER   := 2.4.3
 
