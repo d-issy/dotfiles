@@ -3,8 +3,6 @@ tap "caskroom/versions"
 tap "homebrew/bundle"
 tap "homebrew/core"
 
-cask "java"
-
 brew "awscli"
 brew "clang-format"
 brew "cmake"
@@ -46,20 +44,16 @@ brew "wget"
 brew "yarn", args: ["without-node"]
 brew "zsh", args: ["without-etcdir", "with-gdbm", "with-pcre"]
 
-cask "adobe-acrobat-reader"
 cask "alfred"
 cask "appcleaner"
 cask "dash"
-cask "filezilla"
 cask "google-japanese-ime"
-cask "hammerspoon" cask "iterm2"
-cask "mysqlworkbench"
+cask "hammerspoon"
+cask "iterm2"
 cask "postman"
-cask "sequel-pro"
 cask "staruml"
 cask "visual-studio-code"
 cask "vivaldi"
-cask "wireshark"
 
 mas "Affinity Designer", id: 824171161
 mas "Apple Configurator 2", id: 1037126344
