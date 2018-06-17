@@ -23,24 +23,37 @@ if [[ -x `which grc` ]]; then
 fi
 
 # git
-alias g="git"
-alias ga="git add"
-alias gc="git checkout"
-alias gcf="git checkout --"
-alias gco="git commit"
-alias gd="git diff --color"
-alias gdc="git diff --color --cached"
-alias gf="git fetch --prune"
-alias gl="git log --oneline --graph --decorate"
-alias gp="git push origin HEAD"
-alias gpl="git pull origin HEAD"
-alias gr="git reset HEAD"
-alias gs="git status"
+if [[ -x `which git` ]]; then
+    alias g="git"
+    alias ga="git add"
+    alias gc="git checkout"
+    alias gcf="git checkout --"
+    alias gco="git commit"
+    alias gd="git diff --color"
+    alias gdc="git diff --color --cached"
+    alias gf="git fetch --prune"
+    alias gl="git log --oneline --graph --decorate"
+    alias gp="git push origin HEAD"
+    alias gpl="git pull origin HEAD"
+    alias gr="git reset HEAD"
+    alias gs="git status"
+fi
+
+# tig
+if [[ -x `which tig` ]]; then
+    alias ts="tig status"
+fi
 
 # aliases
-alias v='vim'
-alias nis='npm install --save'
-alias nid='npm install --save-dev'
+if [[ -x `which vim` ]]; then
+    alias v='vim'
+fi
+
+# npm
+if [[ -x `which npm` ]]; then
+    alias nis='npm install --save'
+    alias nid='npm install --save-dev'
+fi
 
 # exit
 alias q='exit'
