@@ -37,6 +37,8 @@ endif
 " vim-plug
 call plug#begin(g:plug.base)
 
+
+" snippets
 if !has('gui_macvim')
   Plug 'sirver/ultisnips'
 endif
@@ -44,17 +46,22 @@ endif
 Plug 'honza/vim-snippets'
 Plug 'shepabashi/vim-snippets-extra'
 
+" linter
+Plug 'w0rp/ale'
+
+" fzf
 Plug '/usr/local/opt/fzf'
 Plug 'junegunn/fzf.vim'
 
-Plug 'editorconfig/editorconfig-vim'
-
+" colorscheme
 Plug 'morhetz/gruvbox'
 
-Plug 'w0rp/ale'
+" editorconfig
+Plug 'editorconfig/editorconfig-vim'
+
+" comment
 Plug 'scrooloose/nerdcommenter'
 
-Plug 'airblade/vim-gitgutter'
 Plug 'junegunn/vim-easy-align'
 Plug 'mattn/emmet-vim'
 Plug 'rhysd/accelerated-jk'
@@ -62,14 +69,15 @@ Plug 'thinca/vim-quickrun'
 Plug 'tpope/tpope-vim-abolish'
 Plug 'tpope/vim-surround'
 
+" git
+Plug 'airblade/vim-gitgutter'
+Plug 'tpope/vim-fugitive'
+
 " for C/C++
 Plug 'justmao945/vim-clang'
 
 " for Arduino
 Plug 'sudar/vim-arduino-syntax'
-
-" Git
-Plug 'tpope/vim-fugitive'
 
 " Go
 if v:version >= 800

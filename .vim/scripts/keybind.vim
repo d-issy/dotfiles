@@ -17,11 +17,8 @@ nnoremap <silent><Leader>d :Ex<CR>
 nnoremap <silent><Leader>w :w<CR>
 nnoremap <silent><C-[><C-[> :noh<CR><C-[>
 
-nnoremap / /\v
-
-if g:plug.is_enabled('nerdcommenter')
-  nmap <silent><Leader>/ <Plug>NERDCommenterToggle
-  vmap <silent><Leader>/ <Plug>NERDCommenterToggle
+if g:plug.is_enabled('ale')
+  nnoremap <silent><Leader>f :ALEFix<CR>
 endif
 
 if g:plug.is_enabled('fzf.vim')
@@ -29,12 +26,16 @@ if g:plug.is_enabled('fzf.vim')
   nnoremap <silent><Leader>a :Ag!<CR>
   nnoremap <silent><Leader>b :Buffers<CR>
   nnoremap <silent><Leader>h :Helptags<CR>
-  nnoremap <silent><Leader>p :Filetypes<CR>
   nnoremap <silent><Leader>co :Colors<CR>
 endif
 
-if g:plug.is_enabled('ale')
-  nnoremap <silent><Leader>f :ALEFix<CR>
+if g:plug.is_enabled('nerdcommenter')
+  nmap <silent><Leader>/ <Plug>NERDCommenterToggle
+  vmap <silent><Leader>/ <Plug>NERDCommenterToggle
+endif
+
+if g:plug.is_enabled('vim-easy-align')
+  vmap <silent><Leader>f <Plug>(EasyAlign)
 endif
 
 if g:plug.is_enabled('vim-quickrun')
