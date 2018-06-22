@@ -1,32 +1,52 @@
+# lang default versions
 NODE_VER   := v8.11.3
 PYTHON_VER := 3.6.5
 RUBY_VER   := 2.5.1
 
+# env paths or directories
 ANYENV_DIR := $(HOME)/.anyenv
-uname := $(shell uname)
+BREW_PATH := /usr/local/bin/brew
+VIM_PLUG_PATH := $(abspath ../.vim/autoload/plug.vim)
 
-ifeq ($(uname),Darwin)
+# os check
+UNAME := $(shell uname)
+
+# for macOS
+ifeq ($(UNAME),Darwin)
 setup: brew anyenv go vim refresh
 endif
 
-ifeq ($(uname),Linux)
+# for other Linux
+ifeq ($(UNAME),Linux)
 setup: anyenv go vim refresh
 endif
 
+# homebrew
 brew: brew/setup brew/install brew/cleanup
 
+brew/setup: $(BREW_PATH)
+
 brew/update:
-	brew update
+	@brew update
 
 brew/install:
 	@brew bundle
 
 brew/cleanup:
-	brew cleanup
-	brew cask cleanup
+	@brew cleanup
+	@brew cask cleanup
 
-anyenv: anyenv/setup
+# anyenv
+anyenv: anyenv/setup anyenv/setup
 	@$(MAKE) -j 3 env/setup
+
+anyenv/setup: $(ANYENV_DIR)
+anyenv/update: anyenv/setup
+	@eval "$$(anyenv init -)" && \
+		anyenv update
+
+anyenv/init:
+	@eval "$$(anyenv init -)"
 
 env/setup: ndenv pyenv rbenv
 
@@ -45,29 +65,31 @@ rbenv: $(ANYENV_DIR)/envs/rbenv/bin/rbenv
 		$< install -s $(RUBY_VER) && \
 		$< global $(RUBY_VER)
 
+# golang
 go:
 	which ghq > /dev/null 2>&1 || go get -u github.com/motemen/ghq
 	which gore > /dev/null 2>&1 || go get -u github.com/motemen/gore
 
+# vim
 vim: vim/setup
+vim/setup: $(VIM_PLUG_PATH)
 
+# refresh
 refresh:
-	exec $$SHELL -l
+	@exec $$SHELL -l
 
 # Setup Locations
-brew/setup: /usr/local/bin/brew
-/usr/local/bin/brew:
-	/usr/bin/ruby -e "$$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+$(BREW_PATH):
+	@/usr/bin/ruby -e "$$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
 
-anyenv/setup: $(ANYENV_DIR)
-$(HOME)/.anyenv:
-	git clone https://github.com/riywo/anyenv $@
-	@eval "$$(anyenv init -)"
+export PATH := $(shell echo $$PATH):$(ANYENV_DIR)/bin
+$(ANYENV_DIR):
+	@git clone https://github.com/riywo/anyenv $@
+	@git clone https://github.com/znz/anyenv-update.git $@/plugins/anyenv-update
 
-vim/setup: $(abspath ../.vim/autoload/plug.vim)
-$(abspath ../.vim/autoload/plug.vim):
-	curl -fLo $@ --create-dirs \
+$(VIM_PLUG_PATH):
+	@curl -fLo $@ --create-dirs \
 		https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
 
-$(ANYENV_DIR)/envs/%:
-	anyenv install -s $(@F)
+$(ANYENV_DIR)/envs/%: anyenv/setup
+	@anyenv install -s $(@F)
