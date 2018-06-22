@@ -37,9 +37,8 @@ endif
 " vim-plug
 call plug#begin(g:plug.base)
 
-
 " snippets
-if !has('gui_macvim')
+if executable('python') && !has('gui_macvim')
   Plug 'sirver/ultisnips'
 endif
 
@@ -50,8 +49,10 @@ Plug 'shepabashi/vim-snippets-extra'
 Plug 'w0rp/ale'
 
 " fzf
-Plug '/usr/local/opt/fzf'
-Plug 'junegunn/fzf.vim'
+if executable('fzf')
+  Plug '/usr/local/opt/fzf'
+  Plug 'junegunn/fzf.vim'
+endif
 
 " colorscheme
 Plug 'morhetz/gruvbox'
@@ -70,8 +71,10 @@ Plug 'tpope/tpope-vim-abolish'
 Plug 'tpope/vim-surround'
 
 " git
-Plug 'airblade/vim-gitgutter'
-Plug 'tpope/vim-fugitive'
+if executable('git')
+  Plug 'airblade/vim-gitgutter'
+  Plug 'tpope/vim-fugitive'
+endif
 
 " for C/C++
 Plug 'justmao945/vim-clang'
@@ -80,25 +83,29 @@ Plug 'justmao945/vim-clang'
 Plug 'sudar/vim-arduino-syntax'
 
 " Go
-if v:version >= 800
+if executable('go') && v:version >= 800
   Plug 'fatih/vim-go', {'do': ':GoInstallBinaries'}
 endif
 
 " Javascript
-Plug 'ternjs/tern_for_vim', {'do': 'npm install'}
-Plug 'leafgarland/typescript-vim'
+if executable('node') && executable('npm')
+  Plug 'ternjs/tern_for_vim', {'do': 'npm install'}
+  Plug 'leafgarland/typescript-vim'
+endif
 
 " Java
-Plug 'vim-scripts/javacomplete', {'do': 'which javac > /dev/null 2>&1 && javac autoload/Reflection.java'}
+if executable('javac')
+  Plug 'vim-scripts/javacomplete', {'do': 'javac autoload/Reflection.java'}
+endif
 
 " Markdown
 Plug 'plasticboy/vim-markdown', {'for': 'markdown'}
 Plug 'kannokanno/previm', {'for': 'markdown'}
 
 " Python
-Plug 'davidhalter/jedi-vim', {'for': 'python', 'do': 'which pip3 > /dev/null 2>&1 && pip3 install jedi'}
-Plug 'shepabashi/vim-pyenv', {'for': 'python'}
+if executable('python') && executable('pip')
+  Plug 'davidhalter/jedi-vim', {'for': 'python', 'do': 'pip install jedi'}
+  Plug 'shepabashi/vim-pyenv', {'for': 'python'}
+endif
 
-" Vim Processing
-Plug 'sophacles/vim-processing'
 call plug#end()
