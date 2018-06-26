@@ -39,6 +39,11 @@ if [[ -x `which git` ]]; then
     alias gs="git status"
 fi
 
+# hub
+if [[ -x `which hub` ]]; then
+    alias git="hub"
+fi
+
 # tig
 if [[ -x `which tig` ]]; then
     alias ts="tig status"
