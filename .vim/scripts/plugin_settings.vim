@@ -40,6 +40,7 @@ let g:ale_fixers = {
       \ 'cpp':        ['clang-format'],
       \ 'javascript': ['eslint'],
       \ 'python':     ['isort', 'autopep8'],
+      \ 'rust':       ['rustfmt'],
       \ 'typescript': ['eslint'],
       \ }
 

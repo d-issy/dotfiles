@@ -5,6 +5,7 @@ RUBY_VER   := 2.5.1
 
 # env paths or directories
 ANYENV_DIR := $(HOME)/.anyenv
+CARGO_DIR := $(HOME)/.cargo
 BREW_PATH := /usr/local/bin/brew
 VIM_PLUG_PATH := $(abspath ../.vim/autoload/plug.vim)
 
@@ -13,7 +14,7 @@ UNAME := $(shell uname)
 
 # for macOS
 ifeq ($(UNAME),Darwin)
-setup: brew anyenv go vim refresh
+setup: brew anyenv go rust vim refresh
 endif
 
 # for other Linux
@@ -70,6 +71,13 @@ go:
 	which ghq > /dev/null 2>&1 || go get -u github.com/motemen/ghq
 	which gore > /dev/null 2>&1 || go get -u github.com/motemen/gore
 
+# rust
+rust: rust/setup
+	@rustup update
+	@rustup component add rustfmt-preview
+
+rust/setup: $(CARGO_DIR)
+
 # vim
 vim: vim/setup
 vim/setup: $(VIM_PLUG_PATH)
@@ -86,6 +94,9 @@ export PATH := $(shell echo $$PATH):$(ANYENV_DIR)/bin
 $(ANYENV_DIR):
 	@git clone https://github.com/riywo/anyenv $@
 	@git clone https://github.com/znz/anyenv-update.git $@/plugins/anyenv-update
+
+$(CARGO_DIR):
+	@yes 1 | curl https://sh.rustup.rs -sSf | sh -s -- -y
 
 $(VIM_PLUG_PATH):
 	@curl -fLo $@ --create-dirs \

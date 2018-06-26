@@ -13,6 +13,7 @@ typeset -gx -U path PATH
 path=(
     $HOME/bin(N-/)
     $GOPATH/bin(N-/)
+    $HOME/.cargo/bin(N-/)
     $HOME/.anyenv/bin(N-/)
     $HOME/.anyenv/envs/pyenv/shims(N-/)
     $HOME/.anyenv/envs/rbenv/shims(N-/)
