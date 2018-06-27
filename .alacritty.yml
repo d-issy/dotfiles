@@ -1,6 +1,12 @@
 env:
     TERM: xterm-256color
 
+# set login shell
+shell:
+  program: /usr/local/bin/zsh
+  args:
+    - --login
+
 window:
   dimensions:
     columns: 270
