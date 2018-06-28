@@ -6,11 +6,7 @@ hs.window.animationDuration = 0
 function focusApp(name)
     local app = hs.appfinder.appFromName(name)
     if app ~= nil and app:isRunning() then
-        if app:isFrontmost() then
-            app:hide()
-        else
-            app:activate(true)
-        end
+        app:activate(true)
     else
         hs.application.open(name)
     end
