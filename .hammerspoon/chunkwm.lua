@@ -62,37 +62,19 @@ end)
 
 -- size left or top {{
 hs.hotkey.bind({'ctrl', 'alt'}, 'H', function()
-    hs.execute('/usr/local/bin/chunkc tiling::window --use-temporary-ratio -0.1 --adjust-window-edge east')
+    hs.execute('/usr/local/bin/chunkc tiling::window --use-temporary-ratio 0.05 --adjust-window-edge west; /usr/local/bin/chunkc tiling::window --use-temporary-ratio -0.05 --adjust-window-edge east')
 end)
 
 hs.hotkey.bind({'ctrl', 'alt'}, 'J', function()
-    hs.execute('/usr/local/bin/chunkc tiling::window --use-temporary-ratio 0.1 --adjust-window-edge south')
+    hs.execute('/usr/local/bin/chunkc tiling::window --use-temporary-ratio 0.05 --adjust-window-edge south; /usr/local/bin/chunkc tiling::window --use-temporary-ratio -0.05 --adjust-window-edge north')
 end)
 
 hs.hotkey.bind({'ctrl', 'alt'}, 'K', function()
-    hs.execute('/usr/local/bin/chunkc tiling::window --use-temporary-ratio -0.1 --adjust-window-edge south')
+    hs.execute('/usr/local/bin/chunkc tiling::window --use-temporary-ratio 0.05 --adjust-window-edge north; /usr/local/bin/chunkc tiling::window --use-temporary-ratio -0.05 --adjust-window-edge south')
 end)
 
 hs.hotkey.bind({'ctrl', 'alt'}, 'L', function()
-    hs.execute('/usr/local/bin/chunkc tiling::window --use-temporary-ratio 0.1 --adjust-window-edge east')
-end)
--- }}
-
--- size right or bottom {{
-hs.hotkey.bind({'ctrl', 'cmd'}, 'H', function()
-    hs.execute('/usr/local/bin/chunkc tiling::window --use-temporary-ratio 0.1 --adjust-window-edge west')
-end)
-
-hs.hotkey.bind({'ctrl', 'cmd'}, 'J', function()
-    hs.execute('/usr/local/bin/chunkc tiling::window --use-temporary-ratio -0.1 --adjust-window-edge north')
-end)
-
-hs.hotkey.bind({'ctrl', 'cmd'}, 'K', function()
-    hs.execute('/usr/local/bin/chunkc tiling::window --use-temporary-ratio 0.1 --adjust-window-edge north')
-end)
-
-hs.hotkey.bind({'ctrl', 'cmd'}, 'L', function()
-    hs.execute('/usr/local/bin/chunkc tiling::window --use-temporary-ratio -0.1 --adjust-window-edge west')
+    hs.execute('/usr/local/bin/chunkc tiling::window --use-temporary-ratio 0.05 --adjust-window-edge east; /usr/local/bin/chunkc tiling::window --use-temporary-ratio -0.05 --adjust-window-edge west')
 end)
 -- }}
 
