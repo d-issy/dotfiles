@@ -5,6 +5,11 @@ noremap <Up> <Nop>
 noremap <Left> <Nop>
 noremap <Right> <Nop>
 
+inoremap <Down> <Nop>
+inoremap <Up> <Nop>
+inoremap <Left> <Nop>
+inoremap <Right> <Nop>
+
 nnoremap Q <Nop>
 noremap Y y$
 
