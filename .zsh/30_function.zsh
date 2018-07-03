@@ -19,11 +19,21 @@ ghq-src() {
     local src=$(ghq list | fzf --query "$1" --reverse -q "$LBUFFER" -1)
     if [ -n "$src" ]; then
         cd $GOPATH/src/$src
-        BUFFER=""
+        LBUFFER="test"
         zle reset-prompt
     fi
 }
 zle -N ghq-src
+
+# inesrt file
+insert-filename() {
+    lbuf=$LBUFFER
+    local file=$(ag --hidden -g "" | fzf --reverse -1)
+    LBUFFER="$lbuf$file "
+    CURSOR=$#LBUFFER
+    zle reset-prompt
+}
+zle -N insert-filename
 
 # fore-ground - foreground function
 fore-ground() {

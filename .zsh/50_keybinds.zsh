@@ -1,9 +1,17 @@
-bindkey -e
-bindkey '^Z' fore-ground
-bindkey '^U' cdup
-bindkey '^R' history-selection
-bindkey '^J' self-insert
+# bindkey -e
+
+bindkey -v
+bindkey '^A' beginning-of-line
+bindkey '^N' down-line-or-history
+bindkey '^E' end-of-line
+bindkey '^P' up-line-or-history
+
 bindkey '^@' ghq-src
+bindkey '^T' insert-filename
+bindkey '^J' self-insert
+bindkey '^R' history-selection
+bindkey '^U' cdup
+bindkey '^Z' fore-ground
 
 # menu select
 zmodload -i zsh/complist
