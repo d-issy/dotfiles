@@ -12,10 +12,6 @@ function focusApp(name)
     end
 end
 
-hs.hotkey.bind({'cmd', 'ctrl'}, 'A', function()
-    focusApp('Affinity Designer')
-end)
-
 hs.hotkey.bind({'cmd', 'ctrl'}, 'D', function()
     focusApp('Finder')
 end)
