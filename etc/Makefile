@@ -1,6 +1,6 @@
 # lang default versions
 NODE_VER   := v8.11.3
-PYTHON_VER := 3.6.5
+PYTHON_VER := 3.7.0
 RUBY_VER   := 2.5.1
 
 # env paths or directories
