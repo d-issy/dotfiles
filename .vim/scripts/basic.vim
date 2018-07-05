@@ -3,6 +3,14 @@ scriptencoding=utf-8
 set encoding=utf-8
 set fileencoding=utf-8
 
+" python 3.7 deprecated imp
+" so plugins using python3 can not work
+" this is an instant solution until vim improve this issues
+" refs: https://github.com/vim/vim/issues/3117
+if has('python3')
+  silent! python3 1
+endif
+
 " break code
 set fileformats=unix,dos,mac
 
