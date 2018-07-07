@@ -1,15 +1,9 @@
-*.csv
 *.gemtags*
-*.json
 *.log
 *.old
-*.pdf
-*.sql
 *.swp
 *.tags*
 *.tmp*
-*.tsv
-*.xml
 *bak*
 *~
 .git
