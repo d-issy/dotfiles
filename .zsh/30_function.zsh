@@ -26,10 +26,14 @@ zle -N ghq-src
 
 # inesrt file
 insert-filename() {
-    lbuf=$LBUFFER
-    local file=$(ag --hidden -g "" | fzf --reverse -1 --height 30)
-    LBUFFER="$lbuf$file"
-    CURSOR=$#LBUFFER
+    local filepath=$(ag --hidden -l | fzf --reverse -1 --height 30)
+    [ -z "$filepath" ] && zle reset-prompt && return
+    if [ -n "$LBUFFER" ]; then
+        BUFFER="$LBUFFER$filepath"
+    elif [ -f "$filepath" ]; then
+        BUFFER="$EDITOR $filepath"
+    fi
+    CURSOR=$#BUFFER
     zle reset-prompt
 }
 zle -N insert-filename
