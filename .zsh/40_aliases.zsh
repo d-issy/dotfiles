@@ -26,7 +26,6 @@ fi
 if [[ -x `which git` ]]; then
     alias g="git"
     alias ga="git add"
-    alias gc="git checkout"
     alias gcf="git checkout --"
     alias gco="git commit"
     alias gd="git diff --color"

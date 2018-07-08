@@ -14,7 +14,7 @@ history-selection() {
 }
 zle -N history-selection
 
-# peco-src - gopath src incremental search
+# fzf-src - gopath src incremental search
 ghq-src() {
     local src=$(ghq list | fzf --query "$1" --reverse -q "$LBUFFER" -1)
     if [ -n "$src" ]; then
@@ -26,10 +26,12 @@ zle -N ghq-src
 
 # inesrt file
 insert-filename() {
-    local filepath=$(ag --hidden -l | fzf --reverse -1 --height 30)
+    local filepath=$(fd --hidden -E .git -c never --max-depth=5 | fzf --reverse -1 --height 30)
     [ -z "$filepath" ] && zle reset-prompt && return
     if [ -n "$LBUFFER" ]; then
         BUFFER="$LBUFFER$filepath"
+    elif [ -d "$filepath" ]; then
+        BUFFER="cd $filepath"
     elif [ -f "$filepath" ]; then
         BUFFER="$EDITOR $filepath"
     fi
@@ -37,6 +39,13 @@ insert-filename() {
     zle reset-prompt
 }
 zle -N insert-filename
+
+# git brach
+gc () {
+    local branch=$(git branch -vv | fzf --prompt='branch>' --reverse --height 30 | awk '{print $1}' | sed "s/.* //")
+    [ -z "$branch" ] && return
+    git checkout "$branch"
+}
 
 # fore-ground - foreground function
 fore-ground() {
@@ -77,3 +86,4 @@ noproxy() {
 envinit() {
     eval "$(anyenv init -)"
 }
+

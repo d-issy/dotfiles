@@ -7,12 +7,17 @@ let g:UltiSnipsJumpForwardTrigger = "<c-j>"
 let g:UltiSnipsJumpBackwardTrigger = "<c-k>"
 
 " fzf
-let $FZF_DEFAULT_COMMAND = 'ag --hidden -g ""'
+let $FZF_DEFAULT_COMMAND = "rg --files --hidden --glob '!.git'"
 if g:plug.is_enabled('fzf.vim')
   command! -bang -nargs=? -complete=dir Files
         \ call fzf#vim#files(<q-args>, fzf#vim#with_preview(), <bang>0)
   command! -bang -nargs=? -complete=dir Ag
         \ call fzf#vim#ag(<q-args>, '--hidden', fzf#vim#with_preview(), <bang>0)
+  command! -bang -nargs=* Rg
+    \ call fzf#vim#grep(
+    \   "rg --column --line-number --color=always --smart-case --hidden --glob '!.git' ".shellescape(<q-args>), 1,
+    \   fzf#vim#with_preview(),
+    \   <bang>0)
   command! -bang Colors
         \ call fzf#vim#colors({'left': '25%', 'options': '--reverse'}, <bang>0)
   command! -bang Filetypes
