@@ -68,8 +68,8 @@ rbenv: $(ANYENV_DIR)/envs/rbenv/bin/rbenv
 
 # golang
 go:
-	which ghq > /dev/null 2>&1 || go get -u github.com/motemen/ghq
-	which gore > /dev/null 2>&1 || go get -u github.com/motemen/gore
+	go get -u github.com/motemen/ghq
+	go get -u github.com/motemen/gore
 
 # rust
 rust: rust/setup
