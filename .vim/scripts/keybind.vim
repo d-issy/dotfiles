@@ -32,7 +32,7 @@ if g:plug.is_enabled('fzf.vim')
   nnoremap <silent><Leader>b :Buffers<CR>
   nnoremap <silent><Leader>h :Helptags<CR>
   nnoremap <silent><Leader>l :Lines<CR>
-  nnoremap <silent><Leader>co :Colors<CR>
+  nnoremap <silent><Leader>t :BTags<CR>
 endif
 
 if g:plug.is_enabled('nerdcommenter')

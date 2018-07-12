@@ -64,6 +64,7 @@ Plug 'editorconfig/editorconfig-vim'
 Plug 'scrooloose/nerdcommenter'
 
 Plug 'junegunn/vim-easy-align'
+Plug 'majutsushi/tagbar'
 Plug 'mattn/emmet-vim'
 Plug 'rhysd/accelerated-jk'
 Plug 'thinca/vim-quickrun'
