@@ -1,6 +1,8 @@
 # Auther: shepabashi
 
 prompt_mytheme_setup () {
+    PROMPT="%F{green}%B%~%b%f "
+
     # begin vcs_info
     if is-at-least 4.3.11; then
         zstyle ":vcs_info:*" enable git
@@ -13,11 +15,10 @@ prompt_mytheme_setup () {
             vcs_info
             [[ -n "$vcs_info_msg_0_" ]] && echo -n "$vcs_info_msg_0_"
         }
+        PROMPT+="%B\$(vcs_prompt_info) %b"
     fi
     # end vcs_info
 
-    PROMPT="%F{green}%B%~%b%f "
-    PROMPT+="%B\$(vcs_prompt_info) %b"
     PROMPT+=$'\n%B%(?|%F{green}|%F{red})>%f%b '
 
     precmd() {
