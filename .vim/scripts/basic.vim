@@ -104,16 +104,6 @@ set nrformats=hex
 set splitright
 set splitbelow
 
-" ctags
-augroup ctags
-  autocmd!
-  if executable('ctags')
-    set tags=\.tags,./tags,tags
-    autocmd BufWritePost *.js silent call system('ctags -R -f .tags &')
-    autocmd BufWritePost *.py silent call system('ctags -R -f .tags &')
-  endif
-augroup END
-
 " syntax
 syntax on
 filetype plugin indent on
