@@ -105,7 +105,11 @@ syn region jsxRegion
       \ contains=@javascriptExpressions,jsxRegion
       \ start=+{+
       \ end=+}+
+syn match  jsxText    /[^<]*/ contained nextgroup=jsxTag,jsxEndTag
 syn region jsxTag
+      \ nextgroup=jsxText
+      \ skipwhite
+      \ skipempty
       \ contains=jsxTagName,jsxArg,javascriptString,javascriptTemplate,jsxRegion
       \ start=+<\a[-:0-9A-Za-z]*+
       \ end=+>+
