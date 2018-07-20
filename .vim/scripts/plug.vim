@@ -101,7 +101,7 @@ endif
 
 " Markdown
 Plug 'plasticboy/vim-markdown', {'for': 'markdown'}
-Plug 'kannokanno/previm', {'for': 'markdown'}
+Plug 'previm/previm', {'for': 'markdown'}
 
 " Python
 if executable('python') && executable('pip')
