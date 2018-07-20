@@ -70,6 +70,7 @@ Plug 'rhysd/accelerated-jk'
 Plug 'thinca/vim-quickrun'
 Plug 'tpope/tpope-vim-abolish'
 Plug 'tpope/vim-surround'
+Plug 'wellle/targets.vim'
 
 " git
 if executable('git')
@@ -102,6 +103,7 @@ endif
 " Markdown
 Plug 'plasticboy/vim-markdown', {'for': 'markdown'}
 Plug 'previm/previm', {'for': 'markdown'}
+Plug 'dhruvasagar/vim-table-mode', {'for': 'markdown'}
 
 " Python
 if executable('python') && executable('pip')

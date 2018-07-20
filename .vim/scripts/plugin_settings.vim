@@ -91,3 +91,6 @@ let g:vim_markdown_fenced_languages = [
       \ 'json',
       \ 'python',
       \ ]
+
+" table-mode-vim
+let g:table_mode_corner='|'
