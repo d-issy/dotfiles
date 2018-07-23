@@ -43,12 +43,3 @@ endif
 if g:plug.is_enabled('vim-easy-align')
   vmap <silent><Leader>f <Plug>(EasyAlign)
 endif
-
-if g:plug.is_enabled('vim-quickrun')
-  nnoremap <silent><Leader>q :QuickRun<CR>
-endif
-
-if g:plug.is_enabled('accelerated-jk')
-  nmap j <Plug>(accelerated_jk_gj)
-  nmap k <Plug>(accelerated_jk_gk)
-endif
