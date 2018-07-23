@@ -22,13 +22,12 @@ let g:go_highlight_types = 1
 let g:go_template_autocreate = 0
 
 if g:plug.is_enabled('vim-go')
-  nnoremap <buffer> <silent><Leader>r   :GoRename<CR>
   nnoremap <buffer> <silent><Leader>i   :GoInfo<CR>
+  nnoremap <buffer> <silent><Leader>r   :GoRename<CR>
+  nnoremap <buffer> <silent><Leader>t   :GoDecls<CR>
   nnoremap <buffer> <silent><Leader>ga  :GoAddTags<CR>
-  nnoremap <buffer> <silent><Leader>gcd :GoCoverage<CR>
-  nnoremap <buffer> <silent><Leader>gcc :GoCoverageClear<CR>
-  nnoremap <buffer> <silent><Leader>gdd :GoDeclsDir<CR>
-  nnoremap <buffer> <silent><Leader>gdg :GoDecls<CR>
+  nnoremap <buffer> <silent><Leader>gc  :GoCoverageToggle<CR>
+  nnoremap <buffer> <silent><Leader>gd  :GoDeclsDir<CR>
   nnoremap <buffer> <silent><Leader>ge  :GoIfErr<CR>
   nnoremap <buffer> <silent><Leader>gf  :GoTestFunc<CR>
   nnoremap <buffer> <silent><Leader>gg  :GoTest<CR>
