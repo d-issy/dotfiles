@@ -68,6 +68,9 @@ let g:user_emmet_settings = {
       \  },
       \}
 
+" quickrun
+let g:quickrun_no_default_key_mappings = 0
+
 " jedi-vim
 let g:jedi#popup_on_dot = 0
 let g:jedi#goto_command = "<C-]>"

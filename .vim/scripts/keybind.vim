@@ -11,7 +11,7 @@ inoremap <Left> <Nop>
 inoremap <Right> <Nop>
 
 nnoremap Q <Nop>
-noremap Y y$
+nnoremap Y y$
 
 nnoremap n nzz
 nnoremap N Nzz
@@ -42,4 +42,8 @@ endif
 
 if g:plug.is_enabled('vim-easy-align')
   vmap <silent><Leader>f <Plug>(EasyAlign)
+endif
+
+if g:plug.is_enabled('vim-quickrun')
+  nnoremap <silent><Leader>q :QuickRun<CR>
 endif
