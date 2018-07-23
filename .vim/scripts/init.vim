@@ -43,6 +43,7 @@ endfunction
 
 " Scripts Load {{ 1
 call s:load('env.vim')
+call s:load('patch.vim')
 
 if s:load('plug.vim')
   call s:load('plugin_settings.vim')
