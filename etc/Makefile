@@ -7,19 +7,18 @@ RUBY_VER   := 2.5.1
 ANYENV_DIR := $(HOME)/.anyenv
 CARGO_DIR := $(HOME)/.cargo
 BREW_PATH := /usr/local/bin/brew
-VIM_PLUG_PATH := $(abspath ../.vim/autoload/plug.vim)
 
 # os check
 UNAME := $(shell uname)
 
 # for macOS
 ifeq ($(UNAME),Darwin)
-setup: brew anyenv go rust vim refresh
+setup: brew anyenv go rust refresh
 endif
 
 # for other Linux
 ifeq ($(UNAME),Linux)
-setup: anyenv go vim refresh
+setup: anyenv go refresh
 endif
 
 # homebrew
@@ -78,10 +77,6 @@ rust: rust/setup
 
 rust/setup: $(CARGO_DIR)
 
-# vim
-vim: vim/setup
-vim/setup: $(VIM_PLUG_PATH)
-
 # refresh
 refresh:
 	@exec $$SHELL -l
@@ -97,10 +92,6 @@ $(ANYENV_DIR):
 
 $(CARGO_DIR):
 	@yes 1 | curl https://sh.rustup.rs -sSf | sh -s -- -y
-
-$(VIM_PLUG_PATH):
-	@curl -fLo $@ --create-dirs \
-		https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
 
 $(ANYENV_DIR)/envs/%: anyenv/setup
 	@anyenv install -s $(@F)
