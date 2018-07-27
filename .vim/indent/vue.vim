@@ -1,8 +1,5 @@
-if !exists('main_indent')
-  if exists('b:did_indent')
-    finish
-  endif
-  let main_indent = 'vue'
+if exists('b:did_indent')
+  finish
 endif
 
 setlocal indentexpr=VueIndent()
@@ -12,16 +9,14 @@ let s:cpo_save = &cpo
 
 if !exists('*HtmlIndent')
   runtime! indent/html.vim
-  unlet b:did_indent
 endif
 if !exists('*GetJavascriptIndent')
   runtime! indent/javascript.vim
-  unlet b:did_indent
 endif
 if !exists('*GetCSSIndent')
   runtime! indent/css.vim
-  unlet b:did_indent
 endif
+let b:did_indent='vue'
 
 function! VueIndent()
   let line = trim(getline(v:lnum))
@@ -47,11 +42,6 @@ function! VueIndent()
   return -1
 endfunction
 
-let b:did_indent='vue'
-if main_indent == 'vue'
-  unlet main_indent
-endif
 
 let &cpo = s:cpo_save
 unlet s:cpo_save
-
