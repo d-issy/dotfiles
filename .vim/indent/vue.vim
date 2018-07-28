@@ -2,19 +2,19 @@ if exists('b:did_indent')
   finish
 endif
 
-if !exists('*HtmlIndent')
+if !exists('HtmlIndent')
   if exists('b:did_indent')
     unlet b:did_indent
   endif
   runtime! indent/html.vim
 endif
-if !exists('*GetJavascriptIndent')
+if !exists('GetJavascriptIndent')
   if exists('b:did_indent')
     unlet b:did_indent
   endif
   runtime! indent/javascript.vim
 endif
-if !exists('*GetCSSIndent')
+if !exists('GetCSSIndent')
   if exists('b:did_indent')
     unlet b:did_indent
   endif
