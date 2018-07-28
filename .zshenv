@@ -55,3 +55,6 @@ export HISTFILE=~/.zsh_history
 export HISTSIZE=10000
 export SAVEHIST=1000000
 export LISTMAX=50
+
+# KEYTIMEOUT
+export KEYTIMEOUT=0

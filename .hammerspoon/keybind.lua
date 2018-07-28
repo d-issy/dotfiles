@@ -17,7 +17,7 @@ hs.hotkey.bind({'cmd', 'ctrl'}, 'D', function()
 end)
 
 hs.hotkey.bind({'cmd', 'ctrl'}, 'E', function()
-    focusApp('Alacritty')
+    focusApp('iTerm2')
 end)
 
 hs.hotkey.bind({'cmd', 'ctrl'}, 'K', function()
