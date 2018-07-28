@@ -75,6 +75,7 @@ let g:quickrun_no_default_key_mappings = 0
 let g:jedi#popup_on_dot = 0
 let g:jedi#goto_command = "<C-]>"
 let g:jedi#goto_definitions_command = ""
+let g:jedi#force_py_version = 3
 
 " markdown
 let g:vim_markdown_folding_disabled = 1
