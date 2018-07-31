@@ -18,6 +18,9 @@ nnoremap N Nzz
 nnoremap * *zz
 nnoremap # #zz
 
+nnoremap j gj
+nnoremap k gk
+
 nnoremap <silent><Leader>d :Ex<CR>
 nnoremap <silent><Leader>w :w<CR>
 nnoremap <silent><C-[><C-[> :noh<CR><C-[>
