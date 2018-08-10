@@ -1,4 +1,4 @@
-let mapleader = "\<Space>"
+let g:mapleader = "\<Space>"
 
 noremap <Down> <Nop>
 noremap <Up> <Nop>
