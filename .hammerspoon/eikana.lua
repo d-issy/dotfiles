@@ -30,7 +30,7 @@ eikanaEventTap = hs.eventtap.new({
         singleCmd = false
         return
     end
-    
+
     -- cmdPress
     local flags = event:getFlags()
     if flags['cmd'] then
