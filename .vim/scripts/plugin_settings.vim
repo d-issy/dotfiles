@@ -24,6 +24,14 @@ if g:plug.is_enabled('fzf.vim')
         \ call fzf#vim#filetypes({'left': '25%', 'options': '--reverse'}, <bang>0)
 endif
 
+" NERDTree
+let g:NERDTreeAutoDeleteBuffer = 1
+let g:NERDTreeDirArrows = 1
+let g:NERDTreeIgnore=['\~$', '\.git']
+let g:NERDTreeMinimalUI = 1
+let g:NERDTreeQuitOnOpen = 1
+let g:NERDTreeShowHidden = 1
+
 " NERDCommenter
 let g:NERDCreateDefaultMappings = 0
 let g:NERDSpaceDelims = 1
@@ -97,4 +105,4 @@ let g:vim_markdown_fenced_languages = [
       \ ]
 
 " table-mode-vim
-let g:table_mode_corner='|'
+let g:table_mode_corner = '|'

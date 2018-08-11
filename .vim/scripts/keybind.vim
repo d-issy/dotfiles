@@ -38,6 +38,10 @@ if g:plug.is_enabled('fzf.vim')
   nnoremap <silent><Leader>t :BTags<CR>
 endif
 
+if g:plug.is_enabled('nerdtree')
+  nnoremap <Leader>e :NERDTreeToggle<CR>
+endif
+
 if g:plug.is_enabled('nerdcommenter')
   nmap <silent><Leader>/ <Plug>NERDCommenterToggle
   vmap <silent><Leader>/ <Plug>NERDCommenterToggle
