@@ -1,6 +1,6 @@
 # GoLang
-if [[ -d "${HOME}/go" ]]; then
-    export GOPATH=$HOME/go
+if type go > /dev/null 2>&1 ; then
+    export GOPATH=$HOME
 fi
 
 # Java

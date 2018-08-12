@@ -1,5 +1,5 @@
 EXCLUSIONS := .DS_Store .ex.gitconfig.user .git .gitignore .gitmodules
-CANDIDATES := $(wildcard .??*) bin
+CANDIDATES := $(wildcard .??*)
 DOTFILES   := $(filter-out $(EXCLUSIONS), $(CANDIDATES))
 
 .DEFAULT_GOAL := help

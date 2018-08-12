@@ -7,4 +7,4 @@
     ui = auto
     diff = true
 [ghq]
-    root = ~/go/src
+    root = ~/src

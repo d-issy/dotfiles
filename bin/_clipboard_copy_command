@@ -1,4 +1,9 @@
 #!/bin/bash
+
+_command_exists() {
+    type "$1" > /dev/null 2>&1
+}
+
 if _command_exists "pbcopy"; then
     if type "reattach-to-user-namespace" > /dev/null 2>&1; then
         echo -n "reattach-to-user-namespace pbcopy"
