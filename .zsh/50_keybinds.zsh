@@ -6,7 +6,7 @@ bindkey '^N' down-line-or-history
 bindkey '^E' end-of-line
 bindkey '^P' up-line-or-history
 
-bindkey '^@' ghq-src
+bindkey '^@' repo
 bindkey '^T' insert-filename
 bindkey '^J' self-insert
 bindkey '^R' history-selection

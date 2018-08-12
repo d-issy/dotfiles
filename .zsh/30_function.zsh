@@ -14,15 +14,15 @@ history-selection() {
 }
 zle -N history-selection
 
-# fzf-src - gopath src incremental search
-ghq-src() {
+# rep - gopath src incremental search
+repo() {
     local src=$(ghq list | fzf --query "$1" --reverse -q "$LBUFFER" -1)
     if [ -n "$src" ]; then
         cd $GOPATH/src/$src
         zle reset-prompt
     fi
 }
-zle -N ghq-src
+zle -N repo
 
 # inesrt file
 insert-filename() {
@@ -86,4 +86,3 @@ noproxy() {
 envinit() {
     eval "$(anyenv init -)"
 }
-
