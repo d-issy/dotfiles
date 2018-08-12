@@ -53,12 +53,14 @@ env/setup: ndenv pyenv rbenv
 ndenv: $(ANYENV_DIR)/envs/ndenv/bin/ndenv
 	@eval "$$(anyenv init -)" && \
 		$< install -s $(NODE_VER) && \
-		$< global $(NODE_VER)
+		$< global $(NODE_VER) && \
+		npm install -g eslint tern
 
 pyenv: $(ANYENV_DIR)/envs/pyenv/bin/pyenv
 	@eval "$$(anyenv init -)" && \
 		$< install -s $(PYTHON_VER) && \
-		$< global $(PYTHON_VER)
+		$< global $(PYTHON_VER) && \
+		pip install -U pip autopep8 isort mypy jedi vim-vint
 
 rbenv: $(ANYENV_DIR)/envs/rbenv/bin/rbenv
 	@eval "$$(anyenv init -)" && \

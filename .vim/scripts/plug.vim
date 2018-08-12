@@ -109,8 +109,7 @@ Plug 'dhruvasagar/vim-table-mode', {'for': 'markdown'}
 
 " Python
 if has('python3') && executable('pip')
-  Plug 'davidhalter/jedi-vim', {'for': 'python', 'do': 'pip install jedi'}
-  " Plug 'shepabashi/vim-pyenv', {'for': 'python'}
+  Plug 'davidhalter/jedi-vim'
 endif
 
 call plug#end()
