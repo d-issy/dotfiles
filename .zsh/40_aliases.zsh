@@ -26,14 +26,14 @@ fi
 if [[ -x `which git` ]]; then
     alias g="git"
     alias ga="git add"
+    alias gaa="git add ."
     alias gcf="git checkout --"
     alias gco="git commit"
     alias gd="git diff --color"
     alias gdc="git diff --color --cached"
-    alias gf="git fetch --prune"
-    alias gl="git log --oneline --graph --decorate"
-    alias gp="git push origin HEAD"
-    alias gpl="git pull origin HEAD"
+    alias gfe="git fetch --prune"
+    alias gpush="git push origin HEAD"
+    alias gpull="git pull origin HEAD"
     alias gr="git reset HEAD"
     alias gs="git status"
 fi
@@ -48,7 +48,7 @@ if [[ -x `which tig` ]]; then
     alias ts="tig status"
 fi
 
-# aliases
+# vim
 if [[ -x `which vim` ]]; then
     alias v='vim'
 fi
