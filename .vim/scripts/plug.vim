@@ -4,10 +4,10 @@ endif
 
 " vim-plug object {{ 1
 let g:plug = {
-      \ "path":   expand(g:env.vimpath) . "/autoload/plug.vim",
-      \ "base":   expand(g:env.vimpath) . "/plugged",
-      \ "url":    "https://raw.github.com/junegunn/vim-plug/master/plug.vim",
-      \ "github": "https://github.com/junegunn/vim-plug",
+      \ 'path':   expand(g:env.vimpath) . '/autoload/plug.vim',
+      \ 'base':   expand(g:env.vimpath) . '/plugged',
+      \ 'url':    'https://raw.github.com/junegunn/vim-plug/master/plug.vim',
+      \ 'github': 'https://github.com/junegunn/vim-plug',
       \ }
 
 function! g:plug.ready()
@@ -19,7 +19,7 @@ function! g:plug.is_installed(plug_name)
 endfunction
 
 function! g:plug.is_runtimepath(plug_name)
-  return index(split(&runtimepath, ","), get(g:plugs[a:plug_name], "dir")) != -1
+  return index(split(&runtimepath, ','), get(g:plugs[a:plug_name], 'dir')) != -1
 endfunction
 
 function! g:plug.is_enabled(plug_name)
@@ -29,8 +29,10 @@ endfunction
 
 " vim-plug init if no exists {{
 if !g:plug.ready()
-  execute printf("!curl -fLo %s --create-dirs %s", g:plug.path, g:plug.url)
-  autocmd VimEnter * PlugInstall --sync
+  execute printf('!curl -fLo %s --create-dirs %s', g:plug.path, g:plug.url)
+  augroup plug_install
+    autocmd VimEnter * PlugInstall --sync
+  augroup END
 endif
 "}}
 

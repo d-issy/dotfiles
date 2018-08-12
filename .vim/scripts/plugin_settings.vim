@@ -2,9 +2,9 @@
 " plugin settings
 "=====================================================
 " UtiSnip
-let g:UltiSnipsExpandTrigger = "<c-l>"
-let g:UltiSnipsJumpForwardTrigger = "<c-j>"
-let g:UltiSnipsJumpBackwardTrigger = "<c-k>"
+let g:UltiSnipsExpandTrigger = '<c-l>'
+let g:UltiSnipsJumpForwardTrigger = '<c-j>'
+let g:UltiSnipsJumpBackwardTrigger = '<c-k>'
 
 " fzf
 let $FZF_DEFAULT_COMMAND = "rg --files --hidden --glob '!.git'"
@@ -81,8 +81,8 @@ let g:quickrun_no_default_key_mappings = 0
 
 " jedi-vim
 let g:jedi#popup_on_dot = 0
-let g:jedi#goto_command = "<C-]>"
-let g:jedi#goto_definitions_command = ""
+let g:jedi#goto_command = '<C-]>'
+let g:jedi#goto_definitions_command = ''
 let g:jedi#force_py_version = 3
 
 " markdown

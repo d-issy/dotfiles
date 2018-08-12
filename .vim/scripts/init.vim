@@ -10,7 +10,7 @@ function! s:source(base, ...)
   let l:found = g:false
 	for l:pattern in a:000
 		for l:script in s:glob(a:base, l:pattern)
-      if l:script =~ 'init'
+      if l:script =~? 'init'
         continue
       endif
       execute 'source' l:script
