@@ -19,9 +19,9 @@ path=(
     $HOME/.anyenv/envs/rbenv/shims(N-/)
     $HOME/.anyenv/envs/ndenv/shims(N-/)
     /usr/local/sbin(N-/)
-    /usr/local/bin(N-/)
     /usr/local/opt/openssl/bin(N-/)
     /usr/local/opt/go/libexec/bin(N-/)
+    /usr/local/bin(N-/)
     $path
 )
 
