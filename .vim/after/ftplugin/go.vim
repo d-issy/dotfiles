@@ -1,9 +1,12 @@
 setlocal noexpandtab
 
 let g:go_addtags_transform='camelcase'
-let g:go_fmt_command = "goimports"
+let g:go_fmt_command = 'goimports'
+
+let g:go_info_mode = 'guru'
 
 let g:go_gocode_unimported_packages = 1
+let g:go_gocode_propose_source = 1
 let g:go_highlight_array_whitespace_error = 1
 let g:go_highlight_build_constraints = 1
 let g:go_highlight_chan_whitespace_error = 1
@@ -32,5 +35,5 @@ if g:plug.is_enabled('vim-go')
   nnoremap <buffer> <silent><Leader>gf  :GoTestFunc<CR>
   nnoremap <buffer> <silent><Leader>gg  :GoTest<CR>
   nnoremap <buffer> <silent><Leader>gr  :GoRemoveTags<CR>
-  nnoremap <buffer> <silent><Leader>gt  :GoAlternate<CR>
+  nnoremap <buffer> <silent><Leader>gt  :GoAlternate!<CR>
 endif
