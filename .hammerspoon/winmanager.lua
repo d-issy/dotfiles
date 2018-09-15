@@ -3,7 +3,7 @@
 wmMode = 0
 
 -- wmOffset
-wmOffset = {top=10, bottom=36, left=8, right=8, gap=15}
+wmOffset = {top=10, bottom=36, left=8, right=8, gap=10}
 
 --
 wmApps = {}

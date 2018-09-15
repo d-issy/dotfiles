@@ -5,8 +5,6 @@ tap "homebrew/core"
 tap "homebrew/services"
 tap "universal-ctags/universal-ctags"
 
-tap "koekeishiya/formulae"
-
 brew "automake"
 brew "awscli"
 brew "bison"
