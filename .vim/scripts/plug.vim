@@ -44,7 +44,7 @@ if executable('python') && !has('gui_macvim')
   Plug 'sirver/ultisnips'
 endif
 
-Plug 'honza/vim-snippets'
+" Plug 'honza/vim-snippets'
 Plug 'shepabashi/vim-snippets-extra'
 
 " linter

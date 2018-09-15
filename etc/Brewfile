@@ -6,7 +6,6 @@ tap "homebrew/services"
 tap "universal-ctags/universal-ctags"
 
 tap "koekeishiya/formulae"
-tap "crisidev/chunkwm"
 
 brew "automake"
 brew "awscli"
@@ -14,7 +13,6 @@ brew "bison"
 brew "clang-format"
 brew "cmake"
 brew "coreutils"
-brew "crisidev/chunkwm/chunkwm", args: ["HEAD", "with-purify"]
 brew "curl"
 brew "diffutils"
 brew "exa"
@@ -90,7 +88,6 @@ cask "sequel-pro"
 cask "skype"
 cask "staruml"
 cask "teensy"
-cask "ubersicht"
 cask "visual-studio-code"
 cask "vivaldi"
 
