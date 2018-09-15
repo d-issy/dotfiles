@@ -1,18 +1,21 @@
 local max = hs.screen.primaryScreen():frame()
 cv = hs.canvas.new{x = 0, y = max.h - 27, w = max.w, h = 20}
 
-hs.timer.doEvery(1, function()
+menuUpdater = hs.timer.doEvery(1, function()
     --
-    date = os.date('%m/%d %H:%M')
+    local date = os.date('%m/%d %H:%M')
     --
-    volume = io.popen("osascript -e 'output volume of (get volume settings)'"):read('*a')
-    volume = string.gsub(volume, '[\n\r]*', '')
+    local volumeCmd = io.popen("osascript -e 'output volume of (get volume settings)'")
+    local volume = string.gsub(volumeCmd:read('*a'), '[\n\r]*', '')
+    volumeCmd:close()
     --
-    battery = io.popen("pmset -g batt | egrep '([0-9]+\\%)' -o | cut -f1 -d';'"):read('*a')
-    battery = string.gsub(battery, '%%[\n\r]*', '')
+    local batteryCmd = io.popen("pmset -g batt | egrep '([0-9]+\\%)' -o | cut -f1 -d';'")
+    local battery = string.gsub(batteryCmd:read('*a'), '%%[\n\r]*', '')
+    batteryCmd:close()
     --
-    wifi = io.popen("/System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources/airport -I | sed -e \"s/^ *SSID: //p\" -e d"):read('*a')
-    wifi = string.gsub(wifi, '[\n\r]*', '')
+    local wifiCmd = io.popen("/System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources/airport -I | sed -e \"s/^ *SSID: //p\" -e d")
+    local wifi = string.gsub(wifiCmd:read('*a'), '[\n\r]*', '')
+    wifiCmd:close()
     --
 
     cv[1] = {
@@ -46,5 +49,6 @@ hs.timer.doEvery(1, function()
     }
 
 end)
+menuUpdater:start()
 
 cv:show()
