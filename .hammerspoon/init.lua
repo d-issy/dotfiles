@@ -3,6 +3,7 @@ require('proxy')
 require('eikana')
 -- require('chunkwm')
 require('winmanager')
+require('menubar')
 
 --- config loaded
 local logger = hs.logger.new('dotfile', 'debug')
