@@ -1,5 +1,5 @@
 local max = hs.screen.primaryScreen():frame()
-cv = hs.canvas.new{x = 0, y = max.h - 25, w = max.w, h = 20}
+cv = hs.canvas.new{x = 0, y = max.h - 27, w = max.w, h = 20}
 
 hs.timer.doEvery(1, function()
     --
