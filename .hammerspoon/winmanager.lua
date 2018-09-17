@@ -25,6 +25,9 @@ function isNotChange(appName, win)
     if appName == 'Hammerspoon' then
         return true
     end
+    if appName == 'loginwindow' then
+        return true
+    end
     if appName == 'Finder' then
         return true
     end
@@ -32,6 +35,9 @@ function isNotChange(appName, win)
         return true
     end
     if win == nil then
+        return true
+    end
+    if win:title() == '' then
         return true
     end
     if win:title() == 'Open' then
