@@ -22,6 +22,7 @@ xTitles = {
 
 -- show
 winFilter = hs.window.filter.new(nil, nil, 'debug')
+winFilter:setCurrentSpace(true)
 winFilter:subscribe(hs.window.filter.windowFocused, function(win, app)
     if mode == 1 then return end
     if not win:isStandard() then return end
