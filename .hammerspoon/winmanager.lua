@@ -1,12 +1,13 @@
+-- animationDuration
+hs.window.animationDuration = 0
+
 -- wmMode 0 single window mode
 -- wmMode 1 tile window mode
+
 wmMode = 0
 
 -- wmOffset
 wmOffset = {top=10, bottom=36, left=8, right=8, gap=10}
-
---
-wmApps = {}
 
 --
 wmAppFilter = hs.window.filter.new()
@@ -21,22 +22,23 @@ wmAppSwitcher = hs.window.switcher.new(wmAppFilter, {
     showSelectedThumbnail = false
 })
 
-function isNotChange(appName, win)
-    if appName == 'Hammerspoon' then
-        return true
+xApps = {
+    'Activity Monitor',
+    'Finder',
+    'FortiClient',
+    'Hammerspoon',
+    'System Preferences',
+    'loginwindow',
+}
+
+function isNotChange(appName)
+    for i=1, #xApps do
+        if appName == xApps[i] then
+            return true
+        end
     end
-    if appName == 'loginwindow' then
-        return true
-    end
-    if appName == 'Finder' then
-        return true
-    end
-    if appName == 'System Preferences' then
-        return true
-    end
-    if win == nil then
-        return true
-    end
+    local win = hs.window.focusedWindow()
+    if win == nil then return true end
     if win:title() == '' then
         return true
     end
@@ -46,48 +48,33 @@ function isNotChange(appName, win)
     return false
 end
 
-wmAppManager = hs.application.watcher.new(function(appName, eType, app)
-    local win = hs.window.focusedWindow()
-    if isNotChange(appName, win) then
+wmAppManager = hs.application.watcher.new(function(appName, eType)
+    if isNotChange(appName) then
         return
     end
     if eType == hs.application.watcher.activated then
-        -- hs.alert.show('activated')
+        local win = hs.window.focusedWindow()
         if wmMode == 0 then
             toFull()
         end
     end
-    if eType == hs.application.watcher.deactivated then
-        -- hs.alert.show('deactivated')
-    end
-    if eType == hs.application.watcher.hidden then
-        -- hs.alert.show('hidden')
-    end
-    if eType == hs.application.watcher.launching then
-        -- hs.alert.show('launching')
-    end
-    if eType == hs.application.watcher.launched then
-        -- hs.alert.show('launched')
-    end
-    if eType == hs.application.watcher.terminated then
-        -- hs.alert.show('terminated')
-    end
-    if eType == hs.application.watcher.unhidden then
-        -- hs.alert.show('unhidden')
-    end
-    -- hs.alert.show(appName)
-    -- hs.alert.show(app:mainWindow():title())
 end):start()
 
 function toFull()
     local scFrame = hs.screen.mainScreen():frame()
     local win = hs.window.focusedWindow()
+    local width = scFrame.w - wmOffset.left - wmOffset.right
+    local heigth = scFrame.h - wmOffset.top - wmOffset.bottom
     win:setFrameInScreenBounds(hs.geometry.rect(
         wmOffset.left,
         wmOffset.top,
-        scFrame.w - wmOffset.left - wmOffset.right,
-        scFrame.h - wmOffset.top  - wmOffset.bottom
-    ), 0)
+        width,
+        heigth
+    ))
+    local f = win:frame()
+    if f.w < width or f.h < heigth then
+        win:centerOnScreen()
+    end
 end
 
 function toWest()
@@ -99,7 +86,7 @@ function toWest()
         wmOffset.top,
         scFrame.w/2 - wmOffset.left - wmOffset.gap/2,
         scFrame.h - wmOffset.top - wmOffset.bottom
-    ), 0)
+    ))
 end
 
 function toEast()
@@ -111,7 +98,14 @@ function toEast()
         wmOffset.top,
         scFrame.w/2 - wmOffset.right - wmOffset.gap/2,
         scFrame.h - wmOffset.top - wmOffset.bottom
-    ), 0)
+    ))
+end
+
+function toCenter()
+    local win = hs.window.focusedWindow()
+    if win ~= nil then
+        win:centerOnScreen()
+    end
 end
 
 -- keybind
@@ -124,6 +118,8 @@ hs.hotkey.bind({'ctrl', 'alt'}, 'S', function()
     wmMode = 1
 end)
 -- move
+hs.hotkey.bind({'ctrl', 'alt'}, 'C', toCenter)
+-- switch
 hs.hotkey.bind({'alt'}, 'L', function() wmAppSwitcher:next() end)
 hs.hotkey.bind({'alt'}, 'H', function() wmAppSwitcher:previous() end)
 -- wrap
