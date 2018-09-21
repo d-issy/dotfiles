@@ -1,7 +1,6 @@
 require('keybind')
 require('proxy')
 require('eikana')
--- require('chunkwm')
 require('winmanager')
 require('menubar')
 
