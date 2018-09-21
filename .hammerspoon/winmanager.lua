@@ -1,127 +1,133 @@
--- animationDuration
+-- global settings
 hs.window.animationDuration = 0
+offset = {top=10, bottom=36, left=8, right=8, gap=10}
 
--- wmMode 0 single window mode
--- wmMode 1 tile window mode
+-- mode
+-- 0: single app mode
+-- 1: original mode
+mode = 1
 
-wmMode = 0
-
--- wmOffset
-wmOffset = {top=10, bottom=36, left=8, right=8, gap=10}
-
---
-wmAppFilter = hs.window.filter.new()
-wmAppFilter:setCurrentSpace(true)
-wmAppFilter:setSortOrder(hs.window.filter.sortByCreated)
-wmAppFilter:setAppFilter('Hammerspoon', false)
-
---
-wmAppSwitcher = hs.window.switcher.new(wmAppFilter, {
-    showTitles = false,
-    showThumbnails = false,
-    showSelectedThumbnail = false
-})
-
+-- applications settings
 xApps = {
-    'Activity Monitor',
+    'Alfred 3',
     'Finder',
-    'FortiClient',
     'Hammerspoon',
     'System Preferences',
-    'loginwindow',
 }
 
-function isNotChange(appName)
+xTitles = {
+    '',
+    'Open',
+}
+
+-- show
+winFilter = hs.window.filter.new(nil, nil, 'debug')
+winFilter:subscribe(hs.window.filter.windowFocused, function(win, app)
+    if mode == 1 then return end
+    if not win:isStandard() then return end
     for i=1, #xApps do
-        if appName == xApps[i] then
-            return true
-        end
+        if app == xApps[i] then return end
     end
-    local win = hs.window.focusedWindow()
-    if win == nil then return true end
-    if win:title() == '' then
-        return true
+    for i=1, #xTitles do
+        if win:title() == xTitles[i] then return end
     end
-    if win:title() == 'Open' then
-        return true
-    end
-    return false
-end
-
-wmAppManager = hs.application.watcher.new(function(appName, eType)
-    if isNotChange(appName) then
-        return
-    end
-    if eType == hs.application.watcher.activated then
-        local win = hs.window.focusedWindow()
-        if wmMode == 0 then
-            toFull()
-        end
-    end
-end):start()
-
-function toFull()
-    local scFrame = hs.screen.mainScreen():frame()
-    local win = hs.window.focusedWindow()
-    local width = scFrame.w - wmOffset.left - wmOffset.right
-    local heigth = scFrame.h - wmOffset.top - wmOffset.bottom
-    win:setFrameInScreenBounds(hs.geometry.rect(
-        wmOffset.left,
-        wmOffset.top,
-        width,
-        heigth
-    ))
-    local f = win:frame()
-    if f.w < width or f.h < heigth then
-        win:centerOnScreen()
-    end
-end
-
-function toWest()
-    wmMode = 1
-    local scFrame = hs.screen.mainScreen():frame()
-    local win = hs.window.focusedWindow()
-    win:setFrameInScreenBounds(hs.geometry.rect(
-        wmOffset.left,
-        wmOffset.top,
-        scFrame.w/2 - wmOffset.left - wmOffset.gap/2,
-        scFrame.h - wmOffset.top - wmOffset.bottom
-    ))
-end
-
-function toEast()
-    wmMode = 1
-    local scFrame = hs.screen.mainScreen():frame()
-    local win = hs.window.focusedWindow()
-    win:setFrameInScreenBounds(hs.geometry.rect(
-        scFrame.w/2 + wmOffset.gap/2,
-        wmOffset.top,
-        scFrame.w/2 - wmOffset.right - wmOffset.gap/2,
-        scFrame.h - wmOffset.top - wmOffset.bottom
-    ))
-end
-
-function toCenter()
-    local win = hs.window.focusedWindow()
-    if win ~= nil then
-        win:centerOnScreen()
-    end
-end
-
--- keybind
--- mode
-hs.hotkey.bind({'ctrl', 'alt'}, 'A', function()
-    wmMode = 0
     toFull()
 end)
-hs.hotkey.bind({'ctrl', 'alt'}, 'S', function()
-    wmMode = 1
-end)
--- move
-hs.hotkey.bind({'ctrl', 'alt'}, 'C', toCenter)
--- switch
-hs.hotkey.bind({'alt'}, 'L', function() wmAppSwitcher:next() end)
-hs.hotkey.bind({'alt'}, 'H', function() wmAppSwitcher:previous() end)
--- wrap
-hs.hotkey.bind({'ctrl', 'alt'}, 'H', function() toWest() end)
-hs.hotkey.bind({'ctrl', 'alt'}, 'L', function() toEast() end)
+
+function toCenter(win)
+    win = win or hs.window.focusedWindow()
+    if win == nil then return end
+    win:centerOnScreen(nil, true)
+end
+
+function toFull(win)
+    win = win or hs.window.focusedWindow()
+    if win == nil then return end
+    local max = hs.screen.mainScreen():frame()
+    win:setFrame({
+        offset.left,
+        offset.top,
+        max.w - offset.left - offset.right,
+        max.h - offset.top - offset.bottom
+    })
+    mode = 0
+end
+
+function toLeftSide(win)
+    win = win or hs.window.focusedWindow()
+    if win == nil then return end
+    local max = hs.screen.mainScreen():frame()
+    win:setFrame({
+        offset.left,
+        offset.top,
+        max.w/2 - offset.left - offset.gap/2,
+        max.h - offset.top - offset.bottom
+    })
+    mode = 1
+end
+
+function toRightSide(win)
+    win = win or hs.window.focusedWindow()
+    if win == nil then return end
+    local max = hs.screen.mainScreen():frame()
+    win:setFrame({
+        max.w/2 + offset.gap/2,
+        offset.top,
+        max.w/2 - offset.right - offset.gap/2,
+        max.h - offset.top - offset.bottom
+    })
+    mode = 1
+end
+
+function disableSingleAppMode()
+    mode = 1
+end
+
+---- switch
+switcher = hs.window.switcher.new(winFilter, {
+    showTitles = false,
+    showThumbnails = true,
+    showSelectedThumbnail = false,
+    showSelectedTitle = false,
+})
+
+function focusLeftWindow()
+    if mode == 1 then
+        winFilter:focusWindowWest()
+    else
+        switcher:previous()
+    end
+end
+
+function focusRightWindow()
+    if mode == 1 then
+        winFilter:focusWindowEast()
+    else
+        switcher:next()
+    end
+end
+
+function focusApp(name)
+    local app = hs.appfinder.appFromName(name)
+    if app ~= nil and app:isRunning() then
+        app:activate(true)
+    else
+        hs.application.open(name)
+    end
+end
+
+
+-- bind
+hs.hotkey.bind({'alt'}, 'A', toFull)
+hs.hotkey.bind({'alt'}, 'S', disableSingleAppMode)
+hs.hotkey.bind({'alt'}, 'C', toCenter)
+
+hs.hotkey.bind({'ctrl', 'alt'}, 'H', toLeftSide)
+hs.hotkey.bind({'ctrl', 'alt'}, 'L', toRightSide)
+
+hs.hotkey.bind({'alt'}, 'H', focusLeftWindow)
+hs.hotkey.bind({'alt'}, 'L', focusRightWindow)
+
+--
+hs.hotkey.bind({'alt'}, 'E', function() focusApp('com.googlecode.iterm2') end)
+hs.hotkey.bind({'alt'}, 'V', function() focusApp('com.vivaldi.Vivaldi') end)
