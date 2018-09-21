@@ -14,7 +14,7 @@ window:
   padding:
     x: 2
     y: 2
-  decorations: false
+  decorations: none
   scale_with_dpi: true
 font:
   normal:
@@ -63,6 +63,7 @@ selection:
   semantic_escape_chars: ",│`|:\"' ()[]{}<>"
 
 dynamic_title: true
+unfocused_hollow_cursor: true
 
 key_bindings:
   - { key: Paste,                          action: Paste            }
@@ -111,6 +112,18 @@ key_bindings:
   - { key: RBracket,  mods: Control,       chars:  "\x1D"           }
   - { key: Caret,     mods: Control,       chars:  "\x1E"           }
   - { key: Underline, mods: Control,       chars:  "\x1F"           }
+  - { key: F1,                             chars: "\x1bOP"          }
+  - { key: F2,                             chars: "\x1bOQ"          }
+  - { key: F3,                             chars: "\x1bOR"          }
+  - { key: F4,                             chars: "\x1bOS"          }
+  - { key: F5,                             chars: "\x1b[15~"        }
+  - { key: F6,                             chars: "\x1b[17~"        }
+  - { key: F7,                             chars: "\x1b[18~"        }
+  - { key: F8,                             chars: "\x1b[19~"        }
+  - { key: F9,                             chars: "\x1b[20~"        }
+  - { key: F10,                            chars: "\x1b[21~"        }
+  - { key: F11,                            chars: "\x1b[23~"        }
+  - { key: F12,                            chars: "\x1b[24~"        }
 # xterm config
   - { key: Minus,     mods: Control,       chars:  "\x1F"           }
   - { key: Key3,      mods: Control,       chars:  "\x1B"           }
