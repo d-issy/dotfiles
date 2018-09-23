@@ -84,28 +84,52 @@ function disableSingleAppMode()
     mode = 1
 end
 
----- switch
-switcher = hs.window.switcher.new(winFilter, {
-    showTitles = false,
-    showThumbnails = true,
-    showSelectedThumbnail = false,
-    showSelectedTitle = false,
-})
+---- switcher
+function getWinInfo()
+    local c = hs.window.focusedWindow()
+    local cid = c and c:id() or nil
+    local rs = {
+        windows = {},
+        current = c,
+        currentID = cid,
+    }
+    local wins = hs.window.allWindows()
+    if mode ~= 0 then
+        table.sort(wins, function(a, b)
+            return a:frame().x < b:frame().x
+        end)
+    end
+    for i=1, #wins do
+        local win = wins[i]
+        local idx = #rs.windows+1
+        if cid == win:id() then
+            rs.currentIdx = idx
+            rs.windows[idx] = win
+        elseif win:isStandard() then
+            rs.windows[idx] = win
+        end
+    end
+    return rs
+end
 
 function focusLeftWindow()
-    if mode == 1 then
-        winFilter:focusWindowWest()
+    local w = getWinInfo()
+    local idx
+    if w.currentIdx == nil then idx = 1
     else
-        switcher:previous()
+        idx = (w.currentIdx-2) % (#w.windows) + 1
     end
+    w.windows[idx]:focus()
 end
 
 function focusRightWindow()
-    if mode == 1 then
-        winFilter:focusWindowEast()
+    local w = getWinInfo()
+    local idx
+    if w.currentIdx == nil then idx = 1
     else
-        switcher:next()
+        idx =(w.currentIdx) % (#w.windows) + 1
     end
+    w.windows[idx]:focus()
 end
 
 function focusApp(name)
@@ -116,7 +140,6 @@ function focusApp(name)
         hs.application.open(name)
     end
 end
-
 
 -- bind
 hs.hotkey.bind({'alt'}, 'A', toFull)
