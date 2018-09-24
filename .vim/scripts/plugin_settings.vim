@@ -106,3 +106,8 @@ let g:vim_markdown_fenced_languages = [
 
 " table-mode-vim
 let g:table_mode_corner = '|'
+
+let g:eskk#server = {
+				\	'host': 'localhost',
+				\	'port': 55100,
+				\}

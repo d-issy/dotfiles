@@ -73,6 +73,7 @@ Plug 'thinca/vim-quickrun'
 Plug 'tpope/tpope-vim-abolish'
 Plug 'tpope/vim-surround'
 Plug 'wellle/targets.vim'
+Plug 'tyru/eskk.vim'
 
 " git
 if executable('git')
