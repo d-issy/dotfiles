@@ -29,7 +29,10 @@ appWatcher = hs.application.watcher.new(function(app, eType)
     if eType ~= hs.application.watcher.activated then
         return
     end
-    if app == 'Terminal' or app == 'iTerm2' or app == 'Alacritty' then
+    if app == 'Terminal'
+        or app == 'iTerm2'
+        or app == 'Alacritty'
+        or app == 'Hyper' then
         for i=1, #keyCodes do
             keyCodes[i]:disable()
         end
