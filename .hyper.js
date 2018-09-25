@@ -142,6 +142,7 @@ module.exports = {
     'hyperminimal',
     'hyperterm-gruvbox',
     'hyper-statusline',
+    'hypercwd',
   ],
 
   // in development, you can create a directory under
