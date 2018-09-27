@@ -3,10 +3,9 @@ setlocal noexpandtab
 let g:go_addtags_transform='camelcase'
 let g:go_fmt_command = 'goimports'
 
-let g:go_info_mode = 'guru'
+let g:go_gocode_propose_source = 0
+let g:go_gocode_propose_builtins = 1
 
-let g:go_gocode_unimported_packages = 1
-let g:go_gocode_propose_source = 1
 let g:go_highlight_array_whitespace_error = 1
 let g:go_highlight_build_constraints = 1
 let g:go_highlight_chan_whitespace_error = 1
@@ -21,11 +20,11 @@ let g:go_highlight_space_tab_error = 1
 let g:go_highlight_string_spellcheck = 1
 let g:go_highlight_trailing_whitespace_error = 1
 let g:go_highlight_types = 1
+let g:go_highlight_variable_assignments = 1
 
 let g:go_template_autocreate = 0
 
 if g:plug.is_enabled('vim-go')
-  nnoremap <buffer> <silent><Leader>i   :GoInfo<CR>
   nnoremap <buffer> <silent><Leader>r   :GoRename<CR>
   nnoremap <buffer> <silent><Leader>t   :GoDecls<CR>
   nnoremap <buffer> <silent><Leader>ga  :GoAddTags<CR>
@@ -35,5 +34,7 @@ if g:plug.is_enabled('vim-go')
   nnoremap <buffer> <silent><Leader>gf  :GoTestFunc<CR>
   nnoremap <buffer> <silent><Leader>gg  :GoTest<CR>
   nnoremap <buffer> <silent><Leader>gr  :GoRemoveTags<CR>
+  nnoremap <buffer> <silent><Leader>gs  :GoInfo<CR>
   nnoremap <buffer> <silent><Leader>gt  :GoAlternate!<CR>
+  nnoremap <buffer> <Leader>i  :GoImport 
 endif
