@@ -1,5 +1,4 @@
 require('keybind')
-require('proxy')
 require('eikana')
 require('winmanager')
 require('menubar')
