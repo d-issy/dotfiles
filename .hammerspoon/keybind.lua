@@ -1,47 +1,48 @@
--- keymap
-function remap(mods, key, fn)
-    return hs.hotkey.bind(mods, key, fn, nil, fn)
+-- str keymap
+keyCodes = hs.hotkey.modal.new(nil)
+
+function keyCodes:newMap(mods, key, fn)
+    self:bind(mods, key, fn, nil, fn)
 end
 
--- app shortcut handling
-keyCodes = {}
-keyCodes[#keyCodes+1] = remap({'ctrl'}, 'W', function()
+keyCodes:newMap({'ctrl'}, 'W', function()
     hs.eventtap.keyStroke({'alt'}, 'Delete', 0)
 end)
 
-keyCodes[#keyCodes+1] = remap({'ctrl'}, 'H', function()
-    hs.eventtap.keyStroke({}, 'Left', 0)
-end)
-
-keyCodes[#keyCodes+1] = remap({'ctrl'}, 'N', function()
+keyCodes:newMap({'ctrl'}, 'N', function()
     hs.eventtap.keyStroke({}, 'Down', 0)
 end)
 
-keyCodes[#keyCodes+1] = remap({'ctrl'}, 'P', function()
+keyCodes:newMap({'ctrl'}, 'P', function()
     hs.eventtap.keyStroke({}, 'Up', 0)
 end)
 
-keyCodes[#keyCodes+1] = remap({'ctrl'}, 'L', function()
+keyCodes:newMap({'ctrl'}, 'H', function()
+    hs.eventtap.keyStroke({}, 'Left', 0)
+end)
+
+keyCodes:newMap({'ctrl'}, 'L', function()
     hs.eventtap.keyStroke({}, 'Right', 0)
 end)
 
-appWatcher = hs.application.watcher.new(function(app, eType)
-    if eType ~= hs.application.watcher.activated then
-        return
-    end
+-- hotkey toggle by application
+appWatcher = hs.window.filter.new()
+appWatcher:allowApp'Alfred 3'
+appWatcher:allowApp'Spotlight'
+
+appWatcher:subscribe({
+    hs.window.filter.windowFocused,
+    hs.window.filter.windowVisible
+}, function(win, app)
     if app == 'Terminal'
         or app == 'iTerm2'
         or app == 'Alacritty'
         or app == 'Hyper' then
-        for i=1, #keyCodes do
-            keyCodes[i]:disable()
-        end
+        keyCodes:exit()
     else
-        for i=1, #keyCodes do
-            keyCodes[i]:enable()
-        end
+        keyCodes:enter()
     end
-end):start()
+end)
 
 --- reload
 hs.hotkey.bind({'cmd', 'alt', 'ctrl'}, 'R', function()
