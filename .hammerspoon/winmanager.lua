@@ -112,6 +112,30 @@ function getWinInfo()
     return rs
 end
 
+function showAlert(str)
+    local win = hs.window.focusedWindow()
+    local f = win:frame()
+    if boxTimer ~= nil then boxTimer:fire() end
+    if mode == 0 then return end
+    box = hs.drawing.rectangle(hs.geometry.rect(f.x + f.w - 15, f.y + 5, 10, 10))
+    box:setFillColor{red = 0.1, green = 0.3, blue = 0.7, alpha = 1.0}
+    box:setStrokeWidth(0)
+    box:show()
+    boxTimer = hs.timer.doAfter(1.0, function()
+        box:delete()
+        box = nil
+    end)
+end
+
+hs.hotkey.bind({'alt'}, 'M', function()
+    local win = hs.window.focusedWindow()
+    local f = win:frame()
+    hs.alert.show(f.x)
+    hs.alert.show(f.y)
+    hs.alert.show(f.w)
+    hs.alert.show(f.h)
+end)
+
 function focusLeftWindow()
     local w = getWinInfo()
     local idx
@@ -120,6 +144,7 @@ function focusLeftWindow()
         idx = (w.currentIdx-2) % (#w.windows) + 1
     end
     w.windows[idx]:focus()
+    showAlert()
 end
 
 function focusRightWindow()
@@ -130,6 +155,7 @@ function focusRightWindow()
         idx =(w.currentIdx) % (#w.windows) + 1
     end
     w.windows[idx]:focus()
+    showAlert()
 end
 
 function focusApp(name)
