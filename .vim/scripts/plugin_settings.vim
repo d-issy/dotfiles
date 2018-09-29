@@ -107,7 +107,16 @@ let g:vim_markdown_fenced_languages = [
 " table-mode-vim
 let g:table_mode_corner = '|'
 
+" eskk
+if g:env.os ==# 'mac'
+let g:eskk#large_dictionary = {
+      \ 'path': '~/Library/Application Support/AquaSKK/SKK-JISYO.L',
+      \ 'sorted': 1,
+      \ 'encoding': 'euc-jp',
+      \}
+
 let g:eskk#server = {
 				\	'host': 'localhost',
-				\	'port': 55100,
+				\	'port': 1178,
 				\}
+endif
