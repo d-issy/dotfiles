@@ -65,6 +65,8 @@ Plug 'editorconfig/editorconfig-vim'
 " comment
 Plug 'scrooloose/nerdcommenter'
 
+Plug 'AndrewRadev/splitjoin.vim'
+Plug 'jiangmiao/auto-pairs'
 Plug 'junegunn/vim-easy-align'
 Plug 'majutsushi/tagbar'
 Plug 'mattn/emmet-vim'
@@ -72,8 +74,8 @@ Plug 'scrooloose/nerdtree'
 Plug 'thinca/vim-quickrun'
 Plug 'tpope/tpope-vim-abolish'
 Plug 'tpope/vim-surround'
-Plug 'wellle/targets.vim'
 Plug 'tyru/eskk.vim'
+Plug 'wellle/targets.vim'
 
 " git
 if executable('git')
