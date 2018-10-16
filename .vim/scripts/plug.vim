@@ -74,7 +74,6 @@ Plug 'scrooloose/nerdtree'
 Plug 'thinca/vim-quickrun'
 Plug 'tpope/tpope-vim-abolish'
 Plug 'tpope/vim-surround'
-Plug 'tyru/eskk.vim'
 Plug 'wellle/targets.vim'
 
 " git
