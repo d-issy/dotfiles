@@ -16,7 +16,8 @@ eikanaEventTap = hs.eventtap.new({
 
     -- except app
     local activeApp = hs.application.frontmostApplication()
-    if activeApp:bundleID() == 'com.vmware.fusion' then
+    if activeApp:bundleID() == 'com.vmware.fusion' or
+        activeApp:bundleID() == 'org.virtualbox.app.VirtualBox' then
         singleCmd = false
         return
     end
