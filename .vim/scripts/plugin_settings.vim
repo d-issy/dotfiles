@@ -84,6 +84,7 @@ let g:jedi#popup_on_dot = 0
 let g:jedi#goto_command = '<C-]>'
 let g:jedi#goto_definitions_command = ''
 let g:jedi#force_py_version = 3
+let g:jedi#show_call_signatures = 0
 
 " markdown
 let g:vim_markdown_folding_disabled = 1
