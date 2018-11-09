@@ -32,7 +32,6 @@ appWatcher:allowApp'Spotlight'
 
 appWatcher:subscribe({
     hs.window.filter.windowFocused,
-    hs.window.filter.windowVisible
 }, function(win, app)
     if app == 'Terminal'
         or app == 'iTerm2'
