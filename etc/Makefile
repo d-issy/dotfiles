@@ -1,7 +1,7 @@
 # lang default versions
-NODE_VER   := v8.11.3
-PYTHON_VER := 3.7.0
-RUBY_VER   := 2.5.1
+NODE_VER   := v10.13.0
+PYTHON_VER := 3.7.1
+RUBY_VER   := 2.5.3
 
 # env paths or directories
 ANYENV_DIR := $(HOME)/.anyenv
