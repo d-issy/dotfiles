@@ -3,8 +3,9 @@ setlocal noexpandtab
 let g:go_addtags_transform='camelcase'
 let g:go_fmt_command = 'goimports'
 
-let g:go_gocode_propose_source = 0
+let g:go_gocode_propose_source = 1
 let g:go_gocode_propose_builtins = 1
+let g:go_gocode_unimported_packages = 1
 
 let g:go_highlight_array_whitespace_error = 1
 let g:go_highlight_build_constraints = 1
