@@ -1,0 +1,4 @@
+set visualbell
+set noerrorbells
+set smartcase
+set hlsearch
