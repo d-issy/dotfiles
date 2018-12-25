@@ -93,7 +93,7 @@ function getWinInfo()
         current = c,
         currentID = cid,
     }
-    local wins = hs.window.allWindows()
+    local wins = hs.window.visibleWindows()
     if mode ~= 0 then
         table.sort(wins, function(a, b)
             return a:frame().x < b:frame().x
@@ -179,5 +179,6 @@ hs.hotkey.bind({'alt'}, 'H', focusLeftWindow)
 hs.hotkey.bind({'alt'}, 'L', focusRightWindow)
 
 --
+
 hs.hotkey.bind({'alt'}, 'E', function() focusApp('com.googlecode.iterm2') end)
 hs.hotkey.bind({'alt'}, 'V', function() focusApp('com.vivaldi.Vivaldi') end)
