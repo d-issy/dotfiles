@@ -1,7 +1,7 @@
 # lang default versions
-NODE_VER   := v10.13.0
-PYTHON_VER := 3.7.1
-RUBY_VER   := 2.5.3
+NODE_VER   := v10.14.2
+PYTHON_VER := 3.7.2
+RUBY_VER   := 2.6.0
 
 # env paths or directories
 ANYENV_DIR := $(HOME)/.anyenv
@@ -54,7 +54,7 @@ ndenv: $(ANYENV_DIR)/envs/ndenv/bin/ndenv
 	@eval "$$(anyenv init -)" && \
 		$< install -s $(NODE_VER) && \
 		$< global $(NODE_VER) && \
-		npm install -g eslint tern
+		npm install -g npm eslint tern
 
 pyenv: $(ANYENV_DIR)/envs/pyenv/bin/pyenv
 	@eval "$$(anyenv init -)" && \
