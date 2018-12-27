@@ -76,6 +76,10 @@ Plug 'tpope/tpope-vim-abolish'
 Plug 'tpope/vim-surround'
 Plug 'wellle/targets.vim'
 
+" LSP
+Plug 'prabirshrestha/async.vim'
+Plug 'prabirshrestha/vim-lsp'
+
 " git
 if executable('git')
   Plug 'airblade/vim-gitgutter'
@@ -108,10 +112,5 @@ endif
 Plug 'plasticboy/vim-markdown', {'for': 'markdown'}
 Plug 'previm/previm', {'for': 'markdown'}
 Plug 'dhruvasagar/vim-table-mode', {'for': 'markdown'}
-
-" Python
-if has('python3') && executable('pip')
-  Plug 'davidhalter/jedi-vim'
-endif
 
 call plug#end()

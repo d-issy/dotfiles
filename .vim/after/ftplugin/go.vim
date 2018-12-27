@@ -1,11 +1,9 @@
 setlocal noexpandtab
 
 let g:go_addtags_transform='camelcase'
-let g:go_fmt_command = 'goimports'
+let g:go_fmt_command = 'gofmt'
 
-let g:go_gocode_propose_source = 1
-let g:go_gocode_propose_builtins = 1
-let g:go_gocode_unimported_packages = 1
+let g:go_doc_keywordprg_enabled = 0
 
 let g:go_highlight_array_whitespace_error = 1
 let g:go_highlight_build_constraints = 1
@@ -28,6 +26,7 @@ let g:go_template_autocreate = 0
 if g:plug.is_enabled('vim-go')
   nnoremap <buffer> <silent><Leader>r   :GoRename<CR>
   nnoremap <buffer> <silent><Leader>t   :GoDecls<CR>
+  nnoremap <buffer> <silent><Leader>f   :GoImports<CR>
   nnoremap <buffer> <silent><Leader>ga  :GoAddTags<CR>
   nnoremap <buffer> <silent><Leader>gc  :GoCoverageToggle<CR>
   nnoremap <buffer> <silent><Leader>gd  :GoDeclsDir<CR>

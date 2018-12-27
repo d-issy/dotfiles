@@ -53,6 +53,7 @@ call s:load('basic.vim')
 call s:load('keybind.vim')
 call s:load('statusline.vim')
 call s:load('fold.vim')
+call s:load('lsp.vim')
 
 if g:env.gui
   call s:load('gui.vim')
