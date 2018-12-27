@@ -60,7 +60,7 @@ pyenv: $(ANYENV_DIR)/envs/pyenv/bin/pyenv
 	@eval "$$(anyenv init -)" && \
 		$< install -s $(PYTHON_VER) && \
 		$< global $(PYTHON_VER) && \
-		pip install -U pip autopep8 isort mypy jedi vim-vint
+		pip install -U pip autopep8 isort mypy vim-vint python-language-server
 
 rbenv: $(ANYENV_DIR)/envs/rbenv/bin/rbenv
 	@eval "$$(anyenv init -)" && \
@@ -71,6 +71,7 @@ rbenv: $(ANYENV_DIR)/envs/rbenv/bin/rbenv
 go:
 	go get -u github.com/motemen/ghq
 	go get -u github.com/motemen/gore
+	go get -u golang.org/x/tools/cmd/golsp
 
 # rust
 rust: rust/setup
