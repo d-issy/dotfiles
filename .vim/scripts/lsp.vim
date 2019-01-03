@@ -22,20 +22,6 @@ if executable('golsp')
           \ 'whitelist': ['go'],
           \ })
 
-    function! GoCompletion(findstart, base) abort
-      let l:res = lsp#complete(a:findstart, a:base)
-      if a:findstart
-        return l:res
-      end
-      return map(l:res, {_, v -> {
-            \ 'word': v['menu'] == 'function' ?
-            \         substitute(v['word'], '\v\(\zs.*', '', '') :
-            \         substitute(v['word'], '\s=.*', '', ''),
-            \ 'abbr': v['word'],
-            \ 'menu': v['menu'] == 'enum member' ? '' : v['menu'],
-            \ 'info': v['info']
-            \ }})
-    endfunction
-    autocmd FileType go setlocal omnifunc=GoCompletion
+    autocmd FileType go setlocal omnifunc=lsp#complete
   augroup END
 endif
