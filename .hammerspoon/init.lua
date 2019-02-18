@@ -1,7 +1,7 @@
 require('keybind')
 require('eikana')
 require('winmanager')
-require('menubar')
+require('watch')
 
 --- config loaded
 print('config loaded')

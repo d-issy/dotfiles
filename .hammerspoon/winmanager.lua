@@ -1,6 +1,6 @@
 -- global settings
 hs.window.animationDuration = 0
-offset = {top=10, bottom=36, left=8, right=8, gap=10}
+offset = {top=0, bottom=0, left=0, right=0, gap=1}
 
 -- mode
 -- 0: single app mode
@@ -13,6 +13,8 @@ xApps = {
     'Finder',
     'Hammerspoon',
     'System Preferences',
+    'VirtualBox',
+    'VMware Fusion',
 }
 
 xTitles = {
