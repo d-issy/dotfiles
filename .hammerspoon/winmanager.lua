@@ -160,12 +160,24 @@ function focusRightWindow()
     showAlert()
 end
 
-function focusApp(name)
-    local app = hs.appfinder.appFromName(name)
-    if app ~= nil and app:isRunning() then
+function focusApp(appInfo)
+    local app = hs.application.find(appInfo)
+    if app == nil then
+        hs.application.open(appInfo)
+        return
+    end
+    local mainWin = app:mainWindow()
+    if mainWin ~= nil and not app:isHidden() then
         app:activate(true)
-    else
-        hs.application.open(name)
+        return
+    end
+    local wins = app:allWindows()
+    if #wins == 1 then
+        local w = wins[1]
+        if w:isMinimized() then
+            w:unminimize()
+        end
+        w:focus()
     end
 end
 
