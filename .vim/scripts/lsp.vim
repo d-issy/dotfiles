@@ -13,15 +13,12 @@ if executable('pyls')
 endif
 
 " go
-if executable('golsp')
+if executable('go-langserver')
   augroup LspGo
-    au!
-    autocmd User lsp_setup call lsp#register_server({
-          \ 'name': 'golsp',
-          \ 'cmd': {server_info->['golsp']},
+    au User lsp_setup call lsp#register_server({
+          \ 'name': 'go-langserver',
+          \ 'cmd': {server_info->['go-langserver', '-gocodecompletion']},
           \ 'whitelist': ['go'],
           \ })
-
-    autocmd FileType go setlocal omnifunc=lsp#complete
   augroup END
 endif

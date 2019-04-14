@@ -27,14 +27,19 @@ if g:plug.is_enabled('vim-go')
   nnoremap <buffer> <silent><Leader>r   :GoRename<CR>
   nnoremap <buffer> <silent><Leader>t   :GoDecls<CR>
   nnoremap <buffer> <silent><Leader>f   :GoImports<CR>
-  nnoremap <buffer> <silent><Leader>ga  :GoAddTags<CR>
+  nnoremap <buffer> <silent><Leader>ga  :GoAddTags 
   nnoremap <buffer> <silent><Leader>gc  :GoCoverageToggle<CR>
   nnoremap <buffer> <silent><Leader>gd  :GoDeclsDir<CR>
   nnoremap <buffer> <silent><Leader>ge  :GoIfErr<CR>
   nnoremap <buffer> <silent><Leader>gf  :GoTestFunc<CR>
   nnoremap <buffer> <silent><Leader>gg  :GoTest<CR>
+  nnoremap <buffer> <silent><Leader>gj  :GoAddTags<CR>
   nnoremap <buffer> <silent><Leader>gr  :GoRemoveTags<CR>
   nnoremap <buffer> <silent><Leader>gs  :GoInfo<CR>
   nnoremap <buffer> <silent><Leader>gt  :GoAlternate!<CR>
   nnoremap <buffer> <Leader>i  :GoImport 
+endif
+
+if g:plug.is_enabled('vim-lsp')
+  setlocal omnifunc=lsp#complete
 endif
