@@ -14,7 +14,7 @@ This endpoint install dependences software and do config.
 make init
 ```
 
-## link 
+## link
 This endpoint create a symbolic link of dotfiles in your HOME directory.
 
 Please note that duplicate files are removed.
@@ -40,4 +40,3 @@ cp .ex.gitconfig.user .gitconfig.user
 ```
 
 And then, replace {name}, {email} in .gitconfig.user with your information.
-
