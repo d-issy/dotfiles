@@ -1,7 +1,8 @@
 # lang default versions
-NODE_VER   := v10.14.2
+NODE_VER   := 10.15.3
 PYTHON_VER := 3.7.2
 RUBY_VER   := 2.6.0
+PHP_VER    := 7.3.4
 
 # env paths or directories
 ANYENV_DIR := $(HOME)/.anyenv
@@ -42,36 +43,41 @@ anyenv: anyenv/setup anyenv/setup
 
 anyenv/setup: $(ANYENV_DIR)
 anyenv/update: anyenv/setup
-	@eval "$$(anyenv init -)" && \
+	@eval "$(shell anyenv init -)" && \
 		anyenv update
 
 anyenv/init:
-	@eval "$$(anyenv init -)"
+	@eval "$(shell anyenv init -)"
 
-env/setup: ndenv pyenv rbenv
+env/setup: nodenv pyenv rbenv phpenv
 
-ndenv: $(ANYENV_DIR)/envs/ndenv/bin/ndenv
-	@eval "$$(anyenv init -)" && \
+nodenv: $(ANYENV_DIR)/envs/nodenv/bin/nodenv
+	@eval "$(shell anyenv init -)" && \
 		$< install -s $(NODE_VER) && \
 		$< global $(NODE_VER) && \
-		npm install -g npm eslint tern
+		npm install -g npm eslint tern typescript typescript-language-server
 
 pyenv: $(ANYENV_DIR)/envs/pyenv/bin/pyenv
-	@eval "$$(anyenv init -)" && \
+	@eval "$(shell anyenv init -)" && \
 		$< install -s $(PYTHON_VER) && \
 		$< global $(PYTHON_VER) && \
 		pip install -U pip autopep8 isort mypy vim-vint python-language-server
 
 rbenv: $(ANYENV_DIR)/envs/rbenv/bin/rbenv
-	@eval "$$(anyenv init -)" && \
+	@eval "$(shell anyenv init -)" && \
 		$< install -s $(RUBY_VER) && \
 		$< global $(RUBY_VER)
+
+phpenv: $(ANYENV_DIR)/envs/phpenv/bin/phpenv
+	@eval "$(shell anyenv init -)" && \
+		$< install -s $(PHP_VER) && \
+		$< global $(PHP_VER)
 
 # golang
 go:
 	go get -u github.com/motemen/ghq
 	go get -u github.com/motemen/gore
-	go get -u golang.org/x/tools/cmd/golsp
+	go get -u github.com/sourcegraph/go-langserver
 
 # rust
 rust: rust/setup
