@@ -1,12 +1,8 @@
 # GoLang
-if type go > /dev/null 2>&1 ; then
-    export GOPATH=$HOME
-fi
+export GOPATH=$HOME
 
 # Java
-if [[ -d "${HOME}/java" ]]; then
-    export CLASSPATH=$HOME/java
-fi
+export CLASSPATH=$HOME/java
 
 # Path
 typeset -gx -U path PATH
@@ -15,10 +11,16 @@ path=(
     $GOPATH/bin(N-/)
     $HOME/.cargo/bin(N-/)
     $HOME/.anyenv/bin(N-/)
+    $HOME/.anyenv/envs/nodenv/shims(N-/)
+    $HOME/.anyenv/envs/phpenv/shims(N-/)
     /usr/local/sbin(N-/)
     /usr/local/opt/openssl/bin(N-/)
     /usr/local/opt/go/libexec/bin(N-/)
     /usr/local/bin(N-/)
+    /usr/bin(N-/)
+    /bin(N-/)
+    /usr/sbin(N-/)
+    /sbin(N-/)
     $path
 )
 
