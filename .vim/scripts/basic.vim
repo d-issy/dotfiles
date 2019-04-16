@@ -61,7 +61,7 @@ nohlsearch
 
 " list
 set list
-set listchars=tab:\ \ ,trail:•
+set listchars=tab:»-,trail:•,nbsp:_
 
 " netrw
 let g:netrw_banner=0
