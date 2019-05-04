@@ -167,17 +167,18 @@ function focusApp(appInfo)
         return
     end
     local mainWin = app:mainWindow()
-    if mainWin ~= nil and not app:isHidden() then
+    if mainWin ~= nil then
         app:activate(true)
         return
     end
     local wins = app:allWindows()
-    if #wins == 1 then
+    if #wins >= 1 then
         local w = wins[1]
         if w:isMinimized() then
             w:unminimize()
         end
         w:focus()
+        w:becomeMain()
     end
 end
 
