@@ -1,3 +1,5 @@
+local helper = require('helper')
+
 -- str keymap
 keyCodes = hs.hotkey.modal.new(nil)
 
@@ -33,10 +35,7 @@ appWatcher:allowApp'Spotlight'
 appWatcher:subscribe({
     hs.window.filter.windowFocused,
 }, function(win, app)
-    if app == 'Terminal'
-        or app == 'iTerm2'
-        or app == 'Alacritty'
-        or app == 'Hyper' then
+    if helper.isTerm(app) then
         keyCodes:exit()
     else
         keyCodes:enter()
