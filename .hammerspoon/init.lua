@@ -1,7 +1,7 @@
 require('keybind')
 require('ime')
 require('winmanager')
-require('watch')
+require('info')
 
 --- config loaded
 print('config loaded')
