@@ -1,5 +1,5 @@
 require('keybind')
-require('eikana')
+require('ime')
 require('winmanager')
 require('watch')
 
