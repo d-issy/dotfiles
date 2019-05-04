@@ -5,7 +5,7 @@ _command_exists() {
 }
 
 if _command_exists "pbcopy"; then
-    if type "reattach-to-user-namespace" > /dev/null 2>&1; then
+    if _command_exists "reattach-to-user-namespace"; then
         echo -n "reattach-to-user-namespace pbcopy"
     else
         echo -n "pbcopy"
