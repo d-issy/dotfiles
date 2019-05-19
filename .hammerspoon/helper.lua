@@ -4,6 +4,7 @@ local obj = {}
 local terms = {
     'com.apple.Terminal',
     'com.googlecode.iterm2',
+    'io.alacritty',
 }
 
 obj.isTerm = function(app)
