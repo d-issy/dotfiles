@@ -18,22 +18,18 @@ window:
   scale_with_dpi: true
 font:
   normal:
-    family: Monaco
+    family: Hack Nerd Font
     style: Regular
   bold:
-    family: Monaco
+    family: Hack Nerd Font
     style: Bold
   size: 12.0
 
 # gruvbox scheme
-custom_cursor_colors: true
 colors:
   primary:
     foreground: '0xd5c4a1'
     background: '0x282828'
-  cursor:
-    cursor: '0xd5c4a1'
-    text:   '0x282828'
   normal:
     black:   '0x282828'
     red:     '0xfb4934'
@@ -57,13 +53,14 @@ colors:
 # - Block
 # - Underline
 # - Beam
-cursor_style: Block
+cursor:
+    style: Block
+    unfocused_hollow: true
 
 selection:
   semantic_escape_chars: ",│`|:\"' ()[]{}<>"
 
 dynamic_title: true
-unfocused_hollow_cursor: true
 
 key_bindings:
   - { key: Paste,                          action: Paste            }
