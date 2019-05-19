@@ -1,5 +1,6 @@
 # ls and tree
 if [[ -x `which exa` ]]; then
+    alias l="exa -F"
     alias ls="exa -F"
     alias la="exa -aF"
     alias ll="exa -lhgF --git"
@@ -7,6 +8,7 @@ if [[ -x `which exa` ]]; then
     alias l1="exa -1F"
     alias tree="exa -TF"
 else
+    alias l="ls"
     alias la="ls -A"
     alias ll="ls -l"
     alias lla="ls -lA"
