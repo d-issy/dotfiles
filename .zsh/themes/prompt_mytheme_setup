@@ -1,48 +1,26 @@
 # Auther: shepabashi
-
 setopt prompt_subst
 
 prompt_mytheme_setup () {
-    # left prompt
-    PROMPT=$' %~'
-    PROMPT+=$'\n '
-
-    # right prompt
+    _git_branch() {
+        if [[ ! -d .git ]]; then return; fi
+        echo -n "%F{yellow}$(git symbolic-ref --short HEAD 2> /dev/null || git rev-parse HEAD | cut -b -7)%f"
+    }
     _git_info() {
         if [[ ! -d .git ]]; then return; fi
-        if [[ $(git rev-parse --is-inside-work-tree 2> /dev/null) != 'true' ]]; then
-            return
-        fi
-        # show branch info
-        prompt=" %F{yellow}$(git symbolic-ref --short HEAD 2> /dev/null || git rev-parse HEAD | cut -b -7)%f"
-        # unstaged
-        local n="$(git status --porcelain | cut -b 2 | grep -c 'M')"
-        if [[ $n != 0 ]]; then
-            prompt+="%F{red}  $n%f"
-        fi
-        # untracking
-        local n="$(git status --porcelain | cut -b 1-2 | grep -c '??')"
-        if [[ $n != 0 ]]; then
-            prompt+="%F{yellow}  $n%f"
-        fi
-        # staged
-        local n="$(git status --porcelain | cut -b 1 | grep -c 'M')"
-        if [[ $n != 0 ]]; then
-            prompt+="%F{green}  $n%f"
-        fi
-        # stashed
-        local n="$(git stash list | wc -l | tr -d ' ')"
-        if [[ $n != 0 ]]; then
-            prompt+="  $n%f"
-        fi
-        echo $prompt
+        echo -n $(git status -s | cut -b -2 | awk -F '\t' '{c[$1]++} { c1=c["MM"]+c[" M"]; c2=c["D "]+c[" D"]; c3=c["MM"]+c["M "]+c["A "]; c4=c["??"] } END{ if (c1 > 0) printf "\033[31;1m +%d", c1; if (c2 > 0) printf "\033[31;1m −" c2 ; if (c3 > 0) printf "\033[32;1m !%d", c3; if (c4 > 0) printf "\033[33;1m ●%d", c4; printf "\033[0m" }')
     }
-    RPROMPT=$'\$(_git_info)'
-    RPROMPT+=$' %(?|%F{48}%f|%K{197} %F{3} %? %f%k)'
+    # left prompt
+    PROMPT=$'%B%~%b'
+    PROMPT+=$'\$(_git_info)'
+    PROMPT+=$'\n❯❯ '
 
-    precmd() {
-        print ""
-    }
+    # right prompt
+    RPROMPT+=$'%B\$(_git_branch)%b'
+    RPROMPT+=$' %(?|%F{48}%B✓%b%f|%K{197} %F{3}%?%b %f%k)'
+
+
+    precmd() { print "" }
 }
 
 prompt_mytheme_setup "$@"
