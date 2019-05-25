@@ -15,7 +15,7 @@ prompt_mytheme_setup () {
     PROMPT+=$'\$(_git_info)'
     PROMPT+=$'\n'
     PROMPT+=$'%(?||%K{197}%F{3}%B %? %b%f%k )'
-    PROMPT+=$'%(?||%F{red})❯ '
+    PROMPT+=$'%(?||%F{red})❯%f '
 
     # right prompt
     RPROMPT=$'\$(_git_branch)'
