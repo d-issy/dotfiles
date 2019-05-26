@@ -16,6 +16,12 @@ else
     alias tree="tree -NC"
 fi
 
+# mv
+alias mv='mv -i'
+
+# cp
+alias cp='cp -i'
+
 # grc
 if [[ -x `which grc` ]]; then
     alias diff="grc diff"
