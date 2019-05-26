@@ -40,6 +40,31 @@ insert-filename() {
 }
 zle -N insert-filename
 
+# expand-alias
+typeset -gA abbrs
+
+function expand-abbr() {
+    local key=$LBUFFER
+    if [ -z "${abbrs[(i)$key]}" ]; then
+        zle complete-word
+        return
+    fi
+
+    cmd=$(echo $abbrs[$key] | awk -F, '{print $1}')
+    arg=$(echo $abbrs[$key] | awk -F, '{print $2}')
+    case $arg in
+        n) LBUFFER="$cmd" ;;
+        f)
+            f=$(find . -type d \( -name '.git' -o -name 'node_modules' \) -prune -o -type f -mindepth 1 -maxdepth 6 -print | sed 's/^\.\///' | fzf --reverse )
+            if [ $f ]; then LBUFFER="$cmd $f" else LBUFFER="" fi
+            ;;
+        *) LBUFFER="$cmd " ;;
+    esac
+    zle reset-prompt
+}
+zle -N expand-abbr
+bindkey '\t' expand-abbr
+
 # git brach
 gc () {
     local branch=$(git branch -vv | fzf --prompt='branch>' --reverse --height 30 | awk '{print $1}' | sed "s/.* //")
