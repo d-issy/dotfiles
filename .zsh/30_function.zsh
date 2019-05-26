@@ -63,7 +63,6 @@ function expand-abbr() {
     zle reset-prompt
 }
 zle -N expand-abbr
-bindkey '\t' expand-abbr
 
 # git brach
 gc () {
