@@ -39,7 +39,11 @@ function expand-abbr() {
     case $arg in
         n) LBUFFER="$cmd" ;;
         f)
-            f=$(find . -type d \( -name '.git' -o -name 'node_modules' \) -prune -o -type f -mindepth 1 -maxdepth 6 -print | sed 's/^\.\///' | fzf --reverse )
+            if $(git rev-parse 2> /dev/null); then
+                f=$(git ls-files --others | fzf --reverse)
+            else
+                f=$(find . -type d \( -name '.git' -o -name 'node_modules' \) -prune -o -type f -mindepth 1 -maxdepth 6 -print | sed 's/^\.\///' | fzf --reverse )
+            fi
             if [ $f ]; then LBUFFER="$cmd $f" else LBUFFER="" fi
             ;;
         *) LBUFFER="$cmd " ;;
