@@ -22,29 +22,8 @@ alias mv='mv -i'
 # cp
 alias cp='cp -i'
 
-# grc
-if [[ -x `which grc` ]]; then
-    alias diff="grc diff"
-    alias netstat="grc netstat"
-    alias ping="grc ping"
-    alias traceroute="grc traceroute"
-fi
-
 # git
-if [[ -x `which git` ]]; then
-    alias g="git"
-    alias ga="git add"
-    alias gaa="git add ."
-    alias gcf="git checkout --"
-    alias gco="git commit"
-    alias gd="git diff --color"
-    alias gdc="git diff --color --cached"
-    alias gfe="git fetch --prune"
-    alias gpush="git push origin HEAD"
-    alias gpull="git pull origin HEAD"
-    alias gr="git reset HEAD"
-    alias gs="git status"
-fi
+alias gs='git status'
 
 # hub
 if [[ -x `which hub` ]]; then
@@ -59,12 +38,6 @@ fi
 # vim
 if [[ -x `which vim` ]]; then
     alias v='vim'
-fi
-
-# npm
-if [[ -x `which npm` ]]; then
-    alias nis='npm install --save'
-    alias nid='npm install --save-dev'
 fi
 
 # exit
