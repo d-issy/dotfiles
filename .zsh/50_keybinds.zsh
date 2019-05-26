@@ -8,7 +8,6 @@ bindkey '^P' up-line-or-history
 
 bindkey '\t' expand-abbr
 bindkey '^@' repo
-bindkey '^T' insert-filename
 bindkey '^J' self-insert
 bindkey '^R' history-selection
 bindkey '^U' cdup

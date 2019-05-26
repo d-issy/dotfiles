@@ -24,22 +24,6 @@ repo() {
 }
 zle -N repo
 
-# inesrt file
-insert-filename() {
-    local filepath=$(fd --hidden -E .git -c never --max-depth=5 | fzf --reverse -1 --height 30)
-    [ -z "$filepath" ] && zle reset-prompt && return
-    if [ -n "$LBUFFER" ]; then
-        BUFFER="$LBUFFER$filepath"
-    elif [ -d "$filepath" ]; then
-        BUFFER="cd $filepath"
-    elif [ -f "$filepath" ]; then
-        BUFFER="$EDITOR $filepath"
-    fi
-    CURSOR=$#BUFFER
-    zle reset-prompt
-}
-zle -N insert-filename
-
 # expand-alias
 typeset -gA abbrs
 
