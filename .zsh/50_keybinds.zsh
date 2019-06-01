@@ -7,6 +7,7 @@ bindkey '^E' end-of-line
 bindkey '^P' up-line-or-history
 
 bindkey '\t' expand-abbr
+bindkey '^t' edit-command
 bindkey '^@' repo
 bindkey '^J' self-insert
 bindkey '^R' select-history
