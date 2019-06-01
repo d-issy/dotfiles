@@ -9,9 +9,8 @@ bindkey '^P' up-line-or-history
 bindkey '\t' expand-abbr
 bindkey '^@' repo
 bindkey '^J' self-insert
-bindkey '^R' history-selection
+bindkey '^R' select-history
 bindkey '^U' cdup
-bindkey '^Z' fore-ground
 
 # menu select
 zmodload -i zsh/complist
