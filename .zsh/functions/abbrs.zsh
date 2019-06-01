@@ -1,7 +1,7 @@
 # expand-alias
 typeset -A _ABBRS_DICT
 
-INC_CMD='fzf --reverse'
+INC_CMD="fzf --reverse --preview 'cat {}'"
 
 function abbr () {
     local abb=$1
