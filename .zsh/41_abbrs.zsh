@@ -1,62 +1,49 @@
-abbrs=(
-    # system
-    e   'export'
-    m   'make'
-    mc  'make -C'
-    mn  'make -n'
-    mnc 'make -n -C'
-    t   'touch'
-    md  'mkdir'
+# system
+abbr e   'export'
+abbr m   'make'
+abbr mc  'make -C'
+abbr mn  'make -n'
+abbr mnc 'make -n -C'
 
-    # git
-    g   'git'
-    ga  'git add'
-    gb  'git branch'
-    gc  'git checkout'
-    gca 'git commit -ammend,n'
-    gcb 'git checkout -b'
-    gco 'git commit,n'
-    gcp 'git cherry-pick'
-    gd  'git diff'
-    gf  'git fetch'
-    gl  'git log'
-    gpl 'git pull'
-    gps 'git push'
-    grm 'git rm'
-    grs 'git reset'
-    gs  'git status,n'
-    gst 'git stash'
-    gsp 'git stash pop'
+# git
+abbr g   'git'
 
-    'git branch '   'git branch -a'
-    'git checkout ' 'git checkout --'
-    'git pull '     'git pull origin'
-    'git push '     'git push origin'
-    'git fetch '    'git fetch origin'
+abbr ga  'git add'
+abbr gf  'git fetch'
+abbr gs  'git status'
+abbr gb  'git branch'
+abbr gc  'git checkout'
+abbr gco 'git commit'
+abbr gpl 'git pull'
+abbr gps 'git push'
+abbr gst 'git stash'
+abbr gsp 'git stash pop'
 
-    # docker
-    d      'docker'
-    dc     'docker-compose'
-    dps    'docker ps'
-    dr     'docker run'
-    dstart 'docker start'
-    dstop  'docker stop'
+abbr 'git checkout' 'git checkout --'
+abbr 'git pull' 'git pull origin'
+abbr 'git push' 'git push origin'
 
-    # tar
-    tar 'tar xzvf'
+# docker
+abbr d      'docker'
+abbr dc     'docker-compose'
+abbr dps    'docker ps'
+abbr dstart 'docker start'
+abbr dstop  'docker stop'
 
-    # sudo
-    s 'sudo'
+# tig
+abbr ts 'tig status'
 
-    # tig
-    ts  'tig status'
+# npm
+abbr nis 'npm install --save'
+abbr nid 'npm install --save-dev'
 
-    # npm
-    nid 'npm install --save-dev'
-    nis 'npm install --save'
+# inc
+## system
+abbr c cd inc='find . -type d -mindepth 1 -maxdepth 6 | sed "s/\.\///"'
 
-    # editor
-    v 'vim,f'
-    i 'idea .,n'
-    c 'code .,n'
-)
+## system
+abbr rm rm inc='find . -type f -maxdepth 8 | grep -v /.git/ | sed "s/\.\///"'
+abbr rr 'rm -rf' inc='find . -type d -mindepth 1 -maxdepth 6 | sed "s/\.\///"'
+
+## vim
+abbr v vim inc='find . -type f -maxdepth 8 | grep -v /.git/ | sed "s/\.\///"'
