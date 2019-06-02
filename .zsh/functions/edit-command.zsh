@@ -1,11 +1,14 @@
 # edit command
 function edit-command() {
     exec < /dev/tty
-    tempfile=$(mktemp)
+
+    local tempfile=$(mktemp)
+    local cursor=$(( $#PREBUFFER + $#LBUFFER + 1 ))
     echo $BUFFER > $tempfile
-    vim $tempfile
+    vim -c "setf zsh" -c "nnoremap <C-t> ZZ" -c "normal $cursor|" $tempfile
     LBUFFER=$(cat $tempfile)
     RBUFFER=''
     rm $tempfile
+    zle reset-prompt
 }
 zle -N edit-command
