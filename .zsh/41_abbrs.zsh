@@ -47,3 +47,6 @@ abbr rr 'rm -rf' inc='find . -type d -mindepth 1 -maxdepth 6 | sed "s/\.\///"'
 
 ## vim
 abbr v vim inc='find . -type f -maxdepth 8 | grep -v /.git/ | sed "s/\.\///"'
+
+## idea
+abbr i 'idea .'
