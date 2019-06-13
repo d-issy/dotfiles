@@ -2,41 +2,7 @@
 hs.window.animationDuration = 0
 offset = {top=0, bottom=0, left=0, right=0, gap=1}
 
--- mode
--- 0: single app mode
--- 1: original mode
-mode = 1
-
--- applications settings
-xApps = {
-    'Alfred 3',
-    'Finder',
-    'Hammerspoon',
-    'System Preferences',
-    'VirtualBox',
-    'VMware Fusion',
-}
-
-xTitles = {
-    '',
-    'Open',
-}
-
 -- show
-winFilter = hs.window.filter.new(nil, nil, 'debug')
-winFilter:setCurrentSpace(true)
-winFilter:subscribe(hs.window.filter.windowFocused, function(win, app)
-    if mode == 1 then return end
-    if not win:isStandard() then return end
-    for i=1, #xApps do
-        if app == xApps[i] then return end
-    end
-    for i=1, #xTitles do
-        if win:title() == xTitles[i] then return end
-    end
-    toFull()
-end)
-
 function toCenter(win)
     win = win or hs.window.focusedWindow()
     if win == nil then return end
@@ -53,7 +19,6 @@ function toFull(win)
         max.w - offset.left - offset.right,
         max.h - offset.top - offset.bottom
     })
-    mode = 0
 end
 
 function toLeftSide(win)
@@ -66,7 +31,6 @@ function toLeftSide(win)
         max.w/2 - offset.left - offset.gap/2,
         max.h - offset.top - offset.bottom
     })
-    mode = 1
 end
 
 function toRightSide(win)
@@ -79,11 +43,6 @@ function toRightSide(win)
         max.w/2 - offset.right - offset.gap/2,
         max.h - offset.top - offset.bottom
     })
-    mode = 1
-end
-
-function disableSingleAppMode()
-    mode = 1
 end
 
 ---- switcher
@@ -96,11 +55,9 @@ function getWinInfo()
         currentID = cid,
     }
     local wins = hs.window.visibleWindows()
-    if mode ~= 0 then
-        table.sort(wins, function(a, b)
-            return a:frame().x < b:frame().x
-        end)
-    end
+    table.sort(wins, function(a, b)
+        return a:frame().x < b:frame().x
+    end)
     for i=1, #wins do
         local win = wins[i]
         local idx = #rs.windows+1
@@ -118,7 +75,6 @@ function showAlert(str)
     local win = hs.window.focusedWindow()
     local f = win:frame()
     if boxTimer ~= nil then boxTimer:fire() end
-    if mode == 0 then return end
     box = hs.drawing.rectangle(hs.geometry.rect(f.x + f.w - 15, f.y + 5, 10, 10))
     box:setFillColor{red = 0.1, green = 0.3, blue = 0.7, alpha = 1.0}
     box:setStrokeWidth(0)
@@ -184,7 +140,6 @@ end
 
 -- bind
 hs.hotkey.bind({'alt'}, 'A', toFull)
-hs.hotkey.bind({'alt'}, 'S', disableSingleAppMode)
 hs.hotkey.bind({'alt'}, 'C', toCenter)
 
 hs.hotkey.bind({'ctrl', 'alt'}, 'H', toLeftSide)
