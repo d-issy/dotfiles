@@ -2,48 +2,94 @@
 hs.window.animationDuration = 0
 offset = {top=0, bottom=0, left=0, right=0, gap=1}
 
--- show
-function toCenter(win)
-    win = win or hs.window.focusedWindow()
+-- settings
+hs.grid.MARGINX = 0
+hs.grid.MARGINY = 0
+hs.grid.HINTS = {
+    {'f1', 'f2', 'f3', 'f4'},
+    {'f5', 'f6', 'f7', 'f8'},
+    {'E', 'R', 'U', 'I'},
+    {'D', 'F', 'J', 'K'},
+}
+hs.grid.ui.showExtraKeys = false
+
+-- helper
+function showMsg(text)
+    hs.alert.closeAll()
+    hs.alert.show(text)
+end
+
+function setGrid(x, y)
+    fstr = string.format('%dx%d', x, y)
+    hs.grid.setGrid(fstr)
+end
+
+-- full
+hs.hotkey.bind({'alt'}, 'A', function()
+    hs.grid.maximizeWindow()
+end)
+
+-- left side
+hs.hotkey.bind({'alt', 'ctrl'}, 'H', function()
+    setGrid(2, 1)
+    hs.grid.adjustWindow(function(cell)
+        cell.x = 0
+        cell.y = 0
+        cell.w = 1
+        cell.h = 1
+    end)
+end)
+
+-- 2/3 left side
+hs.hotkey.bind({'alt', 'ctrl'}, 'J', function()
+    setGrid(3, 1)
+    hs.grid.adjustWindow(function(cell)
+        cell.x = 0
+        cell.y = 0
+        cell.w = 2
+        cell.h = 1
+    end)
+end)
+
+-- right side
+hs.hotkey.bind({'alt', 'ctrl'}, 'L', function()
+    setGrid(2, 1)
+    hs.grid.adjustWindow(function(cell)
+        cell.x = 1
+        cell.y = 0
+        cell.w = 1
+        cell.h = 1
+    end)
+end)
+
+-- 1/3 right side
+hs.hotkey.bind({'alt', 'ctrl'}, 'K', function()
+    setGrid(3, 1)
+    hs.grid.adjustWindow(function(cell)
+        cell.x = 2
+        cell.y = 0
+        cell.w = 1
+        cell.h = 1
+    end)
+end)
+
+-- chooser
+hs.hotkey.bind({'alt'}, 'N', function()
+    setGrid(3, 2)
+    hs.grid.show()
+end)
+
+hs.hotkey.bind({'alt'}, 'M', function()
+    setGrid(4, 2)
+    hs.grid.show()
+end)
+
+-- center
+hs.hotkey.bind({'alt'}, 'C', function()
+    local win = hs.window.focusedWindow()
     if win == nil then return end
     win:centerOnScreen(nil, true)
-end
-
-function toFull(win)
-    win = win or hs.window.focusedWindow()
-    if win == nil then return end
-    local max = hs.screen.mainScreen():frame()
-    win:setFrame({
-        offset.left,
-        offset.top,
-        max.w - offset.left - offset.right,
-        max.h - offset.top - offset.bottom
-    })
-end
-
-function toLeftSide(win)
-    win = win or hs.window.focusedWindow()
-    if win == nil then return end
-    local max = hs.screen.mainScreen():frame()
-    win:setFrame({
-        offset.left,
-        offset.top,
-        max.w/2 - offset.left - offset.gap/2,
-        max.h - offset.top - offset.bottom
-    })
-end
-
-function toRightSide(win)
-    win = win or hs.window.focusedWindow()
-    if win == nil then return end
-    local max = hs.screen.mainScreen():frame()
-    win:setFrame({
-        max.w/2 + offset.gap/2,
-        offset.top,
-        max.w/2 - offset.right - offset.gap/2,
-        max.h - offset.top - offset.bottom
-    })
-end
+end)
 
 ---- switcher
 function getWinInfo()
@@ -84,15 +130,6 @@ function showAlert(str)
         box = nil
     end)
 end
-
-hs.hotkey.bind({'alt'}, 'M', function()
-    local win = hs.window.focusedWindow()
-    local f = win:frame()
-    hs.alert.show(f.x)
-    hs.alert.show(f.y)
-    hs.alert.show(f.w)
-    hs.alert.show(f.h)
-end)
 
 function focusLeftWindow()
     local w = getWinInfo()
@@ -139,12 +176,6 @@ function focusApp(appInfo)
 end
 
 -- bind
-hs.hotkey.bind({'alt'}, 'A', toFull)
-hs.hotkey.bind({'alt'}, 'C', toCenter)
-
-hs.hotkey.bind({'ctrl', 'alt'}, 'H', toLeftSide)
-hs.hotkey.bind({'ctrl', 'alt'}, 'L', toRightSide)
-
 hs.hotkey.bind({'alt'}, 'H', focusLeftWindow)
 hs.hotkey.bind({'alt'}, 'L', focusRightWindow)
 
