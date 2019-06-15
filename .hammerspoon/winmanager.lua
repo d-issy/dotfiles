@@ -91,6 +91,20 @@ hs.hotkey.bind({'alt'}, 'C', function()
     win:centerOnScreen(nil, true)
 end)
 
+-- other window hide
+hs.hotkey.bind({'cmd', 'alt'}, 'H', function()
+    local c = hs.window.frontmostWindow()
+    if c == nil then return end
+    local cid = c:application():bundleID()
+    local wins = c:otherWindowsSameScreen()
+    for _, w in ipairs(wins) do
+        local app = w:application()
+        if cid ~= app:bundleID() then
+            app:hide()
+        end
+    end
+end)
+
 ---- switcher
 function getWinInfo()
     local c = hs.window.focusedWindow()
