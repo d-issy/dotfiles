@@ -105,6 +105,28 @@ hs.hotkey.bind({'cmd', 'alt'}, 'H', function()
     end
 end)
 
+-- chooser
+hs.hotkey.bind({'alt'}, 'S', function()
+    local winChooser = hs.chooser.new(function(item)
+        local win = hs.window.get(item['uuid'])
+        if win then win:focus() end
+    end)
+    local winFilter = hs.window.filter.new()
+    winFilter:setCurrentSpace(true)
+    local wins = winFilter:getWindows()
+    local choices = {}
+    for i, w in ipairs(wins) do
+        choices[i] = {
+            text = w:application():title(),
+            subText = w:title(),
+            uuid = w:id(),
+        }
+    end
+    winChooser:searchSubText(true)
+    winChooser:choices(choices)
+    winChooser:show()
+end)
+
 ---- switcher
 function getWinInfo()
     local c = hs.window.focusedWindow()
