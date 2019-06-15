@@ -28,9 +28,7 @@ keyCodes:newMap({'ctrl'}, 'L', function()
 end)
 
 -- hotkey toggle by application
-appWatcher = hs.window.filter.new()
-appWatcher:allowApp'Alfred 3'
-appWatcher:allowApp'Spotlight'
+appWatcher = hs.window.filter.new(true)
 
 appWatcher:subscribe({
     hs.window.filter.windowFocused,

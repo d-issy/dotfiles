@@ -5,6 +5,7 @@ local terms = {
     'com.apple.Terminal',
     'com.googlecode.iterm2',
     'io.alacritty',
+    'org.hammerspoon.Hammerspoon',
 }
 
 obj.isTerm = function(app)
