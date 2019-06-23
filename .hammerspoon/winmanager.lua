@@ -111,7 +111,11 @@ hs.hotkey.bind({'alt'}, 'S', function()
         local win = hs.window.get(item['uuid'])
         if win then win:focus() end
     end)
-    local winFilter = hs.window.filter.new()
+    local winFilter = hs.window.filter.new(function(win)
+        if win == nil then return false end
+        if win:subrole() == 'AXUnknown' then return false end
+        return true
+    end)
     winFilter:setCurrentSpace(true)
     local wins = winFilter:getWindows()
     local choices = {}
