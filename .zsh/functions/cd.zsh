@@ -1,4 +1,26 @@
 # smart cd
+CD_HISTORY_FILE=${CD_HISTORY_FILE:-$HOME/.cd_history}
+
+# init
+__cd::init() {
+    __cd::history::init
+    alias cd=__cd::run
+}
+
+# history
+__cd::history::init()
+{
+    if [ ! -f $CD_HISTORY_FILE ]; then
+        touch $CD_HISTORY_FILE
+    fi
+}
+
+__cd::history::update()
+{
+    echo $PWD >> $CD_HISTORY_FILE
+}
+
+# goto
 __cd::goto::home()
 {
     builtin cd $HOME
@@ -32,5 +54,6 @@ __cd::run ()
     else
         __cd::goto::default ${@}
     fi
+    __cd::history::update
 }
-alias cd=__cd::run
+__cd::init
