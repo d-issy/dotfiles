@@ -2,6 +2,10 @@
 ZSHHOME="${HOME}/.zsh"
 if [ ! -d $ZSHHOME ]; then; return; fi
 
+for f in ${ZSHHOME}/_*.zsh; do
+    source $f
+done
+
 for f in ${ZSHHOME}/functions/**/*.zsh; do
     source "$f"
 done
