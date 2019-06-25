@@ -42,6 +42,10 @@ BEGIN {
 
 __cd::goto::default()
 {
+    if [ ! -d $@ ]; then
+        echo Sorry: \"$@\" directory does not exist
+        return 1
+    fi
     builtin cd $@
 }
 
@@ -52,7 +56,7 @@ __cd::run ()
     elif [ $1 = ',' ]; then
         __cd::goto::back ${@}
     else
-        __cd::goto::default ${@}
+        __cd::goto::default ${@} || return
     fi
     __cd::history::update
 }
