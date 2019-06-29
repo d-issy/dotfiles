@@ -5,6 +5,7 @@ CD_HISTORY_FILE=${CD_HISTORY_FILE:-$HOME/.cd_history}
 __cd::init() {
     __cd::history::init
     alias cd=__cd::run
+    compdef _cd __cd::run
 }
 
 # history
