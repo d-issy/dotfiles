@@ -51,6 +51,17 @@ __cd::goto::default()
     builtin cd $@
 }
 
+# list
+__cd::list()
+{
+    for d in $(command ls -FA | grep /; cat $CD_HISTORY_FILE | sed 's/$/\//g'); do
+        if [ -d $d ]; then
+            echo $d
+        fi
+    done
+}
+
+# run
 __cd::run ()
 {
     if [ $# -eq 0 ]; then

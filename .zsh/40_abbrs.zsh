@@ -39,7 +39,7 @@ abbr nid 'npm install --save-dev'
 
 # inc
 ## system
-abbr cd cd inc='find . -type d -mindepth 1 -maxdepth 6 | sed "s/\.\///"'
+abbr cd cd inc='__cd::list'
 
 ## system
 abbr rm rm inc='find . -type f -maxdepth 8 | grep -v /.git/ | sed "s/\.\///"'
