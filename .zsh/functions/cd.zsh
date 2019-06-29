@@ -19,6 +19,7 @@ __cd::history::init()
 __cd::history::update()
 {
     echo $PWD >> $CD_HISTORY_FILE
+    sort -u $CD_HISTORY_FILE -o $CD_HISTORY_FILE
 }
 
 # goto
