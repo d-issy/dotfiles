@@ -1,8 +1,3 @@
-# fasd
-if (( $+commands[fasd] )); then
-    eval "$(fasd --init auto)"
-fi
-
 # zsh-syntax-highlighting
 if [ -d /usr/local/share/zsh-syntax-highlighting ]; then
     typeset -A ZSH_HIGHLIGHT_STYLES
