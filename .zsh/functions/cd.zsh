@@ -44,11 +44,11 @@ BEGIN {
 
 __cd::goto::default()
 {
-    if [ ! -d $@ ]; then
+    builtin cd $@ 2>/dev/null
+    if [ $? != 0 ]; then
         echo Sorry: \"$@\" directory does not exist
         return 1
     fi
-    builtin cd $@
 }
 
 # list
