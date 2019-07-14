@@ -54,7 +54,12 @@ __cd::goto::default()
 # list
 __cd::list()
 {
-    for d in $(command ls -FA | grep /; cat $CD_HISTORY_FILE | sed 's/$/\//g'); do
+    for d in $(command find . -mindepth 1 -maxdepth 1 | sed 's/\.\///' | sed 's/$/\//g'); do
+        if [ -d $d ]; then
+            echo $d
+        fi
+    done
+    for d in $(command cat $CD_HISTORY_FILE | sed 's/$/\//g'); do
         if [ -d $d ]; then
             echo $d
         fi

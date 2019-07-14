@@ -6,7 +6,6 @@ bindkey '^N' down-line-or-history
 bindkey '^E' end-of-line
 bindkey '^P' up-line-or-history
 
-bindkey '\t' expand-abbr
 bindkey '^t' edit-command
 bindkey '^@' repo
 bindkey '^J' self-insert
@@ -19,3 +18,4 @@ bindkey -M menuselect '^h' vi-backward-char
 bindkey -M menuselect '^j' vi-down-line-or-history
 bindkey -M menuselect '^k' vi-up-line-or-history
 bindkey -M menuselect '^l' vi-forward-char
+bindkey -M menuselect ' '  accept-line
