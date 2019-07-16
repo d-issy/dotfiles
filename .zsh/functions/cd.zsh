@@ -54,7 +54,7 @@ __cd::goto::default()
 # list
 __cd::list()
 {
-    for d in $(command find . -mindepth 1 -maxdepth 1 | sed 's/\.\///' | sed 's/$/\//g'); do
+    for d in $(command find . -mindepth 1 -maxdepth 1 | sed 's/\.\///' | sed 's/$/\//g' | sort); do
         if [ -d $d ]; then
             echo $d
         fi
