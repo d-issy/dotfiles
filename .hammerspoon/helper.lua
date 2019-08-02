@@ -4,6 +4,8 @@ local obj = {}
 local terms = {
     'com.apple.Terminal',
     'com.googlecode.iterm2',
+    'com.jetbrains.intellij',
+    'com.microsoft.VSCode',
     'io.alacritty',
     'org.hammerspoon.Hammerspoon',
 }

@@ -221,8 +221,9 @@ hs.hotkey.bind({'alt'}, 'L', focusRightWindow)
 
 --
 
+hs.hotkey.bind({'alt'}, 'D', function() focusApp('com.kapeli.dashdoc') end)
 hs.hotkey.bind({'alt'}, 'E', function() focusApp('com.googlecode.iterm2') end)
 hs.hotkey.bind({'alt'}, 'F', function() focusApp('com.google.Chrome') end)
 hs.hotkey.bind({'alt'}, 'I', function() focusApp('com.jetbrains.intellij') end)
 hs.hotkey.bind({'alt'}, 'O', function() focusApp('com.tinyspeck.slackmacgap') end)
-hs.hotkey.bind({'alt'}, 'D', function() focusApp('com.kapeli.dashdoc') end)
+hs.hotkey.bind({'alt'}, 'U', function() focusApp('com.microsoft.VSCode') end)
