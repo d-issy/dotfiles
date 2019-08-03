@@ -4,11 +4,13 @@ self-insert() {
         ' e'  ) LBUFFER='export '         ;;
         ' gs' ) LBUFFER='git status'      ;;
         ' ts' ) LBUFFER='tig status'      ;;
+        'c '  ) LBUFFER='cd '             ;;
         'd '  ) LBUFFER='docker '         ;;
         'dc ' ) LBUFFER='docker-compose ' ;;
         'g '  ) LBUFFER='git '            ;;
         'ga ' ) LBUFFER='git add '        ;;
         'gb ' ) LBUFFER='git branch '     ;;
+        'gc ' ) LBUFFER='git checkout '   ;;
         'gcl ') LBUFFER='git clone '      ;;
         'gco ') LBUFFER='git commit '     ;;
         'gf ' ) LBUFFER='git fetch '      ;;
