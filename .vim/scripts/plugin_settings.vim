@@ -108,5 +108,25 @@ let g:vim_markdown_fenced_languages = [
 " table-mode-vim
 let g:table_mode_corner = '|'
 
-" autopair
-let g:AutoPairsShortcutFastWrap = '<M-w>'
+
+" coc-nvim
+if g:plug.is_enabled('coc.nvim')
+  inoremap <silent><expr> <TAB>
+        \ pumvisible() ? coc#_select_confirm() :
+        \ coc#expandableOrJumpable() ? "\<C-r>=coc#rpc#request('doKeymap', ['snippets-expand-jump',''])\<CR>" :
+        \ <SID>check_back_space() ? "\<TAB>" :
+        \ coc#refresh()
+
+  function! s:check_back_space() abort
+    let col = col('.') - 1
+    return !col || getline('.')[col - 1]  =~# '\s'
+  endfunction
+
+  let g:coc_snippet_next = '<tab>'
+  autocmd VimEnter * nmap <silent> <C-]> <Plug>(coc-definition)
+  autocmd VimEnter * nmap <silent> <leader>r <Plug>(coc-rename)
+  autocmd VimEnter * nmap <silent> <leader>f <Plug>(coc-format)
+  autocmd VimEnter * nmap <silent> <leader>j <Plug>(coc-references)
+  autocmd VimEnter * nmap <silent> <leader>k :call CocAction('doHover')<CR>
+  autocmd VimEnter * nmap <silent> <leader>o :CocList outline<CR>
+endif

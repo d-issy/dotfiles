@@ -14,16 +14,8 @@ function! g:plug.ready()
   return filereadable(g:plug.path)
 endfunction
 
-function! g:plug.is_installed(plug_name)
-  return has_key(g:plugs, a:plug_name) && isdirectory(g:plugs[a:plug_name].dir)
-endfunction
-
-function! g:plug.is_runtimepath(plug_name)
-  return index(split(&runtimepath, ','), get(g:plugs[a:plug_name], 'dir')) != -1
-endfunction
-
 function! g:plug.is_enabled(plug_name)
-  return g:plug.is_installed(a:plug_name) && g:plug.is_runtimepath(a:plug_name)
+  return has_key(g:plugs, a:plug_name) && isdirectory(g:plugs[a:plug_name].dir)
 endfunction
 "}}
 
@@ -44,11 +36,9 @@ if executable('python') && !has('gui_macvim')
   Plug 'sirver/ultisnips'
 endif
 
-" Plug 'honza/vim-snippets'
 Plug 'shepabashi/vim-snippets-extra'
 
-" linter
-Plug 'w0rp/ale'
+Plug 'neoclide/coc.nvim', {'branch': 'release', 'do': ':CocInstall coc-json coc-tsservercoc-snippets coc-ultisnips coc-emmet coc-pairs coc-marketplace coc-html coc-css'}
 
 " fzf
 if executable('fzf')
@@ -66,19 +56,13 @@ Plug 'editorconfig/editorconfig-vim'
 Plug 'scrooloose/nerdcommenter'
 
 Plug 'AndrewRadev/splitjoin.vim'
-Plug 'jiangmiao/auto-pairs'
 Plug 'junegunn/vim-easy-align'
 Plug 'majutsushi/tagbar'
-Plug 'mattn/emmet-vim'
 Plug 'scrooloose/nerdtree'
 Plug 'thinca/vim-quickrun'
 Plug 'tpope/tpope-vim-abolish'
 Plug 'tpope/vim-surround'
 Plug 'wellle/targets.vim'
-
-" LSP
-Plug 'prabirshrestha/async.vim'
-Plug 'prabirshrestha/vim-lsp'
 
 " git
 if executable('git')
@@ -86,26 +70,9 @@ if executable('git')
   Plug 'tpope/vim-fugitive'
 endif
 
-" for C/C++
-Plug 'justmao945/vim-clang'
-
-" for Arduino
-Plug 'sudar/vim-arduino-syntax'
-
 " Go
 if executable('go') && v:version >= 800
   Plug 'fatih/vim-go', {'do': ':GoInstallBinaries'}
-endif
-
-" Javascript
-if executable('node') && executable('npm')
-  Plug 'ternjs/tern_for_vim', {'do': 'npm install'}
-  Plug 'leafgarland/typescript-vim'
-endif
-
-" Java
-if executable('javac')
-  Plug 'vim-scripts/javacomplete', {'do': 'javac autoload/Reflection.java'}
 endif
 
 " Markdown
