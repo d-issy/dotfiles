@@ -2,7 +2,7 @@
 export GOPATH=$HOME
 
 # Java
-export CLASSPATH=$HOME/java
+export JAVA_HOME=$(/usr/libexec/java_home -v1.8)
 
 # Path
 typeset -gx -U path PATH
