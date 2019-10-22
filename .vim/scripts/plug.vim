@@ -38,7 +38,7 @@ endif
 
 Plug 'shepabashi/vim-snippets-extra'
 
-Plug 'neoclide/coc.nvim', {'branch': 'release', 'do': ':CocInstall coc-json coc-tsservercoc-snippets coc-ultisnips coc-emmet coc-pairs coc-marketplace coc-html coc-css'}
+Plug 'neoclide/coc.nvim', {'branch': 'release', 'do': ':CocInstall coc-json coc-marketplace coc-lists coc-tsserver coc-snippets coc-ultisnips coc-emmet coc-pairs coc-html coc-css'}
 
 " fzf
 if executable('fzf')
