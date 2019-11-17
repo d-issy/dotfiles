@@ -28,8 +28,8 @@ self-insert() {
         'rr '  ) LBUFFER='rm -rf '         ;;
         'v '   ) LBUFFER='vim '            ;;
 
-        'git pull  ') LBUFFER="git pull origin $(git symbolic-ref --short HEAD)";;
-        'git push  ') LBUFFER="git push origin $(git symbolic-ref --short HEAD)";;
+        'git pull  ') LBUFFER="git pull origin $(git symbolic-ref --short HEAD 2> /dev/null)";;
+        'git push  ') LBUFFER="git push origin $(git symbolic-ref --short HEAD 2> /dev/null)";;
         'nis ') LBUFFER='npm install --save ';;
         'nid ') LBUFFER='npm install --save-dev ';;
 
