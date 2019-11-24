@@ -36,10 +36,10 @@ self-insert() {
         'cd ')
             local dir=$(__cd::list | fzf --reverse --height=40%)
             LBUFFER="cd $dir"
-            zle reset-prompt
             ;;
         *)
             ;;
     esac
+    zle reset-prompt
 }
 zle -N self-insert
