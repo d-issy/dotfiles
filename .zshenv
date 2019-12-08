@@ -14,6 +14,7 @@ path=(
     $HOME/.anyenv/envs/nodenv/shims(N-/)
     $HOME/.anyenv/envs/phpenv/shims(N-/)
     /usr/local/sbin(N-/)
+    /usr/local/opt/curl/bin(N-/)
     /usr/local/opt/openssl/bin(N-/)
     /usr/local/opt/go/libexec/bin(N-/)
     /usr/local/bin(N-/)
