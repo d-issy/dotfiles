@@ -6,6 +6,7 @@ local terms = {
     'com.googlecode.iterm2',
     'com.jetbrains.intellij',
     'com.microsoft.VSCode',
+    'com.parallels.desktop.console',
     'io.alacritty',
 }
 
