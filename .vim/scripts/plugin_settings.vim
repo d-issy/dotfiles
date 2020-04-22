@@ -78,6 +78,11 @@ let g:user_emmet_settings = {
 
 " quickrun
 let g:quickrun_no_default_key_mappings = 0
+let g:quickrun_config = {
+      \  'cpp': {
+      \    'cmdopt': '-std=c++11'
+      \  }
+      \}
 
 " jedi-vim
 let g:jedi#popup_on_dot = 0

@@ -8,3 +8,5 @@
     diff = true
 [ghq]
     root = ~/src
+[http]
+	sslBackend = openssl
