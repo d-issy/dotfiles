@@ -10,3 +10,4 @@
     root = ~/src
 [http]
 	sslBackend = openssl
+	postBuffer = 16M
