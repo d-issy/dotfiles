@@ -15,6 +15,7 @@ path=(
     $HOME/.anyenv/envs/nodenv/shims(N-/)
     $HOME/.anyenv/envs/phpenv/shims(N-/)
     $HOME/google-cloud-sdk/bin(N-/)
+    $HOME/sbt/bin(N-/)
     /usr/local/opt/php@7.3/bin(N-/)
     /usr/local/opt/php@7.3/sbin(N-/)
     /usr/local/sbin(N-/)
@@ -31,7 +32,7 @@ path=(
 )
 
 # fpath
-typeset -gx -U fpath
+typeset -gx -U fpath FPATH
 fpath=(
     $HOME/.zsh/completions(N-/)
     $HOME/.zsh/themes(N-/)
