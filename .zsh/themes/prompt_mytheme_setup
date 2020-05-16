@@ -9,18 +9,18 @@ prompt_mytheme_setup () {
         _git_branch=" %F{yellow}$(git symbolic-ref --short HEAD 2> /dev/null || git rev-parse HEAD | cut -b -7)%f"
         _git_info=$( git status -s | cut -b -2 | awk -F '\t' '{c[$1]++}
 END{
-    v = c[" D"];
+    v = c[" D"]; # unstaged deleted files
         if (v > 0) printf " %%F\{red\}-%d%%f", v;
-    v = c["??"];
+    v = c["??"]; # untracked add files
         if (v > 0) printf " %%F\{red\}+%d%%f", v;
-    v = c[" A"] + c[" M"];
+    v = c[" A"] + c[" M"]; # unstaged files
         if (v > 0) printf " %%F\{yellow\}○%d%%f", v;
-    v = c["A "] + c["M "] + c["D "] + c["R "];
-        if (v > 0) printf " %%F\{green\}○%d%%f", v;
-    v = c["R "];
-        if (v > 0) printf ":R%d", v;
-    v = c["D "];
-        if (v > 0) printf ":D%d", v;
+    v = c["A "] + c["M "] + c["D "] + c["R "]; # staged files
+        if (v > 0) printf " %%F\{green\}●%d%%f", v;
+    v = c["R "]; # renamed files
+        if (v > 0) printf ":%%F\{yellow\}R%d%%f", v;
+    v = c["D "]; # staged deleted files
+        if (v > 0) printf ":%%F\{red\}D%d%%f", v;
 }'
     )
     }
