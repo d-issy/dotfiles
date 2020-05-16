@@ -2,24 +2,42 @@
 setopt prompt_subst
 
 prompt_mytheme_setup () {
-    _git_branch() {
-        if [[ ! $(git rev-parse --is-inside-work-tree 2> /dev/null) ]]; then return; fi
-        echo -n " %F{yellow}$(git symbolic-ref --short HEAD 2> /dev/null || git rev-parse HEAD | cut -b -7)%f"
+    _git_info_update() {
+        _git_info=''
+        if [[ ! $(git rev-parse --is-inside-work-tree 2> /dev/null) ]]; then; _git_branch=''; return; fi
+
+        _git_branch=" %F{yellow}$(git symbolic-ref --short HEAD 2> /dev/null || git rev-parse HEAD | cut -b -7)%f"
+        _git_info=$( git status -s | cut -b -2 | awk -F '\t' '{c[$1]++}
+END{
+    v = c[" D"];
+        if (v > 0) printf " %%F\{red\}-%d%%f", v;
+    v = c["??"];
+        if (v > 0) printf " %%F\{red\}+%d%%f", v;
+    v = c[" A"] + c[" M"];
+        if (v > 0) printf " %%F\{yellow\}○%d%%f", v;
+    v = c["A "] + c["M "] + c["D "] + c["R "];
+        if (v > 0) printf " %%F\{green\}○%d%%f", v;
+    v = c["R "];
+        if (v > 0) printf ":R%d", v;
+    v = c["D "];
+        if (v > 0) printf ":D%d", v;
+}'
+    )
     }
-    _git_info() {
-        if [[ ! $(git rev-parse --is-inside-work-tree 2> /dev/null) ]]; then return; fi
-        echo -n $(git status -s | cut -b -2 | awk -F '\t' '{c[$1]++} { c1=c["MM"]+c[" M"]; c2=c["D "]+c[" D"]; c3=c["MM"]+c["M "]+c["A "]; c4=c["??"] } END{ if (c1 > 0) printf "\033[31;1m +%d", c1; if (c2 > 0) printf "\033[31;1m −" c2 ; if (c3 > 0) printf "\033[32;1m !%d", c3; if (c4 > 0) printf "\033[33;1m ●%d", c4; printf "\033[0m" }')
-    }
+
     # left prompt
-    PROMPT=$' %B%~%b'
-    PROMPT+=$'\$(_git_info)'
+    PROMPT=$'%(?||%K{197}%F{3}%B %? %b%f%k) %B%~%b'
+    PROMPT+=$'\$_git_info'
     PROMPT+=$'\n'
-    PROMPT+=$'%(?||%K{197}%F{3}%B %? %b%f%k )'
     PROMPT+=$'%(?||%F{red})❯%f '
 
     # right prompt
-    RPROMPT=$'\$(_git_branch)'
-    precmd() { print "" }
+    RPROMPT=$'\$_git_branch'
+
+    precmd() {
+        _git_info_update
+        print ""
+    }
 }
 
 prompt_mytheme_setup "$@"

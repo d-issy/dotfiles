@@ -25,3 +25,8 @@ setopt hist_ignore_space
 setopt hist_no_store
 setopt hist_reduce_blanks
 setopt hist_save_no_dups
+
+# -------------------------------------
+#  variable settings
+# -------------------------------------
+setopt prompt_subst
