@@ -42,7 +42,7 @@ eikanaEventTap = hs.eventtap.new({flagsChanged, keyDown}, function(event)
         if keyCode == Escape then
             hs.eventtap.keyStroke({}, Eisu, 0)
         elseif flags['ctrl'] and keyCode == LeftBracket then
-            hs.eventtap.keyStroke({}, Escape, 0)
+            hs.eventtap.keyStroke({}, Eisu, 0)
         end
         singleCmd = false
         return
