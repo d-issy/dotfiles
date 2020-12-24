@@ -1,9 +1,6 @@
 # GoLang
 export GOPATH=$HOME
 
-# Java
-export JAVA_HOME=$(/usr/libexec/java_home -v1.8)
-
 # Path
 setopt no_global_rcs
 typeset -gx -U path PATH

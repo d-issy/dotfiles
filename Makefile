@@ -1,4 +1,4 @@
-EXCLUSIONS := .DS_Store .ex.gitconfig.user .git .gitignore .gitmodules
+EXCLUSIONS := .DS_Store .git .gitignore .gitmodules
 CANDIDATES := $(wildcard .??*)
 DOTFILES   := $(filter-out $(EXCLUSIONS), $(CANDIDATES))
 

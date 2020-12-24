@@ -1,5 +1,6 @@
-[include]
-    path = ~/.gitconfig.user
+[user]
+    name = d-issy
+    email = 12374694+d-issy@users.noreply.github.com
 [core]
     editor = vim
     excludesfile = ~/.gitignore_global
