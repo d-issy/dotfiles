@@ -1,5 +1,1 @@
-.DS_Store
-*~
-
-.gitconfig.user
-.vim/sessions/
+/config/gcloud

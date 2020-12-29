@@ -1,5 +1,4 @@
 # bindkey -e
-
 bindkey -v
 bindkey '^A' beginning-of-line
 bindkey '^N' down-line-or-history
