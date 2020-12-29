@@ -1,3 +1,13 @@
+# fish
+/config/fish/completions/
+/config/fish/conf.d/
+/config/fish/functions/
 /config/fish/fish_variables
+
+!/config/fish/completions/fisher.fish
+!/config/fish/functions/fisher.fish
+
+
+# other
 /config/gcloud
 /config/wslu
