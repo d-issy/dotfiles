@@ -6,6 +6,9 @@ set -x XDG_CONFIG_HOME $HOME/.config
 set -x TIGRC_USER $XDG_CONFIG_HOME/tig/config # not compatible for under 2.5.1
 set -x ZDOTDIR $XDG_CONFIG_HOME/zsh # not compatible
 
+# own path
+set fish_function_path $fish_function_path $__fish_config_dir/functions/own
+
 # PATH
 set -g PATH
 
