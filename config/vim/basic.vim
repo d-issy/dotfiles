@@ -9,38 +9,6 @@ set fileformats=unix,dos,mac
 " back space
 set backspace=indent,eol,start
 
-" color
-set t_Co=256
-set background=dark
-
-if g:plug.is_enabled('gruvbox')
-  colorscheme gruvbox
-endif
-
-augroup change_colors
-  au!
-
-  " select
-  au VimEnter * hi Visual ctermfg=NONE ctermbg=237 cterm=NONE
-
-  " search
-  au VimEnter * hi Search ctermfg=NONE ctermbg=237 cterm=NONE
-
-  " statusline
-  au VimEnter * hi StatusLine    ctermfg=255 ctermbg=237 cterm=NONE
-  au VimEnter * hi StatusLineNC  ctermfg=245 ctermbg=237 cterm=NONE
-  if v:version >= 800
-    au VimEnter * hi StatusLineTerm    ctermfg=255 ctermbg=237 cterm=NONE
-    au VimEnter * hi StatusLineTermNC  ctermfg=245 ctermbg=237 cterm=NONE
-  endif
-
-  " tabbar
-  au VimEnter * hi TabLine     ctermfg=15 ctermbg=237 cterm=NONE
-  au VimEnter * hi TabLineFill ctermfg=243 ctermbg=237 cterm=underline
-  au VimEnter * hi TabLineSel  ctermfg=243 ctermbg=235 cterm=NONE
-
-augroup END
-
 " indent
 set expandtab
 set autoindent

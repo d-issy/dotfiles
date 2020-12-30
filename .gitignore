@@ -13,5 +13,7 @@ config/fish/fish_variables
 !config/fish/functions/own
 
 # other
-/config/gcloud
-/config/wslu
+config/gcloud
+config/wslu
+config/vim/plugged
+config/vim/autoload/plug.vim
