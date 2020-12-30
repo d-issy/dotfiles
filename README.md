@@ -1,5 +1,12 @@
 # dotfiles
 issy's dotfiles
 
+## Support
+- macOS
+- Linux
+- WSL on Windows
+
 ## Requirements
-- macOS or Linux or WSL on Widnows
+- starship
+- fish shell
+- fzf
