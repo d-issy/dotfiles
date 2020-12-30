@@ -13,7 +13,7 @@ set fish_function_path $__fish_config_dir/functions/own $fish_function_path
 set -g PATH
 
 ## basic
-set -gx PATH $PATH /usr/local/sbin /usr/local/bin /usr/sbin /usr/bin /sbin /bin
+set -gx PATH $PATH $HOME/.local/bin /usr/local/sbin /usr/local/bin /usr/sbin /usr/bin /sbin /bin
 
 ## in WSL vscode
 set -l DIR /mnt/c/Users/$USER/AppData/Local/Programs/Microsoft\ VS\ Code/bin
