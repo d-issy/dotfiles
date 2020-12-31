@@ -68,6 +68,7 @@ let g:NERDTreeShowHidden = 1
 let g:NERDTreeMinimalMenu = 1
 let g:NERDTreeMinimalUI = 1
 let g:NERDTreeNaturalSort = 1
+let g:NERDTreeQuitOnOpen = 1
 let g:NERDTreeIgnore = ['\~$', '\.git']
 let g:netrw_dirhistmax = 0
 
