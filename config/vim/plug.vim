@@ -37,8 +37,22 @@ Plug 'tiagofumo/vim-nerdtree-syntax-highlight'
 Plug 'PhilRunninger/nerdtree-buffer-ops'
 Plug 'Xuyuanp/nerdtree-git-plugin'
 
-" colorscheme
-Plug 'ghifarit53/tokyonight-vim'
+" git
+Plug 'airblade/vim-gitgutter'
+
+" snippet
+if has('python3')
+Plug 'SirVer/ultisnips'
+endif
+
+Plug 'mattn/vim-sonictemplate'
+
+" other
+Plug 'markonm/traces.vim'        " replace preview
+Plug 'tpope/vim-surround'        " text object
+Plug 'ghifarit53/tokyonight-vim' " colorscheme
+Plug 'tpope/vim-commentary'      " comment
+
 
 call plug#end()
 " }}}
@@ -62,6 +76,28 @@ let g:NERDTreeGitStatusUseNerdFonts = 1
 let s:FolderColor = 'D4843E'
 let g:WebDevIconsDefaultFolderSymbolColor = s:FolderColor
 endif
+
+
+if g:plug.is_enabled('nerdtree-git-plugin')
+let g:NERDTreeGitStatusIndicatorMapCustom = {
+  \ 'Modified'  :'',
+  \ 'Staged'    :'',
+  \ 'Untracked' :'',
+  \ 'Renamed'   :'',
+  \ 'Unmerged'  :' ',
+  \ 'Deleted'   :'',
+  \ 'Dirty'     :'',
+  \ 'Ignored'   :' ',
+  \ 'Clean'     :' ',
+  \ 'Unknown'   :' ',
+  \ }
+endif
+" }}}
+
+" gitgutter {{{
+if g:plug.is_enabled('vim-gitgutter')
+autocmd BufEnter * set updatetime=100
+endif
 " }}}
 
 " tokyonight {{{
@@ -75,3 +111,16 @@ let g:tokyonight_menu_selection_background = 'red'
 colorscheme tokyonight
 endif
 " }}}
+
+" Ultisnip {{{
+if g:plug.is_enabled('ultisnips')
+let g:UltiSnipsExpandTrigger="<c-l>"
+let g:UltiSnipsJumpForwardTrigger="<c-n>"
+let g:UltiSnipsJumpBackwardTrigger="<c-p>"
+let g:UltiSnipsSnippetStorageDirectoryForUltiSnipsEdit = expand('$XDG_CONFIG_HOME/vim/UltiSnips')
+endif
+" }}}
+
+" sonic template {{{
+let g:sonictemplate_vim_template_dir = expand("$XDG_CONFIG_HOME/vim/template")
+" }}

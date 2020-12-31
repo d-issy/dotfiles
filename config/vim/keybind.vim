@@ -1,5 +1,7 @@
 let g:mapleader = "\<Space>"
 
+nnoremap <silent><Leader>w :w<CR>
+
 """""""""""
 " plugins "
 """""""""""
