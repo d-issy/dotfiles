@@ -1,5 +1,19 @@
-.DS_Store
-*~
+# fish
+config/fish/conf.d/*
+config/fish/functions/*
+config/fish/completions
+config/fish/fish_variables
 
-.gitconfig.user
-.vim/sessions/
+## exclude fisher
+!config/fish/functions/fisher.fish
+!config/fish/completions/fisher.fish
+
+## exclude own
+!config/fish/conf.d/_*.fish
+!config/fish/functions/own
+
+# other
+config/gcloud
+config/wslu
+config/vim/plugged
+config/vim/autoload/plug.vim

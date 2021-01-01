@@ -1,0 +1,63 @@
+scan_timeout = 500
+add_new_line = false
+
+format = """
+[┌─](bold)$time $memory_usage$cmd_duration$git_branch$git_commit$git_state$git_status
+[│](bold) $status$directory$gcloud
+[└─](bold)$character"""
+
+[character]
+success_symbol = "[>](bold)"
+error_symbol = ">(bold)"
+vicmd_symbol = "|(bold)"
+
+[status]
+disabled = false
+format   = "[ $symbol$status ]($style) "
+symbol   = ""
+stlye    = "RED BOLD"
+
+[time]
+disabled    = false
+time_format = "%Y-%m-%dT%H:%M:%S"
+format      = "[$time]($style)"
+
+[cmd_duration]
+disabled = false
+format   = "[$duration]($style) "
+min_time = 1_000
+
+[directory]
+truncation_length = 10
+format = "[ $path](bold) "
+
+[git_branch]
+always_show_remote = true
+format = "on [$symbol $branch]($style) "
+style  = "fg:214"
+symbol = ""
+
+[git_commit]
+disabled = false
+
+[git_status]
+format = "[$all_status$ahead$behind]($style)"
+style  = ""
+
+deleted   = "[$count ](red bold)"
+renamed   = "[$count ](green bold)"
+modified  = "[$count ](yellow bold)"
+staged    = "[$count ](green bold)"
+untracked = "[$count ](fg:8 bold)"
+ahead     = "↑$count "
+behind    = "↓$count "
+
+[gcloud]
+format = '[$symbol$project ]($style)'
+symbol = " "
+style = "bold blue"
+
+[memory_usage]
+disabled  = false
+threshold = -1
+format    = '[$ram \($ram_pct\) ]($style)'
