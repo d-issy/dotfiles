@@ -1,11 +1,17 @@
 .DEFAULT_GOAL := help
 
+ifeq ($(shell uname),Darwin)
+	LINK_OPTION=-svnf
+else
+	LINK_OPTION=-svTF
+endif
+
 help:
 	@echo Read Makefile
 	@cat Makefile
 
 link:
-	ln -svTf $(realpath config) $(abspath $(HOME)/.config)
+	ln $(LINK_OPTION) $(realpath config) $(abspath $(HOME)/.config)
 	@echo link is done
 
 unlink:
