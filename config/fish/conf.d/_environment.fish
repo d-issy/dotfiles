@@ -37,3 +37,8 @@ path /mnt/c/Users/$USER/AppData/Local/Programs/Microsoft\ VS\ Code/bin
 
 # fzf
 set -gx FZF_DEFAULT_OPTS '--reverse --height=40%'
+
+# zoxide
+if type -q zoxide
+  zoxide init fish | source
+end
