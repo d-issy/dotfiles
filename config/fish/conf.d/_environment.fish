@@ -24,13 +24,14 @@ path /sbin
 path /bin
 
 ## for common
-path $HOME/.cargo/bin
+path $HOME/.cargo/bin # cargo
+path -f $HOME/.nix-profile/bin # nix package manager
 
 ## for macOS
-path -f /usr/local/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/bin
+path /usr/local/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/bin
 
 ## for WSL vscode
-path -f /mnt/c/Users/$USER/AppData/Local/Programs/Microsoft\ VS\ Code/bin
+path /mnt/c/Users/$USER/AppData/Local/Programs/Microsoft\ VS\ Code/bin
 
 # }}}
 
