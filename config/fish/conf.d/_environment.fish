@@ -14,16 +14,19 @@ set fish_function_path $__fish_config_dir/functions/own $fish_function_path
 set -g PATH
 
 ## basic
-set -gx PATH $PATH $HOME/.local/bin /usr/local/sbin /usr/local/bin /usr/sbin /usr/bin /sbin /bin
+set -gx PATH
+path /usr/local/sbin
+path /usr/local/bin
+path /usr/sbin
+path /usr/bin
+path /sbin
+path /bin
 
-## in macOS gcloud
-set -l DIR /usr/local/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/bin
-if test -d $DIR
-  set -gx PATH $PATH $DIR
-end
+## for common
+path $HOME/.cargo/bin
 
-## in WSL vscode
-set -l DIR /mnt/c/Users/$USER/AppData/Local/Programs/Microsoft\ VS\ Code/bin
-if test -d $DIR
-  set -gx PATH $PATH $DIR
-end
+## for macOS
+path -f /usr/local/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/bin
+
+## for WSL vscode
+path -f /mnt/c/Users/$USER/AppData/Local/Programs/Microsoft\ VS\ Code/bin
