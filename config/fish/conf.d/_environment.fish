@@ -11,6 +11,11 @@ set -x VIMINIT "if !has('nvim') | source $XDG_CONFIG_HOME/vim/vimrc" # not compa
 # own function path
 set fish_function_path $__fish_config_dir/functions/own $fish_function_path
 
+# DISPLAY
+if test -f /proc/sys/fs/binfmt_misc/WSLInterop
+  set -gx DISPLAY (cat /etc/resolv.conf | grep nameserver | awk '{print $2}'):0.0
+end
+
 # {{{ PATH
 set -g PATH
 
