@@ -30,6 +30,7 @@ path /bin
 
 ## for common
 path $HOME/.cargo/bin # cargo
+path $HOME/.local/bin # local/bin
 path -f $HOME/.nix-profile/bin # nix package manager
 
 ## for macOS
