@@ -38,6 +38,7 @@ path /usr/local/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/bin
 
 ## for WSL vscode
 path /mnt/c/Users/$USER/AppData/Local/Programs/Microsoft\ VS\ Code/bin
+path /mnt/c/Program\ Files/Docker/Docker/resources/bin
 
 # }}}
 
