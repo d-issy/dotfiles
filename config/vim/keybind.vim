@@ -1,6 +1,7 @@
 let g:mapleader = "\<Space>"
 
 nnoremap <silent><Leader>w :w<CR>
+nnoremap <silent><Leader>ts :ter ++close tig status<CR>
 
 """""""""""
 " plugins "
