@@ -47,6 +47,10 @@ endif
 
 Plug 'mattn/vim-sonictemplate'
 
+" fzf
+Plug 'junegunn/fzf', {'do': { -> fzf#install() }}
+Plug 'junegunn/fzf.vim'
+
 " other
 Plug 'markonm/traces.vim'        " replace preview
 Plug 'tpope/vim-surround'        " text object
