@@ -44,18 +44,19 @@ Plug 'airblade/vim-gitgutter'
 if has('python3')
 Plug 'SirVer/ultisnips'
 endif
-
 Plug 'mattn/vim-sonictemplate'
+
 
 " fzf
 Plug 'junegunn/fzf', {'do': { -> fzf#install() }}
 Plug 'junegunn/fzf.vim'
 
 " other
-Plug 'markonm/traces.vim'        " replace preview
-Plug 'tpope/vim-surround'        " text object
-Plug 'ghifarit53/tokyonight-vim' " colorscheme
-Plug 'tpope/vim-commentary'      " comment
+Plug 'editorconfig/editorconfig-vim' " editorconfig
+Plug 'ghifarit53/tokyonight-vim'     " colorscheme
+Plug 'markonm/traces.vim'            " replace preview
+Plug 'tpope/vim-commentary'          " comment
+Plug 'tpope/vim-surround'            " text object
 
 
 call plug#end()
