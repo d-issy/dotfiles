@@ -138,7 +138,7 @@ endif
 
 " sonic template {{{
 let g:sonictemplate_vim_template_dir = expand("$XDG_CONFIG_HOME/vim/template")
-" }}
+" }}}
 
 " lsp {{{
 if g:plug.is_enabled('vim-lsp')
