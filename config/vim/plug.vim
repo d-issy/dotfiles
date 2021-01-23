@@ -54,6 +54,7 @@ Plug 'junegunn/fzf.vim'
 " other
 Plug 'editorconfig/editorconfig-vim' " editorconfig
 Plug 'ghifarit53/tokyonight-vim'     " colorscheme
+Plug 'junegunn/vim-easy-align'       " align
 Plug 'markonm/traces.vim'            " replace preview
 Plug 'tpope/vim-commentary'          " comment
 Plug 'tpope/vim-surround'            " text object
@@ -69,13 +70,13 @@ call plug#end()
 " nerdtree {{{
 if g:plug.is_enabled('nerdtree')
 let g:NERDTreeAutoDeleteBuffer = 1
-let g:NERDTreeShowHidden = 1
-let g:NERDTreeMinimalMenu = 1
-let g:NERDTreeMinimalUI = 1
-let g:NERDTreeNaturalSort = 1
-let g:NERDTreeQuitOnOpen = 1
-let g:NERDTreeIgnore = ['\~$', '\.git']
+let g:NERDTreeShowHidden       = 1
+let g:NERDTreeMinimalMenu      = 1
+let g:NERDTreeMinimalUI        = 1
+let g:NERDTreeNaturalSort      = 1
+let g:NERDTreeQuitOnOpen       = 1
 let g:netrw_dirhistmax = 0
+let g:NERDTreeIgnore = ['\~$', '\.git']
 
 let g:NERDTreeGitStatusUseNerdFonts = 1
 
@@ -110,9 +111,9 @@ endif
 if g:plug.is_enabled('tokyonight-vim')
 set t_Co=256
 set background=dark
-let g:tokyonight_style = 'night'
-let g:tokyonight_transparent_background = 1
-let g:tokyonight_disable_italic_comment = 1
+let g:tokyonight_style                     = 'night'
+let g:tokyonight_transparent_background    = 1
+let g:tokyonight_disable_italic_comment    = 1
 let g:tokyonight_menu_selection_background = 'red'
 colorscheme tokyonight
 endif
@@ -120,9 +121,9 @@ endif
 
 " Ultisnip {{{
 if g:plug.is_enabled('ultisnips')
-let g:UltiSnipsExpandTrigger="<c-l>"
-let g:UltiSnipsJumpForwardTrigger="<c-n>"
-let g:UltiSnipsJumpBackwardTrigger="<c-p>"
+let g:UltiSnipsExpandTrigger       = "<c-l>"
+let g:UltiSnipsJumpForwardTrigger  = "<c-n>"
+let g:UltiSnipsJumpBackwardTrigger = "<c-p>"
 let g:UltiSnipsSnippetStorageDirectoryForUltiSnipsEdit = expand('$XDG_CONFIG_HOME/vim/UltiSnips')
 endif
 " }}}
