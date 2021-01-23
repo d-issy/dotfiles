@@ -52,6 +52,13 @@ Plug 'mattn/vim-sonictemplate'
 Plug 'junegunn/fzf', {'do': { -> fzf#install() }}
 Plug 'junegunn/fzf.vim'
 
+" lsp
+Plug 'prabirshrestha/vim-lsp'
+Plug 'mattn/vim-lsp-settings'
+Plug 'prabirshrestha/asyncomplete.vim'
+Plug 'prabirshrestha/asyncomplete-lsp.vim'
+Plug 'thomasfaingnaert/vim-lsp-ultisnips'
+
 " other
 Plug 'editorconfig/editorconfig-vim' " editorconfig
 Plug 'ghifarit53/tokyonight-vim'     " colorscheme
@@ -132,3 +139,23 @@ endif
 " sonic template {{{
 let g:sonictemplate_vim_template_dir = expand("$XDG_CONFIG_HOME/vim/template")
 " }}
+
+" lsp {{{
+if g:plug.is_enabled('vim-lsp')
+function! s:on_lsp_buffer_enabled() abort " {{{
+  nmap <buffer> K <plug>(lsp-hover)
+  nmap <buffer> gd <plug>(lsp-definition)
+  nmap <buffer> gf <plug>(lsp-document-format)
+  nmap <buffer> gr <plug>(lsp-references)
+  nmap <buffer> <leader>gr <plug>(lsp-rename)
+endfunction " }}}
+
+augroup lsp_install " {{{
+  au!
+  autocmd User lsp_buffer_enabled call s:on_lsp_buffer_enabled()
+augroup END " }}}
+
+let g:lsp_diagnostics_float_delay = 100
+
+endif
+" }}}
