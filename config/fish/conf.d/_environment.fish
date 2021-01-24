@@ -50,3 +50,8 @@ set -gx FZF_DEFAULT_OPTS '--reverse --height=40%'
 if type -q zoxide
   zoxide init fish | source
 end
+
+# fuck
+if type -q thefuck
+  thefuck --alias | source
+end
