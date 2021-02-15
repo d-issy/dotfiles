@@ -41,6 +41,14 @@ path /usr/local/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/bin
 path /mnt/c/Users/$USER/AppData/Local/Programs/Microsoft\ VS\ Code/bin
 path /mnt/c/Program\ Files/Docker/Docker/resources/bin
 
+## for nix-env
+if type -q nix
+  set -l ld_path (nix eval --raw nixpkgs.stdenv.cc.cc.lib ^/dev/null)
+  if test -d $ld_path/lib64
+    set -gx LD_LIBRARY_PATH $ld_path/lib64
+  end
+end
+
 # }}}
 
 # fzf
