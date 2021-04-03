@@ -15,6 +15,7 @@ set ignore-case = true
 set split-view-height = 80%
 
 # bind
-bind generic g      move-first-line
-bind generic G      move-last-line
-bind main    G      move-last-line
+bind generic g move-first-line
+bind generic G move-last-line
+bind main    G move-last-line
+bind status  C !<git commit
