@@ -1,3 +1,3 @@
 if type -q gh then
-    gh completion -s fish| source
+    gh completion -s fish | source
 end
