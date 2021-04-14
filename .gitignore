@@ -1,19 +1,31 @@
+/config/*
+
+# root
+!/config/starship.toml
+
 # fish
-config/fish/conf.d/*
-config/fish/functions/*
-config/fish/completions
-config/fish/fish_variables
+!/config/fish/
 
-## exclude fisher
-!config/fish/functions/fisher.fish
-!config/fish/completions/fisher.fish
+/config/fish/fish_*
+!/config/fish/fish_plugins
 
-## exclude own
-!config/fish/conf.d/_*.fish
-!config/fish/functions/own
+/config/fish/*/*
+!/config/fish/conf.d/_*
+!/config/fish/*/own/
 
-# other
-config/gcloud
-config/wslu
-config/vim/plugged
-config/vim/autoload/plug.vim
+# vim
+!/config/vim/
+/config/vim/plugged/*
+/config/vim/autoload/plug.vim
+
+# git tools
+!/config/git/
+!/config/tig/
+!/config/gh/config.yml
+
+# tmux
+!/config/tmux/
+
+# iterm
+!/config/iterm2/
+
