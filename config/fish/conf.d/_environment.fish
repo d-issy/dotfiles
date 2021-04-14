@@ -13,14 +13,12 @@ set fish_function_path $__fish_config_dir/functions/own $fish_function_path
 
 # DISPLAY
 if test -f /proc/sys/fs/binfmt_misc/WSLInterop
-  set -gx DISPLAY (cat /etc/resolv.conf | grep nameserver | awk '{print $2}'):0.0
+  set -x DISPLAY (cat /etc/resolv.conf | grep nameserver | awk '{print $2}'):0.0
 end
 
 # {{{ PATH
-set -g PATH
-
 ## basic
-set -gx PATH
+set -x PATH
 path /usr/local/sbin
 path /usr/local/bin
 path /usr/sbin
@@ -45,14 +43,14 @@ path /mnt/c/Program\ Files/Docker/Docker/resources/bin
 if type -q nix
   set -l ld_path (nix eval --raw nixpkgs.stdenv.cc.cc.lib ^/dev/null)
   if test -d $ld_path/lib64
-    set -gx LD_LIBRARY_PATH $ld_path/lib64
+    set -x LD_LIBRARY_PATH $ld_path/lib64
   end
 end
 
 # }}}
 
 # fzf
-set -gx FZF_DEFAULT_OPTS '--reverse --height=40%'
+set -x FZF_DEFAULT_OPTS '--reverse --height=40%'
 
 # pipenv
 if type -q pipenv
