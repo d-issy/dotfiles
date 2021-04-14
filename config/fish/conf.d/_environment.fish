@@ -39,7 +39,7 @@ path /usr/local/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/bin
 path /mnt/c/Users/$USER/AppData/Local/Programs/Microsoft\ VS\ Code/bin
 path /mnt/c/Program\ Files/Docker/Docker/resources/bin
 
-## for nix-env
+## for nix-env ld_path
 if type -q nix
   set -l ld_path (nix eval --raw nixpkgs.stdenv.cc.cc.lib ^/dev/null)
   if test -d $ld_path/lib64
@@ -55,14 +55,4 @@ set -x FZF_DEFAULT_OPTS '--reverse --height=40%'
 # pipenv
 if type -q pipenv
   set -x PIPENV_VENV_IN_PROJECT 1
-end
-
-# zoxide
-if type -q zoxide
-  zoxide init fish | source
-end
-
-# fuck
-if type -q thefuck
-  thefuck --alias | source
 end
