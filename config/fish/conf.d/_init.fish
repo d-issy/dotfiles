@@ -1,8 +1,7 @@
 # fisher
 if ! type -q fisher
   function fisher_init
-    curl https://git.io/fisher --create-dirs -sLo ~/.config/fish/functions/fisher.fish
-    $SHELL -l -c 'fisher update'
+    curl -sL https://git.io/fisher | source && fisher update  && fisher install jorgebucaran/fisher
     exec $SHELL -l
   end
 end
