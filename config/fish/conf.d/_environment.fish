@@ -54,6 +54,11 @@ end
 # fzf
 set -gx FZF_DEFAULT_OPTS '--reverse --height=40%'
 
+# pipenv
+if type -q pipenv
+  set -x PIPENV_VENV_IN_PROJECT 1
+end
+
 # zoxide
 if type -q zoxide
   zoxide init fish | source
