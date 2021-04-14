@@ -1,5 +1,15 @@
+# fisher
+if ! type -q fisher
+  function fisher_init
+    curl https://git.io/fisher --create-dirs -sLo ~/.config/fish/functions/fisher.fish
+    $SHELL -l -c 'fisher update'
+    exec $SHELL -l
+  end
+end
+
+
 # starship
-if type -q starship then
+if type -q starship
   starship init fish | source
 end
 
