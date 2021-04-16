@@ -11,6 +11,9 @@ set -x VIMINIT "source $XDG_CONFIG_HOME/vim/vimrc" # not compatible
 # own function path
 set fish_function_path $__fish_config_dir/functions/own $fish_function_path
 
+# own complete path
+set fish_complete_path $__fish_config_dir/completions/own $fish_complete_path
+
 # DISPLAY
 if test -f /proc/sys/fs/binfmt_misc/WSLInterop
   set -x DISPLAY (cat /etc/resolv.conf | grep nameserver | awk '{print $2}'):0.0
