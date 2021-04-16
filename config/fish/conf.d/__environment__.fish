@@ -49,10 +49,10 @@ end
 
 # }}}
 
-# fzf
-set -x FZF_DEFAULT_OPTS '--reverse --height=40%'
+if type -q fzf
+  set -x FZF_DEFAULT_OPTS '--reverse --height=40%'
+end
 
-# pipenv
 if type -q pipenv
   set -x PIPENV_VENV_IN_PROJECT 1
 end
