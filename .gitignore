@@ -6,7 +6,7 @@
 # fish
 !/config/fish/
 
-/config/fish/fish_*
+/config/fish/*
 !/config/fish/fish_plugins
 
 /config/fish/*/*
