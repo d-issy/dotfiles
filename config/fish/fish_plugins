@@ -1,5 +1,6 @@
-laughedelic/pisces
 0rax/fish-bd
-evanlucas/fish-kubectl-completions
 acomagu/fish-async-prompt
+evanlucas/fish-kubectl-completions
+jorgebucaran/autopair.fish
+jorgebucaran/replay.fish
 jorgebucaran/fisher
