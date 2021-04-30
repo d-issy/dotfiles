@@ -11,16 +11,17 @@ set -x VIMINIT "source $XDG_CONFIG_HOME/vim/vimrc" # not compatible
 # own function path
 set fish_function_path $__fish_config_dir/functions/own $fish_function_path
 
+# own complete path
+set fish_complete_path $__fish_config_dir/completions/own $fish_complete_path
+
 # DISPLAY
 if test -f /proc/sys/fs/binfmt_misc/WSLInterop
-  set -gx DISPLAY (cat /etc/resolv.conf | grep nameserver | awk '{print $2}'):0.0
+  set -x DISPLAY (cat /etc/resolv.conf | grep nameserver | awk '{print $2}'):0.0
 end
 
 # {{{ PATH
-set -g PATH
-
 ## basic
-set -gx PATH
+set -x PATH
 path /usr/local/sbin
 path /usr/local/bin
 path /usr/sbin
@@ -41,25 +42,20 @@ path /usr/local/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/bin
 path /mnt/c/Users/$USER/AppData/Local/Programs/Microsoft\ VS\ Code/bin
 path /mnt/c/Program\ Files/Docker/Docker/resources/bin
 
-## for nix-env
+## for nix-env ld_path
 if type -q nix
   set -l ld_path (nix eval --raw nixpkgs.stdenv.cc.cc.lib ^/dev/null)
   if test -d $ld_path/lib64
-    set -gx LD_LIBRARY_PATH $ld_path/lib64
+    set -x LD_LIBRARY_PATH $ld_path/lib64
   end
 end
 
 # }}}
 
-# fzf
-set -gx FZF_DEFAULT_OPTS '--reverse --height=40%'
-
-# zoxide
-if type -q zoxide
-  zoxide init fish | source
+if type -q fzf
+  set -x FZF_DEFAULT_OPTS '--reverse --height=40%'
 end
 
-# fuck
-if type -q thefuck
-  thefuck --alias | source
+if type -q pipenv
+  set -x PIPENV_VENV_IN_PROJECT 1
 end
