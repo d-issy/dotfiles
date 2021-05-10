@@ -15,7 +15,7 @@ vicmd_symbol = "|(bold)"
 disabled = false
 format   = "[ $symbol$status ]($style) "
 symbol   = " "
-stlye    = "RED BOLD"
+style    = "RED BOLD"
 
 [time]
 disabled    = false
