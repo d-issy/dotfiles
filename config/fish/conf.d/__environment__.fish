@@ -60,3 +60,7 @@ end
 if type -q pipenv
   set -x PIPENV_VENV_IN_PROJECT 1
 end
+
+if type -q anyenv
+  status --is-interactive; and source (anyenv init -|psub)
+end
