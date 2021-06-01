@@ -34,6 +34,7 @@ path $HOME/.cargo/bin          # cargo
 path $HOME/.local/bin          # local/bin
 path -f $HOME/.nix-profile/bin # nix package manager
 path -f $HOME/.poetry/bin      # python package manager
+path -f $HOME/.anyenv/bin      # anyenv
 
 ## for macOS
 path /usr/local/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/bin
