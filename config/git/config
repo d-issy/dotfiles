@@ -1,3 +1,5 @@
+[init]
+	defaultBranch = main
 [user]
     name = d-issy
     email = 12374694+d-issy@users.noreply.github.com

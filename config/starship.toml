@@ -1,5 +1,5 @@
 scan_timeout = 500
-add_new_line = false
+add_newline = false
 
 format = """
 [┌─](bold)$time $memory_usage$cmd_duration$git_branch$git_commit$git_state$git_status
@@ -15,7 +15,7 @@ vicmd_symbol = "|(bold)"
 disabled = false
 format   = "[ $symbol$status ]($style) "
 symbol   = " "
-stlye    = "RED BOLD"
+style    = "RED BOLD"
 
 [time]
 disabled    = false
