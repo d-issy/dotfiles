@@ -37,7 +37,7 @@ path /mnt/c/Program\ Files/Docker/Docker/resources/bin
 
 ## for nix-env ld_path
 if type -q nix
-  set -l ld_path (nix eval --raw nixpkgs.stdenv.cc.cc.lib ^/dev/null)
+  set -l ld_path (nix eval --raw nixpkgs.stdenv.cc.cc.lib 2> /dev/null)
   if test -d $ld_path/lib64
     set -x LD_LIBRARY_PATH $ld_path/lib64
   end
