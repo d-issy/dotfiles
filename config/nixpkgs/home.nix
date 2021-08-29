@@ -14,6 +14,7 @@ in {
 
     # zsh
     pkgs.zsh
+    pkgs.zsh-autosuggestions
     pkgs.zsh-syntax-highlighting
 
     # starship
@@ -38,9 +39,11 @@ in {
 
   programs.zsh = {
     enable = true;
+    enableAutosuggestions = true;
     enableSyntaxHighlighting = true;
     shellAliases = {
-      ll = "ls -la";
+      la = "ls -la";
+      ll = "ls -l";
       ts = "tig status";
     };
   };
