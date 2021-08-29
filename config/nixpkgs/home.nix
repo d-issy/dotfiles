@@ -1,7 +1,9 @@
 { config, pkgs, ... }:
 
 let
-  pkgs = import <nixpkgs> { };
+  pkgs = import <nixpkgs> {
+    config.allowUnfree = true;
+  };
 
 in {
   programs.home-manager.enable = true;
@@ -29,9 +31,13 @@ in {
     pkgs.awscli2
     pkgs.exa
     pkgs.fzf
+    pkgs.gh
+    pkgs.gnumake
     pkgs.google-cloud-sdk
+    pkgs.helm
     pkgs.jq
     pkgs.ripgrep
+    pkgs.ssm-session-manager-plugin
     pkgs.tmux
     pkgs.zoxide
   ];
