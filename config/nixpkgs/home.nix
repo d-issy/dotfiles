@@ -35,6 +35,53 @@ in {
     enable = true;
     settings = {
       add_newline = false;
+      format = ''
+[┌─](bold)$time $memory_usage$cmd_duration$git_branch$git_commit$git_state$git_status
+[│](bold) $status$directory
+[└─](bold)$character
+      '';
+      character = {
+        success_symbol = "[>](bold)";
+        error_symbol = ">(bold)";
+        vicmd_symbol = "|(bold)";
+      };
+      status = {
+        disabled = false;
+        format   = "[ $symbol$status ]($style) ";
+        symbol   = " ";
+        style    = "RED BOLD";
+      };
+      time = {
+        disabled    = false;
+        time_format = "%Y-%m-%dT%H:%M:%S";
+        format      = "[$time]($style)";
+      };
+      cmd_duration = {
+        disabled = false;
+        format   = "[ $duration]($style) ";
+        min_time = 1000;
+      };
+      directory = {
+        truncation_length = 10;
+      };
+      git_branch = {
+        always_show_remote = true;
+        format = "on [$symbol $branch]($style) ";
+        style  = "fg:214";
+        symbol = "";
+      };
+      git_status = {
+        format = "[$all_status$ahead$behind]($style)";
+        style  = "";
+
+        deleted   = "[ $count ](red bold)";
+        renamed   = "[ $count ](green bold)";
+        modified  = "[ $count ](yellow bold)";
+        staged    = "[ $count ](green bold)";
+        untracked = "[ $count ](fg:8 bold)";
+        ahead     = "↑ $count ";
+        behind    = "↓ $count ";
+      };
     };
   };
 
