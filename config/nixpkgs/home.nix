@@ -11,6 +11,11 @@ in {
 
   home.stateVersion = "21.11";
   home.packages = [
+
+    # zsh
+    pkgs.zsh
+    pkgs.zsh-syntax-highlighting
+
     # starship
     pkgs.starship
 
@@ -30,6 +35,28 @@ in {
     pkgs.fzf
     pkgs.ripgrep
   ];
+
+  programs.zsh = {
+    enable = true;
+    enableSyntaxHighlighting = true;
+    shellAliases = {
+      ll = "ls -la";
+      ts = "tig status";
+    };
+    envExtra = ''
+if [ -e $HOME/.config ]; then
+	export XDG_CONFIG_HOME=$HOME/.config
+fi
+
+if [ -e $HOME/.config/zsh ]; then
+	export ZDOTDIR=$XDG_CONFIG_HOME/zsh
+fi
+
+if [ -e $HOME/.nix-profile/etc/profile.d/nix.sh ]; then
+	. $HOME/.nix-profile/etc/profile.d/nix.sh
+fi
+    '';
+  };
 
   programs.starship = {
     enable = true;
@@ -110,6 +137,10 @@ in {
     baseIndex = 1;
     clock24 = true;
     customPaneNavigationAndResize = true;
+  };
+
+  programs.zoxide = {
+    enable = true;
   };
 
 }
