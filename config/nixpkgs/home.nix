@@ -26,15 +26,14 @@ in {
     pkgs.gh
 
     # cli tools
-    pkgs.tmux
-    pkgs.zoxide
-
-    # dev tools
     pkgs.awscli2
+    pkgs.exa
+    pkgs.fzf
     pkgs.google-cloud-sdk
     pkgs.jq
-    pkgs.fzf
     pkgs.ripgrep
+    pkgs.tmux
+    pkgs.zoxide
   ];
 
   programs.zsh = {
@@ -42,8 +41,6 @@ in {
     enableAutosuggestions = true;
     enableSyntaxHighlighting = true;
     shellAliases = {
-      la = "ls -la";
-      ll = "ls -l";
       ts = "tig status";
     };
   };
@@ -118,6 +115,11 @@ in {
         editor = "vim";
       };
     };
+  };
+
+  programs.exa = {
+    enable = true;
+    enableAliases = true;
   };
 
   programs.tmux = {
