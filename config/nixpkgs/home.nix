@@ -40,6 +40,9 @@ in {
     pkgs.ssm-session-manager-plugin
     pkgs.tmux
     pkgs.zoxide
+
+    # programming language
+    pkgs.nodejs
   ];
 
   programs.zsh = {
