@@ -13,24 +13,16 @@ in {
 
   home.stateVersion = "21.11";
   home.packages = [
-
     # zsh
-    pkgs.zsh
     pkgs.zsh-autosuggestions
     pkgs.zsh-syntax-highlighting
 
-    # starship
-    pkgs.starship
-
     # git
-    pkgs.git
     pkgs.tig
     pkgs.gh
 
     # cli tools
     pkgs.awscli2
-    pkgs.exa
-    pkgs.fzf
     pkgs.gh
     pkgs.gnumake
     pkgs.google-cloud-sdk
@@ -38,17 +30,13 @@ in {
     pkgs.jq
     pkgs.ripgrep
     pkgs.ssm-session-manager-plugin
-    pkgs.tmux
-    pkgs.zoxide
-
-    # programming language
-    pkgs.nodejs
   ];
 
   programs.zsh = {
     enable = true;
     enableAutosuggestions = true;
     enableSyntaxHighlighting = true;
+    defaultKeymap = "viins";
     shellAliases = {
       ts = "tig status";
     };
@@ -126,9 +114,34 @@ in {
     };
   };
 
-  programs.exa = {
+  programs.neovim = {
     enable = true;
-    enableAliases = true;
+    viAlias = true;
+    vimAlias = true;
+
+    plugins = with pkgs.vimPlugins; [
+      {
+        plugin = emmet-vim;
+      }
+      {
+        plugin = nvim-lspconfig;
+        config = ''
+          lua << EOF
+            local nvim_lsp = require('lspconfig')
+
+            local on_attach = function(client, bufnr)
+              local function buf_set_option(...) vim.api.nvim_buf_set_option(bufnr, ...) end
+              buf_set_option('omnifunc', 'v:lua.vim.lsp.omnifunc')
+            end
+
+            local servers = {'tsserver'}
+            for _, lsp in ipairs(servers) do
+              nvim_lsp[lsp].setup { on_attach = on_attach }
+            end
+          EOF
+        '';
+      }
+    ];
   };
 
   programs.tmux = {
@@ -138,10 +151,21 @@ in {
     baseIndex = 1;
     clock24 = true;
     customPaneNavigationAndResize = true;
+    extraConfig = ''
+    bind \" split-window -v
+    '';
+  };
+
+  programs.exa = {
+    enable = true;
+    enableAliases = true;
+  };
+
+  programs.fzf = {
+    enable = true;
   };
 
   programs.zoxide = {
     enable = true;
   };
-
 }
