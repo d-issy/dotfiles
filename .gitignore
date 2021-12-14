@@ -1,7 +1,7 @@
 /config/*
 
-# root
-!/config/starship.toml
+# nixpkgs
+!/config/nixpkgs
 
 # fish
 !/config/fish/
@@ -19,12 +19,5 @@
 /config/vim/autoload/plug.vim
 
 # git tools
-!/config/git/
 !/config/tig/
 !/config/gh/config.yml
-
-# tmux
-!/config/tmux/
-
-# iterm
-!/config/iterm2/

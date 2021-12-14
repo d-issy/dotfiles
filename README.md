@@ -7,6 +7,4 @@ issy's dotfiles
 - WSL on Windows
 
 ## Requirements
-- starship
-- fish shell
-- fzf
+- nix home-manager
