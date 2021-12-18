@@ -1,7 +1,15 @@
+# environment
+
+# completion
+autoload -U compinit
+compinit
+
+autoload colors
+
+zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}'
+zstyle ':completion:*' list-colors ''
+
+# software
 if (( $+commands[starship] )); then
   eval "$(starship init zsh)"
 fi
-
-
-autoload -U compinit
-compinit
