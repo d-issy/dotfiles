@@ -1,6 +1,10 @@
 ###############
 # environment #
 ###############
+fpath=(
+  $HOME/.config/zsh/plugins/zsh-completions/src(N-/)
+  $fpath
+)
 
 ##############
 # completion #
@@ -32,4 +36,9 @@ fi
 # zoxide
 if (( $+commands[zoxide] )); then
   eval "$(zoxide init zsh)"
+fi
+
+# zsh syntax highlight
+if [ -e $HOME/.config/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]; then
+  source $HOME/.config/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 fi
