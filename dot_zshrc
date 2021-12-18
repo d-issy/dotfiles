@@ -1,15 +1,35 @@
-# environment
+###############
+# environment #
+###############
 
-# completion
+##############
+# completion #
+##############
 autoload -U compinit
 compinit
 
 autoload colors
 
-zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}'
+zstyle ':completion:*' menu select
+zstyle ':completion:*' matcher-list '' 'm:{a-zA-Z}={A-Za-z}' 'r:|[._-]=* r:|=*' 'l:|=* r:|=*'
 zstyle ':completion:*' list-colors ''
 
-# software
+###########
+# history #
+###########
+setopt hist_ignore_all_dups
+setopt hist_ignore_space
+
+############
+# software #
+############
+
+# starship
 if (( $+commands[starship] )); then
   eval "$(starship init zsh)"
+fi
+
+# zoxide
+if (( $+commands[zoxide] )); then
+  eval "$(zoxide init zsh)"
 fi
