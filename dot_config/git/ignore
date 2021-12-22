@@ -214,7 +214,6 @@ cscope.po.out
 gtags.files
 tags
 
-
 ### TextMate ###
 *.tmproj
 *.tmproject
