@@ -1,0 +1,270 @@
+### Windows ###
+$RECYCLE.BIN/
+*.lnk
+*.msix
+*.stackdump
+Thumbs.db
+Thumbs.db:encryptable
+[Dd]esktop.ini
+ehthumbs.db
+ehthumbs_vista.db
+
+### macOS ###
+.AppleDB
+.AppleDesktop
+.AppleDouble
+.DS_Store
+.DocumentRevisions-V100
+.LSOverride
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+._*
+.apdisk
+.com.apple.timemachine.donotpresent
+.fseventsd
+Icon
+Network Trash Folder
+Temporary Items
+
+### Linux ###
+.Trash-*
+.directory
+.fuse_hidden*
+.nfs*
+
+### Archives ###
+*.7z
+*.bz2
+*.bzip
+*.bzip2
+*.cab
+*.deb
+*.dmg
+*.egg
+*.gem
+*.gz
+*.gzip
+*.iso
+*.jar
+*.lzma
+*.msi
+*.msm
+*.msp
+*.rar
+*.rpm
+*.tar
+*.tgz
+*.txz
+*.xar
+*.xpi
+*.xz
+*.zip
+
+### Backup ###
+*.bak
+*.gho
+*.ori
+*.orig
+*.tmp
+
+### Dropbox ###
+.dropbox
+.dropbox.attr
+.dropbox.cache
+
+### Eclipse ###
+*.launch
+*.pydevproject
+*.swp
+*~.nib
+.apt_generated/
+.apt_generated_test/
+.autotools
+.buildpath
+.cache-main
+.cproject
+.externalToolBuilders/
+.factorypath
+.loadpath
+.metadata
+.recommenders
+.recommenders/
+.scala_dependencies
+.settings/
+.springBeans
+.sts4-cache/
+.target
+.tern-project
+.texlipse
+.worksheet
+local.properties
+tmp/
+
+### Emacs ###
+*.elc
+*.rel
+*_archive
+*_flymake.*
+*~
+.\#*
+.cask/
+.dir-locals.el
+.org-id-locations
+.projectile
+/.emacs.desktop
+/.emacs.desktop.lock
+/auto/
+/elpa/
+/eshell/history
+/eshell/lastdir
+/network-security.data
+/server/
+\#*\#
+auto-save-list
+dist/
+flycheck_*.el
+tramp
+
+### LibreOffice ###
+.~lock.*#
+
+### MATLAB ###
+*.asv
+*.autosave
+*.mex*
+*.mlappinstall
+*.mltbx
+*.m~
+*.slxc
+codegen/
+helpsearch*/
+octave-workspace
+sccprj/
+slprj/
+
+### MicrosoftOffice ###
+**/nbproject/Makefile-*.mk
+**/nbproject/Package-*.bash
+**/nbproject/private/
+*.pidb
+*.resources
+*.userprefs
+*.usertasks
+*.xlk
+*.~vsd*
+.nb-gradle/
+Backup of *.doc*
+build/
+nbbuild/
+nbdist/
+test-results/
+~$*.doc*
+~$*.ppt*
+~$*.xls*
+
+### SBT ###
+.cache
+.history
+.lib/
+dist/*
+lib_managed/
+project/boot/
+project/plugins/project/
+src_managed/
+target/
+
+### SublimeText ###
+*.stTheme.cache
+*.sublime-workspace
+*.tmPreferences.cache
+*.tmlanguage.cache
+GitHub.sublime-settings
+Package Control.ca-bundle
+Package Control.ca-certs/
+Package Control.ca-list
+Package Control.cache/
+Package Control.last-run
+Package Control.merged-ca-bundle
+Package Control.system-ca-bundle
+Package Control.user-ca-bundle
+bh_unicode_properties.cache
+oscrypto-ca-bundle.crt
+sftp-config-alt*.json
+sftp-config.json
+
+### SVN ###
+.svn/
+
+### Tags ###
+!TAGS/
+!tags/
+.TAGS
+.tags
+GPATH
+GRTAGS
+GSYMS
+GTAGS
+TAGS
+cscope.files
+cscope.in.out
+cscope.out
+cscope.po.out
+gtags.files
+tags
+
+
+### TextMate ###
+*.tmproj
+*.tmproject
+tmtags
+
+### Vim ###
+!*.svg  # comment out if you don't need vector files
+.netrwhist
+Session.vim
+Sessionx.vim
+[._]*.s[a-v][a-z]
+[._]*.sw[a-p]
+[._]*.un~
+[._]s[a-rt-v][a-z]
+[._]ss[a-gi-z]
+[._]sw[a-p]
+
+### VirtualEnv ###
+.Python
+.venv
+pip-selfcheck.json
+pyvenv.cfg
+
+### VisualStudioCode ###
+!.vscode/*.code-snippets
+!.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/settings.json
+!.vscode/tasks.json
+.history/
+.ionide
+.vscode/*
+
+### Xcode ###
+!*.xcodeproj/project.pbxproj
+!*.xcodeproj/xcshareddata/
+!*.xcworkspace/contents.xcworkspacedata
+!default.mode1v3
+!default.mode2v3
+!default.pbxuser
+!default.perspectivev3
+**/xcshareddata/WorkspaceSettings.xcsettings
+*.mode1v3
+*.mode2v3
+*.moved-aside
+*.pbxuser
+*.perspectivev3
+*.xccheckout
+*.xcodeproj/*
+*.xcscmblueprint
+/*.gcno
+DerivedData/
+xcuserdata/
