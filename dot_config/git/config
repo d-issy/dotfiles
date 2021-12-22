@@ -1,0 +1,19 @@
+[user]
+	name = d-issy
+	email = 12374694+d-issy@users.noreply.github.com
+[color]
+	ui = auto
+	diff = true
+[init]
+	defaultBranch = main
+[push]
+	default = current
+[pull]
+	ff = only
+	rebase = false
+[fetch]
+	prune = true
+[core]
+	quotePath = false
+	ignorecase = false
+	autocrlf = false
