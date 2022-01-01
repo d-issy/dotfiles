@@ -1,0 +1,63 @@
+###############
+# environment #
+###############
+export XDG_CONFIG_HOME=$HOME/.config
+export XDG_CACHE_HOME=$HOME/.cache
+export XDG_DATA_HOME=$HOME/.local/share
+
+fpath=(
+  $HOME/.config/zsh/plugins/zsh-completions/src(N-/)
+  $fpath
+)
+
+##############
+# completion #
+##############
+autoload -U compinit
+compinit
+
+autoload colors
+
+zstyle ':completion:*' menu select
+zstyle ':completion:*' matcher-list '' 'm:{a-zA-Z}={A-Za-z}' 'r:|[._-]=* r:|=*' 'l:|=* r:|=*'
+zstyle ':completion:*' list-colors ''
+
+###########
+# history #
+###########
+setopt hist_ignore_all_dups
+setopt hist_ignore_space
+
+###########
+# bindkey #
+###########
+bindkey -v
+bindkey -M viins '^A' beginning-of-line
+bindkey -M viins '^E' end-of-line
+bindkey -M viins '^N'  down-line-or-history
+bindkey -M viins '^P'  up-line-or-history
+bindkey -M viins '^R'  history-incremental-pattern-search-backward
+
+############
+# software #
+############
+
+# starship
+if (( $+commands[starship] )); then
+  eval "$(starship init zsh)"
+fi
+
+# zoxide
+if (( $+commands[zoxide] )); then
+  eval "$(zoxide init zsh)"
+fi
+
+# zsh syntax highlight
+if [ -e $XDG_CONFIG_HOME/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]; then
+  source $XDG_CONFIG_HOME/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+fi
+
+# zsh autosuggestions
+if [ -e $XDG_CONFIG_HOME/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh ]; then
+  source $XDG_CONFIG_HOME/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh
+fi

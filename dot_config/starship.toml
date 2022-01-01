@@ -1,0 +1,105 @@
+add_newline = false
+
+format = """
+$username\
+$hostname\
+$shlvl\
+$singularity\
+$kubernetes\
+$directory\
+$vcsh\
+$git_branch\
+$git_commit\
+$git_state\
+$git_metrics\
+$git_status\
+$hg_branch\
+$fill\
+$docker_context\
+$package\
+$cmake\
+$cobol\
+$dart\
+$deno\
+$dotnet\
+$elixir\
+$elm\
+$erlang\
+$golang\
+$helm\
+$java\
+$julia\
+$kotlin\
+$lua\
+$nim\
+$nodejs\
+$ocaml\
+$perl\
+$php\
+$pulumi\
+$purescript\
+$python\
+$rlang\
+$red\
+$ruby\
+$rust\
+$scala\
+$swift\
+$terraform\
+$vlang\
+$vagrant\
+$zig\
+$nix_shell\
+$conda\
+$memory_usage\
+$aws\
+$gcloud\
+$openstack\
+$azure\
+$env_var\
+$crystal\
+$custom\
+$sudo\
+$cmd_duration\
+$jobs\
+$battery\
+$time\
+$line_break\
+$status\
+$shell\
+$character"""
+
+[fill]
+symbol = ' '
+
+[git_branch]
+format = "[$symbol$branch]($style) "
+
+[git_metrics]
+disabled = false
+
+[git_status]
+format = '([$all_status$ahead_behind]($style) )'
+
+[character]
+vicmd_symbol = "[N](green)"
+
+[status]
+disabled = false
+
+[time]
+disabled = false
+format = '[$time]($style)'
+
+[aws]
+disabled = true
+
+[gcloud]
+format = '[$symbol$project]($style) '
+symbol = ' '
+
+[[battery.display]]
+threshold = 20
+
+[python]
+python_binary = ["python3", "python", "python2"]

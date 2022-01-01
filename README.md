@@ -1,10 +1,29 @@
 # dotfiles
-issy's dotfiles
+d-issy's dotfiles
 
 ## Support
 - macOS
 - Linux
 - WSL on Windows
 
-## Requirements
-- nix home-manager
+## Require
+- chezmoi
+
+## init
+
+```
+chezmoi init git@github.com:d-issy/dotfiles.git
+```
+
+
+## diff check
+
+```
+chezmoi diff
+```
+
+## apply
+
+```
+chezmoi -v apply
+```
