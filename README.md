@@ -15,7 +15,6 @@ d-issy's dotfiles
 chezmoi init git@github.com:d-issy/dotfiles.git
 ```
 
-
 ## diff check
 
 ```
