@@ -52,6 +52,10 @@ if (( $+commands[zoxide] )); then
   eval "$(zoxide init zsh)"
 fi
 
+if (( $+commands[thefuck] )); then
+  eval $(thefuck --alias)
+fi
+
 # zsh syntax highlight
 if [ -e $XDG_CONFIG_HOME/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]; then
   source $XDG_CONFIG_HOME/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
