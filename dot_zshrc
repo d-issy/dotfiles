@@ -16,6 +16,8 @@ path=(
   $path
 )
 
+export EDITOR=vim
+
 ##############
 # completion #
 ##############
