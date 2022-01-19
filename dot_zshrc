@@ -10,6 +10,12 @@ fpath=(
   $fpath
 )
 
+path=(
+  $HOME/bin(N-/)
+  /usr/local/go/bin(N-/)
+  $path
+)
+
 ##############
 # completion #
 ##############
@@ -25,8 +31,14 @@ zstyle ':completion:*' list-colors ''
 ###########
 # history #
 ###########
+setopt appendhistory
 setopt hist_ignore_all_dups
 setopt hist_ignore_space
+setopt hist_no_store
+
+HISTFILE=$HOME/.zsh_history
+HISTSIZE=10000
+SAVEHIST=10000
 
 ############
 # commands #
