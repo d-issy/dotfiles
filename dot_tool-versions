@@ -1,1 +1,32 @@
-python 3.8.12 3.6.15
+# programming language
+python 3.10.2 3.8.12 3.6.15
+nodejs 16.13.2 17.4.0
+golang 1.17.6 1.16.13 1.13.15
+ruby 3.1.0
+java adoptopenjdk-11.0.14+9 adoptopenjdk-8.0.312+7
+scala 3.1.0 2.12.15
+
+## python
+pipenv 2022.1.8@3.10.2
+
+## java
+maven 3.8.4
+
+## scala
+sbt 1.6.1
+
+# cli
+## cloud tools
+awscli 2.4.13
+aws-sam-cli 1.37.0@3.10.2
+gcloud 369.0.0
+
+## development tools
+chezmoi 2.10.0
+fzf 0.29.0
+hub v2.14.2
+jq 1.6
+ripgrep 13.0.0
+starship 1.2.1
+tmux 3.2a
+zoxide 0.8.0

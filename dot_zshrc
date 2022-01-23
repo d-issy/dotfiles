@@ -13,7 +13,6 @@ fpath=(
 
 path=(
   $HOME/bin(N-/)
-  /usr/local/go/bin(N-/)
   $path
 )
 
