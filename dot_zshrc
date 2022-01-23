@@ -7,12 +7,12 @@ export XDG_DATA_HOME=$HOME/.local/share
 
 fpath=(
   $HOME/.config/zsh/plugins/zsh-completions/src(N-/)
+  $HOME/.asdf/completions(N-/)
   $fpath
 )
 
 path=(
   $HOME/bin(N-/)
-  /usr/local/go/bin(N-/)
   $path
 )
 
@@ -73,6 +73,11 @@ fi
 # fzf
 if (( $+commands[fzf] )); then
   export FZF_DEFAULT_OPTS='--reverse --height 40%'
+fi
+
+# asdf
+if [ -d $HOME/.asdf ]; then
+  . $HOME/.asdf/asdf.sh
 fi
 
 ################
