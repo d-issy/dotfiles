@@ -46,6 +46,11 @@ SAVEHIST=10000
 # commands #
 ############
 
+# asdf
+if [ -d $HOME/.asdf ]; then
+  . $HOME/.asdf/asdf.sh
+fi
+
 # starship
 if (( $+commands[starship] )); then
   eval "$(starship init zsh)"
@@ -73,11 +78,6 @@ fi
 # fzf
 if (( $+commands[fzf] )); then
   export FZF_DEFAULT_OPTS='--reverse --height 40%'
-fi
-
-# asdf
-if [ -d $HOME/.asdf ]; then
-  . $HOME/.asdf/asdf.sh
 fi
 
 ################
