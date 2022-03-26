@@ -17,11 +17,6 @@ maven 3.8.5
 sbt 1.6.2
 
 # cli
-## cloud tools
-awscli 2.4.29
-aws-sam-cli 1.42.0
-gcloud 378.0.0
-
 ## development tools
 chezmoi 2.14.0
 fzf 0.29.0
@@ -33,3 +28,9 @@ shfmt 3.4.3
 starship 1.5.4
 tmux 3.2a
 zoxide 0.8.0
+
+## cloud tools
+awscli 2.4.29
+aws-sam-cli 1.42.0
+azure-cli 2.34.1
+gcloud 378.0.0
