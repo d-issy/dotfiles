@@ -8,8 +8,6 @@ install_plugin() {
   case $1 in
     pipenv)
       asdf plugin add $plugin https://github.com/amrox/asdf-pyapp.git ;;
-    poetry)
-      asdf plugin add $plugin https://github.com/asdf-community/asdf-poetry.git ;;
     *)
       asdf plugin add $plugin ;;
   esac
