@@ -27,7 +27,9 @@ chezmoi 2.14.0
 fzf 0.29.0
 hub v2.14.2
 jq 1.6
+make 4.3
 ripgrep 13.0.0
+shfmt 3.4.3
 starship 1.5.4
 tmux 3.2a
 zoxide 0.8.0
