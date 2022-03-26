@@ -1,9 +1,10 @@
 # programming language
-python 3.10.4 3.8.13 3.7.13 3.6.15
-nodejs 16.14.2 17.8.0
 golang 1.18 1.17.8 1.16.15 1.13.15
-ruby 3.1.1
 java adoptopenjdk-11.0.14+101 adoptopenjdk-8.0.322+6
+nodejs 16.14.2 17.8.0
+python 3.10.4 3.8.13 3.7.13 3.6.15
+ruby 3.1.1
+rust 1.59.0
 scala 3.1.1 2.13.8
 
 ## for python
