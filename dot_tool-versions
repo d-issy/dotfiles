@@ -34,4 +34,4 @@ zoxide 0.8.0
 awscli 2.4.29
 aws-sam-cli 1.42.0
 azure-cli 2.34.1
-gcloud 378.0.0
+gcloud 379.0.0
