@@ -30,6 +30,7 @@ shfmt 3.4.3
 starship 1.6.2
 terraform 1.1.9
 tmux 3.2a
+yq 4.25.1
 zoxide 0.8.0
 
 ## cloud tools
