@@ -1,14 +1,14 @@
 # programming language
-golang 1.18.1 1.17.9 1.16.15 1.13.15
-java adoptopenjdk-11.0.14+101 adoptopenjdk-8.0.322+6
-nodejs lts 16.14.2 17.9.0
+golang 1.18.2 1.17.10 1.16.15 1.13.15
+java adoptopenjdk-11.0.15+10 adoptopenjdk-8.0.322+9
+nodejs lts 16.15.0 17.9.0
 python 3.10.4 3.8.13 3.7.13 3.6.15
 ruby 3.1.2
 rust 1.60.0
 scala 3.1.2 2.13.8
 
 ## for python
-pipenv 2022.4.21
+pipenv 2022.5.2
 poetry 1.1.13
 
 ## for java
@@ -19,22 +19,22 @@ sbt 1.6.2
 
 # cli
 ## development tools
-chezmoi 2.15.1
+chezmoi 2.15.4
 exa 0.10.1
 fzf 0.30.0
 hub v2.14.2
 jq 1.6
 make 4.3
 ripgrep 13.0.0
-shfmt 3.4.3
-starship 1.6.2
-terraform 1.1.9
+shfmt 3.5.0
+starship 1.6.3
+terraform 1.2.0
 tmux 3.2a
 yq 4.25.1
-zoxide 0.8.0
+zoxide 0.8.1
 
 ## cloud tools
-awscli 2.5.8
-aws-sam-cli 1.46.0
-azure-cli 2.35.0
-gcloud 382.0.0
+awscli 2.7.1
+aws-sam-cli 1.50.0
+azure-cli 2.36.0
+gcloud 386.0.0
