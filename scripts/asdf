@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 help() {
     echo help
@@ -30,13 +30,46 @@ install() {
   asdf install
 }
 
+clean_global() {
+  IFS=$'\n', plugins=$(awk '!/^#/ {print $0}' $HOME/.tool-versions)
+  for plugin_info in ${plugins[@]}; do
+    IFS=' ', versions=($plugin_info)
+    plugin=${versions[0]}
+    if [ ! -d $ASDF_DIR/plugins/$plugin ]; then
+      continue
+    fi
+
+    echo cleanup $plugin...
+    IFS=' ', version_dirs="$ASDF_DIR/installs/$plugin/*"
+    for dir in ${version_dirs[@]}; do
+      size=$(du -hs $dir | cut -f 1)
+      check_version=$(basename $dir)
+      local ok=0
+      for version in ${versions[@]:1}; do
+        if [ "$version" = "$check_version" ]; then
+          echo -e "\e[30m[SKIP] $check_version ($size)\e[m"
+          ok=1
+          break
+        fi
+      done
+      if [ $ok -eq 0 ]; then
+        echo -e "\e[31m[REMOVED] $check_version ($size)\e[m"
+        rm -rf $dir
+      fi
+    done
+    echo
+  done
+}
+
 case $1 in
   help)
     help ;;
-  install_plugins)
+  install-plugins)
     install_plugins ;;
   install)
     install ;;
+  clean-global)
+    clean_global ;;
   *)
     echo No Found Command!
     help
