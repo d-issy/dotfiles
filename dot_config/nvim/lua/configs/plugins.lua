@@ -42,7 +42,7 @@ packer.startup(function(use)
   -- terminal
   use 'akinsho/toggleterm.nvim'
 
-  -- comment
-  use 'numToStr/Comment.nvim'
+  -- others
+  use { 'numToStr/Comment.nvim', config = function() require 'Comment'.setup {} end }
+  use { 'windwp/nvim-autopairs', config = function() require 'nvim-autopairs'.setup {} end }
 end)
-

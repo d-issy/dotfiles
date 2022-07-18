@@ -7,5 +7,3 @@ require('configs.lsp')
 require('configs.ui')
 require('configs.complete')
 require('configs.terminal')
-require('configs.comment')
-
