@@ -41,4 +41,8 @@ packer.startup(function(use)
 
   -- terminal
   use 'akinsho/toggleterm.nvim'
+
+  -- comment
+  use 'numToStr/Comment.nvim'
 end)
+
