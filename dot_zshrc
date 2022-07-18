@@ -124,3 +124,6 @@ bindkey -M viins '^P' up-line-or-history
 
 # own
 bindkey -M viins '^R' zsh-history
+
+# vim: set ft=zsh :
+
