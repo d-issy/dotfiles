@@ -10,7 +10,7 @@ vim.opt.completeopt = { 'menu', 'menuone', 'noselect' }
 
 vim.opt.shiftwidth = 2
 vim.opt.softtabstop = 2
-vim.opt.tabstop = 4
+vim.opt.tabstop = 2
 vim.opt.expandtab = true
 vim.opt.autoindent = true
 vim.opt.breakindent = true
