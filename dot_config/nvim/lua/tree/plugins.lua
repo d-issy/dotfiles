@@ -1,4 +1,36 @@
-local packer = require('packer')
+local install_path = vim.fn.stdpath 'data' .. '/site/pack/packer/start/packer.nvim'
+if vim.fn.empty(vim.fn.glob(install_path)) > 0 then
+  PACKER_BOOT = vim.fn.system {
+    'git',
+    'clone',
+    '--depth',
+    '1',
+    'https://github.com/wbthomason/packer.nvim',
+    install_path,
+  }
+  print 'Installing packer close and reopen Neovim...'
+  vim.cmd 'packadd packer.nvim'
+end
+
+vim.cmd [[
+  augroup packer_config
+    autocmd!
+    autocmd BufWritePost plugins.lua source <afile> | PackerSync
+  augroup end
+]]
+
+local status_ok, packer = pcall(require, 'packer')
+if not status_ok then
+  return
+end
+
+packer.init {
+  display = {
+    open_fn = function()
+      return require 'packer.util'.float { border = 'rounded' }
+    end
+  }
+}
 
 packer.startup(function(use)
   -- package manaager
@@ -43,4 +75,8 @@ packer.startup(function(use)
   use { 'numToStr/Comment.nvim', config = function() require 'Comment'.setup {} end }
   use { 'windwp/nvim-autopairs', config = function() require 'nvim-autopairs'.setup {} end }
   use { 'norcalli/nvim-colorizer.lua', config = function() require 'colorizer'.setup { 'lua', 'css', 'html' } end }
+
+  if PACKER_BOOT then
+    require 'packer'.snyc()
+  end
 end)

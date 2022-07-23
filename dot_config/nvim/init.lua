@@ -1,9 +1,9 @@
-require('configs.plugins')
+require('user.plugins')
 
-require('configs.options')
-require('configs.mappings')
+require('user.options')
+require('user.mappings')
 
-require('configs.lsp')
-require('configs.ui')
-require('configs.complete')
-require('configs.terminal')
+require('user.lsp')
+require('user.ui')
+require('user.complete')
+require('user.terminal')
