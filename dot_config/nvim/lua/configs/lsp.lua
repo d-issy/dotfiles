@@ -14,8 +14,7 @@ end
 local capabilities = require 'cmp_nvim_lsp'.update_capabilities(vim.lsp.protocol.make_client_capabilities())
 require 'nvim-lsp-installer'.setup { automatic_installation = true }
 
---- lua
-require('lspconfig').sumneko_lua.setup {
+require 'lspconfig'.sumneko_lua.setup {
   on_attach = on_attach,
   capabilities = capabilities,
   settings = {
@@ -31,23 +30,10 @@ require('lspconfig').sumneko_lua.setup {
   }
 }
 
---- typescript
-require('lspconfig').tsserver.setup {
-  capabilities = capabilities,
-  on_attach = on_attach
-}
-
---- python
-require('lspconfig').pyright.setup {
-  capabilities = capabilities,
-  on_attach = on_attach
-}
-
---- golang
-require('lspconfig').gopls.setup {
-  capabilities = capabilities,
-  on_attach = on_attach
-}
+require 'lspconfig'.gopls.setup         { capabilities = capabilities, on_attach = on_attach }
+require 'lspconfig'.pyright.setup       { capabilities = capabilities, on_attach = on_attach }
+require 'lspconfig'.rust_analyzer.setup { capabilities = capabilities, on_attach = on_attach }
+require 'lspconfig'.tsserver.setup      { capabilities = capabilities, on_attach = on_attach }
 
 -- lspkind
 require('lspkind').init {
