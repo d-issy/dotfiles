@@ -64,14 +64,16 @@ packer.startup(function(use)
   use 'hrsh7th/cmp-cmdline'
   use 'hrsh7th/cmp-nvim-lsp'
   use 'hrsh7th/cmp-path'
-  use 'hrsh7th/cmp-vsnip'
+  use 'saadparwaiz1/cmp_luasnip'
 
   -- telescope
   use 'nvim-telescope/telescope.nvim'
 
+  -- snippets
+  use 'L3MON4D3/LuaSnip'
+
   -- others
   use 'akinsho/toggleterm.nvim'
-  use 'hrsh7th/vim-vsnip'
   use { 'numToStr/Comment.nvim', config = function() require 'Comment'.setup {} end }
   use { 'windwp/nvim-autopairs', config = function() require 'nvim-autopairs'.setup {} end }
   use { 'norcalli/nvim-colorizer.lua', config = function() require 'colorizer'.setup { 'lua', 'css', 'html' } end }

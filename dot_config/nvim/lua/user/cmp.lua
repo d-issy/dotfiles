@@ -3,9 +3,20 @@ if not cmp_ok then
   return
 end
 
+local luasnip_ok, luasnip = pcall(require, 'luasnip')
+if not luasnip_ok then
+  return
+end
+
 local lspkind_ok, lspkind = pcall(require, 'lspkind')
 if not lspkind_ok then
   return
+end
+
+local has_words_before = function()
+  local line = vim.fn.line('.')
+  local col = vim.fn.col('.')
+  return col ~= 0 and vim.api.nvim_buf_get_lines(0, line - 1, line, true)[1]:sub(col, col):match("%s") == nil
 end
 
 cmp.setup {
@@ -14,7 +25,7 @@ cmp.setup {
   },
   snippet = {
     expand = function(args)
-      vim.fn['vsnip#anonymous'](args.body)
+      luasnip.lsp_expand(args.body)
     end
   },
   mapping = cmp.mapping.preset.insert({
@@ -23,9 +34,25 @@ cmp.setup {
     ['<C-Space>'] = cmp.mapping.complete(),
     ['<C-e>'] = cmp.mapping.abort(),
     ['<CR>'] = cmp.mapping.confirm({ select = true }),
+    ["<C-k>"] = cmp.mapping(function(fallback)
+      if luasnip.expand_or_jumpable() then
+        luasnip.expand_or_jump()
+      elseif has_words_before() then
+        cmp.confirm({ select = true })
+      else
+        fallback()
+      end
+    end, { "i", "s" }),
+    ["<C-l>"] = cmp.mapping(function(fallback)
+      if luasnip.jumpable(-1) then
+        luasnip.jump(-1)
+      else
+        fallback()
+      end
+    end, { "i", "s" }),
   }),
   sources = cmp.config.sources({
-    { name = 'vsnip' },
+    { name = 'luasnip', option = { use_show_condition = false } },
     { name = 'nvim_lsp' },
   })
 }
