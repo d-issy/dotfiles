@@ -3,10 +3,10 @@ local map = vim.keymap.set
 local on_attach = function(_, bufnr)
   vim.api.nvim_buf_set_option(bufnr, 'omnifunc', 'v:lua.vim.lsp.omnifunc')
 
-
   local opts = { noremap = true, silent = true, buffer = bufnr }
 
   map('n', '<leader>f', vim.lsp.buf.formatting, opts)
+  map('n', '<leader>d', vim.diagnostic.open_float, opts)
   map('n', 'gd', vim.lsp.buf.definition, opts)
   map('n', 'K', vim.lsp.buf.hover, opts)
 end
@@ -30,10 +30,10 @@ require 'lspconfig'.sumneko_lua.setup {
   }
 }
 
-require 'lspconfig'.gopls.setup         { capabilities = capabilities, on_attach = on_attach }
-require 'lspconfig'.pyright.setup       { capabilities = capabilities, on_attach = on_attach }
+require 'lspconfig'.gopls.setup { capabilities = capabilities, on_attach = on_attach }
+require 'lspconfig'.pyright.setup { capabilities = capabilities, on_attach = on_attach }
 require 'lspconfig'.rust_analyzer.setup { capabilities = capabilities, on_attach = on_attach }
-require 'lspconfig'.tsserver.setup      { capabilities = capabilities, on_attach = on_attach }
+require 'lspconfig'.tsserver.setup { capabilities = capabilities, on_attach = on_attach }
 
 -- lspkind
 require('lspkind').init {
