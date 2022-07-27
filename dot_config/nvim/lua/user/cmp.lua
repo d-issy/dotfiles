@@ -21,7 +21,10 @@ end
 
 cmp.setup {
   formatting = {
-    format = lspkind.cmp_format({ mode = 'symbol_text', maxwidth = 50 })
+    format = lspkind.cmp_format {
+      mode = 'symbol_text',
+      maxwidth = 50,
+    }
   },
   snippet = {
     expand = function(args)
