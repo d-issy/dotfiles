@@ -80,6 +80,15 @@ if (( $+commands[fzf] )); then
   export FZF_DEFAULT_OPTS='--reverse --height 40%'
 fi
 
+# EDITOR
+if (( $+commands[nvim] )); then
+  alias v=nvim
+  export EDITOR=nvim
+else
+  alias v=vim
+  export EDITOR=vim
+fi
+
 ################
 # own commands #
 ################
@@ -115,3 +124,6 @@ bindkey -M viins '^P' up-line-or-history
 
 # own
 bindkey -M viins '^R' zsh-history
+
+# vim: set ft=zsh :
+

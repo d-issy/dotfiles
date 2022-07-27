@@ -1,8 +1,0 @@
-" vim XDG settings
-set runtimepath=$VIMRUNTIME,$XDG_CONFIG_HOME/vim,$XDG_CONFIG_HOME/vim/after
-
-let s:init_vim_path = expand($XDG_CONFIG_HOME . '/vim/init.vim')
-
-if filereadable(s:init_vim_path)
-  execute 'source' s:init_vim_path
-endif
