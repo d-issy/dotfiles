@@ -1,44 +1,44 @@
 # programming language
-golang 1.18.3 1.17.11 1.16.15 1.13.15
-java adoptopenjdk-11.0.15+10 adoptopenjdk-8.0.332+9
+golang 1.19 1.18.3
+java adoptopenjdk-11.0.16+8 adoptopenjdk-8.0.345+1
 kotlin 1.7.10
 lua 5.4.4
 nodejs lts
-python 3.10.5 3.9.13 3.8.13 3.7.13 3.6.15
+python 3.10.6 3.9.13 3.8.13 3.7.13 3.6.15
 ruby 3.1.2
-rust 1.62.0
+rust 1.62.1
 scala 3.1.3 2.13.8
 
 ## for python
-pipenv 2022.7.4
+pipenv 2022.8.5
 poetry 1.1.14
 
 ## for java
 maven 3.8.6
 
 ## for scala
-sbt 1.6.2
+sbt 1.7.1
 
 # cli
 ## editor
 neovim 0.7.2
 
 ## development tools
-chezmoi 2.18.1
+chezmoi 2.20.0
 exa 0.10.1
-fzf 0.30.0
-github-cli 2.13.0
+fzf 0.32.0
+github-cli 2.14.3
 jq 1.6
 make 4.3
 ripgrep 13.0.0
 shfmt 3.5.1
 starship 1.9.1
-terraform 1.2.4
+terraform 1.2.6
 tmux 3.3a
-yq 4.25.3
+yq 4.27.2
 zoxide 0.8.2
 
 ## cloud tools
-awscli 2.7.14
+awscli 2.7.21
 aws-sam-cli 1.53.0
-gcloud 392.0.0
+gcloud 396.0.0
