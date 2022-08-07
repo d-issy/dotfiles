@@ -1,4 +1,5 @@
 #!/bin/bash
+nodejs_lts_version=16
 
 help() {
     echo help
@@ -41,13 +42,30 @@ clean_global() {
 
     echo cleanup $plugin...
     IFS=' ', version_dirs="$ASDF_DIR/installs/$plugin/*"
+
+    local lts=0
+    if echo $version_dirs | grep nodejs | grep lts >/dev/null; then
+      lts=1
+    fi
+
     for dir in ${version_dirs[@]}; do
       size=$(du -hs $dir | cut -f 1)
       check_version=$(basename $dir)
       local ok=0
       for version in ${versions[@]:1}; do
-        if [ "$version" = "$check_version" ]; then
-          echo -e "\e[30m[SKIP] $check_version ($size)\e[m"
+        if [ $lts -eq 1 ]; then
+          if echo $check_version | grep -e "^${nodejs_lts_version}\." >/dev/null; then
+            ok=1
+            echo -e "\e[90m[SKIP] $check_version (alias by lts) ($size)\e[m"
+            break
+          fi
+        fi
+        if [ "$size" = "0" ]; then
+          ok=1
+          break
+        fi
+        if [ "$check_version" = "$version" ]; then
+          echo -e "\e[90m[SKIP] $check_version ($size)\e[m"
           ok=1
           break
         fi
