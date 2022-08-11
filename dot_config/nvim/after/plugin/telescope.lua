@@ -3,6 +3,8 @@ if not status_ok then
   return
 end
 
+local fb_actions = telescope.extensions.file_browser.actions
+
 telescope.setup {
   pickers = {
     find_files = {
@@ -15,10 +17,13 @@ telescope.setup {
       hijack_netrw = true,
       mappings = {
         ['i'] = {
-          ['<C-w>'] = function() vim.cmd 'normal vbd' end,
+          ['<C-w>'] = function() vim.cmd('normal vbd') end,
         },
         ['n'] = {
-          ['q'] = function() vim.cmd 'close!' end
+          ['/'] = function() vim.cmd('startinsert') end,
+          ['q'] = function() vim.cmd('close!') end,
+          ['a'] = fb_actions.create,
+          ['u'] = fb_actions.goto_parent_dir,
         },
       }
     }
