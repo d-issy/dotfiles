@@ -17,9 +17,6 @@ vim.diagnostic.config({
     prefix = '●'
   },
   update_in_insert = true,
-  float = {
-    source = "always", -- Or "if_many"
-  },
 })
 
 local mason_status_ok, mason = pcall(require, 'mason')
