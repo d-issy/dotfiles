@@ -46,7 +46,6 @@ packer.startup(function(use)
   use 'nvim-lualine/lualine.nvim'
   use 'akinsho/bufferline.nvim'
   use 'lukas-reineke/indent-blankline.nvim'
-  use { 'nvim-neo-tree/neo-tree.nvim', branch = 'v2.x' }
   use 'kkharji/lspsaga.nvim'
   --- treesitter
   use { 'nvim-treesitter/nvim-treesitter', run = ':TSUpdate' }
@@ -69,6 +68,7 @@ packer.startup(function(use)
 
   -- telescope
   use 'nvim-telescope/telescope.nvim'
+  use 'nvim-telescope/telescope-file-browser.nvim'
 
   -- snippets
   use 'L3MON4D3/LuaSnip'
