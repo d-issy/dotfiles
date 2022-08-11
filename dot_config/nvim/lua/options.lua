@@ -21,3 +21,4 @@ vim.opt.relativenumber = true
 
 vim.opt.list = true
 vim.opt.listchars = { tab = '>-', trail = '•', nbsp = '_' }
+vim.opt.clipboard = { 'unnamed', 'unnamedplus' }
