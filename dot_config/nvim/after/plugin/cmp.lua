@@ -11,38 +11,38 @@ end
 local has_words_before = function()
   local line = vim.fn.line('.')
   local col = vim.fn.col('.')
-  return col ~= 0 and vim.api.nvim_buf_get_lines(0, line - 1, line, true)[1]:sub(col, col):match("%s") == nil
+  return col ~= 0 and vim.api.nvim_buf_get_lines(0, line - 1, line, true)[1]:sub(col, col):match('%s') == nil
 end
 
 cmp.setup {
   formatting = {
-    format = function(entry, vim_item)
+    format = function(_, vim_item)
       vim_item.kind = string.format('%s %s', ({
-        Text = "",
-        Method = "",
-        Function = "",
-        Constructor = "",
-        Field = "",
-        Variable = "",
-        Class = "ﴯ",
-        Interface = "",
-        Module = "",
-        Property = "ﰠ",
-        Unit = "",
-        Value = "",
-        Enum = "",
-        Keyword = "",
-        Snippet = "",
-        Color = "",
-        File = "",
-        Reference = "",
-        Folder = "",
-        EnumMember = "",
-        Constant = "",
-        Struct = "",
-        Event = "",
-        Operator = "",
-        TypeParameter = ""
+        Text = '',
+        Method = '',
+        Function = '',
+        Constructor = '',
+        Field = '',
+        Variable = '',
+        Class = 'ﴯ',
+        Interface = '',
+        Module = '',
+        Property = 'ﰠ',
+        Unit = '',
+        Value = '',
+        Enum = '',
+        Keyword = '',
+        Snippet = '',
+        Color = '',
+        File = '',
+        Reference = '',
+        Folder = '',
+        EnumMember = '',
+        Constant = '',
+        Struct = '',
+        Event = '',
+        Operator = '',
+        TypeParameter = ''
       })[vim_item.kind], vim_item.kind)
       return vim_item
     end
@@ -57,8 +57,7 @@ cmp.setup {
     ['<C-f>'] = cmp.mapping.scroll_docs(4),
     ['<C-Space>'] = cmp.mapping.complete(),
     ['<C-e>'] = cmp.mapping.abort(),
-    ['<CR>'] = cmp.mapping.confirm({ select = true }),
-    ["<C-k>"] = cmp.mapping(function(fallback)
+    ['<C-k>'] = cmp.mapping(function(fallback)
       if luasnip.expand_or_jumpable() then
         luasnip.expand_or_jump()
       elseif has_words_before() then
@@ -66,14 +65,14 @@ cmp.setup {
       else
         fallback()
       end
-    end, { "i", "s" }),
-    ["<C-l>"] = cmp.mapping(function(fallback)
+    end, { 'i', 's' }),
+    ['<C-l>'] = cmp.mapping(function(fallback)
       if luasnip.jumpable(-1) then
         luasnip.jump(-1)
       else
         fallback()
       end
-    end, { "i", "s" }),
+    end, { 'i', 's' }),
   }),
   sources = cmp.config.sources({
     { name = 'luasnip', option = { use_show_condition = false } },

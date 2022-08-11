@@ -12,7 +12,12 @@ local on_attach = function(_, bufnr)
 end
 
 local capabilities = require 'cmp_nvim_lsp'.update_capabilities(vim.lsp.protocol.make_client_capabilities())
-require 'nvim-lsp-installer'.setup { automatic_installation = true }
+capabilities.textDocument.completion.completionItem.snippetSupport = true
+
+local installer_status_ok, installer = pcall(require, 'nvim-lsp-installer')
+if installer_status_ok then
+  installer.setup { automatic_installation = true }
+end
 
 require 'lspconfig'.sumneko_lua.setup {
   on_attach = on_attach,
@@ -30,7 +35,24 @@ require 'lspconfig'.sumneko_lua.setup {
   }
 }
 
-require 'lspconfig'.gopls.setup { capabilities = capabilities, on_attach = on_attach }
+require 'lspconfig'.gopls.setup {
+  capabilities = capabilities,
+  on_attach = on_attach,
+  settings = {
+    gopls = {
+      experimentalPostfixCompletions = true,
+      analyses = {
+        unusedparams = true,
+        shadow = true,
+        staticcheck = true,
+      }
+    }
+  },
+  init_options = {
+    usePlaceholders = true,
+  }
+}
+
 require 'lspconfig'.pyright.setup { capabilities = capabilities, on_attach = on_attach }
 require 'lspconfig'.rust_analyzer.setup { capabilities = capabilities, on_attach = on_attach }
 require 'lspconfig'.tsserver.setup { capabilities = capabilities, on_attach = on_attach }
