@@ -8,6 +8,9 @@ configs.setup {
   sync_install = false,
   auto_install = false,
   ignore_install = {},
+  indent = {
+    enable = true
+  },
   highlight = {
     enable = true,
     disable = {},
@@ -38,4 +41,3 @@ configs.setup {
     },
   }
 }
-
