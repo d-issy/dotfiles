@@ -14,9 +14,24 @@ end
 local capabilities = require 'cmp_nvim_lsp'.update_capabilities(vim.lsp.protocol.make_client_capabilities())
 capabilities.textDocument.completion.completionItem.snippetSupport = true
 
-local installer_status_ok, installer = pcall(require, 'nvim-lsp-installer')
-if installer_status_ok then
-  installer.setup { automatic_installation = true }
+vim.diagnostic.config({
+  virtual_text = {
+    prefix = '●'
+  },
+  update_in_insert = true,
+  float = {
+    source = "always", -- Or "if_many"
+  },
+})
+
+local mason_status_ok, mason = pcall(require, 'mason')
+if mason_status_ok then
+  mason.setup {}
+end
+
+local mason_lspconfig_status_ok, mason_lspconfig = pcall(require, 'mason-lspconfig')
+if mason_lspconfig_status_ok then
+  mason_lspconfig.setup { automatic_installation = true }
 end
 
 require 'lspconfig'.sumneko_lua.setup {
