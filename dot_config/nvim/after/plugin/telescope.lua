@@ -18,6 +18,7 @@ telescope.setup {
           ['<C-w>'] = function() vim.cmd 'normal vbd' end,
         },
         ['n'] = {
+          ['q'] = function() vim.cmd 'close!' end
         },
       }
     }
