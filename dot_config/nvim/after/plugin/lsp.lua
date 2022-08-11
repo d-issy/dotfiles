@@ -35,45 +35,6 @@ require 'lspconfig'.pyright.setup { capabilities = capabilities, on_attach = on_
 require 'lspconfig'.rust_analyzer.setup { capabilities = capabilities, on_attach = on_attach }
 require 'lspconfig'.tsserver.setup { capabilities = capabilities, on_attach = on_attach }
 
--- lspkind
-require('lspkind').init {
-  -- default: 'symbol'
-  -- options: 'text', 'text_symbol', 'symbol_text', 'symbol'
-  mode = 'symbol_text',
-
-  -- default: 'default'
-  -- options: 'default', 'codicons'
-  preset = 'codicons',
-
-  symbol_map = {
-    Text = "",
-    Method = "",
-    Function = "",
-    Constructor = "",
-    Field = "ﰠ",
-    Variable = "",
-    Class = "ﴯ",
-    Interface = "",
-    Module = "",
-    Property = "ﰠ",
-    Unit = "塞",
-    Value = "",
-    Enum = "",
-    Keyword = "",
-    Snippet = "",
-    Color = "",
-    File = "",
-    Reference = "",
-    Folder = "",
-    EnumMember = "",
-    Constant = "",
-    Struct = "פּ",
-    Event = "",
-    Operator = "",
-    TypeParameter = ""
-  },
-}
-
 -- lspsaga
 local lspsaga = require 'lspsaga'
 local opts = { noremap = true, silent = true }

@@ -56,7 +56,6 @@ packer.startup(function(use)
   -- lsp
   use 'neovim/nvim-lspconfig'
   use 'williamboman/nvim-lsp-installer'
-  use 'onsails/lspkind.nvim'
 
   -- cmp
   use 'hrsh7th/nvim-cmp'

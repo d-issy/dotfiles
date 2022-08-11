@@ -8,11 +8,6 @@ if not luasnip_ok then
   return
 end
 
-local lspkind_ok, lspkind = pcall(require, 'lspkind')
-if not lspkind_ok then
-  return
-end
-
 local has_words_before = function()
   local line = vim.fn.line('.')
   local col = vim.fn.col('.')
@@ -21,10 +16,36 @@ end
 
 cmp.setup {
   formatting = {
-    format = lspkind.cmp_format {
-      mode = 'symbol_text',
-      maxwidth = 50,
-    }
+    format = function(entry, vim_item)
+      vim_item.kind = string.format('%s %s', ({
+        Text = "",
+        Method = "",
+        Function = "",
+        Constructor = "",
+        Field = "",
+        Variable = "",
+        Class = "ﴯ",
+        Interface = "",
+        Module = "",
+        Property = "ﰠ",
+        Unit = "",
+        Value = "",
+        Enum = "",
+        Keyword = "",
+        Snippet = "",
+        Color = "",
+        File = "",
+        Reference = "",
+        Folder = "",
+        EnumMember = "",
+        Constant = "",
+        Struct = "",
+        Event = "",
+        Operator = "",
+        TypeParameter = ""
+      })[vim_item.kind], vim_item.kind)
+      return vim_item
+    end
   },
   snippet = {
     expand = function(args)
