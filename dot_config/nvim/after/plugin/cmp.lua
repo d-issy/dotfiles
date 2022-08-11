@@ -57,22 +57,26 @@ cmp.setup {
     ['<C-f>'] = cmp.mapping.scroll_docs(4),
     ['<C-Space>'] = cmp.mapping.complete(),
     ['<C-e>'] = cmp.mapping.abort(),
-    ['<C-k>'] = cmp.mapping(function(fallback)
-      if luasnip.expand_or_jumpable() then
-        luasnip.expand_or_jump()
-      elseif has_words_before() then
-        cmp.confirm({ select = true })
-      else
-        fallback()
-      end
-    end, { 'i', 's' }),
-    ['<C-l>'] = cmp.mapping(function(fallback)
-      if luasnip.jumpable(-1) then
-        luasnip.jump(-1)
-      else
-        fallback()
-      end
-    end, { 'i', 's' }),
+    ['<C-k>'] = cmp.mapping(
+      function(fallback)
+        if luasnip.expand_or_jumpable() then
+          luasnip.expand_or_jump()
+        elseif has_words_before() then
+          cmp.confirm({ select = true })
+        else
+          fallback()
+        end
+      end, { 'i', 's' }
+    ),
+    ['<C-l>'] = cmp.mapping(
+      function(fallback)
+        if luasnip.jumpable(-1) then
+          luasnip.jump(-1)
+        else
+          fallback()
+        end
+      end, { 'i', 's' }
+    ),
   }),
   sources = cmp.config.sources({
     { name = 'luasnip', option = { use_show_condition = false } },
