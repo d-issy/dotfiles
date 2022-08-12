@@ -29,9 +29,14 @@ if mason_lspconfig_status_ok then
   mason_lspconfig.setup { automatic_installation = true }
 end
 
+local lsp_flags = {
+  debounce_text_changes = 150
+}
+
 require 'lspconfig'.sumneko_lua.setup {
   on_attach = on_attach,
   capabilities = capabilities,
+  flags = lsp_flags,
   settings = {
     Lua = {
       diagnostics = {
@@ -48,11 +53,11 @@ require 'lspconfig'.sumneko_lua.setup {
 }
 
 require 'lspconfig'.gopls.setup {
-  capabilities = capabilities,
   on_attach = on_attach,
+  capabilities = capabilities,
+  flags = lsp_flags,
   settings = {
     gopls = {
-      experimentalPostfixCompletions = true,
       analyses = {
         unusedparams = true,
         shadow = true,
@@ -65,6 +70,20 @@ require 'lspconfig'.gopls.setup {
   }
 }
 
-require 'lspconfig'.pyright.setup { capabilities = capabilities, on_attach = on_attach }
-require 'lspconfig'.rust_analyzer.setup { capabilities = capabilities, on_attach = on_attach }
-require 'lspconfig'.tsserver.setup { capabilities = capabilities, on_attach = on_attach }
+require 'lspconfig'.pyright.setup {
+  on_attach = on_attach,
+  capabilities = capabilities,
+  settings = {
+    python = {
+      analysis = {
+        autoImportCompletions = true,
+        autoSearchPaths = true,
+        diagnosticMode = 'workspace',
+        useLibraryCodeForTypes = true,
+      }
+    }
+  }
+}
+
+require 'lspconfig'.rust_analyzer.setup { on_attach = on_attach, capabilities = capabilities }
+require 'lspconfig'.tsserver.setup { on_attach = on_attach, capabilities = capabilities }
