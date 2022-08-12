@@ -13,6 +13,7 @@ fpath=(
 
 path=(
   $HOME/bin(N-/)
+  $HOME/.local/bin(N-/)
   $path
 )
 
@@ -126,4 +127,3 @@ bindkey -M viins '^P' up-line-or-history
 bindkey -M viins '^R' zsh-history
 
 # vim: set ft=zsh :
-

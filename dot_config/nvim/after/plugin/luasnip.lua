@@ -13,13 +13,15 @@ luasnip.config.set_config {
   ext_opts = {
     [types.choiceNode] = {
       active = {
-        virt_text = { { "●", "GruvboxBlue" } }
+        virt_text = { { "●" } }
       }
     },
     [types.insertNode] = {
       active = {
-        virt_text = { { "●", "GruvboxOrange" } }
+        virt_text = { { "●" } }
       }
     }
   },
 }
+
+vim.cmd [[ autocmd InsertLeave * lua if require("luasnip").session.current_nodes[vim.api.nvim_get_current_buf()] then require("luasnip").unlink_current() end ]]

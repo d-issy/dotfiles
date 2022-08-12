@@ -46,8 +46,7 @@ packer.startup(function(use)
   use 'nvim-lualine/lualine.nvim'
   use 'akinsho/bufferline.nvim'
   use 'lukas-reineke/indent-blankline.nvim'
-  use { 'nvim-neo-tree/neo-tree.nvim', branch = 'v2.x' }
-  use 'kkharji/lspsaga.nvim'
+  use { 'kkharji/lspsaga.nvim', branch = 'main' }
   --- treesitter
   use { 'nvim-treesitter/nvim-treesitter', run = ':TSUpdate' }
   use 'nvim-treesitter/playground'
@@ -55,8 +54,9 @@ packer.startup(function(use)
 
   -- lsp
   use 'neovim/nvim-lspconfig'
-  use 'williamboman/nvim-lsp-installer'
-  use 'onsails/lspkind.nvim'
+  use 'williamboman/mason.nvim'
+  use 'williamboman/mason-lspconfig.nvim'
+  use 'jose-elias-alvarez/null-ls.nvim'
 
   -- cmp
   use 'hrsh7th/nvim-cmp'
@@ -69,6 +69,7 @@ packer.startup(function(use)
 
   -- telescope
   use 'nvim-telescope/telescope.nvim'
+  use 'nvim-telescope/telescope-file-browser.nvim'
 
   -- snippets
   use 'L3MON4D3/LuaSnip'
