@@ -17,3 +17,5 @@
 	quotePath = false
 	ignorecase = false
 	autocrlf = false
+[ghq]
+	root = ~/code
