@@ -52,18 +52,24 @@ if [ -d $HOME/.asdf ]; then
   . $HOME/.asdf/asdf.sh
 fi
 
+# direnv
+if [ -d $HOME/.asdf ]; then
+  eval "$(direnv hook zsh)"
+fi
+
 # starship
 if (( $+commands[starship] )); then
   eval "$(starship init zsh)"
 fi
 
+# thefuck
+if (( $+commands[thefuck] )); then
+  eval $(thefuck --alias)
+fi
+
 # zoxide
 if (( $+commands[zoxide] )); then
   eval "$(zoxide init zsh)"
-fi
-
-if (( $+commands[thefuck] )); then
-  eval $(thefuck --alias)
 fi
 
 # zsh syntax highlight
