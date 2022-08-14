@@ -5,19 +5,17 @@ export XDG_CONFIG_HOME=$HOME/.config
 export XDG_CACHE_HOME=$HOME/.cache
 export XDG_DATA_HOME=$HOME/.local/share
 
-fpath=(
-  $HOME/.config/zsh/plugins/zsh-completions/src(N-/)
-  $HOME/.asdf/completions(N-/)
-  $fpath
-)
-
 path=(
   $HOME/bin(N-/)
   $HOME/.local/bin(N-/)
   $path
 )
 
-export EDITOR=vim
+fpath=(
+  $HOME/.config/zsh/plugins/zsh-completions/src(N-/)
+  $HOME/.asdf/completions(N-/)
+  $fpath
+)
 
 ##############
 # completion #
@@ -34,14 +32,17 @@ zstyle ':completion:*' list-colors ''
 ###########
 # history #
 ###########
-setopt appendhistory
-setopt hist_ignore_all_dups
-setopt hist_ignore_space
-setopt hist_no_store
-
 HISTFILE=$HOME/.zsh_history
 HISTSIZE=10000
 SAVEHIST=10000
+
+setopt appendhistory
+setopt hist_ignore_all_dups
+setopt hist_ignore_dups
+setopt hist_ignore_space
+setopt hist_no_store
+setopt hist_reduce_blanks
+setopt share_history
 
 ############
 # commands #
@@ -55,6 +56,11 @@ fi
 # direnv
 if [ -d $HOME/.asdf ]; then
   eval "$(direnv hook zsh)"
+fi
+
+# fzf
+if (( $+commands[fzf] )); then
+  export FZF_DEFAULT_OPTS='--reverse --height 40%'
 fi
 
 # starship
@@ -82,16 +88,11 @@ if [ -e $XDG_CONFIG_HOME/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh
   source $XDG_CONFIG_HOME/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh
 fi
 
-# fzf
-if (( $+commands[fzf] )); then
-  export FZF_DEFAULT_OPTS='--reverse --height 40%'
-fi
-
 # EDITOR
 if (( $+commands[nvim] )); then
   alias v=nvim
   export EDITOR=nvim
-else
+elif (( $+commands[vim] )); then
   alias v=vim
   export EDITOR=vim
 fi
