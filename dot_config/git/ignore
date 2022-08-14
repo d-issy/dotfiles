@@ -267,3 +267,7 @@ pyvenv.cfg
 /*.gcno
 DerivedData/
 xcuserdata/
+
+### direnv ###
+.direnv
+.envrc

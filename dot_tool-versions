@@ -27,6 +27,7 @@ neovim 0.7.2
 chezmoi 2.20.0
 exa 0.10.1
 fzf 0.32.0
+direnv 2.32.1
 ghq 1.3.0
 github-cli 2.14.3
 jq 1.6
