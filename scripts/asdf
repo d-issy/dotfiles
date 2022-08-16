@@ -7,7 +7,7 @@ help() {
 
 install_plugin() {
   case $1 in
-    pipenv)
+    pipenv|thefuck)
       asdf plugin add $plugin https://github.com/amrox/asdf-pyapp.git ;;
     *)
       asdf plugin add $plugin ;;
