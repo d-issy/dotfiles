@@ -5,17 +5,6 @@ export XDG_CONFIG_HOME=$HOME/.config
 export XDG_CACHE_HOME=$HOME/.cache
 export XDG_DATA_HOME=$HOME/.local/share
 
-path=(
-  $HOME/bin(N-/)
-  $HOME/.local/bin(N-/)
-  $path
-)
-
-fpath=(
-  $HOME/.config/zsh/plugins/zsh-completions/src(N-/)
-  $HOME/.asdf/completions(N-/)
-  $fpath
-)
 
 ##############
 # completion #
@@ -51,6 +40,9 @@ setopt share_history
 # asdf
 if [ -d $HOME/.asdf ]; then
   . $HOME/.asdf/asdf.sh
+
+  # golang package bin
+  ASDF_GOLANG_PACKAGE_BIN=$(asdf where golang)/packages/bin
 fi
 
 # direnv
@@ -132,5 +124,23 @@ bindkey -M viins '^P' up-line-or-history
 
 # own
 bindkey -M viins '^R' zsh-history
+
+
+########
+# path #
+########
+
+path=(
+  $HOME/bin(N-/)
+  $HOME/.local/bin(N-/)
+  $ASDF_GOLANG_PACKAGE_BIN(N-/)
+  $path
+)
+
+fpath=(
+  $HOME/.config/zsh/plugins/zsh-completions/src(N-/)
+  $HOME/.asdf/completions(N-/)
+  $fpath
+)
 
 # vim: set ft=zsh :

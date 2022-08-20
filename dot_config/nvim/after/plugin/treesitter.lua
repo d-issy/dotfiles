@@ -13,7 +13,9 @@ configs.setup {
   },
   highlight = {
     enable = true,
-    disable = {},
+    disable = {
+      'proto', -- Not working properly
+    },
     additional_vim_regex_highlighting = true,
   },
   rainbow = {
