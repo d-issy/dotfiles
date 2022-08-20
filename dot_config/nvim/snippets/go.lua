@@ -3,97 +3,130 @@ local s = luasnip.s
 local i = luasnip.i
 local t = luasnip.t
 
-local isn = luasnip.indent_snippet_node
-local d = luasnip.dynamic_node
-local c = luasnip.choice_node
-local f = luasnip.function_node
-local sn = luasnip.snippet_node
-
-local ai = require 'luasnip.nodes.absolute_indexer'
 local fmt = require 'luasnip.extras.fmt'.fmt
-local rep = require 'luasnip.extras'.rep
-local postfix = require 'luasnip.extras.postfix'.postfix
+
+local snip = require('snip')
 
 local snippets = {}
 
-table.insert(snippets, s('main',
-  fmt([[
+table.insert(snippets, s('main', fmt([[
 package main
 
 func main() {
 	<>
 }
-]] , { i(0, '// TODO:implements') }, { delimiters = '<>' }
-  )
-))
+]],
+  { i(0, '// TODO:implements') },
+  { delimiters = '<>' }
+), snip.OptStartOfLine))
 
-table.insert(snippets, s('if',
-  fmt([[
+table.insert(snippets, s('fn', fmt([[
+func <name>() <b1><args><b2>{
+	<main>
+}
+]],
+  {
+    name = i(1),
+    args = i(2),
+    main = i(0, '// TODO: implements'),
+    b1 = luasnip.function_node(function(args, _)
+      if #(args[1][1]) > 0 and string.match(args[1][1], ',') ~= nil then
+        return '('
+      else
+        return ''
+      end
+    end, { 2 }),
+    b2 = luasnip.function_node(function(args, _)
+      if #(args[1][1]) > 0 then
+        return string.match(args[1][1], ',') and ') ' or ' '
+      else
+        return ''
+      end
+    end, { 2 }),
+  },
+  { delimiters = '<>' }
+), snip.OptStartOfLine))
+
+table.insert(snippets, s('if', fmt([[
 if <> {
 	<>
 }
-  ]],
-    {
-      i(1),
-      i(0, '// TODO:implements'),
-    }, { delimiters = '<>' }
-  )
-))
+]],
+  {
+    i(1),
+    i(0, '// TODO:implements'),
+  },
+  { delimiters = '<>' }
+), snip.OptStartOfLine))
 
-table.insert(snippets, s('el',
-  fmt([[ else {
+table.insert(snippets, s('el', fmt([[ else {
 	<>
-}]], { i(0, '// TODO:implements') }, { delimiters = '<>' }
-  )
-))
+}]], { i(0, '// TODO: implements') }, { delimiters = '<>' })))
 
-table.insert(snippets, s('err',
-  fmt([[
+table.insert(snippets, s('err', fmt([[
 if err != nil {
 	return <><>err
 }
 <>
-]] ,
-    {
-      i(1),
-      f(function(args, _)
-        return #(args[1][1]) == 0 and '' or ', '
-      end, { 1 }
-      ),
-      i(0),
-    }, { delimiters = '<>' }
-  )
-))
+]],
+  {
+    i(1),
+    luasnip.function_node(function(args, _)
+      return #(args[1][1]) == 0 and '' or ', '
+    end, { 1 }
+    ),
+    i(0),
+  },
+  { delimiters = '<>' }
+), snip.OptStartOfLine))
 
-table.insert(snippets, s('st', fmt('<type><space><name><space>struct<space>{<fields>}', {
-  name = i(1),
-  type = f(
-    function(args, _)
-      return #(args[1][1]) == 0 and '' or 'type'
+table.insert(snippets, s('for', fmt([[
+for <condition><space>{
+	<body>
+}
+]],
+  {
+    condition = i(1),
+    space = luasnip.function_node(function(args, _)
+      return #(args[1][1]) > 0 and ' ' or ''
     end, { 1 }
-  ),
-  space = f(
-    function(args, _)
-      return #(args[1][1]) == 0 and '' or ' '
-    end, { 1 }
-  ),
-  fields = i(0),
-}, { delimiters = '<>' })))
+    ),
+    body = i(0, '// TODO:implements'),
+  },
+  { delimiters = '<>' }
+), snip.OptStartOfLine))
 
-table.insert(snippets, s('in', fmt('<type><space><name><space>interface<space>{<fields>}', {
-  name = i(1),
-  type = f(
-    function(args, _)
-      return #(args[1][1]) == 0 and '' or 'type'
+table.insert(snippets, s('st', fmt('<type><space><name><space>struct<space>{<fields>}',
+  {
+    name = i(1),
+    type = luasnip.function_node(function(args, _)
+      return #(args[1][1]) > 0 and 'type' or ''
     end, { 1 }
-  ),
-  space = f(
-    function(args, _)
-      return #(args[1][1]) == 0 and '' or ' '
+    ),
+    space = luasnip.function_node(function(args, _)
+      return #(args[1][1]) > 0 and ' ' or ''
     end, { 1 }
-  ),
-  fields = i(0),
-}, { delimiters = '<>' })))
+    ),
+    fields = i(0),
+  },
+  { delimiters = '<>' }
+)))
+
+table.insert(snippets, s('in', fmt('<type><space><name><space>interface<space>{<fields>}',
+  {
+    name = i(1),
+    type = luasnip.function_node(function(args, _)
+      return #(args[1][1]) > 0 and 'type' or ''
+    end, { 1 }
+    ),
+    space = luasnip.function_node(function(args, _)
+      return #(args[1][1]) > 0 and ' ' or ''
+    end, { 1 }
+    ),
+    fields = i(0),
+  },
+  { delimiters = '<>' }
+)))
 
 table.insert(snippets, s('m', fmt('map[{}]{}', { i(1), i(0) })))
 table.insert(snippets, s('t', t 'true'))

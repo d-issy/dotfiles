@@ -21,6 +21,11 @@ service <> {
   { delimiters = '<>' }
 ), snip.OptStartOfLine))
 
+table.insert(snippets, s('rpc', fmt('rpc <>(<>) returns (<>);' ,
+  { i(1), i(2), i(3) },
+  { delimiters = '<>' }
+), snip.OptStartOfLine))
+
 table.insert(snippets, s('message', fmt([[
 message <> {
   <>
