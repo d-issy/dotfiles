@@ -9,7 +9,8 @@ local on_attach = function(_, bufnr)
   map('n', '<leader>d', vim.diagnostic.open_float, opts)
 end
 
-local capabilities = require 'cmp_nvim_lsp'.update_capabilities(vim.lsp.protocol.make_client_capabilities())
+local capabilities = vim.lsp.protocol.make_client_capabilities()
+capabilities = require 'cmp_nvim_lsp'.update_capabilities(capabilities)
 capabilities.textDocument.completion.completionItem.snippetSupport = true
 
 vim.diagnostic.config({
@@ -29,14 +30,14 @@ if mason_lspconfig_status_ok then
   mason_lspconfig.setup { automatic_installation = true }
 end
 
-local lsp_flags = {
+local flags = {
   debounce_text_changes = 150
 }
 
 require 'lspconfig'.sumneko_lua.setup {
   on_attach = on_attach,
   capabilities = capabilities,
-  flags = lsp_flags,
+  flags = flags,
   settings = {
     Lua = {
       diagnostics = {
@@ -52,10 +53,34 @@ require 'lspconfig'.sumneko_lua.setup {
   }
 }
 
+require 'lspconfig'.html.setup {
+  on_attach = on_attach,
+  capabilities = capabilities,
+  flags = flags,
+}
+
+require 'lspconfig'.cssls.setup {
+  on_attach = on_attach,
+  capabilities = capabilities,
+  flags = flags,
+}
+
+require 'lspconfig'.emmet_ls.setup {
+  on_attach = on_attach,
+  capabilities = capabilities,
+  flags = flags,
+}
+
+require 'lspconfig'.jsonls.setup {
+  on_attach = on_attach,
+  capabilities = capabilities,
+  flags = flags,
+}
+
 require 'lspconfig'.gopls.setup {
   on_attach = on_attach,
   capabilities = capabilities,
-  flags = lsp_flags,
+  flags = flags,
   settings = {
     gopls = {
       analyses = {
@@ -85,5 +110,12 @@ require 'lspconfig'.pyright.setup {
   }
 }
 
+require 'lspconfig'.terraformls.setup {
+  on_attach = on_attach,
+  capabilities = capabilities,
+  flags = flags,
+}
+
 require 'lspconfig'.rust_analyzer.setup { on_attach = on_attach, capabilities = capabilities }
+require 'lspconfig'.solargraph.setup { on_attach = on_attach, capabilities = capabilities }
 require 'lspconfig'.tsserver.setup { on_attach = on_attach, capabilities = capabilities }

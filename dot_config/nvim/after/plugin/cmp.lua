@@ -14,6 +14,9 @@ local has_words_before = function()
   return col ~= 0 and vim.api.nvim_buf_get_lines(0, line - 1, line, true)[1]:sub(col, col):match('%s') == nil
 end
 
+
+local types = require 'cmp.types'
+
 cmp.setup {
   formatting = {
     format = function(_, vim_item)
@@ -51,6 +54,14 @@ cmp.setup {
     expand = function(args)
       luasnip.lsp_expand(args.body)
     end
+  },
+  completion = {
+    autocomplete = {
+      types.cmp.TriggerEvent.TextChanged,
+    },
+    completeopt = 'menu,menuone,noselect',
+    keyword_pattern = [[\%(-\?\d\+\%(\.\d\+\)\?\|\h\w*\%(-\w*\)*\|\!\)]],
+    keyword_length = 1,
   },
   mapping = cmp.mapping.preset.insert({
     ['<C-b>'] = cmp.mapping.scroll_docs(-4),
