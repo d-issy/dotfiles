@@ -26,7 +26,9 @@ luasnip.config.set_config {
 
 vim.api.nvim_create_autocmd('InsertLeave', {
   pattern = '*',
-  command = [[
-    lua if require("luasnip").session.current_nodes[vim.api.nvim_get_current_buf()] then require("luasnip").unlink_current() end
-  ]]
+  callback = function()
+    if luasnip.session.current_nodes[vim.api.nvim_get_current_buf()] then
+      luasnip.unlink_current()
+    end
+  end
 })
