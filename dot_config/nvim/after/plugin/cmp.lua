@@ -82,6 +82,7 @@ cmp.setup {
     { name = 'luasnip' },
     { name = 'nvim_lsp' },
     { name = 'nvim_lsp_signature_help' },
+    { name = 'buffer' },
   })
 }
 
@@ -92,6 +93,6 @@ cmp.setup.cmdline(':', {
 cmp.setup.cmdline('/', {
   mapping = cmp.mapping.preset.cmdline(),
   sources = {
-    { name = 'buffer' }
+    { name = 'buffer' },
   }
 })
