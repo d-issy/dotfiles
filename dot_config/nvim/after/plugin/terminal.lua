@@ -18,7 +18,10 @@ function _G.set_terminal_keymaps()
 end
 
 -- if you only want these mappings for toggle term use term://*toggleterm#* instead
-vim.cmd('autocmd! TermOpen term://* lua set_terminal_keymaps()')
+vim.api.nvim_create_autocmd('TermOpen', {
+  pattern = 'term://*',
+  command = 'lua set_terminal_keymaps()',
+})
 
 -- programs
 local Terminal = require 'toggleterm.terminal'.Terminal
