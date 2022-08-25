@@ -7,8 +7,13 @@ local fb_actions = telescope.extensions.file_browser.actions
 
 telescope.setup {
   pickers = {
+    buffers = {
+      theme = "dropdown",
+      previewer = false,
+    },
     find_files = {
       theme = "dropdown",
+      previewer = false,
     }
   },
   extensions = {
@@ -37,7 +42,8 @@ local opts = { noremap = true, silent = true }
 
 local builtin = require 'telescope.builtin'
 
-map('n', '<Leader>p', function() builtin.find_files({ previewer = false }) end, opts)
+map('n', '<Leader>b', builtin.buffers, opts)
+map('n', '<Leader>p', builtin.find_files, opts)
 map('n', '<Leader>P', builtin.commands, opts)
 
 map('n', '<Leader>e', function()
