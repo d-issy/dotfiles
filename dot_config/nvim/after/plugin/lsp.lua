@@ -6,7 +6,7 @@ local on_attach = function(_, bufnr)
   local opts = { noremap = true, silent = true, buffer = bufnr }
 
   map('n', '<leader>f', vim.lsp.buf.formatting, opts)
-  map('n', '<leader>d', vim.diagnostic.open_float, opts)
+  -- map('n', '<leader>d', vim.diagnostic.open_float, opts)
 end
 
 local capabilities = require 'cmp_nvim_lsp'.update_capabilities(vim.lsp.protocol.make_client_capabilities())
