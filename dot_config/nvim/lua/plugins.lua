@@ -46,7 +46,7 @@ packer.startup(function(use)
   use 'nvim-lualine/lualine.nvim'
   use 'akinsho/bufferline.nvim'
   use 'lukas-reineke/indent-blankline.nvim'
-  use { 'kkharji/lspsaga.nvim', branch = 'main' }
+  use { 'glepnir/lspsaga.nvim', branch = 'main' }
   --- treesitter
   use { 'nvim-treesitter/nvim-treesitter', run = ':TSUpdate' }
   use 'nvim-treesitter/playground'
