@@ -9,7 +9,8 @@ configs.setup {
   auto_install = false,
   ignore_install = {},
   indent = {
-    enable = true
+    enable = true,
+    disabe = {},
   },
   highlight = {
     enable = true,

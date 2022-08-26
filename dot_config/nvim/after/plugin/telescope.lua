@@ -7,14 +7,20 @@ local fb_actions = telescope.extensions.file_browser.actions
 
 telescope.setup {
   pickers = {
+    buffers = {
+      theme = "dropdown",
+      previewer = false,
+    },
     find_files = {
       theme = "dropdown",
+      previewer = false,
     }
   },
   extensions = {
     file_browser = {
       theme = 'dropdown',
       hijack_netrw = true,
+      hidden = true,
       mappings = {
         ['i'] = {
           ['<C-w>'] = function() vim.cmd('normal vbd') end,
@@ -31,16 +37,14 @@ telescope.setup {
 }
 telescope.load_extension 'file_browser'
 
-
-local map = vim.keymap.set
 local opts = { noremap = true, silent = true }
-
 local builtin = require 'telescope.builtin'
 
-map('n', '<Leader>p', function() builtin.find_files({ previewer = false }) end, opts)
-map('n', '<Leader>P', builtin.commands, opts)
+vim.keymap.set('n', '<Leader>b', builtin.buffers, opts)
+vim.keymap.set('n', '<Leader>p', builtin.find_files, opts)
+vim.keymap.set('n', '<Leader>P', builtin.commands, opts)
 
-map('n', '<Leader>e', function()
+vim.keymap.set('n', '<Leader>e', function()
   telescope.extensions.file_browser.file_browser {
     previewer     = false,
     initial_mode  = 'normal',

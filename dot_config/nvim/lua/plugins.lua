@@ -12,12 +12,12 @@ if vim.fn.empty(vim.fn.glob(install_path)) > 0 then
   vim.cmd 'packadd packer.nvim'
 end
 
-vim.cmd [[
-  augroup packer_config
-    autocmd!
-    autocmd BufWritePost plugins.lua source <afile> | PackerSync
-  augroup end
-]]
+vim.api.nvim_create_augroup('packer_config', {})
+vim.api.nvim_create_autocmd('BufWritePost', {
+  group = 'packer_config',
+  pattern = 'plugins.lua',
+  command = 'source <afile> | PackerSync'
+})
 
 local status_ok, packer = pcall(require, 'packer')
 if not status_ok then
@@ -44,9 +44,9 @@ packer.startup(function(use)
   -- ui
   use 'sainnhe/edge'
   use 'nvim-lualine/lualine.nvim'
-  use 'akinsho/bufferline.nvim'
+  use { 'akinsho/bufferline.nvim', tag = 'v2.*' }
   use 'lukas-reineke/indent-blankline.nvim'
-  use { 'kkharji/lspsaga.nvim', branch = 'main' }
+  use { 'glepnir/lspsaga.nvim', branch = 'main' }
   --- treesitter
   use { 'nvim-treesitter/nvim-treesitter', run = ':TSUpdate' }
   use 'nvim-treesitter/playground'

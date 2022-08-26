@@ -5,8 +5,19 @@ local on_attach = function(_, bufnr)
 
   local opts = { noremap = true, silent = true, buffer = bufnr }
 
-  map('n', '<leader>f', vim.lsp.buf.formatting, opts)
-  map('n', '<leader>d', vim.diagnostic.open_float, opts)
+  -- key mapping
+  vim.keymap.set('n', '<leader>f', vim.lsp.buf.formatting, opts)
+
+  local status_ok, _ = pcall(require, 'lspsaga')
+  if status_ok then
+    vim.keymap.set('n', 'gd', '<cmd>Lspsaga lsp_finder<CR>', opts)
+    vim.keymap.set('n', 'K', '<cmd>Lspsaga hover_doc<CR>', opts)
+    vim.keymap.set('n', '<leader>d', '<cmd>Lspsaga show_line_diagnostics<CR>', opts)
+    vim.keymap.set('n', '<leader>h', '<cmd>Lspsaga code_action<CR>', opts)
+    vim.keymap.set('n', '<leader>r', '<cmd>Lspsaga rename<CR>', opts)
+    vim.keymap.set('n', '<leader>[', '<cmd>Lspsaga diagnostic_jump_next<CR>', opts)
+    vim.keymap.set('n', '<leader>]', '<cmd>Lspsaga diagnostic_jump_prev<CR>', opts)
+  end
 end
 
 local capabilities = vim.lsp.protocol.make_client_capabilities()
