@@ -70,6 +70,11 @@ if (( $+commands[zoxide] )); then
   eval "$(zoxide init zsh)"
 fi
 
+# kubectl completions
+if builtin command -v kubectl &>/dev/null; then
+  source <(kubectl completion zsh)
+fi
+
 # zsh syntax highlight
 if [ -e $XDG_CONFIG_HOME/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]; then
   source $XDG_CONFIG_HOME/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
