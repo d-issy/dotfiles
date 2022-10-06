@@ -21,7 +21,7 @@ sbt 1.7.1
 
 # cli
 ## editor
-neovim 0.7.2
+neovim 0.8.0
 
 ## development tools
 chezmoi 2.23.0
