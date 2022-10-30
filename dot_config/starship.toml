@@ -1,105 +1,89 @@
 add_newline = false
+scan_timeout = 10
+command_timeout = 100
 
-format = """
-$username\
-$hostname\
-$shlvl\
-$singularity\
-$kubernetes\
-$directory\
-$vcsh\
-$git_branch\
-$git_commit\
-$git_state\
-$git_metrics\
-$git_status\
-$hg_branch\
-$fill\
-$docker_context\
-$package\
-$cmake\
-$cobol\
-$dart\
-$deno\
-$dotnet\
-$elixir\
-$elm\
-$erlang\
-$golang\
-$helm\
-$java\
-$julia\
-$kotlin\
-$lua\
-$nim\
-$nodejs\
-$ocaml\
-$perl\
-$php\
-$pulumi\
-$purescript\
-$python\
-$rlang\
-$red\
-$ruby\
-$rust\
-$scala\
-$swift\
-$terraform\
-$vlang\
-$vagrant\
-$zig\
-$nix_shell\
-$conda\
-$memory_usage\
-$aws\
-$gcloud\
-$openstack\
-$azure\
-$env_var\
-$crystal\
-$custom\
-$sudo\
-$cmd_duration\
-$jobs\
-$battery\
-$time\
-$line_break\
-$status\
-$shell\
-$character"""
+format = "$status$directory$all$fill$cmd_duration$git_branch$git_status$git_state$git_metrics$line_break$character"
 
 [fill]
-symbol = ' '
+symbol = '-'
+disabled = false
+
+[directory]
+format = "[$path]($style) $read_only"
+
+[cmd_duration]
+format = "[$duration]($style) "
+show_milliseconds = true
 
 [git_branch]
 format = "[$symbol$branch]($style) "
 
+[git_status]
+format = '([$all_status $ahead_behind]($style))'
+
 [git_metrics]
 disabled = false
-
-[git_status]
-format = '([$all_status$ahead_behind]($style) )'
 
 [character]
 vicmd_symbol = "[N](green)"
 
 [status]
 disabled = false
+symbol = "status="
 
 [time]
-disabled = false
-format = '[$time]($style)'
-
-[aws]
 disabled = true
 
+[aws]
+disabled = false
+format = " [$profile]($style)"
+force_display = true
+
 [gcloud]
-format = '[$symbol$project]($style) '
-symbol = ' '
+disabled = false
+format = " [$profile]($style)"
 
 [[battery.display]]
 threshold = 20
 
+[vagrant]
+disabled = true
+
+#############
+# languages #
+#############
+
+[package]
+disabled = true
+
+[kotlin]
+format = "[${symbol}=${version}]($style) "
+symbol = "kotlin"
+
+[golang]
+format = "[${symbol}=${version}]($style) "
+symbol = "go"
+
+[java]
+format = "[${symbol}=${version}]($style) "
+version_format = "v${major}"
+symbol = "java"
+
+[nodejs]
+format = "[${symbol}=${version}]($style) "
+symbol = "node"
+
+[php]
+format = "[${symbol}${version}]($style) "
+symbol = "php"
+
 [python]
-python_binary = ["python3", "python", "python2"]
+format = "[${symbol}=${version}( \\(${virtualenv}\\))]($style) "
+symbol = "py"
+
+[scala]
+disabled = true
+
+[terraform]
+format = "[${symbol}=${version}\\($workspace\\)]($style)"
+symbol = "tf"
