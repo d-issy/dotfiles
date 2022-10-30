@@ -6,14 +6,30 @@ end
 local fb_actions = telescope.extensions.file_browser.actions
 
 telescope.setup {
+  defaults = {
+    file_ignore_patterns = {
+      '.DS_Store',
+      '.git/',
+      '.svn/',
+      '.hg/',
+      '.venv/',
+      'node_modules/',
+      '.bz2$',
+      '.gz$',
+      '.png$',
+      '.tgz$',
+    }
+  },
   pickers = {
     buffers = {
-      theme = "dropdown",
+      theme = 'dropdown',
       previewer = false,
     },
     find_files = {
-      theme = "dropdown",
+      theme = 'dropdown',
       previewer = false,
+      hidden = true,
+      no_ignore = true,
     }
   },
   extensions = {
@@ -21,6 +37,7 @@ telescope.setup {
       theme = 'dropdown',
       hijack_netrw = true,
       hidden = true,
+      respect_gitignore = true,
       mappings = {
         ['i'] = {
           ['<C-w>'] = function() vim.cmd('normal vbd') end,
