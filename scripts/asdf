@@ -72,7 +72,7 @@ clean_global() {
       done
       if [ $ok -eq 0 ]; then
         echo -e "\e[31m[REMOVED] $check_version ($size)\e[m"
-        rm -rf $dir
+        sudo rm -rf $dir
       fi
     done
     echo
