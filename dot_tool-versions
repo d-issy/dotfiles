@@ -1,4 +1,5 @@
 # programming language
+deno 1.27.1
 golang 1.19.2 1.18.7
 java adoptopenjdk-11.0.16+101 adoptopenjdk-8.0.345+1
 kotlin 1.7.20
