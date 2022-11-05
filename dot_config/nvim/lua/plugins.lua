@@ -44,9 +44,11 @@ packer.startup(function(use)
   -- ui
   use 'sainnhe/edge'
   use 'nvim-lualine/lualine.nvim'
-  use { 'akinsho/bufferline.nvim', tag = 'v2.*' }
+  use { 'akinsho/bufferline.nvim', tag = 'v3.*' }
   use 'lukas-reineke/indent-blankline.nvim'
   use { 'glepnir/lspsaga.nvim', branch = 'main' }
+  use { "nvim-neo-tree/neo-tree.nvim", branch = "v2.x" }
+
   --- treesitter
   use { 'nvim-treesitter/nvim-treesitter', run = ':TSUpdate' }
   use 'nvim-treesitter/playground'
@@ -69,7 +71,6 @@ packer.startup(function(use)
 
   -- telescope
   use 'nvim-telescope/telescope.nvim'
-  use 'nvim-telescope/telescope-file-browser.nvim'
 
   -- snippets
   use 'L3MON4D3/LuaSnip'
