@@ -5,7 +5,7 @@ local on_attach = function(_, bufnr)
   local opts = { noremap = true, silent = true, buffer = bufnr }
 
   -- key mapping
-  vim.keymap.set('n', '<leader>f', vim.lsp.buf.formatting, opts)
+  vim.keymap.set('n', '<leader>f', function() vim.lsp.buf.format { async = true } end, opts)
 
   local status_ok, _ = pcall(require, 'lspsaga')
   if status_ok then
@@ -85,6 +85,13 @@ require 'lspconfig'.jsonls.setup {
   on_attach = on_attach,
   capabilities = capabilities,
   flags = flags,
+}
+
+require 'lspconfig'.denols.setup {
+  on_attach = on_attach,
+  capabilities = capabilities,
+  flags = flags,
+  root_dir = require('lspconfig').util.root_pattern('deno.json'),
 }
 
 require 'lspconfig'.gopls.setup {
