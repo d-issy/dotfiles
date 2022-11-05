@@ -16,8 +16,5 @@ vim.opt.autoindent = true
 vim.opt.breakindent = true
 vim.opt.smartindent = true
 
-vim.opt.number = true
-vim.opt.relativenumber = true
-
 vim.opt.list = true
 vim.opt.listchars = { tab = '>-', trail = '•', nbsp = '_' }
