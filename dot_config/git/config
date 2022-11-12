@@ -1,21 +1,31 @@
 [user]
-	name = d-issy
-	email = 12374694+d-issy@users.noreply.github.com
+  name = d-issy
+  email = 12374694+d-issy@users.noreply.github.com
 [color]
-	ui = auto
-	diff = true
+  ui = auto
+  diff = true
 [init]
-	defaultBranch = main
+  defaultBranch = main
 [push]
-	default = current
+  default = current
 [pull]
-	ff = only
-	rebase = false
+  ff = only
+  rebase = false
+[merge]
+  conflictstyle = diff3
 [fetch]
-	prune = true
+  prune = true
+[interactive]
+  diffFilter = delta --color-only
 [core]
-	quotePath = false
-	ignorecase = false
-	autocrlf = false
+  quotePath = false
+  ignorecase = false
+  autocrlf = false
+  pager = delta
+[delta]
+  syntax-theme = Github
+  features = decorations
+  side-by-side = true
+  line-numbers = true
 [ghq]
-	root = ~/code
+  root = ~/code

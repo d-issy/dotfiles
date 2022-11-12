@@ -27,6 +27,7 @@ neovim 0.8.0
 
 ## development tools
 chezmoi 2.26.0
+delta 0.14.0
 direnv 2.32.1
 exa 0.10.1
 fzf 0.34.0
