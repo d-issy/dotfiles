@@ -6,19 +6,19 @@ end
 telescope.setup {
   defaults = {
     file_ignore_patterns = {
-      '.DS_Store',
-      '.git/',
-      '.svn/',
-      '.hg/',
-      '.venv/',
+      '%.DS_Store',
+      '%.git/',
+      '%.svn/',
+      '%.hg/',
+      '%.venv/',
       '__pycache__/',
-      '.mypy_cache/',
-      '.pytest_cache/',
+      '%.mypy_cache/',
+      '%.pytest_cache/',
       'node_modules/',
-      '.bz2$',
-      '.gz$',
-      '.png$',
-      '.tgz$',
+      '%.bz2$',
+      '%.gz$',
+      '%.png$',
+      '%.tgz$',
     }
   },
   pickers = {

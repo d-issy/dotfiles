@@ -23,7 +23,6 @@
   autocrlf = false
   pager = delta
 [delta]
-  syntax-theme = Github
   features = decorations
   side-by-side = true
   line-numbers = true

@@ -2,27 +2,29 @@
 nodejs_lts_version=16
 
 help() {
-    echo help
+  cat help
 }
 
 install_plugin() {
   case $1 in
-    pipenv|thefuck)
-      asdf plugin add $plugin https://github.com/amrox/asdf-pyapp.git ;;
+    pipenv | thefuck)
+      asdf plugin add $plugin https://github.com/amrox/asdf-pyapp.git
+      ;;
     *)
-      asdf plugin add $plugin ;;
+      asdf plugin add $plugin
+      ;;
   esac
 }
 
 install_plugins() {
-    echo asdf plugins installing...
-    for plugin in $(awk '!/^#/ {print $1}' $HOME/.tool-versions); do
-        if [ ! -d $ASDF_DIR/plugins/$plugin ]; then
-            echo Install $plugin plugin...
-            install_plugin $plugin
-        fi
-    done
-    echo done
+  echo asdf plugins installing...
+  for plugin in $(awk '!/^#/ {print $1}' $HOME/.tool-versions); do
+    if [ ! -d $ASDF_DIR/plugins/$plugin ]; then
+      echo Install $plugin plugin...
+      install_plugin $plugin
+    fi
+  done
+  echo done
 }
 
 install() {
@@ -81,13 +83,17 @@ clean_global() {
 
 case $1 in
   help)
-    help ;;
+    help
+    ;;
   install-plugins)
-    install_plugins ;;
+    install_plugins
+    ;;
   install)
-    install ;;
+    install
+    ;;
   clean-global)
-    clean_global ;;
+    clean_global
+    ;;
   *)
     echo No Found Command!
     help
