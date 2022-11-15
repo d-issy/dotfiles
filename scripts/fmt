@@ -1,0 +1,7 @@
+#!/bin/bash
+
+# markdown
+deno fmt .
+
+# scripts
+shfmt -w -i 2 -ci .
