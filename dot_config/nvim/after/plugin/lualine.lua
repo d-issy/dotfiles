@@ -19,6 +19,22 @@ local colors = {
   gray3  = '#3e4452',
 }
 
+local active = function()
+  return ' '
+end
+
+local filename = {
+  'filename',
+  path = 1,
+  file_stats = true,
+  color = { gui = 'bold' },
+  symbols = {
+    modified = ' [+]',
+    readonly = ' [-]',
+    unnamed = '-',
+  },
+}
+
 lualine.setup {
   options = {
     icons_enabled = true,
@@ -43,17 +59,20 @@ lualine.setup {
     section_separators = { left = '', right = '' },
     disabled_filetypes = {},
     always_divide_middle = true,
-    globalstatus = true,
+    globalstatus = false,
   },
-  sections = {
+  tabline = {
     lualine_a = {
       {
         'mode',
         fmt = function(mode) return mode:sub(1, 1) end,
-      }
+      },
     },
-    lualine_b = {
-      'branch',
+    lualine_b = {},
+    lualine_c = {
+      { 'tabs', mode = 1 },
+    },
+    lualine_x = {
       {
         'diff',
         diff_color = {
@@ -61,12 +80,14 @@ lualine.setup {
           modified = { fg = colors.yellow },
           removed = { fg = colors.red1 },
         },
-        symbols = {
-          added = ' ',
-          modified = ' ',
-          removed = ' ',
-        }
       },
+    },
+    lualine_y = { 'branch' },
+    lualine_z = {}
+  },
+  sections = {
+    lualine_a = { active },
+    lualine_b = {
       {
         'diagnostics',
         diagnostics_color = {
@@ -77,36 +98,12 @@ lualine.setup {
         }
       }
     },
-    lualine_c = { '' },
+    lualine_c = { filename },
     lualine_x = {
-      {
-        'filename',
-        path = 1,
-        file_stats = true,
-        color = { gui = 'bold' },
-        symbols = {
-          modified = ' [+]',
-          readonly = ' [-]',
-          unnamed = '-',
-        },
-      },
       'filesize',
+      { 'filetype', colored = false },
     },
-    lualine_y = {
-      'encoding',
-      {
-        'fileformat',
-        symbols = {
-          unix = 'unix',
-          dos = 'dos',
-          mac = 'mac',
-        }
-      },
-      {
-        'filetype',
-        colored = false,
-      },
-    },
+    lualine_y = {},
     lualine_z = {},
     -- defaults:
     --   lualine_a = { 'mode' },
@@ -119,11 +116,13 @@ lualine.setup {
   inactive_sections = {
     lualine_a = {},
     lualine_b = {},
-    lualine_c = { 'filename' },
-    lualine_x = { 'location' },
+    lualine_c = { filename },
+    lualine_x = {
+      'filesize',
+      { 'filetype', colored = false }
+    },
     lualine_y = {},
     lualine_z = {}
   },
-  tabline = {},
   extensions = { 'neo-tree', 'toggleterm' }
 }

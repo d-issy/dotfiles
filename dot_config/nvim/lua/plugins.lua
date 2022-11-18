@@ -44,7 +44,6 @@ packer.startup(function(use)
   -- ui
   use 'sainnhe/edge'
   use 'nvim-lualine/lualine.nvim'
-  use { 'akinsho/bufferline.nvim', tag = 'v3.*' }
   use 'lukas-reineke/indent-blankline.nvim'
   use { 'glepnir/lspsaga.nvim', branch = 'main' }
   use { "nvim-neo-tree/neo-tree.nvim", branch = "v2.x" }
