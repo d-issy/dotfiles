@@ -17,14 +17,14 @@ install_plugin() {
 }
 
 install_plugins() {
-  echo asdf plugins installing...
+  echo "asdf plugins installing..."
   for plugin in $(awk '!/^#/ {print $1}' $HOME/.tool-versions); do
     if [ ! -d $ASDF_DIR/plugins/$plugin ]; then
-      echo Install $plugin plugin...
-      install_plugin $plugin
+      echo "Install ${plugin} plugin..."
+      install_plugin "$plugin"
     fi
   done
-  echo done
+  echo "instllation done"
 }
 
 install() {
@@ -42,11 +42,11 @@ clean_global() {
       continue
     fi
 
-    echo cleanup $plugin...
+    echo "cleanuping ${plugin}..."
     IFS=' ', version_dirs="$ASDF_DIR/installs/$plugin/*"
 
     local lts=0
-    if echo $version_dirs | grep nodejs | grep lts >/dev/null; then
+    if echo "$version_dirs" | grep nodejs | grep lts >/dev/null; then
       lts=1
     fi
 
@@ -56,7 +56,7 @@ clean_global() {
       local ok=0
       for version in ${versions[@]:1}; do
         if [ $lts -eq 1 ]; then
-          if echo $check_version | grep -e "^${nodejs_lts_version}\." >/dev/null; then
+          if echo "$check_version" | grep -e "^${nodejs_lts_version}\." >/dev/null; then
             ok=1
             echo -e "\e[90m[SKIP] $check_version (alias by lts) ($size)\e[m"
             break
@@ -77,7 +77,7 @@ clean_global() {
         sudo rm -rf $dir
       fi
     done
-    echo
+    echo ""
   done
 }
 
@@ -95,7 +95,7 @@ case $1 in
     clean_global
     ;;
   *)
-    echo No Found Command!
+    echo "No Found Command!"
     help
     exit 1
     ;;
