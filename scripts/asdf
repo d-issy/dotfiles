@@ -2,7 +2,6 @@
 version_file="$HOME/.tool-versions"
 nodejs_lts_version=18
 
-
 help() {
   cat help
 }
@@ -20,13 +19,13 @@ install_plugin() {
 
 install_plugins() {
   echo "asdf plugins installing..."
-  for plugin in $(awk '!/^#/ {print $1}' "$version_file"); do
+  awk '!/^#/ {print $1}' "$version_file" | while IFS= read -r plugin; do
     if [ ! -d "$ASDF_DIR/plugins/$plugin" ]; then
       echo "Install ${plugin} plugin..."
       install_plugin "$plugin"
     fi
   done
-  echo "instllation done"
+  echo "Instllation done !!!"
 }
 
 install() {
@@ -36,27 +35,30 @@ install() {
 }
 
 clean_global() {
-  IFS=$'\n', plugins=$(awk '!/^#/ {print $0}' "$version_file")
-  for plugin_info in ${plugins[@]}; do
-    IFS=' ', versions=($plugin_info)
+  awk '!/^#/ {print $0}' "$version_file" | while IFS= read -r plugin_info; do
+    versions=()
+    while IFS= read -r v; do versions+=("$v"); done < <(echo "$plugin_info" | tr ' ' '\n')
+
     plugin=${versions[0]}
-    if [ ! -d "$ASDF_DIR/plugins/$plugin" ]; then
+
+    if [ -z "$plugin" ] || [ ! -d "$ASDF_DIR/plugins/$plugin" ]; then
       continue
     fi
 
     echo "cleanuping ${plugin}..."
-    IFS=$'\n' version_dirs=$(find "$ASDF_DIR/installs/$plugin" -mindepth 1 -maxdepth 1)
+    version_dirs=()
+    while IFS= read -r dir; do version_dirs+=("$dir"); done < <(find "$ASDF_DIR/installs/$plugin" -mindepth 1 -maxdepth 1)
 
     local lts=0
-    if echo "$version_dirs" | grep nodejs | grep lts >/dev/null; then
+    if echo "${version_dirs[@]}" | grep nodejs | grep lts >/dev/null; then
       lts=1
     fi
 
-    for dir in ${version_dirs[@]}; do
+    for dir in "${version_dirs[@]}"; do
       size=$(du -hs "$dir" | cut -f 1)
       check_version=$(basename "$dir")
       local ok=0
-      for version in ${versions[@]:1}; do
+      for version in "${versions[@]:1}"; do
         if [ $lts -eq 1 ]; then
           if echo "$check_version" | grep -e "^${nodejs_lts_version}\." >/dev/null; then
             ok=1
@@ -76,7 +78,7 @@ clean_global() {
       done
       if [ $ok -eq 0 ]; then
         echo -e "\e[31m[REMOVED] $check_version ($size)\e[m"
-        sudo rm -rf $dir
+        # sudo rm -rf $dir
       fi
     done
     echo ""
