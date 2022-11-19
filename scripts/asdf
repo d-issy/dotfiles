@@ -35,7 +35,7 @@ install() {
 }
 
 clean_global() {
-  awk '!/^#/ {print $0}' "$version_file" | while IFS= read -r plugin_info; do
+  awk '!/^#/ {print $0}' "${version_file}" | while IFS= read -r plugin_info; do
     versions=()
     while IFS= read -r v; do versions+=("${v}"); done < <(echo "${plugin_info}" | tr ' ' '\n')
 
@@ -76,7 +76,7 @@ clean_global() {
           break
         fi
       done
-      if [ "$ok" -eq "0" ]; then
+      if [ "${ok}" -eq "0" ]; then
         echo -e "\e[31m[REMOVED] $check_version (${size})\e[m"
         sudo rm -rf "${dir}"
       fi
