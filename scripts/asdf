@@ -1,5 +1,7 @@
 #!/bin/bash
-nodejs_lts_version=16
+version_file="$HOME/.tool-versions"
+nodejs_lts_version=18
+
 
 help() {
   cat help
@@ -18,7 +20,7 @@ install_plugin() {
 
 install_plugins() {
   echo "asdf plugins installing..."
-  for plugin in $(awk '!/^#/ {print $1}' $HOME/.tool-versions); do
+  for plugin in $(awk '!/^#/ {print $1}' "$version_file"); do
     if [ ! -d $ASDF_DIR/plugins/$plugin ]; then
       echo "Install ${plugin} plugin..."
       install_plugin "$plugin"
@@ -34,7 +36,7 @@ install() {
 }
 
 clean_global() {
-  IFS=$'\n', plugins=$(awk '!/^#/ {print $0}' $HOME/.tool-versions)
+  IFS=$'\n', plugins=$(awk '!/^#/ {print $0}' "$version_file")
   for plugin_info in ${plugins[@]}; do
     IFS=' ', versions=($plugin_info)
     plugin=${versions[0]}
@@ -43,7 +45,7 @@ clean_global() {
     fi
 
     echo "cleanuping ${plugin}..."
-    IFS=' ', version_dirs="$ASDF_DIR/installs/$plugin/*"
+    IFS=$'\n' version_dirs=$(find "$ASDF_DIR/installs/$plugin" -mindepth 1 -maxdepth 1)
 
     local lts=0
     if echo "$version_dirs" | grep nodejs | grep lts >/dev/null; then
@@ -51,8 +53,8 @@ clean_global() {
     fi
 
     for dir in ${version_dirs[@]}; do
-      size=$(du -hs $dir | cut -f 1)
-      check_version=$(basename $dir)
+      size=$(du -hs "$dir" | cut -f 1)
+      check_version=$(basename "$dir")
       local ok=0
       for version in ${versions[@]:1}; do
         if [ $lts -eq 1 ]; then
