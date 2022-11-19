@@ -1,0 +1,3 @@
+#!/bin/bash
+shfmt -d -i 2 -ci .
+shellcheck --shell bash scripts/*
