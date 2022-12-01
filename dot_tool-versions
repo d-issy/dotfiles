@@ -5,14 +5,13 @@ java adoptopenjdk-11.0.16+101 adoptopenjdk-8.0.345+1
 kotlin 1.7.21
 lua 5.4.4
 nodejs lts
-python 3.10.8 3.11.0 3.9.15 3.8.14 3.7.15 3.6.15
+python 3.10.8 3.11.0 3.9.15
 ruby 3.1.2
 rust 1.65.0
 scala 3.2.1 2.13.10
 
 ## for python
-# downgrade pipenv for python 3.6
-pipenv 2022.4.20 2022.11.11
+pipenv 2022.11.11
 poetry 1.2.2
 
 ## for java
