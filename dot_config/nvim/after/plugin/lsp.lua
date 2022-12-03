@@ -20,8 +20,12 @@ local on_attach = function(_, bufnr)
 end
 
 local capabilities = vim.lsp.protocol.make_client_capabilities()
-capabilities = require 'cmp_nvim_lsp'.default_capabilities(capabilities)
-capabilities.textDocument.completion.completionItem.snippetSupport = true
+
+local cmp_nvim_lsp_status_ok, cmp_nvim_lsp = pcall(require, 'cmp_nvim_lsp')
+if cmp_nvim_lsp_status_ok then
+  capabilities = cmp_nvim_lsp.default_capabilities(capabilities)
+  capabilities.textDocument.completion.completionItem.snippetSupport = true
+end
 
 vim.diagnostic.config({
   virtual_text = {
