@@ -29,8 +29,7 @@ telescope.setup {
     find_files = {
       theme = 'dropdown',
       previewer = false,
-      hidden = true,
-      no_ignore = true,
+      find_command = { "rg", "--files", "--hidden" }
     }
   },
 }

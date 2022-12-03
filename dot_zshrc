@@ -38,15 +38,19 @@ setopt share_history
 ############
 
 # asdf
-if [ -d $HOME/.asdf ]; then
+if [ -f /opt/homebrew/opt/asdf/libexec/asdf.sh ]; then
+  . /opt/homebrew/opt/asdf/libexec/asdf.sh
+elif [ -f $HOME/.asdf/asdf.sh ]; then
   . $HOME/.asdf/asdf.sh
+fi
 
+if [ -d $HOME/.asdf ]; then
   # golang package bin
   ASDF_GOLANG_PACKAGE_BIN=$(asdf where golang)/packages/bin
 fi
 
 # direnv
-if [ -d $HOME/.asdf ]; then
+if [ -f "$(asdf where direnv)" ]; then
   eval "$(direnv hook zsh)"
 fi
 
