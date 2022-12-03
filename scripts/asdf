@@ -20,7 +20,7 @@ install_plugin() {
 install_plugins() {
   echo "asdf plugins installing..."
   awk '!/^#/ {print $1}' "${version_file}" | while IFS= read -r plugin; do
-    if [ ! -d "${ASDF_DIR}/plugins/${plugin}" ]; then
+    if [ ! -d "${HOME}/.asdf/plugins/${plugin}" ]; then
       echo "Install ${plugin} plugin..."
       install_plugin "${plugin}"
     fi
@@ -35,19 +35,19 @@ install() {
 }
 
 clean_global() {
-  awk '!/^#/ {print $0}' "${version_file}" | while IFS= read -r plugin_info; do
+  sed -e '/^#/d' -e '/^$/d' "${version_file}" | while IFS= read -r plugin_info; do
     versions=()
     while IFS= read -r v; do versions+=("${v}"); done < <(echo "${plugin_info}" | tr ' ' '\n')
 
     plugin=${versions[0]}
 
-    if [ -z "${plugin}" ] || [ ! -d "${ASDF_DIR}/plugins/${plugin}" ]; then
+    if [ -z "${plugin}" ] || [ ! -d "${HOME}/.asdf/plugins/${plugin}" ]; then
       continue
     fi
 
     echo "cleanuping ${plugin}..."
     version_dirs=()
-    while IFS= read -r dir; do version_dirs+=("${dir}"); done < <(find "${ASDF_DIR}/installs/${plugin}" -mindepth 1 -maxdepth 1)
+    while IFS= read -r dir; do version_dirs+=("${dir}"); done < <(find "${HOME}/.asdf/installs/${plugin}" -mindepth 1 -maxdepth 1)
 
     local lts=0
     if echo "${version_dirs[@]}" | grep nodejs | grep lts >/dev/null; then
@@ -62,7 +62,7 @@ clean_global() {
         if [ $lts -eq 1 ]; then
           if echo "${check_version}" | grep -e "^${nodejs_lts_version}\." >/dev/null; then
             ok=1
-            echo -e "\e[90m[SKIP] ${check_version} (alias by lts) (${size})\e[m"
+            echo -e "\033[90m[SKIP] ${check_version} (alias by lts) (${size})\033[m"
             break
           fi
         fi
@@ -71,13 +71,13 @@ clean_global() {
           break
         fi
         if [ "${check_version}" = "${version}" ]; then
-          echo -e "\e[90m[SKIP] ${check_version} (${size})\e[m"
+          echo -e "\033[90m[SKIP] ${check_version} (${size})\033[m"
           ok=1
           break
         fi
       done
       if [ "${ok}" -eq "0" ]; then
-        echo -e "\e[31m[REMOVED] $check_version (${size})\e[m"
+        echo -e "\033[31m[REMOVED] $check_version (${size})\033[m"
         sudo rm -rf "${dir}"
       fi
     done
