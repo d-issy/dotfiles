@@ -5,10 +5,10 @@ d-issy's dotfiles
 ## Require
 
 - macOS
- - `brew install curl asdf`
+  - `brew install curl asdf`
 - WSL2 Ubuntu on Windows
- - `apt install curl`
- - `git clone https://github.com/asdf-vm/asdf.git ~/.asdf --branch v0.10.2`
+  - `apt install curl`
+  - `git clone https://github.com/asdf-vm/asdf.git ~/.asdf --branch v0.10.2`
 
 ## init
 
@@ -26,6 +26,6 @@ chezmoi diff
 ## update
 
 ```
-chezmoi -v update
+chezmoi update -v
 asdf install
 ```
