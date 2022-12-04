@@ -4,17 +4,18 @@ d-issy's dotfiles
 
 ## Require
 
-- macOS
-  - `brew install curl asdf`
-- WSL2 Ubuntu on Windows
-  - `apt install git`
-  - `git clone https://github.com/asdf-vm/asdf.git ~/.asdf --branch v0.10.2`
+- zsh
+- curl
+- os
+  - macOS
+    - require brew
+  - WSL2 on Windows / Linux
+    - require apt
 
 ## init
 
 ```
 sh -c "$(curl -fsLS get.chezmoi.io)" -- init --apply d-issy
-asdf install
 ```
 
 ## diff check
@@ -27,5 +28,4 @@ chezmoi diff
 
 ```
 chezmoi update -v
-asdf install
 ```
