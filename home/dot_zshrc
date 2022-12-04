@@ -49,23 +49,18 @@ if [ -d $HOME/.asdf ]; then
 fi
 
 # direnv
-if [ -f "$(asdf where direnv)" ]; then
+if [ -f "$(asdf which direnv 2>/dev/null)" ]; then
   eval "$(direnv hook zsh)"
 fi
 
 # fzf
-if (( $+commands[fzf] )); then
+if [ -f "$(asdf which fzf 2>/dev/null)" ]; then
   export FZF_DEFAULT_OPTS='--reverse --height 40%'
 fi
 
 # starship
-if (( $+commands[starship] )); then
+if [ -f "$(asdf which starship 2>/dev/null)" ]; then
   eval "$(starship init zsh)"
-fi
-
-# thefuck
-if (( $+commands[thefuck] )); then
-  eval $(thefuck --alias)
 fi
 
 # zoxide
@@ -79,12 +74,12 @@ if builtin command -v kubectl &>/dev/null; then
 fi
 
 # zsh syntax highlight
-if [ -e $XDG_CONFIG_HOME/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]; then
+if [ -f $XDG_CONFIG_HOME/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]; then
   source $XDG_CONFIG_HOME/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 fi
 
 # zsh autosuggestions
-if [ -e $XDG_CONFIG_HOME/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh ]; then
+if [ -f $XDG_CONFIG_HOME/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh ]; then
   source $XDG_CONFIG_HOME/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh
 fi
 
