@@ -2,20 +2,19 @@
 
 d-issy's dotfiles
 
-## Support
-
-- macOS
-- Linux
-- WSL on Windows
-
 ## Require
 
-- chezmoi
+- macOS
+ - `brew install curl asdf`
+- WSL2 Ubuntu on Windows
+ - `apt install curl`
+ - `git clone https://github.com/asdf-vm/asdf.git ~/.asdf --branch v0.10.2`
 
 ## init
 
 ```
-chezmoi init git@github.com:d-issy/dotfiles.git
+sh -c "$(curl -fsLS get.chezmoi.io)" -- init --apply d-issy
+asdf install
 ```
 
 ## diff check
@@ -24,8 +23,9 @@ chezmoi init git@github.com:d-issy/dotfiles.git
 chezmoi diff
 ```
 
-## apply
+## update
 
 ```
-chezmoi -v apply
+chezmoi -v update
+asdf install
 ```
