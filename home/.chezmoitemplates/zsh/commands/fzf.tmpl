@@ -1,0 +1,5 @@
+{{- /* vim: set ft=zsh : */ -}}
+
+if [ -f "$(asdf which fzf 2>/dev/null)" ]; then
+  export FZF_DEFAULT_OPTS='--reverse --height 40%'
+fi

@@ -1,0 +1,5 @@
+{{- /* vim: set ft=zsh : */ -}}
+
+if [ -f "$(asdf which direnv 2>/dev/null)" ]; then
+  eval "$(direnv hook zsh)"
+fi
