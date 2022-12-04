@@ -7,7 +7,7 @@ d-issy's dotfiles
 - macOS
   - `brew install curl asdf`
 - WSL2 Ubuntu on Windows
-  - `apt install curl`
+  - `apt install git`
   - `git clone https://github.com/asdf-vm/asdf.git ~/.asdf --branch v0.10.2`
 
 ## init
