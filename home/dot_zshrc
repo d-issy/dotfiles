@@ -45,7 +45,7 @@ fi
 
 if [ -d $HOME/.asdf ]; then
   # golang package bin
-  ASDF_GOLANG_PACKAGE_BIN=$(asdf where golang)/packages/bin
+  ASDF_GOLANG_PACKAGE_BIN=$(asdf where golang 2>/dev/null)/packages/bin
 fi
 
 # direnv

@@ -1,0 +1,56 @@
+#!{{ lookPath "zsh" }}
+
+basic_install() {
+  if ! command -v "$1" >/dev/null 2>&1; then
+    {{ if eq .chezmoi.os "darwin" -}}
+    brew install $1
+    {{- else -}}
+    if [[ "$(whoami)" == "root" ]]; then
+      apt install -y --no-install-recommends $1
+    else
+      sudo apt install -y --no-install-recommends $1
+    fi
+    {{- end }}
+  fi
+}
+
+# install asdf
+if [[ ! -d $HOME/.asdf ]]; then
+  # install pre-requirement for common
+  basic_install git
+  basic_install curl
+  basic_install gnupg
+  basic_install unzip
+  basic_install ca-certificates
+
+  {{ if eq .chezmoi.os "darwin" -}}
+  {{- /*** for macOS **/ -}}
+
+  # install pre-requirement for darwin
+  basic_install readline
+  basic_install autoconf
+  # install asdf
+  brew install asdf
+
+  {{- else -}}
+
+  {{- /*** for linux **/ -}}
+  # install pre-requirement for debian
+  basic_install build-essential
+  basic_install libffi-dev
+  basic_install libssl-dev
+  basic_install zlib1g-dev
+  # install asdf
+  git clone https://github.com/asdf-vm/asdf.git ~/.asdf
+  . $HOME/.asdf/asdf.sh
+
+  {{- end }}
+fi
+
+# update asdf for {{ include "dot_tool-versions.tmpl" | sha256sum }}
+{{ .chezmoi.workingTree }}/scripts/asdf install-plugins
+asdf install python
+asdf install jq
+asdf install
+
+# vim: set ft=zsh :
