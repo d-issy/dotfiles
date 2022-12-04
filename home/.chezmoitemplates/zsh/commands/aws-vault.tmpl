@@ -1,0 +1,9 @@
+{{- /* vim: set ft=zsh : */ -}}
+
+if [ -f "$(asdf which aws-vault 2>/dev/null)" ]; then
+  {{ if eq .chezmoi.os "linux" -}}
+  export AWS_VAULT_BACKEND=pass
+  export AWS_VAULT_PASS_PREFIX=aws-vault
+  export GPG_TTY=$(tty)
+  {{- end }}
+fi

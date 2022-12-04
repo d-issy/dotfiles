@@ -1,0 +1,12 @@
+{{- /* vim: set ft=zsh : */ -}}
+
+zsh-history() {
+  if (( $+commands[fzf] )); then
+    BUFFER=`history -n 1 | fzf --query "$BUFFER"`
+    CURSOR=$#BUFFER
+    zle reset-prompt
+  else
+    zle history-incremental-search-backward
+  fi
+}
+zle -N zsh-history

@@ -1,0 +1,89 @@
+{{- /* vim: set ft=zsh : */ -}}
+
+export XDG_CONFIG_HOME=$HOME/.config
+export XDG_CACHE_HOME=$HOME/.cache
+export XDG_DATA_HOME=$HOME/.local/share
+
+############
+# commands #
+############
+
+# basic commands
+{{ template "zsh/commands/asdf.tmpl" }}
+{{ template "zsh/commands/aws-vault.tmpl" . }}
+{{ template "zsh/commands/direnv.tmpl" }}
+{{ template "zsh/commands/fzf.tmpl" }}
+{{ template "zsh/commands/starship.tmpl" }}
+{{ template "zsh/commands/zoxide.tmpl" }}
+
+# my commands
+{{ template "zsh/commands/_zsh-history.tmpl" }}
+{{ template "zsh/commands/_ssm.tmpl" }}
+{{ template "zsh/commands/_external.tmpl" }}
+
+# EDITOR
+if (( $+commands[nvim] )); then
+  alias v=nvim
+  export EDITOR=nvim
+elif (( $+commands[vim] )); then
+  alias v=vim
+  export EDITOR=vim
+fi
+
+###########
+# bindkey #
+###########
+
+# vi
+bindkey -v
+bindkey -M viins '^A' beginning-of-line
+bindkey -M viins '^E' end-of-line
+bindkey -M viins '^N' down-line-or-history
+bindkey -M viins '^P' up-line-or-history
+
+# own
+bindkey -M viins '^R' zsh-history
+
+##############
+# completion #
+##############
+autoload -U compinit
+compinit
+
+autoload colors
+
+zstyle ':completion:*' menu select
+zstyle ':completion:*' matcher-list '' 'm:{a-zA-Z}={A-Za-z}' 'r:|[._-]=* r:|=*' 'l:|=* r:|=*'
+zstyle ':completion:*' list-colors ''
+
+###########
+# history #
+###########
+HISTFILE=$HOME/.zsh_history
+HISTSIZE=10000
+SAVEHIST=10000
+
+setopt appendhistory
+setopt hist_ignore_all_dups
+setopt hist_ignore_dups
+setopt hist_ignore_space
+setopt hist_no_store
+setopt hist_reduce_blanks
+setopt share_history
+
+########
+# path #
+########
+
+path=(
+  $HOME/bin(N-/)
+  $HOME/.local/bin(N-/)
+  $ASDF_GOLANG_PACKAGE_BIN(N-/)
+  $path
+)
+
+fpath=(
+  $HOME/.config/zsh/plugins/zsh-completions/src(N-/)
+  $HOME/.asdf/completions(N-/)
+  $fpath
+)
