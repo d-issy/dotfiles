@@ -7,7 +7,8 @@ local terms = {
   'com.jetbrains.intellij',
   'com.microsoft.VSCode',
   'com.parallels.desktop.console',
-  'io.alacritty',
+  'com.github.wez.wezterm',
+  'org.alacritty',
 }
 
 obj.isTerm = function(app)
