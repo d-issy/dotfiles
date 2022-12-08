@@ -21,8 +21,6 @@ end)
 return {
   -- apperance
   color_scheme = 'Edge Dark (base16)',
-  text_background_opacity = 0.3,
-
   font = wezterm.font 'Hack Nerd Font Mono',
   font_size = 14,
 
