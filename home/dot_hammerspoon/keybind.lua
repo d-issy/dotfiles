@@ -30,9 +30,7 @@ end)
 -- hotkey toggle by application
 appWatcher = hs.window.filter.new(true)
 
-appWatcher:subscribe({
-  hs.window.filter.windowFocused,
-}, function(win, app)
+appWatcher:subscribe({ hs.window.filter.windowFocused }, function(win, app)
   if helper.isTerm(app) then
     keyCodes:exit()
   else
