@@ -25,7 +25,7 @@ KeyBindEvent = hs.eventtap.new({
   if not flags.ctrl then return false end
 
   -- for skk on 'Ctrl+J'
-  if codes[keyCode] == 'j' then return false end
+  if key == 'j' then return false end
 
   -- custom keybinds fallback
   if CustomCtrlKeyBindings[key] ~= nil then
