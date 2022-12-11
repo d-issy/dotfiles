@@ -6,6 +6,7 @@ local codes = hs.keycodes.map
 -- define key bindings
 CustomCtrlKeyBindings = {
   tab = false,
+  j = false,
   w = { { 'alt' }, 'delete' },
   p = { {}, 'up' },
   n = { {}, 'down' },
@@ -24,9 +25,6 @@ KeyBindEvent = hs.eventtap.new({
   -- ignore if pressing any key other than ctrl
   if flags.shift or flags.cmd or flags.alt then return false end
   if not flags.ctrl then return false end
-
-  -- for skk on 'Ctrl+J'
-  if key == 'j' then return false end
 
   -- custom keybinds fallback
   if CustomCtrlKeyBindings[key] ~= nil then
