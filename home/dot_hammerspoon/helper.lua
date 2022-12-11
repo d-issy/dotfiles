@@ -21,7 +21,6 @@ M.isTerminalApp = function(app)
     'com.googlecode.iterm2',
     'com.jetbrains.intellij',
     'com.microsoft.VSCode',
-    'com.parallels.desktop.console',
     'com.github.wez.wezterm',
     'org.alacritty',
   }, app)
@@ -29,6 +28,7 @@ end
 
 M.isVirtualMachineApp = function(app)
   return isTargetApp({
+    'com.parallels.desktop.console',
     'com.vmware.fusion',
     'org.virtualbox.app.VirtualBox',
   }, app)
