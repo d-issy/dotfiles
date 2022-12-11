@@ -5,6 +5,7 @@ local codes = hs.keycodes.map
 
 -- define key bindings
 CustomCtrlKeyBindings = {
+  tab = false,
   w = { { 'alt' }, 'delete' },
   p = { {}, 'up' },
   n = { {}, 'down' },
@@ -31,6 +32,7 @@ KeyBindEvent = hs.eventtap.new({
   if CustomCtrlKeyBindings[key] ~= nil then
     if event:getType() == eventTypes.keyDown then
       local bind = CustomCtrlKeyBindings[key]
+      if not bind then return false end
       eventtap.keyStroke(bind[1], bind[2], 0)
     end
     return true
