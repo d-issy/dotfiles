@@ -1,44 +1,61 @@
 local helper = require('helper')
+local eventtap = hs.eventtap
+local eventTypes = eventtap.event.types
+local codes = hs.keycodes.map
 
--- str keymap
-keyCodes = hs.hotkey.modal.new(nil)
+-- define key bindings
+CustomCtrlKeyBindings = {
+  w = { { 'alt' }, 'delete' },
+  p = { {}, 'up' },
+  n = { {}, 'down' },
+}
 
-function keyCodes:newMap(mods, key, fn)
-  self:bind(mods, key, fn, nil, fn)
-end
+KeyBindEvent = hs.eventtap.new({
+  eventTypes.flagChanged,
+  eventTypes.keyDown,
+  eventTypes.keyUp,
+}, function(event)
 
-keyCodes:newMap({ 'ctrl' }, 'W', function()
-  hs.eventtap.keyStroke({ 'alt' }, 'Delete', 0)
+  local flags = event:getFlags()
+  local keyCode = event:getKeyCode()
+  local key = codes[keyCode]
+
+  -- ignore if pressing any key other than ctrl
+  if flags.shift or flags.cmd or flags.alt then return false end
+  if not flags.ctrl then return false end
+
+  -- for skk on 'Ctrl+J'
+  if codes[keyCode] == 'j' then return false end
+
+  -- custom keybinds fallback
+  if CustomCtrlKeyBindings[key] ~= nil then
+    if event:getType() == eventTypes.keyDown then
+      local bind = CustomCtrlKeyBindings[key]
+      eventtap.keyStroke(bind[1], bind[2], 0)
+    end
+    return true
+  end
+
+  -- replace ctrl with cmd
+  flags.cmd = true
+  flags.ctrl = nil
+  event:setFlags(flags)
+
+  return false
 end)
 
-keyCodes:newMap({ 'ctrl' }, 'N', function()
-  hs.eventtap.keyStroke({}, 'Down', 0)
-end)
-
-keyCodes:newMap({ 'ctrl' }, 'P', function()
-  hs.eventtap.keyStroke({}, 'Up', 0)
-end)
-
-keyCodes:newMap({ 'ctrl' }, 'H', function()
-  hs.eventtap.keyStroke({}, 'Left', 0)
-end)
-
-keyCodes:newMap({ 'ctrl' }, 'L', function()
-  hs.eventtap.keyStroke({}, 'Right', 0)
-end)
-
--- hotkey toggle by application
-appWatcher = hs.window.filter.new(true)
-
-appWatcher:subscribe({ hs.window.filter.windowFocused }, function(win, app)
+AppWatcher = hs.window.filter.new(true)
+AppWatcher:subscribe({ hs.window.filter.windowFocused }, function(_, app)
   if helper.isTerm(app) then
-    keyCodes:exit()
+    KeyBindEvent:stop()
   else
-    keyCodes:enter()
+    KeyBindEvent:start()
   end
 end)
 
 --- reload
 hs.hotkey.bind({ 'cmd', 'alt', 'ctrl' }, 'R', function()
+  hs.alert.show('reload hammerspoon config')
+  hs.timer.usleep(1000000)
   hs.reload()
 end)
