@@ -6,6 +6,8 @@ local LeftCmd     = 0x37
 local Eisu        = 0x66
 local Kana        = 0x68
 
+local helper = require 'helper'
+
 local flagsChanged = hs.eventtap.event.types.flagsChanged
 local keyDown      = hs.eventtap.event.types.keyDown
 
@@ -15,10 +17,8 @@ IMEEventTap = hs.eventtap.new({ flagsChanged, keyDown }, function(event)
   local keyCode = event:getKeyCode()
   local flags = event:getFlags()
 
-  -- except app
-  local activeApp = hs.application.frontmostApplication()
-  if activeApp:bundleID() == 'com.vmware.fusion' or
-      activeApp:bundleID() == 'org.virtualbox.app.VirtualBox' then
+  -- except virtual machine app
+  if helper.isVirtualMachineApp() then
     singleCmd = false
     return
   end

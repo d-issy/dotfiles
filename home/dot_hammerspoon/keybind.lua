@@ -46,7 +46,7 @@ end)
 
 AppWatcher = hs.window.filter.new(true)
 AppWatcher:subscribe({ hs.window.filter.windowFocused }, function(_, app)
-  if helper.isTerm(app) then
+  if helper.isTerminalApp(app) then
     KeyBindEvent:stop()
   else
     KeyBindEvent:start()
