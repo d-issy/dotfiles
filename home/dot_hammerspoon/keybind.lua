@@ -45,17 +45,17 @@ KeyBindEvent = hs.eventtap.new({
 end)
 
 AppWatcher = hs.window.filter.new(true)
-AppWatcher:subscribe({ hs.window.filter.windowFocused }, function(win, app)
+AppWatcher:subscribe({ hs.window.filter.windowFocused }, function(_, app)
   if helper.isTerm(app) then
-    hs.alert.show('stop')
     KeyBindEvent:stop()
   else
-    hs.alert.show('start')
     KeyBindEvent:start()
   end
 end)
 
 --- reload
 hs.hotkey.bind({ 'cmd', 'alt', 'ctrl' }, 'R', function()
+  hs.alert.show('reload hammerspoon config')
+  hs.timer.usleep(1000000)
   hs.reload()
 end)
