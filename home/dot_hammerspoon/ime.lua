@@ -10,7 +10,7 @@ local flagsChanged = hs.eventtap.event.types.flagsChanged
 local keyDown      = hs.eventtap.event.types.keyDown
 
 local singleCmd = false
-eikanaEventTap = hs.eventtap.new({ flagsChanged, keyDown }, function(event)
+IMEEventTap = hs.eventtap.new({ flagsChanged, keyDown }, function(event)
   local eventType = event:getType()
   local keyCode = event:getKeyCode()
   local flags = event:getFlags()
@@ -27,7 +27,7 @@ eikanaEventTap = hs.eventtap.new({ flagsChanged, keyDown }, function(event)
   if eventType == keyDown then
     if keyCode == Escape then
       hs.eventtap.keyStroke({}, Eisu, 0)
-    elseif flags['ctrl'] and keyCode == LeftBracket then
+    elseif flags.ctrl and keyCode == LeftBracket then
       hs.eventtap.keyStroke({}, Escape, 0)
       return true
     end
@@ -36,7 +36,7 @@ eikanaEventTap = hs.eventtap.new({ flagsChanged, keyDown }, function(event)
   end
 
   -- cmdPress
-  if flags['cmd'] then
+  if flags.cmd then
     singleCmd = true
     return
   end

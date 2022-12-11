@@ -1,4 +1,4 @@
-local obj = {}
+local M = {}
 
 local terms = {
   'com.apple.Terminal',
@@ -10,19 +10,15 @@ local terms = {
   'org.alacritty',
 }
 
-obj.isTerm = function(app)
+M.isTerm = function(app)
   if type(app) == 'string' then
     app = hs.application.find(app)
-    if app == nil then
-      return false
-    end
+    if app == nil then return false end
   end
   for _, t in ipairs(terms) do
-    if app:bundleID() == t then
-      return true
-    end
+    if app:bundleID() == t then return true end
   end
   return false
 end
 
-return obj
+return M
