@@ -17,7 +17,7 @@ obj.isTerm = function(app)
       return false
     end
   end
-  for i, t in ipairs(terms) do
+  for _, t in ipairs(terms) do
     if app:bundleID() == t then
       return true
     end
