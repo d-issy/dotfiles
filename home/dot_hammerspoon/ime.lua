@@ -10,16 +10,6 @@ local Kana        = 0x68
 local flagsChanged = hs.eventtap.event.types.flagsChanged
 local keyDown      = hs.eventtap.event.types.keyDown
 
--- eisu
-hs.hotkey.bind({ 'ctrl', 'shift' }, ';', function()
-  hs.eventtap.keyStroke({}, Eisu, 0)
-end)
-
--- kana
-hs.hotkey.bind({ 'ctrl', 'shift' }, 'j', function()
-  hs.eventtap.keyStroke({}, Kana, 0)
-end)
-
 -- eikana
 --- variable
 local singleCmd = false
