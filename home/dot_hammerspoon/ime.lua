@@ -6,14 +6,10 @@ local LeftCmd     = 0x37
 local Eisu        = 0x66
 local Kana        = 0x68
 
--- eventTypes
 local flagsChanged = hs.eventtap.event.types.flagsChanged
 local keyDown      = hs.eventtap.event.types.keyDown
 
--- eikana
---- variable
 local singleCmd = false
---- event
 eikanaEventTap = hs.eventtap.new({ flagsChanged, keyDown }, function(event)
   local eventType = event:getType()
   local keyCode = event:getKeyCode()

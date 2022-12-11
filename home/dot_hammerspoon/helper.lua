@@ -1,6 +1,5 @@
 local obj = {}
 
--- term check
 local terms = {
   'com.apple.Terminal',
   'com.googlecode.iterm2',

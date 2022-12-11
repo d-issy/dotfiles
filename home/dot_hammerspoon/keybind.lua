@@ -55,7 +55,5 @@ end)
 
 --- reload
 hs.hotkey.bind({ 'cmd', 'alt', 'ctrl' }, 'R', function()
-  hs.alert.show('reload hammerspoon config')
-  hs.timer.usleep(1000000)
   hs.reload()
 end)
