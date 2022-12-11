@@ -6,18 +6,18 @@ local codes = hs.keycodes.map
 -- variables
 local singleCmd = false
 local modeKana = false
-local skkActived = nil
 
 -- for skk switch support
-local isActivatedSKK = function()
+local skkActived = nil
+local isActivedSKK = function()
   if skkActived == nil then
-    hs.fnutils.contains(hs.keycodes.methods(), 'AquaSKK 統合')
+    sskActived = hs.fnutils.contains(hs.keycodes.methods(), 'AquaSKK 統合')
   end
   return skkActived
 end
 
 local switchToEisu = function()
-  if not isActivatedSKK() then
+  if not isActivedSKK() then
     hs.eventtap.keyStroke({}, codes.eisu, 0)
     return
   end
@@ -29,7 +29,7 @@ local switchToEisu = function()
 end
 
 local switchToKana = function()
-  if not isActivatedSKK() then
+  if not isActivedSKK() then
     hs.eventtap.keyStroke({}, codes.kana, 0)
     return
   end
