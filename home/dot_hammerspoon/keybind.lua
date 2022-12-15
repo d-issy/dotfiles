@@ -4,6 +4,11 @@ local eventTypes = eventtap.event.types
 local codes = hs.keycodes.map
 
 -- define key bindings
+CustomBindings = {
+  ['home'] = { { 'ctrl' }, 'left' },
+  ['end'] = { { 'ctrl' }, 'right' },
+}
+
 CustomCtrlKeyBindings = {
   tab = false,
   j = false,
@@ -12,35 +17,47 @@ CustomCtrlKeyBindings = {
   n = { {}, 'down' },
 }
 
+local fallback = true
 KeyBindEvent = hs.eventtap.new({
   eventTypes.flagChanged,
   eventTypes.keyDown,
   eventTypes.keyUp,
 }, function(event)
-
   local flags = event:getFlags()
   local keyCode = event:getKeyCode()
   local key = codes[keyCode]
 
-  -- ignore if pressing any key other than ctrl
-  if flags.shift or flags.cmd or flags.alt then return false end
-  if not flags.ctrl then return false end
-
-  -- custom keybinds fallback
-  if CustomCtrlKeyBindings[key] ~= nil then
-    if event:getType() == eventTypes.keyDown then
-      local bind = CustomCtrlKeyBindings[key]
-      if not bind then return false end
-      eventtap.keyStroke(bind[1], bind[2], 0)
+  if event:getType() == eventTypes.keyDown then
+    if not fallback then
+      fallback = true
+      return false
     end
-    return true
+    if not flags.ctrl then
+      -- without ctrl
+      if CustomBindings[key] ~= nil then
+        local bind = CustomBindings[key]
+        if not bind then return false end
+        eventtap.keyStroke(bind[1], bind[2], 0)
+        fallback = false
+        return true
+      end
+    else
+      -- ctrl
+      if CustomCtrlKeyBindings[key] ~= nil then
+        if event:getType() == eventTypes.keyDown then
+          local bind = CustomCtrlKeyBindings[key]
+          if not bind then return false end
+          eventtap.keyStroke(bind[1], bind[2], 0)
+        end
+        return true
+      else
+        flags.cmd = true
+        flags.ctrl = nil
+        event:setFlags(flags)
+        return false
+      end
+    end
   end
-
-  -- replace ctrl with cmd
-  flags.cmd = true
-  flags.ctrl = nil
-  event:setFlags(flags)
-
   return false
 end)
 
