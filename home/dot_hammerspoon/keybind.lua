@@ -37,9 +37,7 @@ KeyBindEvent = hs.eventtap.new({
       if CustomBindings[key] ~= nil then
         local bind = CustomBindings[key]
         if not bind then return false end
-        local mods = bind[1]
-        for mod, _ in pairs(flags) do table.insert(mods, mod) end
-        eventtap.keyStroke(mods, bind[2], 0)
+        eventtap.keyStroke(bind[1], bind[2], 0)
         fallback = false
         return true
       end
