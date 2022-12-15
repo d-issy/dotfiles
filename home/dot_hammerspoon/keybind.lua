@@ -12,6 +12,7 @@ CustomBindings = {
 CustomCtrlKeyBindings = {
   tab = false,
   j = false,
+  y = false,
   w = { { 'alt' }, 'delete' },
   p = { {}, 'up' },
   n = { {}, 'down' },
