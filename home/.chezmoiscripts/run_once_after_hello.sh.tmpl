@@ -24,8 +24,8 @@ if [[ ! -d $HOME/.asdf ]]; then
   basic_install ca-certificates
 
   {{ if eq .chezmoi.os "darwin" -}}
-  {{- /*** for macOS **/ -}}
 
+  {{- /*** for macOS **/ -}}
   # install pre-requirement for darwin
   basic_install readline
   basic_install autoconf

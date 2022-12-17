@@ -19,9 +19,6 @@ local colors = {
   gray3  = '#3e4452',
 }
 
-local active = function()
-  return ' '
-end
 
 local filename = {
   'filename',
@@ -42,7 +39,7 @@ lualine.setup {
       normal = {
         a = { fg = colors.bg, bg = colors.green, gui = 'bold' },
         b = { fg = colors.fg, bg = colors.gray3 },
-        c = { fg = colors.fg, bg = colors.gray2 },
+        c = { fg = colors.fg, bg = colors.gray3 },
       },
       insert = { a = { fg = colors.bg, bg = colors.blue, gui = 'bold' } },
       visual = { a = { fg = colors.bg, bg = colors.purple, gui = 'bold' } },
@@ -50,9 +47,9 @@ lualine.setup {
       terminal = { a = { fg = colors.bg, bg = colors.cyan, gui = 'bold' } },
       command = { a = { fg = colors.bg, bg = colors.yellow, gui = 'bold' } },
       inactive = {
-        a = { fg = colors.gray1, bg = colors.bg, gui = 'bold' },
-        b = { fg = colors.gray1, bg = colors.bg },
-        c = { fg = colors.gray1, bg = colors.gray2 },
+        a = { fg = colors.fg, bg = colors.gray3, gui = 'bold' },
+        b = { fg = colors.fg, bg = colors.gray3 },
+        c = { fg = colors.fg, bg = colors.gray3 },
       },
     },
     component_separators = { left = '', right = '' },
@@ -61,32 +58,10 @@ lualine.setup {
     always_divide_middle = true,
     globalstatus = false,
   },
-  tabline = {
-    lualine_a = {
-      {
-        'mode',
-        fmt = function(mode) return mode:sub(1, 1) end,
-      },
-    },
-    lualine_b = {},
-    lualine_c = {
-      { 'tabs', mode = 1 },
-    },
-    lualine_x = {
-      {
-        'diff',
-        diff_color = {
-          added = { fg = colors.green },
-          modified = { fg = colors.yellow },
-          removed = { fg = colors.red1 },
-        },
-      },
-    },
-    lualine_y = { 'branch' },
-    lualine_z = {}
-  },
   sections = {
-    lualine_a = { active },
+    lualine_a = {
+      { 'mode', fmt = function(mode) return mode:sub(1, 1) end }
+    },
     lualine_b = {
       {
         'diagnostics',
