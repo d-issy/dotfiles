@@ -1,54 +1,36 @@
--- lsp basics
+local status, lspconfig = pcall(require, 'lspconfig')
+if not status then return end
+
+
 local on_attach = function(_, bufnr)
   vim.api.nvim_buf_set_option(bufnr, 'omnifunc', 'v:lua.vim.lsp.omnifunc')
 
   local opts = { noremap = true, silent = true, buffer = bufnr }
 
-  -- key mapping
   vim.keymap.set('n', '<leader>f', function() vim.lsp.buf.format { async = true } end, opts)
 
-  local status_ok, _ = pcall(require, 'lspsaga')
-  if status_ok then
+  status, _ = pcall(require, 'lspsaga')
+  if status then
     vim.keymap.set('n', 'gd', '<cmd>Lspsaga lsp_finder<CR>', opts)
     vim.keymap.set('n', 'K', '<cmd>Lspsaga hover_doc<CR>', opts)
     vim.keymap.set('n', '<leader>d', '<cmd>Lspsaga show_line_diagnostics<CR>', opts)
     vim.keymap.set('n', '<leader>h', '<cmd>Lspsaga code_action<CR>', opts)
     vim.keymap.set('n', '<leader>r', '<cmd>Lspsaga rename<CR>', opts)
-    vim.keymap.set('n', '<leader>[', '<cmd>Lspsaga diagnostic_jump_next<CR>', opts)
-    vim.keymap.set('n', '<leader>]', '<cmd>Lspsaga diagnostic_jump_prev<CR>', opts)
+    vim.keymap.set('n', '<leader>[', '<cmd>Lspsaga diagnostic_jump_prev<CR>', opts)
+    vim.keymap.set('n', '<leader>]', '<cmd>Lspsaga diagnostic_jump_next<CR>', opts)
   end
 end
 
 local capabilities = vim.lsp.protocol.make_client_capabilities()
-
 local cmp_nvim_lsp_status_ok, cmp_nvim_lsp = pcall(require, 'cmp_nvim_lsp')
 if cmp_nvim_lsp_status_ok then
   capabilities = cmp_nvim_lsp.default_capabilities(capabilities)
   capabilities.textDocument.completion.completionItem.snippetSupport = true
 end
 
-vim.diagnostic.config({
-  virtual_text = {
-    prefix = '●'
-  },
-  update_in_insert = true,
-})
+local flags = { debounce_text_changes = 150 }
 
-local mason_status_ok, mason = pcall(require, 'mason')
-if mason_status_ok then
-  mason.setup {}
-end
-
-local mason_lspconfig_status_ok, mason_lspconfig = pcall(require, 'mason-lspconfig')
-if mason_lspconfig_status_ok then
-  mason_lspconfig.setup { automatic_installation = true }
-end
-
-local flags = {
-  debounce_text_changes = 150
-}
-
-require 'lspconfig'.sumneko_lua.setup {
+lspconfig.sumneko_lua.setup {
   on_attach = on_attach,
   capabilities = capabilities,
   flags = flags,
@@ -68,38 +50,7 @@ require 'lspconfig'.sumneko_lua.setup {
   }
 }
 
-require 'lspconfig'.html.setup {
-  on_attach = on_attach,
-  capabilities = capabilities,
-  flags = flags,
-}
-
-require 'lspconfig'.cssls.setup {
-  on_attach = on_attach,
-  capabilities = capabilities,
-  flags = flags,
-}
-
-require 'lspconfig'.emmet_ls.setup {
-  on_attach = on_attach,
-  capabilities = capabilities,
-  flags = flags,
-}
-
-require 'lspconfig'.jsonls.setup {
-  on_attach = on_attach,
-  capabilities = capabilities,
-  flags = flags,
-}
-
-require 'lspconfig'.denols.setup {
-  on_attach = on_attach,
-  capabilities = capabilities,
-  flags = flags,
-  root_dir = require('lspconfig').util.root_pattern('deno.json'),
-}
-
-require 'lspconfig'.gopls.setup {
+lspconfig.gopls.setup {
   on_attach = on_attach,
   capabilities = capabilities,
   flags = flags,
@@ -117,7 +68,7 @@ require 'lspconfig'.gopls.setup {
   }
 }
 
-require 'lspconfig'.pyright.setup {
+lspconfig.pyright.setup {
   on_attach = on_attach,
   capabilities = capabilities,
   settings = {
@@ -132,12 +83,34 @@ require 'lspconfig'.pyright.setup {
   }
 }
 
-require 'lspconfig'.terraformls.setup {
+lspconfig.denols.setup {
   on_attach = on_attach,
   capabilities = capabilities,
   flags = flags,
+  root_dir = require('lspconfig').util.root_pattern('deno.json'),
 }
 
-require 'lspconfig'.rust_analyzer.setup { on_attach = on_attach, capabilities = capabilities }
-require 'lspconfig'.solargraph.setup { on_attach = on_attach, capabilities = capabilities }
-require 'lspconfig'.tsserver.setup { on_attach = on_attach, capabilities = capabilities }
+for _, lsp in ipairs({
+  'cssls',
+  'emmet_ls',
+  'html',
+  'jsonls',
+  'rust_analyzer',
+  'solargraph',
+  'terraformls',
+  'tsserver',
+}) do lspconfig[lsp].setup { on_attach = on_attach, capabilities = capabilities, flags = flags, } end
+
+local signs = { Error = " ", Warning = " ", Hint = " ", Information = " " }
+for type, icon in pairs(signs) do
+  local hl = "DiagnosticSign" .. type
+  vim.fn.sign_define(hl, { text = icon, texthl = hl, numhl = hl })
+end
+
+vim.diagnostic.config({
+  virtual_text = {
+    prefix = '●'
+  },
+  update_in_insert = true,
+  float = { source = 'always' },
+})

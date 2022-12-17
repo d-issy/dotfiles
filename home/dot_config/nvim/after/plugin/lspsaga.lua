@@ -5,5 +5,5 @@ end
 
 saga.init_lsp_saga {
   border_style = 'plus',
-  diagnostic_header = { " ", " ", " ", "ﴞ " },
+  diagnostic_header = { " ", " ", " ", " " },
 }

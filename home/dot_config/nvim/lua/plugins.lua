@@ -49,7 +49,7 @@ packer.startup(function(use)
   use { "nvim-neo-tree/neo-tree.nvim", branch = "v2.x" }
 
   --- treesitter
-  use { 'nvim-treesitter/nvim-treesitter', run = ':TSUpdate' }
+  use { 'nvim-treesitter/nvim-treesitter' }
   use 'nvim-treesitter/playground'
   use 'p00f/nvim-ts-rainbow'
 
