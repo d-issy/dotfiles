@@ -36,8 +36,6 @@ neo_tree.setup {
       }
     },
   },
-  buffers = { window = { position = 'bottom' } },
-  git_status = { window = { position = 'bottom' } },
 }
 
 local opts = { noremap = true, silent = true }
