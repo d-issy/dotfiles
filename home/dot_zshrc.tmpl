@@ -19,6 +19,7 @@ export XDG_DATA_HOME=$HOME/.local/share
 {{ template "zsh/commands/_zsh-history.tmpl" }}
 {{ template "zsh/commands/_ssm.tmpl" }}
 {{ template "zsh/commands/_external.tmpl" }}
+{{ template "zsh/commands/_zr.tmpl" }}
 
 # EDITOR
 if (( $+commands[nvim] )); then
