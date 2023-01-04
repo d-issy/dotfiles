@@ -1,6 +1,6 @@
-local M = {}
+Helper = {}
 
-local isTargetApp = function(targetApps, app)
+Helper.isTargetApp = function(targetApps, app)
   if type(app) == 'string' then
     app = hs.application.find(app)
   elseif app == nil then
@@ -15,8 +15,8 @@ local isTargetApp = function(targetApps, app)
   return false
 end
 
-M.isTerminalApp = function(app)
-  return isTargetApp({
+Helper.isTerminalApp = function(app)
+  return Helper.isTargetApp({
     'com.apple.Terminal',
     'com.googlecode.iterm2',
     'com.jetbrains.intellij',
@@ -26,12 +26,10 @@ M.isTerminalApp = function(app)
   }, app)
 end
 
-M.isVirtualMachineApp = function(app)
-  return isTargetApp({
+Helper.isVirtualMachineApp = function(app)
+  return Helper.isTargetApp({
     'com.parallels.desktop.console',
     'com.vmware.fusion',
     'org.virtualbox.app.VirtualBox',
   }, app)
 end
-
-return M
