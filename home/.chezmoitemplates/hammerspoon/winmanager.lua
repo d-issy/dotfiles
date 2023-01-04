@@ -1,14 +1,11 @@
 WinManager = (function()
-  local M = {}
-
   local margin = 10
   local diff = 30
 
   hs.window.animationDuration = 0
   hs.grid.setMargins({ x = margin, y = margin })
 
-  M._ = {}
-
+  local M = { _ = {} }
   local _currentWindow = function()
     return hs.window.frontmostWindow()
   end
@@ -127,6 +124,5 @@ WinManager = (function()
       hs.alert.show('ArrangeMode')
     end
   end
-
   return M
 end)()
