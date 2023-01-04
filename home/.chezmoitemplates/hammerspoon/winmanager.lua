@@ -39,24 +39,21 @@ WinManager = (function()
     return win
   end
 
-  local _clamp = function(value, min, max)
-    return math.min(math.max(value, min), max)
-  end
 
   local _setWindowPositionDiff = function(win, pos)
     local screen = win:screen():frame()
     local f = win:frame()
 
     win:setTopLeft({
-      x = _clamp(
+      x = Helper.clamp(
         f.x + (pos.x or 0),
         margin,
         screen.w - f.w - margin
       ),
-      y = _clamp(
+      y = Helper.clamp(
         f.y + (pos.y or 0),
-        screen.y + margin,
-        screen.y + screen.h - f.h - margin
+        margin + screen.y,
+        screen.h - f.h - margin + screen.y
       )
     })
   end

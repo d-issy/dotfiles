@@ -33,5 +33,9 @@ Helper = (function()
       'org.virtualbox.app.VirtualBox',
     }, app)
   end
+
+  M.clamp = function(value, min, max)
+    return math.min(math.max(value, min), max)
+  end
   return M
 end)()
