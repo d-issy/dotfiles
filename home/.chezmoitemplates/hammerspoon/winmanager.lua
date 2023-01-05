@@ -12,10 +12,8 @@ WinManager = (function()
 
   local moveGrid = function(win, rect)
     rect = rect or {}
+    win = win or currentWindow()
     hs.grid.setGrid(string.format('%dx%d', rect.w or 1, rect.h or 1))
-    if win == nil then
-      win = currentWindow()
-    end
     hs.grid.set(win, { x = (rect.x or 1) - 1, y = (rect.y or 1) - 1, w = 1, h = 1 })
   end
 
