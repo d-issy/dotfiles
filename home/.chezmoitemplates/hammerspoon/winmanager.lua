@@ -6,19 +6,19 @@ WinManager = (function()
   hs.grid.setMargins({ x = margin, y = margin })
 
   local M = { _ = {} }
-  local _currentWindow = function()
+  local currentWindow = function()
     return hs.window.frontmostWindow()
   end
 
-  local _moveGrid = function(w, h, x, y, win)
+  local moveGrid = function(w, h, x, y, win)
     hs.grid.setGrid(string.format('%dx%d', w, h))
     if win == nil then
-      win = _currentWindow()
+      win = currentWindow()
     end
     hs.grid.set(win, { x = x - 1, y = y - 1, w = 1, h = 1 })
   end
 
-  local _findApplication = function(app)
+  local findApplication = function(app)
     if hs.fnutils.contains({ 'string', 'number' }, type(app)) then
       app = hs.application.find(app)
     elseif app == nil then
@@ -27,7 +27,7 @@ WinManager = (function()
     return app
   end
 
-  local _mainWindow = function(app)
+  local mainWindow = function(app)
     local win = app:mainWindow()
     if win == nil then
       local wins = app:allWindows()
@@ -37,7 +37,7 @@ WinManager = (function()
   end
 
 
-  local _setWindowPositionDiff = function(win, pos)
+  local setWindowPositionDiff = function(win, pos)
     local screen = win:screen():frame()
     local f = win:frame()
 
@@ -55,60 +55,43 @@ WinManager = (function()
     })
   end
 
-  M.moveLeft = function(win) _moveGrid(2, 1, 1, 1, win) end
-  M.moveRight = function(win) _moveGrid(2, 1, 2, 1, win) end
-  M.moveFull = function(win) _moveGrid(1, 1, 1, 1, win) end
-  M.toggleZoom = function() _currentWindow():toggleZoom() end
-  M.toggleFullScreen = function() _currentWindow():toggleFullScreen() end
-
-  M.focusApplication = function(app)
-    app = _findApplication(app)
-    if app == nil then return end
-    local win = _mainWindow(app)
-    if win == nil then return end
-    if win:isMinimized() then
-      win:unminimize()
-    end
-    win:focus()
-  end
-
   M._._arrangeMode = hs.eventtap.new({ hs.eventtap.event.types.keyDown }, function(event)
     local quit = true
     local key = hs.keycodes.map[event:getKeyCode()]
-    local win = _currentWindow()
+    local win = currentWindow()
 
     local fn = ({
       a = function() M.moveFull() end,
       h = function()
-        _setWindowPositionDiff(win, { x = -diff })
+        setWindowPositionDiff(win, { x = -diff })
         quit = false
       end,
       j = function()
-        _setWindowPositionDiff(win, { y = diff })
+        setWindowPositionDiff(win, { y = diff })
         quit = false
       end,
       k = function()
-        _setWindowPositionDiff(win, { y = -diff })
+        setWindowPositionDiff(win, { y = -diff })
         quit = false
       end,
       l = function()
-        _setWindowPositionDiff(win, { x = diff })
+        setWindowPositionDiff(win, { x = diff })
         quit = false
       end,
       H = function()
-        _setWindowPositionDiff(win, { x = -diff })
+        setWindowPositionDiff(win, { x = -diff })
         quit = false
       end,
       J = function()
-        _setWindowPositionDiff(win, { y = diff })
+        setWindowPositionDiff(win, { y = diff })
         quit = false
       end,
       K = function()
-        _setWindowPositionDiff(win, { y = -diff })
+        setWindowPositionDiff(win, { y = -diff })
         quit = false
       end,
       L = function()
-        _setWindowPositionDiff(win, { x = diff })
+        setWindowPositionDiff(win, { x = diff })
         quit = false
       end,
     })[key]
@@ -123,6 +106,23 @@ WinManager = (function()
       M._._arrangeMode:start()
       hs.alert.show('ArrangeMode')
     end
+  end
+
+  M.moveLeft = function(win) moveGrid(2, 1, 1, 1, win) end
+  M.moveRight = function(win) moveGrid(2, 1, 2, 1, win) end
+  M.moveFull = function(win) moveGrid(1, 1, 1, 1, win) end
+  M.toggleZoom = function() currentWindow():toggleZoom() end
+  M.toggleFullScreen = function() currentWindow():toggleFullScreen() end
+
+  M.focusApplication = function(app)
+    app = findApplication(app)
+    if app == nil then return end
+    local win = mainWindow(app)
+    if win == nil then return end
+    if win:isMinimized() then
+      win:unminimize()
+    end
+    win:focus()
   end
   return M
 end)()
