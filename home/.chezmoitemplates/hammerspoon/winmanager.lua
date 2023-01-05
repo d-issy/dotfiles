@@ -123,14 +123,17 @@ WinManager = (function()
   M.toggleFullScreen = function() currentWindow():toggleFullScreen() end
 
   M.focusApplication = function(app)
-    app = findApplication(app)
-    if app == nil then return end
-    local win = mainWindow(app)
-    if win == nil then return end
-    if win:isMinimized() then
-      win:unminimize()
+    local fn = function()
+      app = findApplication(app)
+      if app == nil then return end
+      local win = mainWindow(app)
+      if win == nil then return end
+      if win:isMinimized() then
+        win:unminimize()
+      end
+      win:focus()
     end
-    win:focus()
+    return fn
   end
   return M
 end)()
