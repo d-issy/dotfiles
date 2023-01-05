@@ -39,8 +39,6 @@ WinManager = (function()
     local screen = win:screen():frame()
     local f = win:frame()
     local block = { x = (diff.x or 0) * screen.w, y = (diff.y or 0) * screen.h }
-    print(hs.inspect(diff))
-    print(hs.inspect(block))
     diff = {
       x = Helper.clamp(f.x + block.x, MARGIN, screen.w - f.w - MARGIN),
       y = Helper.clamp(f.y + block.y, MARGIN + screen.y, screen.h - f.h - MARGIN + screen.y),
