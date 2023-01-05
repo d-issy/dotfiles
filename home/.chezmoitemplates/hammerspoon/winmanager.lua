@@ -1,6 +1,5 @@
 WinManager = (function()
   local MARGIN = 10
-  local DIFF = 30
 
   hs.window.animationDuration = 0
   hs.grid.setMargins({ x = MARGIN, y = MARGIN })
@@ -36,22 +35,30 @@ WinManager = (function()
   end
 
 
-  local setWindowPositionDiff = function(win, pos)
+  local setWindowPositionDiff = function(win, diff)
     local screen = win:screen():frame()
     local f = win:frame()
+    local block = { x = (diff.x or 0) * screen.w, y = (diff.y or 0) * screen.h }
+    print(hs.inspect(diff))
+    print(hs.inspect(block))
+    diff = {
+      x = Helper.clamp(f.x + block.x, MARGIN, screen.w - f.w - MARGIN),
+      y = Helper.clamp(f.y + block.y, MARGIN + screen.y, screen.h - f.h - MARGIN + screen.y),
+    }
+    win:setTopLeft(diff)
+  end
 
-    win:setTopLeft({
-      x = Helper.clamp(
-        f.x + (pos.x or 0),
-        MARGIN,
-        screen.w - f.w - MARGIN
-      ),
-      y = Helper.clamp(
-        f.y + (pos.y or 0),
-        MARGIN + screen.y,
-        screen.h - f.h - MARGIN + screen.y
-      )
-    })
+  local setWindowSizeDiff = function(win, diff)
+    local screen = win:screen():frame()
+    local f = win:frame()
+    local block = { w = (diff.w or 0) * screen.w, h = (diff.h or 0) * screen.h }
+    local frame = {
+      w = Helper.clamp(f.w + block.w, 200, screen.w - MARGIN * 2),
+      h = Helper.clamp(f.h + block.h, 200, screen.h - MARGIN * 2),
+    }
+    frame.x = Helper.clamp(f.x, MARGIN, screen.w - (frame.w + MARGIN))
+    frame.y = Helper.clamp(f.y, MARGIN + screen.y, screen.h - (frame.h + MARGIN) + screen.y)
+    win:setFrame(frame)
   end
 
   M._.arangeMode = hs.eventtap.new({ hs.eventtap.event.types.keyDown }, function(event)
@@ -59,38 +66,42 @@ WinManager = (function()
     local key = hs.keycodes.map[event:getKeyCode()]
     local win = currentWindow()
 
+    if event:getFlags().shift then
+      key = string.upper(key)
+    end
+
     local fn = ({
       a = function() M.moveFull() end,
       h = function()
-        setWindowPositionDiff(win, { x = -DIFF })
+        setWindowPositionDiff(win, { x = -0.25 })
         quit = false
       end,
       j = function()
-        setWindowPositionDiff(win, { y = DIFF })
+        setWindowPositionDiff(win, { y = 0.25 })
         quit = false
       end,
       k = function()
-        setWindowPositionDiff(win, { y = -DIFF })
+        setWindowPositionDiff(win, { y = -0.25 })
         quit = false
       end,
       l = function()
-        setWindowPositionDiff(win, { x = DIFF })
+        setWindowPositionDiff(win, { x = 0.25 })
         quit = false
       end,
       H = function()
-        setWindowPositionDiff(win, { x = -DIFF })
+        setWindowSizeDiff(win, { w = -0.25 })
         quit = false
       end,
       J = function()
-        setWindowPositionDiff(win, { y = DIFF })
+        setWindowSizeDiff(win, { h = -0.25 })
         quit = false
       end,
       K = function()
-        setWindowPositionDiff(win, { y = -DIFF })
+        setWindowSizeDiff(win, { h = -0.25 })
         quit = false
       end,
       L = function()
-        setWindowPositionDiff(win, { x = DIFF })
+        setWindowSizeDiff(win, { w = 0.25 })
         quit = false
       end,
     })[key]
