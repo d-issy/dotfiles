@@ -21,7 +21,11 @@ end)
 return {
   -- apperance
   color_scheme = 'Edge Dark (base16)',
-  font = wezterm.font 'Hack Nerd Font Mono',
+  font = wezterm.font_with_fallback {
+    'Hack Nerd Font Mono',
+    'Hiragino Mincho Pro W3',
+  },
+
   font_size = 14,
 
   hide_tab_bar_if_only_one_tab = true,
