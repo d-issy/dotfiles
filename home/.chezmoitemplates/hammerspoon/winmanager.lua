@@ -85,8 +85,8 @@ WinManager = (function()
     end
 
     local fn = ({
-      a = function() M.moveFull() end,
-      c = function() M.moveCenter() end,
+      a = M.moveFull,
+      c = M.moveCenter,
       h = function()
         setWindowPositionDiff(win, { x = -SCALE })
         quit = false
