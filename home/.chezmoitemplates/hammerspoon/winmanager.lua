@@ -5,6 +5,11 @@ WinManager = (function()
   hs.window.animationDuration = 0
   hs.grid.setMargins({ x = MARGIN, y = MARGIN })
 
+  hs.window.highlight.ui.overlay = true
+  hs.window.highlight.ui.flushDuration = 1
+  hs.window.highlight.ui.frameWidth = 5
+  hs.window.highlight.ui.frameColor = { 0, 1.0, 0, 0.5 }
+
   local M = { _ = {} }
   local currentWindow = function()
     return hs.window.frontmostWindow()
@@ -62,10 +67,12 @@ WinManager = (function()
 
   local startArrangeMode = function()
     M._.arangeMode:start()
+    hs.window.highlight.start()
   end
 
   local stopArrangeMode = function()
     M._.arangeMode:stop()
+    hs.window.highlight.stop()
   end
 
   M._.arangeMode = hs.eventtap.new({ hs.eventtap.event.types.keyDown }, function(event)
@@ -114,7 +121,7 @@ WinManager = (function()
       end,
     })[key]
     if fn then fn() end
-
+    hs.window.highlight.start()
     if quit then stopArrangeMode() end
     return true
   end)
