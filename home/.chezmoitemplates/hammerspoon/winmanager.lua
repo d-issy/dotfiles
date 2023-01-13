@@ -60,6 +60,14 @@ WinManager = (function()
     win:setFrame(frame)
   end
 
+  local startArrangeMode = function()
+    M._.arangeMode:start()
+  end
+
+  local stopArrangeMode = function()
+    M._.arangeMode:stop()
+  end
+
   M._.arangeMode = hs.eventtap.new({ hs.eventtap.event.types.keyDown }, function(event)
     local quit = true
     local key = hs.keycodes.map[event:getKeyCode()]
@@ -107,14 +115,14 @@ WinManager = (function()
     })[key]
     if fn then fn() end
 
-    if quit then M._.arangeMode:stop() end
+    if quit then stopArrangeMode() end
     return true
   end)
 
+
   M.arrangeMode = function()
     if not M._.arangeMode:isEnabled() then
-      M._.arangeMode:start()
-      hs.alert.show('ArrangeMode')
+      startArrangeMode()
     end
   end
 
