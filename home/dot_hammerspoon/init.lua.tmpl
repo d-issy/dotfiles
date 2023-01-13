@@ -1,5 +1,4 @@
 {{- /* vim: set ft=lua.template : */ -}}
-
 hs.alert.show('hammerspoon config loaded', {
   strokeWidth     = 0,
   textSize        = 27,
@@ -12,8 +11,8 @@ hs.alert.show('hammerspoon config loaded', {
 
 AutoReloader = hs.pathwatcher.new(os.getenv("HOME") .. "/.hammerspoon/", hs.reload):start()
 
--- settings
 {{ template "hammerspoon/require.lua" . }}
 {{ template "hammerspoon/helper.lua" . }}
 {{ template "hammerspoon/winmanager.lua" . }}
 {{ template "hammerspoon/keybind.lua" . }}
+{{- /* end */ -}}
