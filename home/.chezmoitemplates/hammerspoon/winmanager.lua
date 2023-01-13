@@ -1,5 +1,6 @@
 WinManager = (function()
   local MARGIN = 10
+  local SCALE = 0.125
 
   hs.window.animationDuration = 0
   hs.grid.setMargins({ x = MARGIN, y = MARGIN })
@@ -70,36 +71,37 @@ WinManager = (function()
 
     local fn = ({
       a = function() M.moveFull() end,
+      c = function() M.moveCenter() end,
       h = function()
-        setWindowPositionDiff(win, { x = -0.25 })
+        setWindowPositionDiff(win, { x = -SCALE })
         quit = false
       end,
       j = function()
-        setWindowPositionDiff(win, { y = 0.25 })
+        setWindowPositionDiff(win, { y = SCALE })
         quit = false
       end,
       k = function()
-        setWindowPositionDiff(win, { y = -0.25 })
+        setWindowPositionDiff(win, { y = -SCALE })
         quit = false
       end,
       l = function()
-        setWindowPositionDiff(win, { x = 0.25 })
+        setWindowPositionDiff(win, { x = SCALE })
         quit = false
       end,
       H = function()
-        setWindowSizeDiff(win, { w = -0.25 })
+        setWindowSizeDiff(win, { w = -SCALE })
         quit = false
       end,
       J = function()
-        setWindowSizeDiff(win, { h = -0.25 })
+        setWindowSizeDiff(win, { h = SCALE })
         quit = false
       end,
       K = function()
-        setWindowSizeDiff(win, { h = -0.25 })
+        setWindowSizeDiff(win, { h = -SCALE })
         quit = false
       end,
       L = function()
-        setWindowSizeDiff(win, { w = 0.25 })
+        setWindowSizeDiff(win, { w = SCALE })
         quit = false
       end,
     })[key]
@@ -119,6 +121,7 @@ WinManager = (function()
   M.moveLeft = function(win) moveGrid(win, { w = 2, x = 1 }) end
   M.moveRight = function(win) moveGrid(win, { w = 2, x = 2 }) end
   M.moveFull = function(win) moveGrid(win) end
+  M.moveCenter = function(win) (win or currentWindow()):centerOnScreen() end
   M.toggleZoom = function() currentWindow():toggleZoom() end
   M.toggleFullScreen = function() currentWindow():toggleFullScreen() end
 
