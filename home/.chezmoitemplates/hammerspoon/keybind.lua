@@ -1,0 +1,12 @@
+hs.hotkey.bind({ 'alt', 'ctrl' }, 'h', WinManager.moveLeft)
+hs.hotkey.bind({ 'alt', 'ctrl' }, 'l', WinManager.moveRight)
+hs.hotkey.bind({ 'alt' }, 'a', WinManager.moveFull)
+hs.hotkey.bind({ 'alt' }, 'c', WinManager.moveCenter)
+hs.hotkey.bind({ 'alt' }, 'q', WinManager.arrangeMode)
+hs.hotkey.bind({ 'cmd', 'ctrl' }, 'f', WinManager.toggleFullScreen)
+--
+hs.hotkey.bind({ 'alt' }, 'D', WinManager.focusApplication 'com.kapeli.dashdoc')
+hs.hotkey.bind({ 'alt' }, 'E', WinManager.focusApplication 'com.github.wez.wezterm')
+hs.hotkey.bind({ 'alt' }, 'F', WinManager.focusApplication 'com.google.Chrome')
+hs.hotkey.bind({ 'alt' }, 'O', WinManager.focusApplication 'com.tinyspeck.slackmacgap')
+hs.hotkey.bind({ 'alt' }, 'U', WinManager.focusApplication 'com.microsoft.VSCode')
