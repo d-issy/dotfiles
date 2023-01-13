@@ -1,7 +1,7 @@
 hs.hotkey.bind({ 'alt', 'ctrl' }, 'h', WinManager.moveLeft)
 hs.hotkey.bind({ 'alt', 'ctrl' }, 'l', WinManager.moveRight)
 hs.hotkey.bind({ 'alt' }, 'a', WinManager.moveFull)
-hs.hotkey.bind({ 'alt' }, 'z', WinManager.toggleZoom)
+hs.hotkey.bind({ 'alt' }, 'c', WinManager.moveCenter)
 hs.hotkey.bind({ 'alt' }, 'q', WinManager.arrangeMode)
 hs.hotkey.bind({ 'cmd', 'ctrl' }, 'f', WinManager.toggleFullScreen)
 --
