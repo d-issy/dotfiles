@@ -1,85 +1,86 @@
-local install_path = vim.fn.stdpath 'data' .. '/site/pack/packer/start/packer.nvim'
-if vim.fn.empty(vim.fn.glob(install_path)) > 0 then
-  PACKER_BOOT = vim.fn.system {
-    'git',
-    'clone',
-    '--depth',
-    '1',
-    'https://github.com/wbthomason/packer.nvim',
-    install_path,
-  }
-  print 'Installing packer close and reopen Neovim...'
-  vim.cmd 'packadd packer.nvim'
+local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
+if not vim.loop.fs_stat(lazypath) then
+  vim.fn.system({
+    "git",
+    "clone",
+    "--filter=blob:none",
+    "https://github.com/folke/lazy.nvim.git",
+    "--branch=stable", -- latest stable release
+    lazypath,
+  })
 end
+vim.opt.rtp:prepend(lazypath)
 
-vim.api.nvim_create_augroup('packer_config', {})
-vim.api.nvim_create_autocmd('BufWritePost', {
-  group = 'packer_config',
-  pattern = 'plugins.lua',
-  command = 'source <afile> | PackerSync'
-})
+local status_ok, lazy = pcall(require, 'lazy')
+if not status_ok then return end
 
-local status_ok, packer = pcall(require, 'packer')
-if not status_ok then
-  return
-end
-
-packer.init {
-  display = {
-    open_fn = function()
-      return require 'packer.util'.float { border = 'rounded' }
-    end
-  }
+lazy.setup {
+  {
+    'sainnhe/edge', lazy = false, priority = 1000, config = function()
+      vim.g.edge_style = 'neon'
+      vim.g.edge_dim_foreground = 1
+      vim.cmd 'colorscheme edge'
+    end,
+  },
+  {
+    'nvim-neo-tree/neo-tree.nvim', branch = 'v2.x', dependencies = {
+      "nvim-lua/plenary.nvim",
+      "MunifTanjim/nui.nvim",
+      "nvim-tree/nvim-web-devicons",
+    }
+  },
+  {
+    'nvim-treesitter/nvim-treesitter',
+    lazy = true,
+    dependencies = {
+      'nvim-treesitter/playground',
+      { 'lukas-reineke/indent-blankline.nvim', opts = {
+        char = "▏",
+        show_current_context = true
+      } },
+    }
+  },
+  { 'neovim/nvim-lspconfig', event = 'InsertEnter', dependencies = {
+    'jose-elias-alvarez/null-ls.nvim',
+    {
+      'williamboman/mason.nvim',
+      config = true,
+      dependencies = {
+        { 'williamboman/mason-lspconfig.nvim', opts = { automatic_installation = false } }
+      }
+    },
+    {
+      'glepnir/lspsaga.nvim', branch = 'main',
+      opts = { ui = { code_action = '', diagnostic = '' } },
+      keys = {
+        { '<leader>f', function() vim.lsp.buf.format { async = true } end },
+        { 'gd', '<cmd>Lspsaga lsp_finder<CR>' },
+        { 'K', '<cmd>Lspsaga hover_doc<CR>' },
+        { '<leader>d', '<cmd>Lspsaga show_line_diagnostics<CR>' },
+        { '<leader>h', '<cmd>Lspsaga code_action<CR>' },
+        { '<leader>l', '<cmd>Lspsaga outline<CR>' },
+        { '<leader>r', '<cmd>Lspsaga rename<CR>' },
+        { '<leader>[', '<cmd>Lspsaga diagnostic_jump_prev<CR>' },
+        { '<leader>]', '<cmd>Lspsaga diagnostic_jump_next<CR>' },
+      }
+    }
+  } },
+  {
+    'hrsh7th/nvim-cmp',
+    dependencies = {
+      'hrsh7th/cmp-buffer',
+      'hrsh7th/cmp-cmdline',
+      'hrsh7th/cmp-nvim-lsp',
+      'hrsh7th/cmp-path',
+      'hrsh7th/cmp-nvim-lsp-signature-help',
+      'L3MON4D3/LuaSnip',
+      'saadparwaiz1/cmp_luasnip',
+    },
+  },
+  { 'akinsho/toggleterm.nvim', opts = { size = 13, start_in_insert = true, shade_terminals = false } },
+  { 'nvim-lualine/lualine.nvim', dependencies = { 'nvim-tree/nvim-web-devicons' } },
+  { 'nvim-telescope/telescope.nvim', dependencies = { 'nvim-lua/plenary.nvim' } },
+  { 'norcalli/nvim-colorizer.lua', opts = { 'lua', 'css', 'html' } },
+  { 'numToStr/Comment.nvim', config = true },
+  { 'windwp/nvim-autopairs', config = true },
 }
-
-packer.startup(function(use)
-  -- package manaager
-  use 'wbthomason/packer.nvim'
-
-  -- prepare
-  use 'MunifTanjim/nui.nvim'
-  use 'kyazdani42/nvim-web-devicons'
-  use 'nvim-lua/plenary.nvim'
-
-  -- ui
-  use 'sainnhe/edge'
-  use 'nvim-lualine/lualine.nvim'
-  use 'lukas-reineke/indent-blankline.nvim'
-  use { 'glepnir/lspsaga.nvim', branch = 'main' }
-  use { "nvim-neo-tree/neo-tree.nvim", branch = "v2.x" }
-
-  --- treesitter
-  use { 'nvim-treesitter/nvim-treesitter' }
-  use 'nvim-treesitter/playground'
-
-  -- lsp
-  use 'neovim/nvim-lspconfig'
-  use 'williamboman/mason.nvim'
-  use 'williamboman/mason-lspconfig.nvim'
-  use 'jose-elias-alvarez/null-ls.nvim'
-
-  -- cmp
-  use 'hrsh7th/nvim-cmp'
-  use 'hrsh7th/cmp-buffer'
-  use 'hrsh7th/cmp-cmdline'
-  use 'hrsh7th/cmp-nvim-lsp'
-  use 'hrsh7th/cmp-path'
-  use 'hrsh7th/cmp-nvim-lsp-signature-help'
-  use 'saadparwaiz1/cmp_luasnip'
-
-  -- telescope
-  use 'nvim-telescope/telescope.nvim'
-
-  -- snippets
-  use 'L3MON4D3/LuaSnip'
-
-  -- others
-  use 'akinsho/toggleterm.nvim'
-  use { 'numToStr/Comment.nvim', config = function() require 'Comment'.setup {} end }
-  use { 'windwp/nvim-autopairs', config = function() require 'nvim-autopairs'.setup {} end }
-  use { 'norcalli/nvim-colorizer.lua', config = function() require 'colorizer'.setup { 'lua', 'css', 'html' } end }
-
-  if PACKER_BOOT then
-    require 'packer'.snyc()
-  end
-end)

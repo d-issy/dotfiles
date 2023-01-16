@@ -4,22 +4,6 @@ if not status then return end
 
 local on_attach = function(_, bufnr)
   vim.api.nvim_buf_set_option(bufnr, 'omnifunc', 'v:lua.vim.lsp.omnifunc')
-
-  local opts = { noremap = true, silent = true, buffer = bufnr }
-
-  vim.keymap.set('n', '<leader>f', function() vim.lsp.buf.format { async = true } end, opts)
-
-  status, _ = pcall(require, 'lspsaga')
-  if status then
-    vim.keymap.set('n', 'gd', '<cmd>Lspsaga lsp_finder<CR>', opts)
-    vim.keymap.set('n', 'K', '<cmd>Lspsaga hover_doc<CR>', opts)
-    vim.keymap.set('n', '<leader>d', '<cmd>Lspsaga show_line_diagnostics<CR>', opts)
-    vim.keymap.set('n', '<leader>h', '<cmd>Lspsaga code_action<CR>', opts)
-    vim.keymap.set('n', '<leader>l', '<cmd>Lspsaga outline<CR>', opts)
-    vim.keymap.set('n', '<leader>r', '<cmd>Lspsaga rename<CR>', opts)
-    vim.keymap.set('n', '<leader>[', '<cmd>Lspsaga diagnostic_jump_prev<CR>', opts)
-    vim.keymap.set('n', '<leader>]', '<cmd>Lspsaga diagnostic_jump_next<CR>', opts)
-  end
 end
 
 local capabilities = vim.lsp.protocol.make_client_capabilities()
