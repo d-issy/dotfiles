@@ -1,12 +1,9 @@
 local status_ok, configs = pcall(require, 'nvim-treesitter.configs')
-if not status_ok then
-  return
-end
+if not status_ok then return end
 
 configs.setup {
-  ensure_installed = 'all',
   sync_install = false,
-  auto_install = false,
+  auto_install = true,
   ignore_install = {},
   indent = {
     enable = true,
@@ -18,12 +15,6 @@ configs.setup {
       'proto', -- Not working properly
     },
     additional_vim_regex_highlighting = true,
-  },
-  rainbow = {
-    enable = true,
-    disabe = {},
-    extended_mode = true,
-    max_file_lines = nil,
   },
   playground = {
     enable = true,
