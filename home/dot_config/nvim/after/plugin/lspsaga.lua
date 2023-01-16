@@ -18,7 +18,6 @@ saga.setup {
     incoming = ' ',
     outgoing = ' ',
   },
-  border_style = 'plus',
   diagnostic_header = {},
   symbol_in_winbar = {
     enable = true,
