@@ -40,34 +40,36 @@ lazy.setup {
       } },
     }
   },
-  { 'neovim/nvim-lspconfig', event = 'InsertEnter', dependencies = {
-    'jose-elias-alvarez/null-ls.nvim',
-    {
-      'williamboman/mason.nvim',
-      config = true,
-      dependencies = {
-        { 'williamboman/mason-lspconfig.nvim', opts = { automatic_installation = false } }
-      }
-    },
-    {
-      'glepnir/lspsaga.nvim', branch = 'main',
-      opts = { ui = { code_action = '', diagnostic = '' } },
-      keys = {
-        { '<leader>f', function() vim.lsp.buf.format { async = true } end },
-        { 'gd', '<cmd>Lspsaga lsp_finder<CR>' },
-        { 'K', '<cmd>Lspsaga hover_doc<CR>' },
-        { '<leader>d', '<cmd>Lspsaga show_line_diagnostics<CR>' },
-        { '<leader>h', '<cmd>Lspsaga code_action<CR>' },
-        { '<leader>l', '<cmd>Lspsaga outline<CR>' },
-        { '<leader>r', '<cmd>Lspsaga rename<CR>' },
-        { '<leader>[', '<cmd>Lspsaga diagnostic_jump_prev<CR>' },
-        { '<leader>]', '<cmd>Lspsaga diagnostic_jump_next<CR>' },
-      }
-    }
-  } },
-  {
-    'hrsh7th/nvim-cmp',
+  { 'neovim/nvim-lspconfig', event = 'InsertEnter',
     dependencies = {
+      { 'jose-elias-alvarez/null-ls.nvim' },
+      { 'folke/neodev.nvim', config = true },
+      {
+        'williamboman/mason.nvim',
+        config = true,
+        dependencies = {
+          { 'williamboman/mason-lspconfig.nvim', opts = { automatic_installation = false } }
+        }
+      },
+      {
+        'glepnir/lspsaga.nvim', branch = 'main',
+        opts = { ui = { code_action = '', diagnostic = '' } },
+        keys = {
+          { '<leader>f', function() vim.lsp.buf.format { async = true } end },
+          { 'gd', '<cmd>Lspsaga lsp_finder<CR>' },
+          { 'K', '<cmd>Lspsaga hover_doc<CR>' },
+          { '<leader>d', '<cmd>Lspsaga show_line_diagnostics<CR>' },
+          { '<leader>h', '<cmd>Lspsaga code_action<CR>' },
+          { '<leader>l', '<cmd>Lspsaga outline<CR>' },
+          { '<leader>r', '<cmd>Lspsaga rename<CR>' },
+          { '<leader>[', '<cmd>Lspsaga diagnostic_jump_prev<CR>' },
+          { '<leader>]', '<cmd>Lspsaga diagnostic_jump_next<CR>' },
+        }
+      },
+    }
+  },
+  {
+    'hrsh7th/nvim-cmp', dependencies = {
       'hrsh7th/cmp-buffer',
       'hrsh7th/cmp-cmdline',
       'hrsh7th/cmp-nvim-lsp',
@@ -81,6 +83,8 @@ lazy.setup {
   { 'nvim-lualine/lualine.nvim', dependencies = { 'nvim-tree/nvim-web-devicons' } },
   { 'nvim-telescope/telescope.nvim', dependencies = { 'nvim-lua/plenary.nvim' } },
   { 'norcalli/nvim-colorizer.lua', opts = { 'lua', 'css', 'html' } },
+  { 'j-hui/fidget.nvim', config = true },
+  { 'lewis6991/gitsigns.nvim', config = true },
   { 'numToStr/Comment.nvim', config = true },
   { 'windwp/nvim-autopairs', config = true },
 }
