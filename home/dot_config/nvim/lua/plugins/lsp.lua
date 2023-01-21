@@ -2,7 +2,6 @@ return {
   'neovim/nvim-lspconfig',
   event = { 'BufReadPre', 'BufNewFile' },
   dependencies = {
-    { 'jose-elias-alvarez/null-ls.nvim' },
     { 'folke/neodev.nvim', config = true },
     'williamboman/mason.nvim',
     'williamboman/mason-lspconfig.nvim',
