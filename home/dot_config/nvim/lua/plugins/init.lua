@@ -9,7 +9,6 @@ return {
       vim.cmd 'colorscheme edge'
     end,
   },
-  { 'akinsho/toggleterm.nvim', opts = { size = 13, start_in_insert = true, shade_terminals = false } },
   { 'j-hui/fidget.nvim', config = true },
   { 'lewis6991/gitsigns.nvim', config = true },
   { 'norcalli/nvim-colorizer.lua', opts = { 'lua', 'css', 'html' } },
