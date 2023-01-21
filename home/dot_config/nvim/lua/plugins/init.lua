@@ -13,6 +13,5 @@ return {
   { 'lewis6991/gitsigns.nvim', config = true },
   { 'norcalli/nvim-colorizer.lua', opts = { 'lua', 'css', 'html' } },
   { 'numToStr/Comment.nvim', config = true },
-  { 'nvim-lualine/lualine.nvim', dependencies = { 'nvim-tree/nvim-web-devicons' } },
   { 'windwp/nvim-autopairs', config = true },
 }
