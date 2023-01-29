@@ -44,11 +44,11 @@ if [[ ! -d $HOME/.asdf ]]; then
   git clone https://github.com/asdf-vm/asdf.git ~/.asdf
   . $HOME/.asdf/asdf.sh
 
+  {{ .chezmoi.workingTree }}/scripts/asdf install-plugins
   {{- end }}
 fi
 
 # update asdf for {{ include "dot_tool-versions.tmpl" | sha256sum }}
-{{ .chezmoi.workingTree }}/scripts/asdf install-plugins
 asdf install python
 asdf install jq
 asdf install

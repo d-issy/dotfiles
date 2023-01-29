@@ -15,17 +15,11 @@
   conflictstyle = diff3
 [fetch]
   prune = true
-[interactive]
-  diffFilter = delta --color-only
 [core]
   quotePath = false
   ignorecase = false
   autocrlf = false
   pager = delta
-[delta]
-  features = decorations
-  side-by-side = true
-  line-numbers = true
 [ghq]
   root = ~/code
 [url "git@github.com:"]
