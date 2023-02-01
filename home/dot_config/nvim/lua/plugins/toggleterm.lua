@@ -1,11 +1,14 @@
 return {
   'akinsho/toggleterm.nvim',
   keys = function()
-    local Terminal = require 'toggleterm.terminal'.Terminal
-    local tig_status = Terminal:new { cmd = 'tig status', direction = 'float' }
+    function tig()
+      local Terminal = require 'toggleterm.terminal'.Terminal
+      local tig_status = Terminal:new { cmd = 'tig status', direction = 'float' }
+      tig_status:toggle()
+    end
     return {
       { '<Leader>t', '<cmd>ToggleTerm<CR>' },
-      { '<Leader>gs', function() tig_status:toggle() end },
+      { '<Leader>gs', tig },
     }
   end,
   config = function()
