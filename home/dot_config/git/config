@@ -19,7 +19,6 @@
   quotePath = false
   ignorecase = false
   autocrlf = false
-  pager = delta
 [ghq]
   root = ~/code
 [url "git@github.com:"]
