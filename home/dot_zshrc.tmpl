@@ -30,19 +30,64 @@ elif (( $+commands[vim] )); then
   export EDITOR=vim
 fi
 
+#########
+# alias #
+#########
+alias ..='cd ..'
+alias ch='chezmoi'
+alias cha='chezmoi apply -v'
+alias chc='chezmoi cd'
+alias chd='chezmoi diff'
+alias chu='chezmoi update -v'
+alias dc='docker-compose'
+alias g='git'
+alias ga='git add'
+alias gb='git branch'
+alias gbd='git branch -D'
+alias gc='git commit -v'
+alias gcl='git clean -fd'
+alias gf='git fetch'
+alias gr='git restore'
+alias gs='git status'
+alias gsc='git switch -c'
+alias gsw='git switch'
+alias la='ls -lAF'
+alias ll='ls -lF'
+alias ls='ls --color'
+alias resh='exec $SHELL -l'
+alias ts='tig status'
+
+alias -g G='| grep --color=auto'
+
 ###########
 # bindkey #
 ###########
-
 # vi
 bindkey -v
 bindkey -M viins '^A' beginning-of-line
 bindkey -M viins '^E' end-of-line
 bindkey -M viins '^N' down-line-or-history
 bindkey -M viins '^P' up-line-or-history
-
 # own
 bindkey -M viins '^R' zsh-history
+
+# vi cursor
+function zle-keymap-select () {
+  case $KEYMAP in
+    vicmd) echo -ne '\e[1 q';;
+    viins|main) echo -ne '\e[5 q';;
+  esac
+}
+zle -N zle-keymap-select
+
+function zle-line-init() {
+  zle -K viins
+  echo -ne "\e[5 q"
+}
+zle -N zle-line-init
+
+echo -ne '\e[5 q'
+function preexec() { echo -ne '\e[5 q'; }
 
 ##############
 # completion #
@@ -51,10 +96,15 @@ autoload -U compinit
 compinit
 
 autoload colors
+zstyle ':completion:*' completer _expand_alias _complete _ignored
 
-zstyle ':completion:*' menu select
+zstyle ':completion:*:descriptions' format '%F{blue} %B%d%b%f'
+zstyle ':completion:*:warnings' format '%F{yello} No matches for: %d%f'
+
+zstyle ':completion:*' group-name ''
 zstyle ':completion:*' matcher-list '' 'm:{a-zA-Z}={A-Za-z}' 'r:|[._-]=* r:|=*' 'l:|=* r:|=*'
-zstyle ':completion:*' list-colors ''
+zstyle ':completion:*' menu select=2
+zstyle ':completion:*' verbose yes
 
 ###########
 # history #
