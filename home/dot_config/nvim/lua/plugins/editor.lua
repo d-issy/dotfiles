@@ -33,4 +33,19 @@ return {
       },
     },
   },
+
+  -- telescope
+  {
+    'nvim-telescope/telescope.nvim',
+    cmd = 'Telescope',
+    keys = {
+      { '<leader>,', '<cmd>Telescope buffers show_all_buffers=true<cr>', desc='Switch Buffers' },
+      { '<leader>/', '<cmd>Telescope live_grep<cr>', desc='Grep' },
+      { '<leader>p', '<cmd>Telescope find_files enable_preview=false<cr>', desc='Find Files' },
+      { '<leader>gs', '<cmd>Telescope git_status<cr>', desc='Git status' },
+      { '<leader>gb', '<cmd>Telescope git_branches<cr>', desc='Switch Branch' },
+      { '<leader>sc', '<cmd>Telescope colorscheme enable_preview=true<cr>', desc='Find Files' },
+    }
+  }
+
 }
