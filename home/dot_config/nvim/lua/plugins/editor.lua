@@ -46,6 +46,20 @@ return {
       { '<leader>gb', '<cmd>Telescope git_branches<cr>', desc='Switch Branch' },
       { '<leader>sc', '<cmd>Telescope colorscheme enable_preview=true<cr>', desc='Find Files' },
     }
-  }
+  },
+
+  -- easily jump to any location and enhanced f/t motions for Leap
+  {
+    "ggandor/leap.nvim",
+    event = "VeryLazy",
+    dependencies = { { "ggandor/flit.nvim", opts = { labeled_modes = "nv" } } },
+    config = function(_, opts)
+      local leap = require("leap")
+      for k, v in pairs(opts) do
+        leap.opts[k] = v
+      end
+      leap.add_default_mappings(true)
+    end
+  },
 
 }
