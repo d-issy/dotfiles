@@ -54,4 +54,4 @@ end
 vim.opt.rtp:prepend(lazypath)
 require 'lazy'.setup('plugins')
 
-require 'tokyonight'.load()
+vim.cmd 'colorscheme edge'
