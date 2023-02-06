@@ -9,6 +9,7 @@ return {
       sources = {
         nls.builtins.formatting.black,
         nls.builtins.formatting.isort,
+        nls.builtins.formatting.prettier,
       }
     }
   end
