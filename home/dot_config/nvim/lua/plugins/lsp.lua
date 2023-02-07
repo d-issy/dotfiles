@@ -89,6 +89,8 @@ return {
 							"yaml",
 						},
 					}),
+					nls.builtins.diagnostics.cspell,
+					nls.builtins.code_actions.cspell,
 				},
 			}
 		end,
@@ -105,6 +107,7 @@ return {
 				"black",
 				"isort",
 				"prettierd",
+				"cspell",
 			},
 		},
 		config = function(_, opts)
