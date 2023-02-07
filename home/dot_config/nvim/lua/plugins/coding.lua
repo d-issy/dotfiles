@@ -27,7 +27,7 @@ return {
         },
         mapping = cmp.mapping.preset.insert {
           ['<C-Space>'] = cmp.mapping.complete(),
-          ['<CR>'] = cmp.mapping.confirm({select=true})
+          ['<TAB>'] = cmp.mapping.confirm({select=true})
         }
       }
     end
@@ -58,9 +58,11 @@ return {
     event={'BufReadPre', 'BufNewFile'},
     config=true,
     keys = {
-      {'<leader>ca", "<cmd>Lspsaga code_action<cr>', mode = {'n','v'} },
+      {'<leader>cf', function() vim.lsp.buf.format({async=true}) end },
+      {'<leader>ca', '<cmd>Lspsaga code_action<cr>' },
+      {'<leader>cd', '<cmd>Lspsaga show_line_diagnostics<cr>' },
       {'<leader>cr', '<cmd>Lspsaga rename<cr>'},
-      {'gd', '<cmd>Lspsaga lsp_find<cr>'},
+      {'gd', '<cmd>Lspsaga lsp_finder<cr>'},
       {'K', '<cmd>Lspsaga hover_doc<cr>'},
     }
   },
