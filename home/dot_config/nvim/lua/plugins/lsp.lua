@@ -8,7 +8,7 @@ return {
       'neovim/nvim-lspconfig',
     },
     opts = {
-      ensure_installed = { 'sumneko_lua' }
+      ensure_installed = { 'sumneko_lua' },
       servers = {
       }
     },
