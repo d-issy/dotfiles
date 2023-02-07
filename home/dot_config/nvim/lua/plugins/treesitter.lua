@@ -2,8 +2,10 @@ return {
   {
     'nvim-treesitter/nvim-treesitter',
     build = ':TSUpdate',
-    event = 'BufReadPost',
+    event = {'BufReadPost', 'BufNewFile'},
     opts = {
+      auto_install = true,
+      sync_install = true,
       highlight = { enable = true },
       indent = { enable = true },
       context_commentstring = { enable = true, enable_autocmd = false },
