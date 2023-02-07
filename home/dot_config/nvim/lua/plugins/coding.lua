@@ -2,6 +2,7 @@ return {
 	-- cmp
 	{
 		"hrsh7th/nvim-cmp",
+		event = "InsertEnter",
 		dependencies = {
 			"hrsh7th/cmp-nvim-lsp",
 			"hrsh7th/cmp-path",
@@ -72,15 +73,12 @@ return {
 	--lspsaga
 	{
 		"glepnir/lspsaga.nvim",
-		event = { "BufReadPre", "BufNewFile" },
+		dependencies = {
+			"nvim-treesitter/nvim-treesitter",
+			"neovim/nvim-lspconfig",
+		},
 		config = true,
 		keys = {
-			{
-				"<leader>cf",
-				function()
-					vim.lsp.buf.format({ async = true })
-				end,
-			},
 			{ "<leader>ca", "<cmd>Lspsaga code_action<cr>" },
 			{ "<leader>cd", "<cmd>Lspsaga show_line_diagnostics<cr>" },
 			{ "<leader>cr", "<cmd>Lspsaga rename<cr>" },

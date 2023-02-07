@@ -33,6 +33,9 @@ return {
 	{
 		"folke/noice.nvim",
 		event = "VeryLazy",
+		dependencies = {
+			"nvim-treesitter/nvim-treesitter",
+		},
 		opts = {
 			cmdline = {
 				view = "cmdline",

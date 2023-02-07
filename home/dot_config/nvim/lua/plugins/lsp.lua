@@ -2,7 +2,7 @@ return {
 	-- lsp config
 	{
 		"neovim/nvim-lspconfig",
-		event = { "BufReadPre", "BufNewFile" },
+		event = { "BufReadPre", "BufNewFile", "VeryLazy" },
 		dependencies = {
 			"williamboman/mason.nvim",
 			"williamboman/mason-lspconfig.nvim",
@@ -49,6 +49,14 @@ return {
 					local capabilities =
 						require("cmp_nvim_lsp").default_capabilities(vim.lsp.protocol.make_client_capabilities())
 					lsp_opts.capabilities = capabilities
+
+					lsp_opts.on_attach = function(_, buffer)
+						local key_opts = { silent = true, buffer = buffer }
+						vim.keymap.set("n", "<leader>cf", function()
+							vim.lsp.buf.format({ async = true })
+						end, key_opts)
+					end
+
 					require("lspconfig")[name].setup(lsp_opts)
 				end,
 			})
@@ -64,11 +72,23 @@ return {
 			local nls = require("null-ls")
 			return {
 				sources = {
-					nls.builtins.formatting.prettierd,
+					nls.builtins.formatting.stylua,
 					nls.builtins.formatting.black,
 					nls.builtins.formatting.isort,
-					nls.builtins.formatting.stylua,
-					nls.builtins.diagnostics.flake8,
+					nls.builtins.formatting.prettierd.with({
+						filetypes = {
+							"css",
+							"html",
+							"javascript",
+							"javascriptreact",
+							"json",
+							"jsonc",
+							"sass",
+							"typescript",
+							"typescriptreact",
+							"yaml",
+						},
+					}),
 				},
 			}
 		end,
@@ -82,9 +102,9 @@ return {
 		opts = {
 			ensure_installed = {
 				"stylua",
-				"shellcheck",
-				"shfmt",
-				"flake8",
+				"black",
+				"isort",
+				"prettierd",
 			},
 		},
 		config = function(_, opts)
