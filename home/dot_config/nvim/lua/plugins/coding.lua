@@ -50,5 +50,19 @@ return {
         end
       end})
     end
-  }
+  },
+
+  --lspsaga
+  {
+    'glepnir/lspsaga.nvim',
+    event={'BufReadPre', 'BufNewFile'},
+    config=true,
+    keys = {
+      {'<leader>ca", "<cmd>Lspsaga code_action<cr>', mode = {'n','v'} },
+      {'<leader>cr', '<cmd>Lspsaga rename<cr>'},
+      {'gd', '<cmd>Lspsaga lsp_find<cr>'},
+      {'K', '<cmd>Lspsaga hover_doc<cr>'},
+    }
+  },
+
 }
