@@ -6,6 +6,7 @@ return {
       'williamboman/mason.nvim',
       'williamboman/mason-lspconfig.nvim',
       'neovim/nvim-lspconfig',
+      'hrsh7th/cmp-nvim-lsp',
     },
     opts = {
       ensure_installed = { 'sumneko_lua' },
@@ -39,6 +40,9 @@ return {
           print(name)
           print(vim.inspect(opts.servers[name] or {}))
           local lsp_opts =  opts.servers[name] or {}
+
+          local capabilities = require("cmp_nvim_lsp").default_capabilities(vim.lsp.protocol.make_client_capabilities())
+          lsp_opts.capabilities = capabilities
           require('lspconfig')[name].setup(lsp_opts)
         end
       }

@@ -24,6 +24,10 @@ return {
           {name='luasnip'},
           {name='path'},
           {name='buffer'},
+        },
+        mapping = cmp.mapping.preset.insert {
+          ['<C-Space>'] = cmp.mapping.complete(),
+          ['<CR>'] = cmp.mapping.confirm({select=true})
         }
       }
     end
