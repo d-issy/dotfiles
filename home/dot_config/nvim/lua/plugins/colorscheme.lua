@@ -18,6 +18,7 @@ return {
   },
 
   -- catppuccin
+  -- @cspell: words catppuccin
   {
     'catppuccin/nvim',
     lazy = true,

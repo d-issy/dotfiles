@@ -7,9 +7,7 @@ return {
     keys = {
       {
         '<leader>e',
-        function()
-          require('neo-tree.command').execute({ toggle = true })
-        end,
+        function() require('neo-tree.command').execute { toggle = true } end,
         desc = 'Explorer NeoTree (root dir)',
       },
     },
@@ -40,12 +38,28 @@ return {
     'nvim-telescope/telescope.nvim',
     cmd = 'Telescope',
     keys = {
-      { '<leader>,', '<cmd>Telescope buffers show_all_buffers=true<cr>', desc = 'Switch Buffers' },
+      {
+        '<leader>,',
+        '<cmd>Telescope buffers show_all_buffers=true<cr>',
+        desc = 'Switch Buffers',
+      },
       { '<leader>/', '<cmd>Telescope live_grep<cr>', desc = 'Grep' },
-      { '<leader>p', '<cmd>Telescope find_files enable_preview=false<cr>', desc = 'Find Files' },
+      {
+        '<leader>p',
+        '<cmd>Telescope find_files enable_preview=false<cr>',
+        desc = 'Find Files',
+      },
       { '<leader>gs', '<cmd>Telescope git_status<cr>', desc = 'Git status' },
-      { '<leader>gb', '<cmd>Telescope git_branches<cr>', desc = 'Switch Branch' },
-      { '<leader>sc', '<cmd>Telescope colorscheme enable_preview=true<cr>', desc = 'Find Files' },
+      {
+        '<leader>gb',
+        '<cmd>Telescope git_branches<cr>',
+        desc = 'Switch Branch',
+      },
+      {
+        '<leader>sc',
+        '<cmd>Telescope colorscheme enable_preview=true<cr>',
+        desc = 'Find Files',
+      },
     },
   },
 
@@ -73,7 +87,7 @@ return {
     config = function(_, opts)
       local wk = require('which-key')
       wk.setup(opts)
-      wk.register({
+      wk.register {
         mode = { 'n', 'v' },
         ['g'] = { name = '+goto' },
         ['gz'] = { name = '+surround' },
@@ -91,7 +105,7 @@ return {
         ['<leader>u'] = { name = '+ui' },
         ['<leader>w'] = { name = '+windows' },
         ['<leader>x'] = { name = '+diagnostics/quickfix' },
-      })
+      }
     end,
   },
 
@@ -109,20 +123,36 @@ return {
 
         map('n', ']h', gs.next_hunk, 'Next Hunk')
         map('n', '[h', gs.prev_hunk, 'Prev Hunk')
-        map({ 'n', 'v' }, '<leader>ghs', ':Gitsigns stage_hunk<CR>', 'Stage Hunk')
-        map({ 'n', 'v' }, '<leader>ghr', ':Gitsigns reset_hunk<CR>', 'Reset Hunk')
+        map(
+          { 'n', 'v' },
+          '<leader>ghs',
+          ':Gitsigns stage_hunk<CR>',
+          'Stage Hunk'
+        )
+        map(
+          { 'n', 'v' },
+          '<leader>ghr',
+          ':Gitsigns reset_hunk<CR>',
+          'Reset Hunk'
+        )
         map('n', '<leader>ghS', gs.stage_buffer, 'Stage Buffer')
         map('n', '<leader>ghu', gs.undo_stage_hunk, 'Undo Stage Hunk')
         map('n', '<leader>ghR', gs.reset_buffer, 'Reset Buffer')
         map('n', '<leader>ghp', gs.preview_hunk, 'Preview Hunk')
-        map('n', '<leader>ghb', function()
-          gs.blame_line({ full = true })
-        end, 'Blame Line')
+        map(
+          'n',
+          '<leader>ghb',
+          function() gs.blame_line { full = true } end,
+          'Blame Line'
+        )
         map('n', '<leader>ghd', gs.diffthis, 'Diff This')
-        map('n', '<leader>ghD', function()
-          gs.diffthis('~')
-        end, 'Diff This ~')
-        map({ 'o', 'x' }, 'ih', ':<C-U>Gitsigns select_hunk<CR>', 'GitSigns Select Hunk')
+        map('n', '<leader>ghD', function() gs.diffthis('~') end, 'Diff This ~')
+        map(
+          { 'o', 'x' },
+          'ih',
+          ':<C-U>Gitsigns select_hunk<CR>',
+          'GitSigns Select Hunk'
+        )
       end,
     },
   },
@@ -133,8 +163,16 @@ return {
     cmd = { 'TroubleToggle', 'Trouble' },
     opts = { use_diagnostic_signs = true },
     keys = {
-      { '<leader>xx', '<cmd>TroubleToggle document_diagnostics<cr>', desc = 'Document Diagnostics (Trouble)' },
-      { '<leader>xX', '<cmd>TroubleToggle workspace_diagnostics<cr>', desc = 'Workspace Diagnostics (Trouble)' },
+      {
+        '<leader>xx',
+        '<cmd>TroubleToggle document_diagnostics<cr>',
+        desc = 'Document Diagnostics (Trouble)',
+      },
+      {
+        '<leader>xX',
+        '<cmd>TroubleToggle workspace_diagnostics<cr>',
+        desc = 'Workspace Diagnostics (Trouble)',
+      },
     },
   },
 }
