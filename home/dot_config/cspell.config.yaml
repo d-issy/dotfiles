@@ -11,9 +11,11 @@ languageSettings:
   - languageId: lua
     locale: "*"
     allowCompoundWords: true
+    words:
+      - autocmd # cspell: disable-line
     ignoreRegExpList:
       - /'.*\/.*'/
-      - /vim\.opt\.\w+/
+      - /vim\.(opt|api)\.\w+/
       - /\w?noremap/
       - /:\w+/
     dictionaries:

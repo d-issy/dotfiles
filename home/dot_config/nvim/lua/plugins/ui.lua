@@ -23,13 +23,21 @@ return {
     event = 'BufReadPost',
     opts = {
       char = '▏',
-      filetype_exclude = { 'help', 'alpha', 'dashboard', 'neo-tree', 'Trouble', 'lazy' },
+      filetype_exclude = {
+        'help',
+        'alpha',
+        'dashboard',
+        'neo-tree',
+        'Trouble',
+        'lazy',
+      },
       show_trailing_blankline_indent = false,
       show_current_context = false,
     },
   },
 
   -- noice ui
+  -- @cspell: words noice,cmdline,getcmdline
   {
     'folke/noice.nvim',
     event = 'VeryLazy',
@@ -41,8 +49,18 @@ return {
         view = 'cmdline',
         format = {
           cmdline = { pattern = '^:', icon = ':', lang = 'vim' },
-          search_down = { kind = 'search', pattern = '^/', icon = ' ', lang = 'regex' },
-          search_up = { kind = 'search', pattern = '^%?', icon = ' ', lang = 'regex' },
+          search_down = {
+            kind = 'search',
+            pattern = '^/',
+            icon = ' ',
+            lang = 'regex',
+          },
+          search_up = {
+            kind = 'search',
+            pattern = '^%?',
+            icon = ' ',
+            lang = 'regex',
+          },
           filter = { pattern = '^:%s*!', icon = '', lang = 'bash' },
           lua = { pattern = '^:%s*lua%s+', icon = '', lang = 'lua' },
           help = { pattern = '^:%s*he?l?p?%s+', icon = '' },
@@ -63,31 +81,23 @@ return {
     keys = {
       {
         '<S-Enter>',
-        function()
-          require('noice').redirect(vim.fn.getcmdline())
-        end,
+        function() require('noice').redirect(vim.fn.getcmdline()) end,
         mode = 'c',
         desc = 'Redirect Cmdline',
       },
       {
         '<leader>snl',
-        function()
-          require('noice').cmd('last')
-        end,
+        function() require('noice').cmd 'last' end,
         desc = 'Noice Last Message',
       },
       {
         '<leader>snh',
-        function()
-          require('noice').cmd('history')
-        end,
+        function() require('noice').cmd 'history' end,
         desc = 'Noice History',
       },
       {
         '<leader>sna',
-        function()
-          require('noice').cmd('all')
-        end,
+        function() require('noice').cmd 'all' end,
         desc = 'Noice All',
       },
       {

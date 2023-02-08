@@ -61,10 +61,9 @@ return {
         function(name)
           local lsp_opts = opts.servers[name] or {}
 
-          lsp_opts.capabilities =
-            require('cmp_nvim_lsp').default_capabilities(
-              vim.lsp.protocol.make_client_capabilities()
-            )
+          lsp_opts.capabilities = require('cmp_nvim_lsp').default_capabilities(
+            vim.lsp.protocol.make_client_capabilities()
+          )
 
           lsp_opts.on_attach = function(client, buffer)
             local key_opts = {
@@ -82,8 +81,7 @@ return {
               key_opts
             )
             if client.name == 'sumneko_lua' then
-              client.server_capabilities.documentFormattingProvider =
-                false
+              client.server_capabilities.documentFormattingProvider = false
             end
           end
 
@@ -104,7 +102,7 @@ return {
       'mason.nvim',
     },
     opts = function()
-      local nls = require('null-ls')
+      local nls = require 'null-ls'
       return {
         sources = {
           nls.builtins.formatting.stylua,
@@ -137,7 +135,8 @@ return {
     end,
   },
 
-  -- cmdline tools and lsp servers
+  -- cmd line tools and lsp servers
+  -- @cspell: words sumneko,stylua,pyright,isort,prettierd
   {
     'williamboman/mason.nvim',
     cmd = 'Mason',
@@ -159,7 +158,7 @@ return {
     },
     config = function(_, opts)
       require('mason').setup(opts)
-      local mr = require('mason-registry')
+      local mr = require 'mason-registry'
       for _, tool in ipairs(opts.ensure_installed) do
         local p = mr.get_package(tool)
         if not p:is_installed() then

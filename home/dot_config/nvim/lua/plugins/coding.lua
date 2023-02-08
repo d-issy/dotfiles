@@ -1,5 +1,6 @@
 return {
   -- cmp
+  -- @cspell: words autocmplete
   {
     'hrsh7th/nvim-cmp',
     event = 'InsertEnter',
@@ -10,8 +11,8 @@ return {
       'saadparwaiz1/cmp_luasnip',
     },
     config = function()
-      local cmp = require('cmp')
-      local types = require('cmp.types')
+      local cmp = require 'cmp'
+      local types = require 'cmp.types'
       cmp.setup {
         completion = {
           autocmplete = { types.cmp.TriggerEvent.TextChanged },
@@ -51,7 +52,7 @@ return {
       },
     },
     config = function()
-      local luasnip = require('luasnip')
+      local luasnip = require 'luasnip'
       luasnip.setup {}
       require('luasnip.loaders.from_lua').lazy_load {
         paths = '~/.config/nvim/snippets/',

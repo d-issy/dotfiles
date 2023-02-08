@@ -16,7 +16,7 @@ return {
       if vim.fn.argc() == 1 then
         local stat = vim.loop.fs_stat(vim.fn.argv(0))
         if stat and stat.type == 'directory' then
-          require('neo-tree')
+          require 'neo-tree'
         end
       end
     end,
@@ -69,7 +69,7 @@ return {
     event = 'VeryLazy',
     dependencies = { { 'ggandor/flit.nvim', opts = { labeled_modes = 'nv' } } },
     config = function(_, opts)
-      local leap = require('leap')
+      local leap = require 'leap'
       for k, v in pairs(opts) do
         leap.opts[k] = v
       end
@@ -85,7 +85,7 @@ return {
       plugins = { spelling = true },
     },
     config = function(_, opts)
-      local wk = require('which-key')
+      local wk = require 'which-key'
       wk.setup(opts)
       wk.register {
         mode = { 'n', 'v' },
@@ -101,7 +101,7 @@ return {
         ['<leader>gh'] = { name = '+hunks' },
         ['<leader>q'] = { name = '+quit/session' },
         ['<leader>s'] = { name = '+search' },
-        ['<leader>sn'] = { name = '+noice' },
+        ['<leader>sn'] = { name = '+notify' },
         ['<leader>u'] = { name = '+ui' },
         ['<leader>w'] = { name = '+windows' },
         ['<leader>x'] = { name = '+diagnostics/quickfix' },
@@ -146,7 +146,7 @@ return {
           'Blame Line'
         )
         map('n', '<leader>ghd', gs.diffthis, 'Diff This')
-        map('n', '<leader>ghD', function() gs.diffthis('~') end, 'Diff This ~')
+        map('n', '<leader>ghD', function() gs.diffthis '~' end, 'Diff This ~')
         map(
           { 'o', 'x' },
           'ih',
