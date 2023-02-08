@@ -46,14 +46,17 @@ return {
         function(name)
           local lsp_opts = opts.servers[name] or {}
 
-          local capabilities = require('cmp_nvim_lsp').default_capabilities(vim.lsp.protocol.make_client_capabilities())
-          lsp_opts.capabilities = capabilities
+          lsp_opts.capabilities =
+            require('cmp_nvim_lsp').default_capabilities(vim.lsp.protocol.make_client_capabilities())
 
-          lsp_opts.on_attach = function(_, buffer)
+          lsp_opts.on_attach = function(client, buffer)
             local key_opts = { silent = true, buffer = buffer }
             vim.keymap.set('n', '<leader>cf', function()
               vim.lsp.buf.format({ async = true })
             end, key_opts)
+            if client.name == 'sumneko_lua' then
+              client.server_capabilities.documentFormattingProvider = false
+            end
           end
 
           require('lspconfig')[name].setup(lsp_opts)
