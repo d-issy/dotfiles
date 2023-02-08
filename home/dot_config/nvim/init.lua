@@ -22,7 +22,7 @@ vim.opt.tabstop = 2
 vim.opt.path:append({ '**' })
 
 vim.opt.list = true
-vim.opt.listchars = { tab = '  ', trail = '•', nbsp = '_' }
+vim.opt.listchars = { tab = '> ', trail = '•', nbsp = '_' }
 
 -- keys
 vim.g.mapleader = ' '
