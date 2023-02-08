@@ -12,6 +12,15 @@ languageSettings:
     locale: "*"
     allowCompoundWords: true
     ignoreRegExpList:
-      - "/'.*\/.*'/"
+      - /'.*\/.*'/
+      - /vim\.opt\.\w+/
+      - /\w?noremap/
+      - /:\w+/
     dictionaries:
       - lua
+  - languageId: yaml
+    locale: "*"
+    ignoreRegExpList:
+      - /\/.*\//
+    dictionaries:
+      - yaml
