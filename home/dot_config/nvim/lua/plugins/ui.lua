@@ -29,7 +29,7 @@ return {
     },
   },
 
-  -- noicer ui
+  -- noice ui
   {
     'folke/noice.nvim',
     event = 'VeryLazy',

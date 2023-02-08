@@ -83,15 +83,18 @@ return {
               'html',
               'javascript',
               'javascriptreact',
-              'json',
-              'jsonc',
               'sass',
               'typescript',
               'typescriptreact',
               'yaml',
             },
           }),
-          nls.builtins.diagnostics.cspell,
+          nls.builtins.diagnostics.cspell.with({
+            diagnostics_postprocess = function(diagnostic)
+              diagnostic.severity = vim.diagnostic.severity['INFO']
+            end,
+            extra_args = { '--config', vim.call('expand', '~/.config/cspell.config.yaml') },
+          }),
           nls.builtins.code_actions.cspell,
         },
       }
