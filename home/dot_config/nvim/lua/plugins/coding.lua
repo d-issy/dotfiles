@@ -78,11 +78,15 @@ return {
     },
     config = true,
     keys = {
-      { '<leader>ca', '<cmd>Lspsaga code_action<cr>' },
-      { '<leader>cd', '<cmd>Lspsaga show_line_diagnostics<cr>' },
-      { '<leader>cr', '<cmd>Lspsaga rename<cr>' },
-      { 'gd', '<cmd>Lspsaga lsp_finder<cr>' },
-      { 'K', '<cmd>Lspsaga hover_doc<cr>' },
+      { '<leader>ca', '<cmd>Lspsaga code_action<cr>', desc = 'Code Action' },
+      {
+        '<leader>cd',
+        '<cmd>Lspsaga show_line_diagnostics<cr>',
+        desc = 'Show Line Diagnostics',
+      },
+      { '<leader>cr', '<cmd>Lspsaga rename<cr>', desc = 'Rename' },
+      { 'gd', '<cmd>Lspsaga lsp_finder<cr>', desc = 'go definition' },
+      { 'K', '<cmd>Lspsaga hover_doc<cr>', desc = 'Hover' },
     },
   },
 }
