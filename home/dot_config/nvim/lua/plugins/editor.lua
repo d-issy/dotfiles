@@ -48,7 +48,6 @@ return {
         '<cmd>Telescope find_files theme=ivy<cr>',
         desc = 'Find Files',
       },
-      { '<leader>gs', '<cmd>Telescope git_status<cr>', desc = 'Git status' },
       {
         '<leader>gb',
         '<cmd>Telescope git_branches enable_preview=false<cr>',
