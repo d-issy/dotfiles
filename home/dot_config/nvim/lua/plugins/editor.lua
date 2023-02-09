@@ -26,9 +26,7 @@ return {
         follow_current_file = true,
       },
       window = {
-        mappings = {
-          ['<space>'] = 'none',
-        },
+        mappings = { ['<space>'] = 'none' },
       },
     },
   },
@@ -37,28 +35,24 @@ return {
   {
     'nvim-telescope/telescope.nvim',
     cmd = 'Telescope',
+    branch = '0.1.x',
     keys = {
       {
         '<leader>,',
-        '<cmd>Telescope buffers show_all_buffers=true<cr>',
+        '<cmd>Telescope buffers show_all_buffers=true theme=ivy<cr>',
         desc = 'Switch Buffers',
       },
-      { '<leader>/', '<cmd>Telescope live_grep<cr>', desc = 'Grep' },
+      { '<leader>/', '<cmd>Telescope live_grep theme=ivy<cr>', desc = 'Grep' },
       {
         '<leader>p',
-        '<cmd>Telescope find_files enable_preview=false<cr>',
+        '<cmd>Telescope find_files theme=ivy<cr>',
         desc = 'Find Files',
       },
       { '<leader>gs', '<cmd>Telescope git_status<cr>', desc = 'Git status' },
       {
         '<leader>gb',
-        '<cmd>Telescope git_branches<cr>',
+        '<cmd>Telescope git_branches enable_preview=false<cr>',
         desc = 'Switch Branch',
-      },
-      {
-        '<leader>sc',
-        '<cmd>Telescope colorscheme enable_preview=true<cr>',
-        desc = 'Find Files',
       },
     },
   },
@@ -93,7 +87,7 @@ return {
         ['gz'] = { name = '+surround' },
         [']'] = { name = '+next' },
         ['['] = { name = '+prev' },
-        ['<leader><tab>'] = { name = '+tabs' },
+        ['<leader>t'] = { name = '+tabs' },
         ['<leader>b'] = { name = '+buffer' },
         ['<leader>c'] = { name = '+code' },
         ['<leader>f'] = { name = '+file/find' },
