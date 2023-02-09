@@ -40,7 +40,7 @@ vim.keymap.set('n', '<Leader>tn', ':tabnext<CR>', opts)
 vim.keymap.set('n', '<Leader>tp', ':tabprevious<CR>', opts)
 
 -- plugins
-local lazypath = vim.fn.stdpath('data') .. '/lazy/lazy.nvim'
+local lazypath = vim.fn.stdpath 'data' .. '/lazy/lazy.nvim'
 if not vim.loop.fs_stat(lazypath) then
   vim.fn.system {
     'git',
@@ -53,5 +53,4 @@ if not vim.loop.fs_stat(lazypath) then
 end
 vim.opt.rtp:prepend(lazypath)
 require('lazy').setup('plugins')
-
-vim.cmd('colorscheme edge')
+vim.cmd 'colorscheme edge'

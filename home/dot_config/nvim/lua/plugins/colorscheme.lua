@@ -2,14 +2,13 @@ return {
   -- tokyonight
   {
     'folke/tokyonight.nvim',
-    lazy = true,
+    priority = 1000,
     opts = { style = 'moon' },
   },
 
   -- edge
   {
     'sainnhe/edge',
-    lazy = true,
     priority = 1000,
     config = function()
       vim.g.edge_style = 'neon'

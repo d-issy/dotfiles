@@ -2,11 +2,7 @@ return {
   -- lsp config
   {
     'neovim/nvim-lspconfig',
-    event = {
-      'BufReadPre',
-      'BufNewFile',
-      'VeryLazy',
-    },
+    event = { 'BufReadPre', 'BufNewFile', 'VeryLazy' },
     dependencies = {
       'williamboman/mason.nvim',
       'williamboman/mason-lspconfig.nvim',
@@ -14,38 +10,30 @@ return {
       'hrsh7th/cmp-nvim-lsp',
     },
     opts = {
-      ensure_installed = {
-        'sumneko_lua',
-      },
+      ensure_installed = { 'sumneko_lua' },
       servers = {
         sumneko_lua = {
           settings = {
             Lua = {
-              diagnostics = {
-                globals = {
-                  'vim',
-                  'hs',
-                },
-              },
+              diagnostics = { globals = { 'vim', 'hs' } },
               workspace = {
                 library = vim.api.nvim_get_runtime_file('', true),
                 checkThirdParty = false,
               },
-              telemetry = {
-                enable = false,
-              },
+              telemetry = { enable = false },
             },
           },
         },
-      },
-      pyright = {
-        settings = {
-          python = {
-            analysis = {
-              autoImportCompletions = true,
-              autoSearchPaths = true,
-              diagnosticMode = 'workspace',
-              useLibraryCodeForTypes = true,
+        gopls = { format = true },
+        pyright = {
+          settings = {
+            python = {
+              analysis = {
+                autoImportCompletions = true,
+                autoSearchPaths = true,
+                diagnosticMode = 'workspace',
+                useLibraryCodeForTypes = true,
+              },
             },
           },
         },
@@ -60,29 +48,20 @@ return {
       require('mason-lspconfig').setup_handlers {
         function(name)
           local lsp_opts = opts.servers[name] or {}
-
           lsp_opts.capabilities = require('cmp_nvim_lsp').default_capabilities(
             vim.lsp.protocol.make_client_capabilities()
           )
 
           lsp_opts.on_attach = function(client, buffer)
-            local key_opts = {
-              silent = true,
-              buffer = buffer,
-            }
+            local key_opts = { silent = true, buffer = buffer }
             vim.keymap.set(
               'n',
               '<leader>cf',
-              function()
-                vim.lsp.buf.format {
-                  async = true,
-                }
-              end,
+              function() vim.lsp.buf.format { async = true } end,
               key_opts
             )
-            if client.name == 'sumneko_lua' then
-              client.server_capabilities.documentFormattingProvider = false
-            end
+            client.server_capabilities.documentFormattingProvider = lsp_opts.format
+              or false
           end
 
           require('lspconfig')[name].setup(lsp_opts)
