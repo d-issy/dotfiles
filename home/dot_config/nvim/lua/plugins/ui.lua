@@ -25,7 +25,6 @@ return {
       char = '▏',
       filetype_exclude = {
         'help',
-        'alpha',
         'dashboard',
         'neo-tree',
         'Trouble',
