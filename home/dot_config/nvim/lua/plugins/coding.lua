@@ -89,4 +89,8 @@ return {
       { 'K', '<cmd>Lspsaga hover_doc<cr>', desc = 'Hover' },
     },
   },
+
+  -- other
+  { 'norcalli/nvim-colorizer.lua', opts = { 'lua', 'css', 'html' } },
+  { 'numToStr/Comment.nvim', config = true },
 }
