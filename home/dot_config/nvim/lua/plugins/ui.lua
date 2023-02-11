@@ -96,17 +96,18 @@ return {
               right_padding = 2,
             },
           },
-          lualine_b = { "diagnostics" },
+          lualine_b = {},
           lualine_c = { "buffers" },
           lualine_x = { "branch", "diff" },
-          lualine_y = { "filetype" },
-          lualine_z = { function() return " " end },
+          lualine_y = {},
+          lualine_z = { "filetype" },
         },
         tabline = {
           lualine_a = { "tabs" },
           lualine_b = {
             { "filetype", icon_only = true, separator = "", padding = { left = 1, right = 0 } },
             { "filename", path = 1, symbols = { modified = "+", readonly = "[R]", unnamed = "[404]" } },
+            "diagnostics",
           },
           lualine_x = {
             function() return require("nvim-navic").get_location() end,
