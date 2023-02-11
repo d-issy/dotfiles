@@ -1,0 +1,6 @@
+{{- /* vim: set ft=zsh : */ -}}
+#!{{ lookPath "zsh" }}
+
+
+# nvim config {{ output "sh" "-c" "find ~/.config/nvim/lua/" | sha256sum }}
+chezmoi unmanaged --path-style absolute | grep .config/nvim/lua | xargs -r rm -v
