@@ -3,3 +3,8 @@
 
 # nvim config {{ output "sh" "-c" "find ~/.config/nvim/lua/" | sha256sum }}
 chezmoi unmanaged --path-style absolute | grep .config/nvim/lua | xargs -r rm -v
+
+{{ if eq .chezmoi.os "darwin" }}
+# hammerspoon config {{ output "sh" "-c" "find ~/.hammerspoon/" | sha256sum }}
+chezmoi unmanaged --path-style absolute | grep .hammerspoon/ | xargs -r rm -v
+{{ end }}
