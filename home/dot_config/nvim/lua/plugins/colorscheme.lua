@@ -1,12 +1,10 @@
 return {
-  -- tokyonight
   {
     "folke/tokyonight.nvim",
     priority = 1000,
     opts = { style = "moon" },
   },
 
-  -- edge
   {
     "sainnhe/edge",
     priority = 1000,
@@ -16,7 +14,6 @@ return {
     end,
   },
 
-  -- catppuccin
   -- @cspell: words catppuccin
   {
     "catppuccin/nvim",

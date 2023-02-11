@@ -1,0 +1,15 @@
+version: "0.2"
+name: vim
+dictionaryDefinitions:
+  - name: vim
+    useCompounds: true
+    path: ./words.txt
+languageSettings:
+  - languageId:
+      - lua
+      - vim
+    allowCompoundWords: false
+    dictionaries:
+      - vim
+    ignoreRegExpList:
+      - /".*\/.*"/

@@ -1,6 +1,5 @@
 return {
   -- cmp
-  -- @cspell: words autocmplete
   {
     "hrsh7th/nvim-cmp",
     event = "InsertEnter",

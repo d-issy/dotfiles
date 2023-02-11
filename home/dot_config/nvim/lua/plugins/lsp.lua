@@ -99,7 +99,7 @@ return {
             end,
             extra_args = {
               "--config",
-              vim.call("expand", "~/.config/cspell.config.yaml"),
+              vim.call("expand", "~/.config/cspell/cspell.yaml"),
             },
           },
           nls.builtins.code_actions.cspell,
@@ -109,7 +109,6 @@ return {
   },
 
   -- cmd line tools and lsp servers
-  -- @cspell: words sumneko,stylua,pyright,isort,prettierd
   {
     "williamboman/mason.nvim",
     cmd = "Mason",

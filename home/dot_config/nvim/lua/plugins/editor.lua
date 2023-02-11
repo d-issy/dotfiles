@@ -1,5 +1,6 @@
 return {
   -- file explorer
+  -- @cSpell: words Neotree
   {
     "nvim-neo-tree/neo-tree.nvim",
     cmd = "Neotree",
@@ -102,6 +103,7 @@ return {
   },
 
   -- git signs
+  -- @cSpell: words gitsigns
   {
     "lewis6991/gitsigns.nvim",
     event = "BufReadPre",

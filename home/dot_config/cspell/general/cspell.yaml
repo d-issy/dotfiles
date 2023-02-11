@@ -1,0 +1,8 @@
+version: "0.2"
+name: general
+dictionaryDefinitions:
+  - name: dev
+    useCompounds: true
+    path: ./dev_words.txt
+dictionaries:
+  - dev
