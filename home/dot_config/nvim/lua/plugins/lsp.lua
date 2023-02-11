@@ -11,6 +11,7 @@ return {
     },
     opts = {
       ensure_installed = { 'sumneko_lua' },
+      format = { 'gopls' },
       servers = {
         sumneko_lua = {
           settings = {
@@ -24,7 +25,6 @@ return {
             },
           },
         },
-        gopls = { format = true },
         pyright = {
           settings = {
             python = {
@@ -53,17 +53,17 @@ return {
           )
 
           lsp_opts.on_attach = function(client, buffer)
-            local key_opts = { silent = true, buffer = buffer }
             vim.keymap.set(
               'n',
               '<leader>cf',
               function() vim.lsp.buf.format { async = true } end,
-              key_opts
+              { silent = true, buffer = buffer }
             )
-            client.server_capabilities.documentFormattingProvider = lsp_opts.format
-              or false
+            client.server_capabilities.documentFormattingProvider = vim.tbl_contains(
+              opts.format,
+              name
+            ) or false
           end
-
           require('lspconfig')[name].setup(lsp_opts)
         end,
       }
@@ -77,9 +77,7 @@ return {
       'BufReadPre',
       'BufNewFile',
     },
-    dependencies = {
-      'mason.nvim',
-    },
+    dependencies = { 'mason.nvim' },
     opts = function()
       local nls = require 'null-ls'
       return {
