@@ -16,6 +16,13 @@ return {
       highlight = { enable = true },
       indent = { enable = true },
       context_commentstring = { enable = true, enable_autocmd = false },
+      ensure_installed = {
+        'help',
+        'vim',
+        'lua',
+        'markdown',
+        'markdown_inline',
+      }
     },
     config = function(_, opts) require('nvim-treesitter.configs').setup(opts) end,
   },
