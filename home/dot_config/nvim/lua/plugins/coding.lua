@@ -2,34 +2,34 @@ return {
   -- cmp
   -- @cspell: words autocmplete
   {
-    'hrsh7th/nvim-cmp',
-    event = 'InsertEnter',
+    "hrsh7th/nvim-cmp",
+    event = "InsertEnter",
     dependencies = {
-      'hrsh7th/cmp-nvim-lsp',
-      'hrsh7th/cmp-path',
-      'hrsh7th/cmp-buffer',
-      'saadparwaiz1/cmp_luasnip',
+      "hrsh7th/cmp-nvim-lsp",
+      "hrsh7th/cmp-path",
+      "hrsh7th/cmp-buffer",
+      "saadparwaiz1/cmp_luasnip",
     },
     config = function()
-      local cmp = require 'cmp'
-      local types = require 'cmp.types'
+      local cmp = require "cmp"
+      local types = require "cmp.types"
       cmp.setup {
         completion = {
           autocmplete = { types.cmp.TriggerEvent.TextChanged },
-          completeopt = 'menu,menuone,noselect',
+          completeopt = "menu,menuone,noselect",
         },
         snippet = {
-          expand = function(args) require('luasnip').lsp_expand(args.body) end,
+          expand = function(args) require("luasnip").lsp_expand(args.body) end,
         },
         sources = cmp.config.sources {
-          { name = 'nvim_lsp' },
-          { name = 'luasnip' },
-          { name = 'path' },
-          { name = 'buffer' },
+          { name = "nvim_lsp" },
+          { name = "luasnip" },
+          { name = "path" },
+          { name = "buffer" },
         },
         mapping = cmp.mapping.preset.insert {
-          ['<C-Space>'] = cmp.mapping.complete(),
-          ['<TAB>'] = cmp.mapping.confirm { select = true },
+          ["<C-Space>"] = cmp.mapping.complete(),
+          ["<TAB>"] = cmp.mapping.confirm { select = true },
         },
       }
     end,
@@ -38,27 +38,27 @@ return {
   -- snippet
   -- @cspell: words luasnip
   {
-    'L3MON4D3/LuaSnip',
+    "L3MON4D3/LuaSnip",
     keys = {
       {
-        '<C-k>',
-        function() require('luasnip').expand_or_jump() end,
-        mode = { 'i', 's' },
+        "<C-k>",
+        function() require("luasnip").expand_or_jump() end,
+        mode = { "i", "s" },
       },
       {
-        '<C-l>',
-        function() require('luasnip').jump(-1) end,
-        mode = { 'i', 's' },
+        "<C-l>",
+        function() require("luasnip").jump(-1) end,
+        mode = { "i", "s" },
       },
     },
     config = function()
-      local luasnip = require 'luasnip'
+      local luasnip = require "luasnip"
       luasnip.setup {}
-      require('luasnip.loaders.from_lua').lazy_load {
-        paths = '~/.config/nvim/snippets/',
+      require("luasnip.loaders.from_lua").lazy_load {
+        paths = "~/.config/nvim/snippets/",
       }
-      vim.api.nvim_create_autocmd('InsertLeave', {
-        pattern = '*',
+      vim.api.nvim_create_autocmd("InsertLeave", {
+        pattern = "*",
         callback = function()
           if luasnip.session.current_nodes[vim.api.nvim_get_current_buf()] then
             luasnip.unlink_current()
@@ -71,26 +71,26 @@ return {
   -- lspsaga
   -- @cspell: words lspsaga
   {
-    'glepnir/lspsaga.nvim',
+    "glepnir/lspsaga.nvim",
     dependencies = {
-      'nvim-treesitter/nvim-treesitter',
-      'neovim/nvim-lspconfig',
+      "nvim-treesitter/nvim-treesitter",
+      "neovim/nvim-lspconfig",
     },
     config = true,
     keys = {
-      { '<leader>ca', '<cmd>Lspsaga code_action<cr>', desc = 'Code Action' },
+      { "<leader>ca", "<cmd>Lspsaga code_action<cr>", desc = "Code Action" },
       {
-        '<leader>cd',
-        '<cmd>Lspsaga show_line_diagnostics<cr>',
-        desc = 'Show Line Diagnostics',
+        "<leader>cd",
+        "<cmd>Lspsaga show_line_diagnostics<cr>",
+        desc = "Show Line Diagnostics",
       },
-      { '<leader>cr', '<cmd>Lspsaga rename<cr>', desc = 'Rename' },
-      { 'gd', '<cmd>Lspsaga lsp_finder<cr>', desc = 'go definition' },
-      { 'K', '<cmd>Lspsaga hover_doc<cr>', desc = 'Hover' },
+      { "<leader>cr", "<cmd>Lspsaga rename<cr>", desc = "Rename" },
+      { "gd", "<cmd>Lspsaga lsp_finder<cr>", desc = "go definition" },
+      { "K", "<cmd>Lspsaga hover_doc<cr>", desc = "Hover" },
     },
   },
 
   -- other
-  { 'norcalli/nvim-colorizer.lua', opts = { 'lua', 'css', 'html' } },
-  { 'numToStr/Comment.nvim', config = true },
+  { "norcalli/nvim-colorizer.lua", opts = { "lua", "css", "html" } },
+  { "numToStr/Comment.nvim", config = true },
 }

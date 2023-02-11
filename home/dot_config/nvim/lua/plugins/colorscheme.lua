@@ -1,17 +1,17 @@
 return {
   -- tokyonight
   {
-    'folke/tokyonight.nvim',
+    "folke/tokyonight.nvim",
     priority = 1000,
-    opts = { style = 'moon' },
+    opts = { style = "moon" },
   },
 
   -- edge
   {
-    'sainnhe/edge',
+    "sainnhe/edge",
     priority = 1000,
     config = function()
-      vim.g.edge_style = 'neon'
+      vim.g.edge_style = "neon"
       vim.g.edge_dim_foreground = 1
     end,
   },
@@ -19,8 +19,8 @@ return {
   -- catppuccin
   -- @cspell: words catppuccin
   {
-    'catppuccin/nvim',
+    "catppuccin/nvim",
     lazy = true,
-    name = 'catppuccin',
+    name = "catppuccin",
   },
 }

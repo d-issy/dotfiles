@@ -1,13 +1,13 @@
 return {
   {
-    'nvim-treesitter/nvim-treesitter',
-    build = ':TSUpdate',
-    event = { 'BufReadPost', 'BufNewFile', 'VeryLazy' },
+    "nvim-treesitter/nvim-treesitter",
+    build = ":TSUpdate",
+    event = { "BufReadPost", "BufNewFile", "VeryLazy" },
     keys = {
       {
-        '<leader>ut',
-        '<cmd>TSBufToggle highlight<cr>',
-        desc = 'Toggle Highlight',
+        "<leader>ut",
+        "<cmd>TSBufToggle highlight<cr>",
+        desc = "Toggle Highlight",
       },
     },
     opts = {
@@ -17,13 +17,13 @@ return {
       indent = { enable = true },
       context_commentstring = { enable = true, enable_autocmd = false },
       ensure_installed = {
-        'help',
-        'vim',
-        'lua',
-        'markdown',
-        'markdown_inline',
-      }
+        "help",
+        "vim",
+        "lua",
+        "markdown",
+        "markdown_inline",
+      },
     },
-    config = function(_, opts) require('nvim-treesitter.configs').setup(opts) end,
+    config = function(_, opts) require("nvim-treesitter.configs").setup(opts) end,
   },
 }
