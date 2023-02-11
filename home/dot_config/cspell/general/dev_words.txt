@@ -1,0 +1,12 @@
+builtins
+gopls
+isort
+lsp
+lspconfig
+neovim
+nvim
+prettier
+prettierd
+pyright
+stylua
+sumneko_lua

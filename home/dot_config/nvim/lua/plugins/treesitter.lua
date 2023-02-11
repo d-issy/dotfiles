@@ -1,19 +1,29 @@
 return {
-  'nvim-treesitter/nvim-treesitter',
-  dependencies = {
-    { 'lukas-reineke/indent-blankline.nvim',
-      opts = {
-        char = "▏",
-        show_current_context = true
-      }
-    }
-  },
-  event = 'BufReadPost',
-  config = function()
-    require 'nvim-treesitter.configs'.setup({
+  {
+    "nvim-treesitter/nvim-treesitter",
+    build = ":TSUpdate",
+    event = { "BufReadPost", "BufNewFile", "VeryLazy" },
+    keys = {
+      {
+        "<leader>ut",
+        "<cmd>TSBufToggle highlight<cr>",
+        desc = "Toggle Highlight",
+      },
+    },
+    opts = {
+      auto_install = true,
+      sync_install = true,
       highlight = { enable = true },
       indent = { enable = true },
-      ensure_installed = { 'vim', 'help', 'lua' }
-    })
-  end
+      context_commentstring = { enable = true, enable_autocmd = false },
+      ensure_installed = {
+        "help",
+        "vim",
+        "lua",
+        "markdown",
+        "markdown_inline",
+      },
+    },
+    config = function(_, opts) require("nvim-treesitter.configs").setup(opts) end,
+  },
 }

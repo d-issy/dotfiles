@@ -1,8 +1,6 @@
 local M = {}
 
-local startOfLine = function(line)
-  return string.match(line, '^%s*%w+$') ~= nil
-end
+local startOfLine = function(line) return string.match(line, '^%s*%w+$') ~= nil end
 
 M.OptStartOfLine = {
   condition = startOfLine,
