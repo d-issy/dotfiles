@@ -1,1 +1,1 @@
-vim.cmd "colorscheme edge"
+vim.cmd "colorscheme material"

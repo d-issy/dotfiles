@@ -75,17 +75,17 @@ return {
       "nvim-treesitter/nvim-treesitter",
       "neovim/nvim-lspconfig",
     },
-    config = true,
+    config = {
+      symbol_in_winbar = { enable = false },
+    },
     keys = {
       { "<leader>ca", "<cmd>Lspsaga code_action<cr>", desc = "Code Action" },
-      {
-        "<leader>cd",
-        "<cmd>Lspsaga show_line_diagnostics<cr>",
-        desc = "Show Line Diagnostics",
-      },
+      -- stylua: ignore
+      { "<leader>cd", "<cmd>Lspsaga show_line_diagnostics<cr>", desc = "Show Line Diagnostics" },
+      { "<leader>cl", "<cmd>Lspsaga outline<cr>", desc = "Outline" },
       { "<leader>cr", "<cmd>Lspsaga rename<cr>", desc = "Rename" },
-      { "gd", "<cmd>Lspsaga lsp_finder<cr>", desc = "go definition" },
       { "K", "<cmd>Lspsaga hover_doc<cr>", desc = "Hover" },
+      { "gd", "<cmd>Lspsaga lsp_finder<cr>", desc = "go definition" },
     },
   },
 

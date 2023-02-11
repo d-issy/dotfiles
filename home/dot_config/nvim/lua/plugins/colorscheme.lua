@@ -6,6 +6,31 @@ return {
   },
 
   {
+    "marko-cerovac/material.nvim",
+    opts = function()
+      vim.g.material_style = "darker"
+      return {
+        plugins = {
+          "gitsigns",
+          "indent-blankline",
+          "lspsaga",
+          "nvim-cmp",
+          "nvim-navic",
+          "nvim-tree",
+          "nvim-web-devicons",
+          "telescope",
+          "trouble",
+          "which-key",
+        },
+        high_visibility = {
+          darker = true,
+        },
+        lualine_style = "stealth",
+      }
+    end,
+  },
+
+  {
     "sainnhe/edge",
     priority = 1000,
     config = function()

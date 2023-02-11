@@ -8,6 +8,7 @@ return {
       "williamboman/mason-lspconfig.nvim",
       "neovim/nvim-lspconfig",
       "hrsh7th/cmp-nvim-lsp",
+      "SmiteshP/nvim-navic",
     },
     opts = {
       ensure_installed = { "sumneko_lua" },
@@ -62,6 +63,10 @@ return {
               opts.format,
               name
             ) or false
+
+            if client.server_capabilities.documentSymbolProvider then
+              require("nvim-navic").attach(client, buffer)
+            end
           end
           require("lspconfig")[name].setup(lsp_opts)
         end,
