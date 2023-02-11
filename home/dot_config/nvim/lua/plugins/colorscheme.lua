@@ -1,7 +1,7 @@
 return {
   {
     "folke/tokyonight.nvim",
-    priority = 1000,
+    event = "VeryLazy",
     opts = { style = "moon" },
   },
 
@@ -36,7 +36,7 @@ return {
 
   {
     "sainnhe/edge",
-    priority = 1000,
+    event = "VeryLazy",
     config = function()
       vim.g.edge_style = "neon"
       vim.g.edge_dim_foreground = 1
@@ -46,7 +46,7 @@ return {
   -- @cspell: words catppuccin
   {
     "catppuccin/nvim",
-    lazy = true,
+    event = "VeryLazy",
     name = "catppuccin",
   },
 }
