@@ -80,7 +80,11 @@ return {
           component_separators = "",
           section_separators = "",
           disabled_filetypes = {
-            statusline = { "TelescopePrompt", "lazy" },
+            statusline = {
+              "TelescopePrompt",
+              "lazy",
+              "mason",
+            },
           },
         },
         extensions = { "neo-tree" },
@@ -99,9 +103,12 @@ return {
           lualine_z = { function() return " " end },
         },
         tabline = {
+          lualine_a = { "tabs" },
           lualine_b = {
             { "filetype", icon_only = true, separator = "", padding = { left = 1, right = 0 } },
             { "filename", path = 1, symbols = { modified = "  ", readonly = "", unnamed = "" } },
+          },
+          lualine_x = {
             function() return require("nvim-navic").get_location() end,
           },
         },

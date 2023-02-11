@@ -10,6 +10,10 @@ return {
     opts = function()
       vim.g.material_style = "darker"
       return {
+        contrast = {
+          terminal = true,
+          floating_window = true,
+        },
         plugins = {
           "gitsigns",
           "indent-blankline",
