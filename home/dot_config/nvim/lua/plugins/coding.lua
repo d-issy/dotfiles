@@ -80,7 +80,6 @@ return {
     },
     keys = {
       { "<leader>ca", "<cmd>Lspsaga code_action<cr>", desc = "Code Action" },
-      -- stylua: ignore
       { "<leader>cd", "<cmd>Lspsaga show_line_diagnostics<cr>", desc = "Show Line Diagnostics" },
       { "<leader>cl", "<cmd>Lspsaga outline<cr>", desc = "Outline" },
       { "<leader>cr", "<cmd>Lspsaga rename<cr>", desc = "Rename" },

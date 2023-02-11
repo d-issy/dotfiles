@@ -30,9 +30,7 @@ return {
         view = "cmdline",
         format = {
           cmdline = { pattern = "^:", icon = ":", lang = "vim" },
-          -- stylua: ignore
           search_down = { kind = "search", pattern = "^/", icon = " ", lang = "regex" },
-          -- stylua: ignore
           search_up = { kind = "search", pattern = "^%?", icon = " ", lang = "regex" },
           filter = { pattern = "^:%s*!", icon = "", lang = "bash" },
           lua = { pattern = "^:%s*lua%s+", icon = "", lang = "lua" },
@@ -102,9 +100,7 @@ return {
         },
         tabline = {
           lualine_b = {
-            -- stylua: ignore
             { "filetype", icon_only = true, separator = "", padding = { left = 1, right = 0 } },
-            -- stylua: ignore
             { "filename", path = 1, symbols = { modified = "  ", readonly = "", unnamed = "" } },
             function() return require("nvim-navic").get_location() end,
           },

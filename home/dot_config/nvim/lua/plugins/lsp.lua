@@ -48,9 +48,8 @@ return {
       require("mason-lspconfig").setup_handlers {
         function(name)
           local lsp_opts = opts.servers[name] or {}
-          lsp_opts.capabilities = require("cmp_nvim_lsp").default_capabilities(
-            vim.lsp.protocol.make_client_capabilities()
-          )
+          lsp_opts.capabilities =
+            require("cmp_nvim_lsp").default_capabilities(vim.lsp.protocol.make_client_capabilities())
 
           lsp_opts.on_attach = function(client, buffer)
             vim.keymap.set(
@@ -59,10 +58,7 @@ return {
               function() vim.lsp.buf.format { async = true } end,
               { silent = true, buffer = buffer }
             )
-            client.server_capabilities.documentFormattingProvider = vim.tbl_contains(
-              opts.format,
-              name
-            ) or false
+            client.server_capabilities.documentFormattingProvider = vim.tbl_contains(opts.format, name) or false
 
             if client.server_capabilities.documentSymbolProvider then
               require("nvim-navic").attach(client, buffer)
@@ -99,9 +95,7 @@ return {
             },
           },
           nls.builtins.diagnostics.cspell.with {
-            diagnostics_postprocess = function(diagnostic)
-              diagnostic.severity = vim.diagnostic.severity["INFO"]
-            end,
+            diagnostics_postprocess = function(diagnostic) diagnostic.severity = vim.diagnostic.severity["INFO"] end,
             extra_args = {
               "--config",
               vim.call("expand", "~/.config/cspell/cspell.yaml"),
