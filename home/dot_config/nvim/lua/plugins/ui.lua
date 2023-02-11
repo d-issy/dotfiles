@@ -106,7 +106,7 @@ return {
           lualine_a = { "tabs" },
           lualine_b = {
             { "filetype", icon_only = true, separator = "", padding = { left = 1, right = 0 } },
-            { "filename", path = 1, symbols = { modified = "  ", readonly = "", unnamed = "" } },
+            { "filename", path = 1, symbols = { modified = "+", readonly = "[R]", unnamed = "[404]" } },
           },
           lualine_x = {
             function() return require("nvim-navic").get_location() end,
