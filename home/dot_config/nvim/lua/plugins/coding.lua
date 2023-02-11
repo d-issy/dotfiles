@@ -12,10 +12,33 @@ return {
     config = function()
       local cmp = require "cmp"
       local types = require "cmp.types"
+      -- stylua: ignore
+      local function de_prioritize_snippet(e1, e2)
+        if e1:get_kind() == types.lsp.CompletionItemKind.Snippet then return false end
+        if e2:get_kind() == types.lsp.CompletionItemKind.Snippet then return true end
+      end
       cmp.setup {
         completion = {
           autocmplete = { types.cmp.TriggerEvent.TextChanged },
           completeopt = "menu,menuone,noselect",
+          keyword_pattern = [[\%(-\?\d\+\%(\.\d\+\)\?\|\h\w*\%(-\w*\)*\|\!\)]],
+          keyword_length = 1,
+        },
+        sorting = {
+          priority_weight = 2,
+          comparators = {
+            de_prioritize_snippet,
+            cmp.config.compare.offset,
+            cmp.config.compare.exact,
+            cmp.config.compare.scopes,
+            cmp.config.compare.score,
+            cmp.config.compare.recently_used,
+            cmp.config.compare.logicality,
+            cmp.config.compare.kind,
+            cmp.config.compare.sort_text,
+            cmp.config.compare.length,
+            cmp.config.compare.order,
+          },
         },
         snippet = {
           expand = function(args) require("luasnip").lsp_expand(args.body) end,
