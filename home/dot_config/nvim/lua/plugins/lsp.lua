@@ -12,7 +12,10 @@ return {
     },
     opts = {
       ensure_installed = { "sumneko_lua" },
-      format = { "gopls" },
+      format = {
+        "gopls",
+        "rust_analyzer",
+      },
       servers = {
         sumneko_lua = {
           settings = {
