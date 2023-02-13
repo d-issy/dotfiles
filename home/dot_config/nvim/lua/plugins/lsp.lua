@@ -98,8 +98,9 @@ return {
             },
           },
           nls.builtins.diagnostics.cspell.with {
-            diagnostics_postprocess = function(diagnostic) diagnostic.severity = vim.diagnostic.severity["INFO"] end,
+            diagnostics_postprocess = function(diagnostic) diagnostic.severity = vim.diagnostic.severity["HINT"] end,
             extra_args = {
+              "--unique",
               "--config",
               vim.call("expand", "~/.config/cspell/cspell.yaml"),
             },
