@@ -1,0 +1,15 @@
+version: "0.2"
+name: python
+dictionaryDefinitions:
+  - name: python-user
+    path: ./words.txt
+languageSettings:
+  - languageId:
+      - python
+    dictionaries:
+      - python
+      - python-common
+    ignoreRegExpList:
+      - /import \S+/
+      - /from \S+ import \S+/
+      - /__/
