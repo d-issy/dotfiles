@@ -50,7 +50,6 @@ return {
       }
       require("mason-lspconfig").setup_handlers {
         function(name)
-          print(name)
           local lsp_opts = opts.servers[name] or {}
           lsp_opts.capabilities =
             require("cmp_nvim_lsp").default_capabilities(vim.lsp.protocol.make_client_capabilities())
