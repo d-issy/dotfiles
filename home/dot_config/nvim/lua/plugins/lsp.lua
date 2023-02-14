@@ -11,13 +11,13 @@ return {
       "SmiteshP/nvim-navic",
     },
     opts = {
-      ensure_installed = { "sumneko_lua" },
+      ensure_installed = { "lua_ls" },
       format = {
         "gopls",
         "rust_analyzer",
       },
       servers = {
-        sumneko_lua = {
+        lua_ls = {
           settings = {
             Lua = {
               diagnostics = { globals = { "vim", "hs" } },
