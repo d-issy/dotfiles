@@ -11,13 +11,13 @@ return {
       "SmiteshP/nvim-navic",
     },
     opts = {
-      ensure_installed = { "sumneko_lua" },
+      ensure_installed = { "lua_ls" },
       format = {
         "gopls",
         "rust_analyzer",
       },
       servers = {
-        sumneko_lua = {
+        lua_ls = {
           settings = {
             Lua = {
               diagnostics = { globals = { "vim", "hs" } },
@@ -50,6 +50,7 @@ return {
       }
       require("mason-lspconfig").setup_handlers {
         function(name)
+          print(name)
           local lsp_opts = opts.servers[name] or {}
           lsp_opts.capabilities =
             require("cmp_nvim_lsp").default_capabilities(vim.lsp.protocol.make_client_capabilities())
