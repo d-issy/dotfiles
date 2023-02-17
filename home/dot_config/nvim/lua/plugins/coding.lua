@@ -98,7 +98,7 @@ return {
       "nvim-treesitter/nvim-treesitter",
       "neovim/nvim-lspconfig",
     },
-    config = {
+    opts = {
       symbol_in_winbar = { enable = false },
     },
     keys = {
