@@ -1,4 +1,4 @@
-local helper = require 'helper'
+local helper = require "helper"
 local eventtap = hs.eventtap
 local eventTypes = eventtap.event.types
 local codes = hs.keycodes.map
@@ -11,7 +11,7 @@ local modeKana = false
 local skkActived = nil
 local isActivedSKK = function()
   if skkActived == nil then
-    sskActived = hs.fnutils.contains(hs.keycodes.methods(), 'AquaSKK 統合')
+    sskActived = hs.fnutils.contains(hs.keycodes.methods(), "AquaSKK 統合")
   end
   return skkActived
 end
@@ -35,7 +35,7 @@ local switchToKana = function()
   end
 
   if not modeKana then
-    hs.eventtap.keyStroke({ 'ctrl' }, codes.j, 0)
+    hs.eventtap.keyStroke({ "ctrl" }, codes.j, 0)
   end
   modeKana = true
 end
@@ -57,10 +57,10 @@ IMEEventTap = hs.eventtap.new({ eventTypes.flagsChanged, eventTypes.keyDown }, f
   if eventType == eventTypes.keyDown then
     if keyCode == codes.escape then
       switchToEisu()
-    elseif flags.ctrl and key == '[' then
+    elseif flags.ctrl and key == "[" then
       switchToEisu()
       hs.eventtap.keyStroke({}, codes.escape, 0)
-    elseif flags.ctrl and key == 'j' then
+    elseif flags.ctrl and key == "j" then
       switchToKana()
     end
     singleCmd = false
@@ -82,7 +82,6 @@ IMEEventTap = hs.eventtap.new({ eventTypes.flagsChanged, eventTypes.keyDown }, f
     end
     singleCmd = false
   end
-
 end)
 
 IMEEventTap:start()

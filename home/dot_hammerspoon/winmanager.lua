@@ -3,7 +3,7 @@ WinManager = (function()
   local SCALE = 0.125
 
   hs.window.animationDuration = 0
-  hs.grid.setMargins({ x = MARGIN, y = MARGIN })
+  hs.grid.setMargins { x = MARGIN, y = MARGIN }
 
   hs.window.highlight.ui.overlay = true
   hs.window.highlight.ui.flushDuration = 1
@@ -11,19 +11,17 @@ WinManager = (function()
   hs.window.highlight.ui.frameColor = { 0, 1.0, 0, 0.5 }
 
   local M = { _ = {} }
-  local currentWindow = function()
-    return hs.window.frontmostWindow()
-  end
+  local currentWindow = function() return hs.window.frontmostWindow() end
 
   local moveGrid = function(win, rect)
     rect = rect or {}
     win = win or currentWindow()
-    hs.grid.setGrid(string.format('%dx%d', rect.w or 1, rect.h or 1))
+    hs.grid.setGrid(string.format("%dx%d", rect.w or 1, rect.h or 1))
     hs.grid.set(win, { x = (rect.x or 1) - 1, y = (rect.y or 1) - 1, w = 1, h = 1 })
   end
 
   local findApplication = function(app)
-    if hs.fnutils.contains({ 'string', 'number' }, type(app)) then
+    if hs.fnutils.contains({ "string", "number" }, type(app)) then
       app = hs.application.find(app)
     elseif app == nil then
       app = hs.application.open(app)
@@ -35,11 +33,12 @@ WinManager = (function()
     local win = app:mainWindow()
     if win == nil then
       local wins = app:allWindows()
-      if #wins >= 1 then win = wins[1] end
+      if #wins >= 1 then
+        win = wins[1]
+      end
     end
     return win
   end
-
 
   local setWindowPositionDiff = function(win, diff)
     local screen = win:screen():frame()
@@ -120,12 +119,15 @@ WinManager = (function()
         quit = false
       end,
     })[key]
-    if fn then fn() end
+    if fn then
+      fn()
+    end
     hs.window.highlight.start()
-    if quit then stopArrangeMode() end
+    if quit then
+      stopArrangeMode()
+    end
     return true
   end)
-
 
   M.arrangeMode = function()
     if not M._.arangeMode:isEnabled() then
@@ -143,9 +145,13 @@ WinManager = (function()
   M.focusApplication = function(app)
     local fn = function()
       app = findApplication(app)
-      if app == nil then return end
+      if app == nil then
+        return
+      end
       local win = mainWindow(app)
-      if win == nil then return end
+      if win == nil then
+        return
+      end
       if win:isMinimized() then
         win:unminimize()
       end

@@ -1,3 +1,4 @@
+{{- /* vim: set ft=zsh : */ -}}
 #!{{ lookPath "zsh" }}
 
 basic_install() {
@@ -51,6 +52,5 @@ fi
 # update asdf for {{ include "dot_tool-versions.tmpl" | sha256sum }}
 asdf install python
 asdf install jq
-asdf install
+asdf install || true 2>/dev/null
 
-# vim: set ft=zsh :
