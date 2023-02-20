@@ -1,8 +1,10 @@
 IntelliJ
 JetBrains
+LGBM
 adoptopenjdk
 alacritty
 awscli
+basetime
 builtins
 chezmoi
 deno
@@ -13,12 +15,16 @@ hammerspoon
 isort
 iterm2
 keybind
+lognorm
 lsp
 lspconfig
+millis
 neovim
+njson
 nvim
 prettier
 prettierd
+proba
 protoc
 pyright
 readline
@@ -29,7 +35,9 @@ spellcheck
 stylua
 sumneko_lua
 tflint
+timespot
 tmpl
+usecase
 wezterm
 winmanager
 zoxide

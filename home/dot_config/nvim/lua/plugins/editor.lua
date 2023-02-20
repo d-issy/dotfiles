@@ -25,6 +25,10 @@ return {
       filesystem = {
         bind_to_cwd = false,
         follow_current_file = true,
+        filtered_items = {
+          visible = true,
+          never_show = { ".git" },
+        },
       },
       window = {
         mappings = { ["<space>"] = "none" },
@@ -37,12 +41,28 @@ return {
     "nvim-telescope/telescope.nvim",
     cmd = "Telescope",
     branch = "0.1.x",
+    opts = {
+      defaults = {
+        file_ignore_patterns = {
+          ".git",
+          ".venv",
+          "node_modules",
+        },
+      },
+      pickers = {
+        buffers = { theme = "ivy", show_all_buffers = true },
+        colorscheme = { enable_preview = true },
+        find_files = { theme = "ivy", hidden = true },
+        help_tags = { theme = "ivy" },
+        live_grep = { theme = "ivy" },
+      },
+    },
     keys = {
-      { "<leader>,", "<cmd>Telescope buffers show_all_buffers=true theme=ivy<cr>", desc = "Buffers" },
-      { "<leader>/", "<cmd>Telescope live_grep theme=ivy<cr>", desc = "Grep" },
-      { "<leader>p", "<cmd>Telescope find_files theme=ivy<cr>", desc = "Find Files" },
-      { "<leader>sh", "<cmd>Telescope help_tags theme=ivy<cr>", desc = "Help Page" },
-      { "<leader>uc", "<cmd>Telescope colorscheme enable_preview=true<cr>", desc = "Colorscheme with preview" },
+      { "<leader>,", "<cmd>Telescope buffers<cr>", desc = "Buffers" },
+      { "<leader>/", "<cmd>Telescope live_grep<cr>", desc = "Grep" },
+      { "<leader>p", "<cmd>Telescope find_files<cr>", desc = "Find Files" },
+      { "<leader>sh", "<cmd>Telescope help_tags<cr>", desc = "Help Page" },
+      { "<leader>uc", "<cmd>Telescope colorscheme<cr>", desc = "Colorscheme with preview" },
     },
   },
 

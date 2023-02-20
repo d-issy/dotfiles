@@ -11,10 +11,13 @@ return {
       "SmiteshP/nvim-navic",
     },
     opts = {
-      ensure_installed = { "sumneko_lua" },
-      format = { "gopls" },
+      ensure_installed = { "lua_ls" },
+      format = {
+        "gopls",
+        "rust_analyzer",
+      },
       servers = {
-        sumneko_lua = {
+        lua_ls = {
           settings = {
             Lua = {
               diagnostics = { globals = { "vim", "hs" } },
@@ -95,8 +98,9 @@ return {
             },
           },
           nls.builtins.diagnostics.cspell.with {
-            diagnostics_postprocess = function(diagnostic) diagnostic.severity = vim.diagnostic.severity["INFO"] end,
+            diagnostics_postprocess = function(diagnostic) diagnostic.severity = vim.diagnostic.severity["HINT"] end,
             extra_args = {
+              "--unique",
               "--config",
               vim.call("expand", "~/.config/cspell/cspell.yaml"),
             },

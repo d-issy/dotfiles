@@ -1,7 +1,16 @@
 version: "0.2"
 language: en
 dictionaries:
+  - en_US
+  - en-gb
+  - companies
   - softwareTerms
+  - misc
+  - filetypes
+  - aws
+ignoreRegExpList:
+  - /[０-９Ａ-Ｚａ-ｚぁ-んァ-ヶ亜-熙纊-黑]+/
 import:
   - general/cspell.yaml
+  - python/cspell.yaml
   - vim/cspell.yaml
