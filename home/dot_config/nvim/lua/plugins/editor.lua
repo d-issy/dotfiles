@@ -36,6 +36,13 @@ return {
     },
   },
 
+  -- search/replace
+  {
+    "windwp/nvim-spectre",
+    opts = { live_update = true },
+    keys = { { "<leader>sr", function() require("spectre").open() end, desc = "Replace in files (Spectre)" } },
+  },
+
   -- telescope
   {
     "nvim-telescope/telescope.nvim",
@@ -66,16 +73,21 @@ return {
     },
   },
 
-  -- easily jump to any location and enhanced f/t motions
+  -- hop
   {
-    "ggandor/flit.nvim",
-    event = "VeryLazy",
-    dependencies = { "ggandor/leap.nvim" },
+    "phaazon/hop.nvim",
+    version = "v2.*",
     opts = {
-      keys = { f = "f", F = "F", t = "t", T = "T" },
-      labeled_modes = "nv",
-      multiline = true,
-      opts = {},
+      -- @cspell: disable-next
+      keys = "etovxqpdygfblzhckisuran",
+    },
+    keys = {
+      { "<leader>K", "<cmd>HopLineStartBC<cr>", mode = { "n", "v", "s", "o" }, desc = "jump LineStartBC" },
+      { "<leader>J", "<cmd>HopLineStartAC<cr>", mode = { "n", "v", "s", "o" }, desc = "jump LineStartAC" },
+      { "<leader>k", "<cmd>HopWordBC<cr>", mode = { "n", "v", "s", "o" }, desc = "jump WordBC" },
+      { "<leader>j", "<cmd>HopWordAC<cr>", mode = { "n", "v", "s", "o" }, desc = "jump WordAC" },
+      { "<leader>N", "<cmd>HopPatternBC<cr>", mode = { "n", "v", "s", "o" }, desc = "jump Pattern BC" },
+      { "<leader>n", "<cmd>HopPatternAC<cr>", mode = { "n", "v", "s", "o" }, desc = "jump Pattern AC" },
     },
   },
 
