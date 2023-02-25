@@ -75,7 +75,9 @@ return {
     },
     config = function()
       local luasnip = require "luasnip"
-      luasnip.setup {}
+      luasnip.setup {
+        update_events = "TextChanged,TextChangedI",
+      }
       require("luasnip.loaders.from_lua").lazy_load {
         paths = "~/.config/nvim/snippets/",
       }
