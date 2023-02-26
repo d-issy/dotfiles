@@ -25,4 +25,19 @@ local postfix = require("luasnip.extras.postfix").postfix
 local types = require "luasnip.util.types"
 local parse = require("luasnip.util.parser").parse_snippet
 
-return {}
+return {
+  s("req", { t 'require "', i(1), t '"' }),
+  s("local", { t "local ", i(1), t " = " }),
+  s("if", { t "if ", i(1), t { " then", "  " }, i(0), t { "", "end" } }),
+  s(
+    "fn",
+    c(1, {
+      { t "function(", i(1), t { ")", "  " }, i(2), t { "", "end" } },
+      { t "local ", i(1), t " = function(", i(2), t { ")", "  " }, i(3), t { "", "end" } },
+    })
+  ),
+  s("el", t "else"),
+  s("t", t "true"),
+  s("f", t "false"),
+  s("n", t "nil"),
+}

@@ -69,7 +69,13 @@ return {
       },
       {
         "<C-l>",
-        function() require("luasnip").jump(-1) end,
+        function()
+          if require("luasnip").choice_active() then
+            require("luasnip").change_choice(1)
+          else
+            require("luasnip").jump(-1)
+          end
+        end,
         mode = { "i", "s" },
       },
     },
