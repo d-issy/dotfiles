@@ -52,6 +52,7 @@ return {
       },
     },
     git_status = {
+      group_empty_dirs = true,
       window = {
         mappings = {
           ["<space>"] = "none",
