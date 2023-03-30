@@ -56,6 +56,7 @@ return {
         mappings = {
           ["<space>"] = "none",
           ["a"] = "git_add_file",
+          ["c"] = "git_commit",
           ["u"] = "git_unstage_file",
           ["!"] = "git_revert_file",
         },
