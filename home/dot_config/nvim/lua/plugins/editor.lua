@@ -6,36 +6,6 @@ return {
     keys = { { "<leader>sr", function() require("spectre").open() end, desc = "Replace in files (Spectre)" } },
   },
 
-  -- telescope
-  {
-    "nvim-telescope/telescope.nvim",
-    cmd = "Telescope",
-    branch = "0.1.x",
-    opts = {
-      defaults = {
-        file_ignore_patterns = {
-          ".git",
-          ".venv",
-          "node_modules",
-        },
-      },
-      pickers = {
-        buffers = { theme = "ivy", show_all_buffers = true },
-        colorscheme = { enable_preview = true },
-        find_files = { theme = "ivy", hidden = true },
-        help_tags = { theme = "ivy" },
-        live_grep = { theme = "ivy" },
-      },
-    },
-    keys = {
-      { "<leader>,", "<cmd>Telescope buffers<cr>", desc = "Buffers" },
-      { "<leader>/", "<cmd>Telescope live_grep<cr>", desc = "Grep" },
-      { "<leader>p", "<cmd>Telescope find_files<cr>", desc = "Find Files" },
-      { "<leader>sh", "<cmd>Telescope help_tags<cr>", desc = "Help Page" },
-      { "<leader>uc", "<cmd>Telescope colorscheme<cr>", desc = "Colorscheme with preview" },
-    },
-  },
-
   -- hop
   {
     "phaazon/hop.nvim",
