@@ -32,5 +32,6 @@ return {
     { "<leader>fr", "<cmd>Telescope registers<cr>", desc = "Find registers" },
     { "<leader>gb", "<cmd>Telescope git_branches<cr>", desc = "Git branches" },
     { "<leader>gc", "<cmd>Telescope git_commits<cr>", desc = "Git commits" },
+    { "<leader>p", "<cmd>Telescope find_files<cr>", desc = "Find Files" },
   },
 }
