@@ -1,6 +1,7 @@
 local colors = {
   green = "#9ECE6A",
   orange = "#F2B732",
+  yellow = "#f7dc6f",
   blue = "#7DCFFF",
   red = "#F7768E",
   gray = "#323232",
@@ -39,6 +40,7 @@ return {
 
     local GitBranch = {
       condition = conditions.is_git_repo,
+      update = { "User", pattern = "GitSignsUpdate" },
       init = function(self)
         self.status_dict = vim.b.gitsigns_status_dict
         self.has_changes = self.status_dict.added ~= 0 or self.status_dict.removed ~= 0 or self.status_dict.changed ~= 0
@@ -69,11 +71,12 @@ return {
 
     local GitDiff = {
       condition = conditions.is_git_repo,
+      update = { "User", pattern = "GitSignsUpdate" },
       init = function(self)
         self.status_dict = vim.b.gitsigns_status_dict
         self.has_changes = self.status_dict.added ~= 0 or self.status_dict.removed ~= 0 or self.status_dict.changed ~= 0
       end,
-      { condition = function(self) return self.has_changes end, provider = " " },
+      { condition = function(self) return self.has_changes end, provider = "  " },
       {
         provider = function(self)
           local count = self.status_dict.added or 0
@@ -98,29 +101,17 @@ return {
       { condition = function(self) return self.has_changes end, provider = " " },
     }
 
-    local LspActive = {
-      condition = conditions.lsp_attached,
-      update = { "LspAttach", "LspDetach" },
-      provider = function()
-        local names = {}
-        for _, server in pairs(vim.lsp.get_active_clients { bufnr = 0 }) do
-          table.insert(names, server.name)
-        end
-        return "  " .. table.concat(names, " ") .. " "
-      end,
-      hl = { fg = colors.white },
-    }
-
     local Diagnostics = {
       condition = conditions.has_diagnostics,
       init = function(self)
         self.errors = #vim.diagnostic.get(0, { severity = vim.diagnostic.severity.ERROR })
         self.warnings = #vim.diagnostic.get(0, { severity = vim.diagnostic.severity.WARN })
-        self.hints = #vim.diagnostic.get(0, { severity = vim.diagnostic.severity.HINT })
         self.info = #vim.diagnostic.get(0, { severity = vim.diagnostic.severity.INFO })
+        self.hints = #vim.diagnostic.get(0, { severity = vim.diagnostic.severity.HINT })
       end,
       update = { "DiagnosticChanged", "BufEnter" },
       hl = { fg = colors.white },
+      { provider = " " },
       {
         provider = function(self) return self.errors > 0 and (" " .. self.errors .. " ") end,
         hl = { fg = colors.red },
@@ -134,10 +125,27 @@ return {
         hl = { fg = colors.blue },
       },
       {
-        provider = function(self) return self.hints > 0 and ("" .. self.hints) end,
-        hl = { fg = colors.green },
+        provider = function(self) return self.hints > 0 and (" " .. self.hints) end,
+        hl = { fg = colors.yellow },
       },
       { provider = " " },
+    }
+
+    local Fill = { provider = "%=" }
+
+    local LspActive = {
+      condition = conditions.lsp_attached,
+      update = { "LspAttach", "LspDetach" },
+      provider = function()
+        local names = {}
+        for _, server in pairs(vim.lsp.get_active_clients { bufnr = 0 }) do
+          if server.name ~= "null-ls" then
+            table.insert(names, server.name)
+          end
+        end
+        return "  " .. table.concat(names, ", ") .. " "
+      end,
+      hl = { fg = colors.white },
     }
 
     local Statusline = {
@@ -146,12 +154,16 @@ return {
       GitBranch,
       FileInfo,
       GitDiff,
-      LspActive,
       Diagnostics,
+      Fill,
+      LspActive,
+      Mode,
     }
 
+    vim.opt.laststatus = 3
+
     return {
-      statusline = { Statusline },
+      statusline = Statusline,
     }
   end,
 }
