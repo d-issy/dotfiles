@@ -5,12 +5,17 @@ local colors = {
   blue = "#7DCFFF",
   red = "#F7768E",
   gray = "#323232",
+  lightgray = "#404040",
   black = "black",
   white = "white",
 }
 return {
   "rebelot/heirline.nvim",
-
+  dependencies = {
+    "gitsigns.nvim",
+    "nvim-navic",
+    "nvim-web-devicons",
+  },
   opts = function()
     local conditions = require "heirline.conditions"
     local utils = require "heirline.utils"
@@ -166,10 +171,24 @@ return {
       Mode,
     }
 
-    vim.opt.laststatus = 3
-
-    return {
-      statusline = Statusline,
+    local File = {
+      provider = function() return vim.fn.fnamemodify(vim.api.nvim_buf_get_name(0), ":.") end,
     }
+
+    local Navic = {
+      condition = function() return require("nvim-navic").is_available() end,
+      update = "CursorMoved",
+      init = function(self) self.nav = require("nvim-navic").get_location { highlight = true } end,
+      { condition = function(self) return #self.nav > 0 end, provider = " > " },
+      { provider = function(self) return self.nav end },
+    }
+
+    local WinBar = {
+      hl = { bg = colors.lightgray },
+      File,
+      Navic,
+    }
+    vim.opt.laststatus = 3
+    return { statusline = Statusline, winbar = WinBar }
   end,
 }
