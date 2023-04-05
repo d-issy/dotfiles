@@ -52,6 +52,12 @@ return {
     }
 
     local FileInfo = {
+      condition = function()
+        return not vim.tbl_contains({
+          "neo-tree",
+          "TelescopePrompt",
+        }, vim.bo.filetype)
+      end,
       init = function(self)
         self.filename = vim.api.nvim_buf_get_name(0)
         self.extension = vim.fn.fnamemodify(self.filename, ":e")

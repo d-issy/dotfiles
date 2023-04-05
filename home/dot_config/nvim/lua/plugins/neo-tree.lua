@@ -27,7 +27,6 @@ return {
   opts = {
     source_selector = {
       winbar = true,
-      statusline = true,
     },
     window = {
       width = 30,
