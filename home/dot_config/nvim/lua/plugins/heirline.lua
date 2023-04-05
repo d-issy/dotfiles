@@ -46,14 +46,9 @@ return {
     local GitBranch = {
       condition = conditions.is_git_repo,
       update = { "User", pattern = "GitSignsUpdate" },
-      init = function(self)
-        self.status_dict = vim.b.gitsigns_status_dict
-        self.has_changes = self.status_dict.added ~= 0 or self.status_dict.removed ~= 0 or self.status_dict.changed ~= 0
-      end,
-      {
-        hl = { fg = colors.orange },
-        provider = function(self) return "  " .. self.status_dict.head .. " " end,
-      },
+      init = function(self) self.branch = vim.g.gitsigns_head end,
+      hl = { fg = colors.orange },
+      provider = function(self) return "  " .. self.branch .. " " end,
     }
 
     local FileInfo = {
