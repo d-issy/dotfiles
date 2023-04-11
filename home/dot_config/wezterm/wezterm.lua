@@ -1,6 +1,6 @@
-local wezterm = require 'wezterm'
+local wezterm = require "wezterm"
 
-wezterm.on('toggle-opacity', function(window, pane)
+wezterm.on("toggle-opacity", function(window, pane)
   local overrides = window:get_config_overrides() or {}
   if not overrides.window_background_opacity then
     overrides.window_background_opacity = 0.9
@@ -17,13 +17,12 @@ wezterm.on('toggle-opacity', function(window, pane)
   window:set_config_overrides(overrides)
 end)
 
-
 return {
   -- apperance
-  color_scheme = 'Edge Dark (base16)',
+  color_scheme = "Edge Dark (base16)",
   font = wezterm.font_with_fallback {
-    'Hack Nerd Font Mono',
-    'Hiragino Mincho Pro W3',
+    "Hack Nerd Font Mono",
+    "Hiragino Mincho Pro W3",
   },
 
   font_size = 14,
@@ -33,9 +32,10 @@ return {
 
   -- key bindings
   use_ime = true,
+  macos_forward_to_ime_modifier_mask = "SHIFT|CTRL",
   keys = {
     -- for tmux key binding for use-ime
-    { key = 'q', mods = 'CTRL', action = wezterm.action.SendKey { key = 'q', mods = 'CTRL' } },
-    { key = 'u', mods = 'CMD', action = wezterm.action.EmitEvent 'toggle-opacity' }
-  }
+    { key = "q", mods = "CTRL", action = wezterm.action.SendKey { key = "q", mods = "CTRL" } },
+    { key = "u", mods = "CMD", action = wezterm.action.EmitEvent "toggle-opacity" },
+  },
 }
