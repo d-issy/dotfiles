@@ -8,9 +8,9 @@ d-issy's dotfiles
 - curl
 - os
   - macOS
-    - require brew
+    - brew
   - WSL2 on Windows / Linux
-    - require apt
+    - apt
 
 ## init
 
