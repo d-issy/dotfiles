@@ -167,7 +167,14 @@ return {
     }
 
     local File = {
-      provider = function() return vim.fn.fnamemodify(vim.api.nvim_buf_get_name(0), ":.") end,
+      init = function(self) self.filename = vim.fn.fnamemodify(vim.api.nvim_buf_get_name(0), ":.") end,
+      provider = function(self)
+        if self.filename ~= "" then
+          return self.filename
+        else
+          return " [404] "
+        end
+      end,
     }
 
     local Navic = {
@@ -179,11 +186,21 @@ return {
     }
 
     local WinBar = {
-      hl = { bg = colors.lightgray },
+      hl = { bg = colors.gray },
       File,
       Navic,
     }
     vim.opt.laststatus = 3
-    return { statusline = Statusline, winbar = WinBar }
+    return {
+      statusline = Statusline,
+      winbar = WinBar,
+      opts = {
+        disable_winbar_cb = function(args)
+          return conditions.buffer_matches({
+            buftype = { "nofile", "prompt", "help", "quickfix", "terminal" },
+          }, args.buf)
+        end,
+      },
+    }
   end,
 }
