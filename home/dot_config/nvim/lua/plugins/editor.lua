@@ -1,76 +1,9 @@
 return {
-  -- file explorer
-  -- @cSpell: words Neotree
-  {
-    "nvim-neo-tree/neo-tree.nvim",
-    cmd = "Neotree",
-    branch = "v2.x",
-    keys = {
-      {
-        "<leader>e",
-        function() require("neo-tree.command").execute { toggle = true } end,
-        desc = "Explorer NeoTree (root dir)",
-      },
-    },
-    init = function()
-      vim.g.neo_tree_remove_legacy_commands = 1
-      if vim.fn.argc() == 1 then
-        local stat = vim.loop.fs_stat(vim.fn.argv(0))
-        if stat and stat.type == "directory" then
-          require "neo-tree"
-        end
-      end
-    end,
-    opts = {
-      filesystem = {
-        bind_to_cwd = false,
-        follow_current_file = true,
-        filtered_items = {
-          visible = true,
-          never_show = { ".git" },
-        },
-      },
-      window = {
-        mappings = { ["<space>"] = "none" },
-      },
-    },
-  },
-
   -- search/replace
   {
     "windwp/nvim-spectre",
     opts = { live_update = true },
     keys = { { "<leader>sr", function() require("spectre").open() end, desc = "Replace in files (Spectre)" } },
-  },
-
-  -- telescope
-  {
-    "nvim-telescope/telescope.nvim",
-    cmd = "Telescope",
-    branch = "0.1.x",
-    opts = {
-      defaults = {
-        file_ignore_patterns = {
-          ".git",
-          ".venv",
-          "node_modules",
-        },
-      },
-      pickers = {
-        buffers = { theme = "ivy", show_all_buffers = true },
-        colorscheme = { enable_preview = true },
-        find_files = { theme = "ivy", hidden = true },
-        help_tags = { theme = "ivy" },
-        live_grep = { theme = "ivy" },
-      },
-    },
-    keys = {
-      { "<leader>,", "<cmd>Telescope buffers<cr>", desc = "Buffers" },
-      { "<leader>/", "<cmd>Telescope live_grep<cr>", desc = "Grep" },
-      { "<leader>p", "<cmd>Telescope find_files<cr>", desc = "Find Files" },
-      { "<leader>sh", "<cmd>Telescope help_tags<cr>", desc = "Help Page" },
-      { "<leader>uc", "<cmd>Telescope colorscheme<cr>", desc = "Colorscheme with preview" },
-    },
   },
 
   -- hop

@@ -2,13 +2,32 @@ return {
   {
     "nvim-treesitter/nvim-treesitter",
     build = ":TSUpdate",
-    event = { "BufReadPost", "BufNewFile", "VeryLazy" },
+    event = {
+      "BufReadPost",
+      "BufNewFile",
+      "VeryLazy",
+    },
+    cmd = {
+      "TSBufDisable",
+      "TSBufEnable",
+      "TSBufToggle",
+      "TSConfigInfo",
+      "TSDisable",
+      "TSEditQuery",
+      "TSEditQueryUserAfter",
+      "TSEnable",
+      "TSInstall",
+      "TSInstallFromGrammar",
+      "TSInstallInfo",
+      "TSInstallSync",
+      "TSModuleInfo",
+      "TSToggle",
+      "TSUninstall",
+      "TSUpdate",
+      "TSUpdateSync",
+    },
     keys = {
-      {
-        "<leader>ut",
-        "<cmd>TSBufToggle highlight<cr>",
-        desc = "Toggle Highlight",
-      },
+      { "<leader>uh", "<cmd>TSBufToggle highlight<cr>", desc = "Toggle Highlight" },
     },
     opts = {
       auto_install = true,

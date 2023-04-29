@@ -68,55 +68,6 @@ return {
     },
   },
 
-  -- statusline
-  {
-    "nvim-lualine/lualine.nvim",
-    event = "VeryLazy",
-    opts = function()
-      return {
-        options = {
-          theme = "auto",
-          globalstatus = true,
-          component_separators = "",
-          section_separators = "",
-          disabled_filetypes = {
-            statusline = {
-              "TelescopePrompt",
-              "lazy",
-              "mason",
-            },
-          },
-        },
-        extensions = { "neo-tree" },
-        sections = {
-          lualine_a = {
-            {
-              "mode",
-              fmt = function(mode) return mode:sub(1, 1) end,
-              right_padding = 2,
-            },
-          },
-          lualine_b = {},
-          lualine_c = { "buffers" },
-          lualine_x = { "branch", "diff" },
-          lualine_y = {},
-          lualine_z = { "filetype" },
-        },
-        tabline = {
-          lualine_a = { "tabs" },
-          lualine_b = {
-            { "filetype", icon_only = true, separator = "", padding = { left = 1, right = 0 } },
-            { "filename", path = 1, symbols = { modified = "+", readonly = "[R]", unnamed = "[404]" } },
-            "diagnostics",
-          },
-          lualine_x = {
-            function() return require("nvim-navic").get_location() end,
-          },
-        },
-      }
-    end,
-  },
-
   -- indent guides for Neovim
   {
     "lukas-reineke/indent-blankline.nvim",
