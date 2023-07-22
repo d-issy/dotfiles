@@ -55,12 +55,7 @@ return {
             require("cmp_nvim_lsp").default_capabilities(vim.lsp.protocol.make_client_capabilities())
 
           lsp_opts.on_attach = function(client, buffer)
-            vim.keymap.set(
-              "n",
-              "<leader>cf",
-              function() vim.lsp.buf.format { async = true } end,
-              { silent = true, buffer = buffer }
-            )
+            vim.keymap.set("n", "<leader>cf", ":Format<CR>", { silent = true, buffer = buffer })
             client.server_capabilities.documentFormattingProvider = vim.tbl_contains(opts.format, name) or false
 
             if client.server_capabilities.documentSymbolProvider then
@@ -75,39 +70,81 @@ return {
 
   -- formatters
   {
-    "jose-elias-alvarez/null-ls.nvim",
-    event = { "BufReadPre", "BufNewFile" },
-    dependencies = { "mason.nvim" },
+    "mhartington/formatter.nvim",
     opts = function()
-      local nls = require "null-ls"
+      local util = require "formatter.util"
       return {
-        sources = {
-          nls.builtins.formatting.stylua,
-          nls.builtins.formatting.black,
-          nls.builtins.formatting.isort,
-          nls.builtins.formatting.prettierd.with {
-            filetypes = {
-              "css",
-              "html",
-              "javascript",
-              "javascriptreact",
-              "sass",
-              "typescript",
-              "typescriptreact",
-              "yaml",
-            },
+        filetype = {
+          css = { require("formatter.defaults").prettierd },
+          go = { require("formatter.filetypes.go").goimports },
+          html = { require("formatter.defaults").prettierd },
+          javascript = { require("formatter.defaults").prettierd },
+          javascriptreact = { require("formatter.defaults").prettierd },
+          json = { require("formatter.defaults").prettierd },
+          lua = { require("formatter.filetypes.lua").stylua },
+          python = {
+            require("formatter.filetypes.python").black,
+            require("formatter.filetypes.python").isort,
           },
-          nls.builtins.diagnostics.cspell.with {
-            diagnostics_postprocess = function(diagnostic) diagnostic.severity = vim.diagnostic.severity["HINT"] end,
-            extra_args = {
-              "--unique",
-              "--config",
-              vim.call("expand", "~/.config/cspell/cspell.yaml"),
-            },
+          rust = {
+            require("formatter.filetypes.rust").rustfmt,
           },
-          nls.builtins.code_actions.cspell,
+          tf = { require("formatter.filetypes.terraform").terraformfmt },
+          typescript = { require("formatter.defaults").prettierd },
+          typescriptreact = { require("formatter.defaults").prettierd },
+          vue = { require("formatter.defaults").prettierd },
+          yaml = { require("formatter.defaults").prettierd },
         },
       }
+    end,
+  },
+
+  -- linters
+  {
+    "mfussenegger/nvim-lint",
+    config = function()
+      local lint = require "lint"
+
+      lint.linters.cspell = {
+        cmd = "cspell",
+        stdin = true,
+        ignore_exitcode = true,
+        args = {
+          "--no-color",
+          "--no-progress",
+          "--no-summary",
+          "--unique",
+          "--config",
+          vim.call("expand", "~/.config/cspell/cspell.yaml"),
+          "--",
+          "stdin",
+        },
+        stream = "stdout",
+        parser = require("lint.parser").from_pattern(
+          "[^:]+:(%d+):(%d+)%s+-%s+(.+)",
+          { "lnum", "lcol", "message" },
+          nil,
+          { source = "cspell", severity = vim.diagnostic.severity.HINT }
+        ),
+      }
+
+      lint.linters_by_ft = {
+        go = { "cspell" },
+        javascript = { "cspell" },
+        javascriptreact = { "cspell" },
+        make = { "cspell" },
+        markdown = { "cspell" },
+        python = { "flake8", "cspell" },
+        rust = { "cspell" },
+        tf = { "cspell" },
+        typescript = { "cspell" },
+        typescriptreact = { "cspell" },
+      }
+
+      vim.api.nvim_create_autocmd(
+        { "InsertLeave", "TextChanged", "BufReadPost", "BufNewFile" },
+        { callback = function() lint.try_lint() end }
+      )
     end,
   },
 
