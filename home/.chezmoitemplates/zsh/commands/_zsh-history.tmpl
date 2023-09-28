@@ -1,8 +1,8 @@
 {{- /* vim: set ft=zsh : */ -}}
 
 zsh-history() {
-  if (( $+commands[fzf] )); then
-    BUFFER=`history -n 1 | fzf --query "$BUFFER"`
+  if which rtx &>/dev/null; then
+    BUFFER=`history -n 1 | fzf --reverse --query "$BUFFER"`
     CURSOR=$#BUFFER
     zle reset-prompt
   else
