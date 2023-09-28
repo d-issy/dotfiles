@@ -4,31 +4,52 @@ export XDG_CONFIG_HOME=$HOME/.config
 export XDG_CACHE_HOME=$HOME/.cache
 export XDG_DATA_HOME=$HOME/.local/share
 
+{{ if eq .chezmoi.os "linux" -}}
+export AWS_VAULT_BACKEND=pass
+export AWS_VAULT_PASS_PREFIX=aws-vault
+export GPG_TTY=$(tty)
+{{- end }}
+
+########
+# path #
+########
+
+path=(
+  $HOME/bin(N-/)
+  $HOME/.local/bin(N-/)
+  $HOME/.local/share/rtx/bin(N-/)
+  $path
+)
+typeset -U PATH
+
+fpath=(
+  $HOME/.config/zsh/plugins/zsh-completions/src(N-/)
+  $HOME/.asdf/completions(N-/)
+  $fpath
+)
+typeset -U FPATH
+
+
 ############
 # commands #
 ############
 
-# basic commands
-{{ template "zsh/commands/asdf.tmpl" }}
-{{ template "zsh/commands/aws-vault.tmpl" . }}
-{{ template "zsh/commands/direnv.tmpl" }}
-{{ template "zsh/commands/fzf.tmpl" }}
-{{ template "zsh/commands/starship.tmpl" }}
-{{ template "zsh/commands/zoxide.tmpl" }}
+if which rtx &>/dev/null; then
+  eval "$(rtx activate zsh)"
+
+  eval "$(rtx exec -- direnv hook zsh)"
+  eval "$(rtx exec -- starship init zsh)"
+  eval "$(rtx exec -- zoxide init zsh)"
+
+  alias v=nvim
+  export EDITOR=nvim
+fi
+
 # my commands
 {{ template "zsh/commands/_zsh-history.tmpl" }}
 {{ template "zsh/commands/_ssm.tmpl" }}
 {{ template "zsh/commands/_external.tmpl" }}
 {{ template "zsh/commands/_zr.tmpl" }}
-
-# EDITOR
-if (( $+commands[nvim] )); then
-  alias v=nvim
-  export EDITOR=nvim
-elif (( $+commands[vim] )); then
-  alias v=vim
-  export EDITOR=vim
-fi
 
 #########
 # alias #
@@ -120,22 +141,3 @@ setopt hist_ignore_space
 setopt hist_no_store
 setopt hist_reduce_blanks
 setopt share_history
-
-########
-# path #
-########
-
-path=(
-  $HOME/bin(N-/)
-  $HOME/.local/bin(N-/)
-  $ASDF_GOLANG_PACKAGE_BIN(N-/)
-  $path
-)
-typeset -U PATH
-
-fpath=(
-  $HOME/.config/zsh/plugins/zsh-completions/src(N-/)
-  $HOME/.asdf/completions(N-/)
-  $fpath
-)
-typeset -U FPATH
