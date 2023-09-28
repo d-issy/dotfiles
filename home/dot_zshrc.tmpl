@@ -24,7 +24,6 @@ typeset -U PATH
 
 fpath=(
   $HOME/.config/zsh/plugins/zsh-completions/src(N-/)
-  $HOME/.asdf/completions(N-/)
   $fpath
 )
 typeset -U FPATH
@@ -36,6 +35,7 @@ typeset -U FPATH
 
 if which rtx &>/dev/null; then
   eval "$(rtx activate zsh)"
+  eval "$(rtx completions zsh)"
 
   eval "$(rtx exec -- direnv hook zsh)"
   eval "$(rtx exec -- starship init zsh)"
