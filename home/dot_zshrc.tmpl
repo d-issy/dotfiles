@@ -28,58 +28,6 @@ fpath=(
 )
 typeset -U FPATH
 
-
-############
-# commands #
-############
-
-if which rtx &>/dev/null; then
-  eval "$(rtx activate zsh)"
-  eval "$(rtx completions zsh)"
-
-  eval "$(rtx exec -- direnv hook zsh)"
-  eval "$(rtx exec -- starship init zsh)"
-  eval "$(rtx exec -- zoxide init zsh)"
-
-  alias v=nvim
-  export EDITOR=nvim
-fi
-
-# my commands
-{{ template "zsh/commands/_zsh-history.tmpl" }}
-{{ template "zsh/commands/_ssm.tmpl" }}
-{{ template "zsh/commands/_external.tmpl" }}
-{{ template "zsh/commands/_zr.tmpl" }}
-
-#########
-# alias #
-#########
-alias ..='cd ..'
-alias ch='chezmoi'
-alias cha='chezmoi apply -v'
-alias chc='chezmoi cd'
-alias chd='chezmoi diff'
-alias chu='chezmoi update -v'
-alias dc='docker-compose'
-alias g='git'
-alias ga='git add'
-alias gb='git branch'
-alias gbd='git branch -D'
-alias gc='git commit -v'
-alias gcl='git clean -fd'
-alias gf='git fetch'
-alias gr='git restore'
-alias gs='git status'
-alias gsc='git switch -c'
-alias gsw='git switch'
-alias la='ls -lAF'
-alias ll='ls -lF'
-alias ls='ls --color'
-alias resh='exec $SHELL -l'
-alias ts='tig status'
-
-alias -g G='| grep --color=auto'
-
 ###########
 # bindkey #
 ###########
@@ -141,3 +89,54 @@ setopt hist_ignore_space
 setopt hist_no_store
 setopt hist_reduce_blanks
 setopt share_history
+
+############
+# commands #
+############
+
+if which rtx &>/dev/null; then
+  eval "$(rtx activate zsh)"
+  eval "$(rtx completions zsh)"
+
+  eval "$(rtx exec -- direnv hook zsh)"
+  eval "$(rtx exec -- starship init zsh)"
+  eval "$(rtx exec -- zoxide init zsh)"
+
+  alias v=nvim
+  export EDITOR=nvim
+fi
+
+# my commands
+{{ template "zsh/commands/_zsh-history.tmpl" }}
+{{ template "zsh/commands/_ssm.tmpl" }}
+{{ template "zsh/commands/_external.tmpl" }}
+{{ template "zsh/commands/_zr.tmpl" }}
+
+#########
+# alias #
+#########
+alias ..='cd ..'
+alias ch='chezmoi'
+alias cha='chezmoi apply -v'
+alias chc='chezmoi cd'
+alias chd='chezmoi diff'
+alias chu='chezmoi update -v'
+alias dc='docker-compose'
+alias g='git'
+alias ga='git add'
+alias gb='git branch'
+alias gbd='git branch -D'
+alias gc='git commit -v'
+alias gcl='git clean -fd'
+alias gf='git fetch'
+alias gr='git restore'
+alias gs='git status'
+alias gsc='git switch -c'
+alias gsw='git switch'
+alias la='ls -lAF'
+alias ll='ls -lF'
+alias ls='ls --color'
+alias resh='exec $SHELL -l'
+alias ts='tig status'
+
+alias -g G='| grep --color=auto'
