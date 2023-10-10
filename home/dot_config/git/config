@@ -11,8 +11,11 @@
 [pull]
   ff = only
   rebase = false
+  autostash = true
 [merge]
   conflictstyle = diff3
+[rebase]
+  autostash = true
 [fetch]
   prune = true
 [core]
