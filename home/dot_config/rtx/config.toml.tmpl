@@ -3,15 +3,15 @@
 [tools]
 # languages
 deno = '1.37'
-flutter = '3.13'
+flutter = 'latest'
 golang = '1.21'
-java = 'adoptopenjdk-17.0.8+7'
-kotlin = '1.9'
+java = 'adoptopenjdk-17'
+kotlin = '1.9.10'
 lua = '5.4'
 nodejs = ['18', '20']
 python = ['3.10', '3.11', '3.12']
 ruby = '3.2'
-rust = '1.72'
+rust = '1.73'
 scala = '3.3'
 
 # development tools
@@ -26,7 +26,7 @@ ripgrep = 'latest'
 shellcheck = 'latest'
 starship = 'latest'
 
-duckdb = ['0.9', '0.8']
+duckdb = '0.9'
 neovim = '0.9'
 terraform = '1.5'
 tmux = '3.3a'
@@ -36,8 +36,8 @@ zoxide = '0.9.2'
 # cloud
 awscli = '2'
 aws-vault = '7.2'
-aws-sam-cli = '1.97.0'
-gcloud = '448'
+aws-sam-cli = '1'
+gcloud = 'latest'
 
 [plugins]
 duckdb = 'https://github.com/asdf-community/asdf-duckdb'
@@ -47,3 +47,6 @@ legacy_version_file = true
 jobs = 2
 experimental = true
 missing_runtime_behavior = 'ignore'
+trusted_config_paths = [
+  '~/.config/rtx',
+]
