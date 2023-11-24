@@ -118,7 +118,7 @@ fi
 alias ..='cd ..'
 alias ch='chezmoi'
 alias cha='chezmoi apply -v'
-alias chc='chezmoi cd'
+alias chc='cd $(chezmoi source-path)'
 alias chd='chezmoi diff'
 alias chu='chezmoi update -v'
 alias dc='docker-compose'
