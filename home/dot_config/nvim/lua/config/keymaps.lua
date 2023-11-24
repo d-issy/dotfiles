@@ -7,3 +7,9 @@ local map = function(mode, lhs, rhs, desc)
 end
 
 map("n", "<leader>w", "<cmd>w<cr><esc>", "Write")
+
+-- disable terminal switching
+vim.keymap.del("t", "<C-h>")
+vim.keymap.del("t", "<C-j>")
+vim.keymap.del("t", "<C-k>")
+vim.keymap.del("t", "<C-l>")
