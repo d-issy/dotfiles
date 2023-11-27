@@ -36,5 +36,11 @@ return {
       })
     end,
   },
+
+  -- disable community snippets
   { "friendly-snippets", enabled = false },
+
+  -- use nvim-autopairs instead of mini.pairs
+  { "mini.pairs", enabled = false },
+  { "windwp/nvim-autopairs", event = "InsertEnter", opts = {} },
 }

@@ -16,6 +16,8 @@ require("lazy").setup {
   spec = {
     { "LazyVim/LazyVim", import = "lazyvim.plugins" },
     { import = "lazyvim.plugins.extras.coding.copilot" },
+    { import = "lazyvim.plugins.extras.editor.navic" },
+    { import = "lazyvim.plugins.extras.util.project" },
 
     -- custom plugin settings
     { import = "plugins" },
