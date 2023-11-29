@@ -39,6 +39,13 @@ return {
     end,
   },
   {
+    "bufferline.nvim",
+    opts = function(_, opts)
+      -- tab mode
+      opts.options.mode = "tabs"
+    end,
+  },
+  {
     "lualine.nvim",
     opts = function(_, opts)
       opts.sections.lualine_a[1] = { function() return vim.fn.mode():sub(1, 1):upper() end }
