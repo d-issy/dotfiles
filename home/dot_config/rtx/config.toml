@@ -1,5 +1,3 @@
-{{- /* vim: set ft=toml.tmpl : */ -}}
-
 [tools]
 # languages
 deno = '1.37'
@@ -22,6 +20,7 @@ fzf = 'latest'
 ghq = 'latest'
 github-cli = 'latest'
 jq = 'latest'
+lazygit = 'latest'
 ripgrep = 'latest'
 shellcheck = 'latest'
 starship = 'latest'

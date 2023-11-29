@@ -1,66 +1,6 @@
 return {
-  -- cmp
   {
-    "hrsh7th/nvim-cmp",
-    event = "InsertEnter",
-    dependencies = {
-      "hrsh7th/cmp-nvim-lsp",
-      "hrsh7th/cmp-path",
-      "hrsh7th/cmp-buffer",
-      "saadparwaiz1/cmp_luasnip",
-    },
-    config = function()
-      local cmp = require "cmp"
-      local types = require "cmp.types"
-      -- stylua: ignore
-      local function de_prioritize_snippet(e1, e2)
-        if e1:get_kind() == types.lsp.CompletionItemKind.Snippet then return false end
-        if e2:get_kind() == types.lsp.CompletionItemKind.Snippet then return true end
-      end
-      cmp.setup {
-        completion = {
-          autocmplete = { types.cmp.TriggerEvent.TextChanged },
-          completeopt = "menu,menuone,noselect",
-          keyword_pattern = [[\%(-\?\d\+\%(\.\d\+\)\?\|\h\w*\%(-\w*\)*\|\!\)]],
-          keyword_length = 1,
-        },
-        sorting = {
-          priority_weight = 2,
-          comparators = {
-            de_prioritize_snippet,
-            cmp.config.compare.offset,
-            cmp.config.compare.exact,
-            cmp.config.compare.scopes,
-            cmp.config.compare.score,
-            cmp.config.compare.recently_used,
-            cmp.config.compare.logicality,
-            cmp.config.compare.kind,
-            cmp.config.compare.sort_text,
-            cmp.config.compare.length,
-            cmp.config.compare.order,
-          },
-        },
-        snippet = {
-          expand = function(args) require("luasnip").lsp_expand(args.body) end,
-        },
-        sources = cmp.config.sources {
-          { name = "nvim_lsp" },
-          { name = "luasnip" },
-          { name = "path" },
-          { name = "buffer" },
-        },
-        mapping = cmp.mapping.preset.insert {
-          ["<C-Space>"] = cmp.mapping.complete(),
-          ["<TAB>"] = cmp.mapping.confirm { select = true },
-        },
-      }
-    end,
-  },
-
-  -- snippet
-  -- @cspell: words luasnip
-  {
-    "L3MON4D3/LuaSnip",
+    "LuaSnip",
     keys = {
       {
         "<C-k>",
@@ -81,12 +21,11 @@ return {
     },
     config = function()
       local luasnip = require "luasnip"
-      luasnip.setup {
-        update_events = "TextChanged,TextChangedI",
-      }
-      require("luasnip.loaders.from_lua").lazy_load {
-        paths = "~/.config/nvim/snippets/",
-      }
+      local from_lua = require "luasnip.loaders.from_lua"
+
+      luasnip.setup { update_events = "TextChanged,TextChangedI" }
+      from_lua.lazy_load { paths = "~/.config/nvim/lua/snippets/" }
+
       vim.api.nvim_create_autocmd("InsertLeave", {
         pattern = "*",
         callback = function()
@@ -98,28 +37,10 @@ return {
     end,
   },
 
-  -- lspsaga
-  -- @cspell: words lspsaga
-  {
-    "glepnir/lspsaga.nvim",
-    dependencies = {
-      "nvim-treesitter/nvim-treesitter",
-      "neovim/nvim-lspconfig",
-    },
-    opts = {
-      symbol_in_winbar = { enable = false },
-    },
-    keys = {
-      { "<leader>ca", "<cmd>Lspsaga code_action<cr>", desc = "Code Action" },
-      { "<leader>cd", "<cmd>Lspsaga show_line_diagnostics<cr>", desc = "Show Line Diagnostics" },
-      { "<leader>cl", "<cmd>Lspsaga outline<cr>", desc = "Outline" },
-      { "<leader>cr", "<cmd>Lspsaga rename<cr>", desc = "Rename" },
-      { "K", "<cmd>Lspsaga hover_doc<cr>", desc = "Hover" },
-      { "gd", "<cmd>Lspsaga lsp_finder<cr>", desc = "go definition" },
-    },
-  },
+  -- disable community snippets
+  { "friendly-snippets", enabled = false },
 
-  -- other
-  { "norcalli/nvim-colorizer.lua", opts = { "lua", "css", "html" } },
-  { "numToStr/Comment.nvim", config = true },
+  -- use nvim-autopairs instead of mini.pairs
+  { "mini.pairs", enabled = false },
+  { "windwp/nvim-autopairs", event = "InsertEnter", opts = {} },
 }
