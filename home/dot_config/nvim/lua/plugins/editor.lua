@@ -25,4 +25,12 @@ return {
       { "S", mode = { "n", "x", "s" }, false },
     },
   },
+  {
+    "telescope.nvim",
+    opts = function(_, opts)
+      -- disable trouble
+      opts.defaults.mappings.i["<c-t>"] = nil
+      opts.defaults.mappings.i["<a-t>"] = nil
+    end,
+  },
 }
