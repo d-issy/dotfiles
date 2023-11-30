@@ -1,0 +1,25 @@
+# yaml-language-server: $schema=https://json.schemastore.org/lazygit.json
+gui:
+  language: en
+  nerdFontsVersion: '3'
+  sidePanelWidth: 0.15
+  theme:
+    activeBorderColor:
+      - blue
+      - bold
+    inactiveBorderColor:
+      - white
+    selectedLineBgColor:
+      - reverse
+    selectedRangeBgColor:
+      - reverse
+  commandLogSize: 2
+  showRandomTip: false
+quitOnTopLevelReturn: true
+keybinding:
+  universal:
+    quit: Q
+    return: q
+  files:
+    commitChanges: ''
+    commitChangesWithEditor: c
