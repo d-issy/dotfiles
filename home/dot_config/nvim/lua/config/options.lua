@@ -8,6 +8,8 @@ vim.g.writebackup = false
 
 vim.g.root_spec = { "cwd" }
 
+vim.opt.clipboard = ""
+
 vim.opt.ignorecase = true
 vim.opt.smartcase = true
 
