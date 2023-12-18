@@ -45,7 +45,6 @@ duckdb = 'https://github.com/asdf-community/asdf-duckdb'
 legacy_version_file = true
 jobs = 2
 experimental = true
-missing_runtime_behavior = 'ignore'
 trusted_config_paths = [
   '~/.config/rtx',
 ]
