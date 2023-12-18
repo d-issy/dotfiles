@@ -1,6 +1,6 @@
 [tools]
 # languages
-deno = '1.37'
+deno = '1.39'
 flutter = 'latest'
 golang = '1.21'
 java = 'adoptopenjdk-17'
@@ -9,7 +9,7 @@ lua = '5.4'
 nodejs = ['18', '20']
 python = ['3.10', '3.11', '3.12']
 ruby = '3.2'
-rust = '1.73'
+rust = '1.74'
 scala = '3.3'
 
 # development tools
