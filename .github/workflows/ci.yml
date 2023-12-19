@@ -23,8 +23,7 @@ jobs:
       - name: rtx
         run: |
             curl https://rtx.jdx.dev/install.sh | sh
-            echo "$HOME/.local/share/rtx/bin" >> $GITHUB_PATH
-            echo "$HOME/.local/share/rtx/shims" >> $GITHUB_PATH
+            exec zsh -l
             rtx install
 
   lint:
