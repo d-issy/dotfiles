@@ -12,6 +12,4 @@ jobs:
         run: cargo install stylua
 
       - name: check
-        run: |
-          pwd
-          ls
+        run: stylua --check .
