@@ -8,4 +8,8 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - run: echo hello ci
+      - name: setup stylua
+        run: cargo install stylua
+
+      - name: lint
+        run: stylua '**.lua'
