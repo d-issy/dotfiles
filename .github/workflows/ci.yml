@@ -9,7 +9,6 @@ permissions:
 jobs:
   install-test:
     runs-on: ubuntu-latest
-    needs: setup
     steps:
       - uses: actions/checkout@v4
       - name: zsh
@@ -22,7 +21,6 @@ jobs:
 
   lint:
     runs-on: ubuntu-latest
-    needs: setup
     steps:
       - uses: actions/checkout@v4
       - name: cache
