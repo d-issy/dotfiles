@@ -5,7 +5,7 @@ on:
 
 defaults:
   run:
-    shell: bash
+    shell: zsh
 
 permissions:
   contents: read
@@ -16,6 +16,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: chezmoi
+        working-directory: home
         run: sh -c "$(curl -fsLS chezmoi.io/get)" -- init --apply -S .
 
   lint:
