@@ -11,6 +11,13 @@ permissions:
   contents: read
 
 jobs:
+  install-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: chezmoi
+        run: sh -c "$(curl -fsLS chezmoi.io/get)" -- init --apply -S .
+
   lint:
     runs-on: ubuntu-latest
     steps:
@@ -21,6 +28,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ~/.cargo/bin/
+          key: cache
 
       - name: setup stylua
         run: cargo install stylua
