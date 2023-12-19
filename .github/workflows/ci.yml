@@ -7,11 +7,18 @@ permissions:
   contents: read
 
 jobs:
-  install-test:
+  setup:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - run: |
+          apt update
+          apt install zsh
 
+  install-test:
+    runs-on: ubuntu-latest
+    needs: setup
+    steps:
       - name: Display the path
         run: |
           echo $ZSH_NAME $ZSH_VERSION
@@ -23,9 +30,8 @@ jobs:
 
   lint:
     runs-on: ubuntu-latest
+    needs: setup
     steps:
-      - uses: actions/checkout@v4
-
       - name: cache
         id: cache
         uses: actions/cache@v3
