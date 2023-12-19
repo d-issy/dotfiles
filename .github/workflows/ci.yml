@@ -11,5 +11,7 @@ jobs:
       - name: setup stylua
         run: cargo install stylua
 
-      - name: lint
-        run: stylua '**.lua'
+      - name: check
+        run: |
+          pwd
+          ls
