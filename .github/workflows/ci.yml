@@ -3,10 +3,6 @@ name: CI
 on:
   pull_request:
 
-defaults:
-  run:
-    shell: zsh {0}
-
 permissions:
   contents: read
 
@@ -15,6 +11,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - run: |
+          echo $ZSH_NAME $ZSH_VERSION
+        shell: zsh {0}
+
       - name: chezmoi
         working-directory: home
         run: sh -c "$(curl -fsLS chezmoi.io/get)" -- init --apply -S .
