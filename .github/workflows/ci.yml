@@ -12,8 +12,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: |
-          apt update
-          apt install zsh
+          sudo apt install zsh --no-install-recommends -y zsh
 
   install-test:
     runs-on: ubuntu-latest
