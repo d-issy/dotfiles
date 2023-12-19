@@ -12,7 +12,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - run: |
+      - name: Display the path
+        run: |
           echo $ZSH_NAME $ZSH_VERSION
         shell: zsh {0}
 
@@ -33,6 +34,7 @@ jobs:
           key: cache
 
       - name: setup stylua
+        if: ${{ steps.cache.outputs.cache-hit != 'true' }}
         run: cargo install stylua
 
       - name: check
