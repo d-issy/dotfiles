@@ -15,9 +15,12 @@ jobs:
         run: |
           sudo apt install zsh --no-install-recommends -y zsh
           sudo chsh -s zsh
+
       - name: chezmoi
         working-directory: home
         run: sh -c "$(curl -fsLS chezmoi.io/get)" -- init --apply -S .
+
+      - uses: jdx/rtx-action@v1
 
   lint:
     runs-on: ubuntu-latest
