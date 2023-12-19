@@ -7,22 +7,15 @@ permissions:
   contents: read
 
 jobs:
-  setup:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - run: |
-          sudo apt install zsh --no-install-recommends -y zsh
-
   install-test:
     runs-on: ubuntu-latest
     needs: setup
     steps:
-      - name: Display the path
+      - uses: actions/checkout@v4
+      - name: zsh
         run: |
-          echo $ZSH_NAME $ZSH_VERSION
-        shell: zsh {0}
-
+          sudo apt install zsh --no-install-recommends -y zsh
+          sudo chsh -s zsh
       - name: chezmoi
         working-directory: home
         run: sh -c "$(curl -fsLS chezmoi.io/get)" -- init --apply -S .
@@ -31,6 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: setup
     steps:
+      - uses: actions/checkout@v4
       - name: cache
         id: cache
         uses: actions/cache@v3
