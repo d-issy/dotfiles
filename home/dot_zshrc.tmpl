@@ -17,7 +17,6 @@ export GPG_TTY=$(tty)
 path=(
   $HOME/bin(N-/)
   $HOME/.local/bin(N-/)
-  $HOME/.local/share/rtx/bin(N-/)
   $path
 )
 typeset -U PATH
@@ -94,13 +93,13 @@ setopt share_history
 # commands #
 ############
 
-if which rtx &>/dev/null; then
-  eval "$(rtx activate zsh)"
-  eval "$(rtx completions zsh)"
+if which mise &>/dev/null; then
+  eval "$(mise activate zsh)"
+  eval "$(mise completion zsh)"
 
-  eval "$(rtx exec -- direnv hook zsh)"
-  eval "$(rtx exec -- starship init zsh)"
-  eval "$(rtx exec -- zoxide init zsh)"
+  eval "$(mise exec -- direnv hook zsh)"
+  eval "$(mise exec -- starship init zsh)"
+  eval "$(mise exec -- zoxide init zsh)"
 
   alias v=nvim
   export EDITOR=nvim
