@@ -40,11 +40,3 @@ gcloud = 'latest'
 
 [plugins]
 duckdb = 'https://github.com/asdf-community/asdf-duckdb'
-
-[settings]
-legacy_version_file = true
-jobs = 2
-experimental = true
-trusted_config_paths = [
-  '~/.config/rtx',
-]

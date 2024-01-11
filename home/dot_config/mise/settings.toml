@@ -1,0 +1,8 @@
+legacy_version_file = true
+
+trusted_config_paths = [
+  '~/.config/mise',
+]
+
+jobs = 2
+experimental = true
