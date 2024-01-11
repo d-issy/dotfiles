@@ -6,3 +6,6 @@ trusted_config_paths = [
 
 jobs = 2
 experimental = true
+
+not_found_auto_install = false
+log_level = 'warn'
