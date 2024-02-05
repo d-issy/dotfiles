@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  install-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: zsh
+        run: |
+          sudo apt install zsh --no-install-recommends -y zsh
+          sudo chsh -s zsh
+
+      - name: chezmoi
+        working-directory: home
+        run: sh -c "$(curl -fsLS chezmoi.io/get)" -- init --apply -S .
+
+      - name: rtx
+        run: |
+            curl https://rtx.jdx.dev/install.sh | sh
+            exec zsh -l
+            rtx install
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: cache
+        id: cache
+        uses: actions/cache@v3
+        with:
+          path: ~/.cargo/bin/
+          key: cache
+
+      - name: setup stylua
+        if: ${{ steps.cache.outputs.cache-hit != 'true' }}
+        run: cargo install stylua
+
+      - name: check
+        run: stylua --check .
