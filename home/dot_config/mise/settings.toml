@@ -11,4 +11,4 @@ not_found_auto_install = false
 log_level = 'warn'
 
 [status]
-missing_tools = false
+missing_tools = "never"
