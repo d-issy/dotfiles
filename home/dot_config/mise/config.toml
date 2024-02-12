@@ -1,15 +1,15 @@
 [tools]
 # languages
-deno = '1.39'
+deno = 'latest'
 flutter = 'latest'
-golang = '1.21'
+golang = '1.22'
 java = 'adoptopenjdk-21'
 kotlin = '1.9'
 lua = '5.4'
 nodejs = ['18', '20']
 python = ['3.10', '3.11', '3.12']
 ruby = '3.3'
-rust = '1.75'
+rust = 'latest'
 scala = '3.3'
 
 # development tools
