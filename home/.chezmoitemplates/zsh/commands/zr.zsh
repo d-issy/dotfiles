@@ -1,5 +1,3 @@
-{{- /* vim: set ft=zsh : */ -}}
-
 zr() {
   cd $(ghq list -p  | fzf --reverse)
 }

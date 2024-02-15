@@ -1,89 +1,95 @@
+"$schema" = "https://starship.rs/config-schema.json"
+
 add_newline = false
 scan_timeout = 10
-command_timeout = 100
+command_timeout = 500 # ms
 
-format = "$status$directory$all$fill$cmd_duration$git_branch$git_status$git_state$git_metrics$line_break$character"
+format = """\
+$directory\
+$localip\
+$python\
+$nodejs\
+$terraform\
+$line_break\
+$character\
+"""
 
+right_format = """\
+$git_branch\
+$git_commit\
+$git_metrics\
+$memory_usage\
+$battery\
+$time\
+$cmd_duration\
+"""
+
+
+# basic
 [fill]
-symbol = '-'
+symbol = "-"
 disabled = false
 
 [directory]
-format = "[$path]($style) $read_only"
+truncation_length = 5
+truncation_symbol = "*"
 
-[cmd_duration]
-format = "[$duration]($style) "
-show_milliseconds = true
-
-[git_branch]
-format = "[$symbol$branch]($style) "
-
-[git_status]
-format = '([$all_status $ahead_behind]($style))'
-
-[git_metrics]
+[localip]
+ssh_only = true
 disabled = false
-
-[character]
-vicmd_symbol = "[N](green)"
 
 [status]
 disabled = false
 symbol = "status="
 
+[memory_usage]
+format = "[mem=$ram_pct]($style) "
+disabled = false
+
 [time]
+format = "[$time]($style) "
+time_format = "%R"
+disabled = false
+
+[cmd_duration]
+format = "[$duration]($style) "
+min_time = 1000
+show_milliseconds = false
+
+[git_branch]
+format = "[$symbol$branch]($style) "
+symbol = ""
+
+[git_status]
 disabled = true
 
-[aws]
+[git_metrics]
 disabled = false
-format = " [$profile]($style)"
-force_display = true
 
-[gcloud]
-disabled = false
-format = " [$profile]($style)"
+[character]
+vimcmd_symbol = "[E](green)"
 
-[[battery.display]]
-threshold = 20
-
-[vagrant]
-disabled = true
-
-#############
-# languages #
-#############
-
+# language
 [package]
 disabled = true
 
-[kotlin]
-format = "[${symbol}=${version}]($style) "
-symbol = "kotlin"
-
-[golang]
-format = "[${symbol}=${version}]($style) "
-symbol = "go"
-
-[java]
-format = "[${symbol}=${version}]($style) "
-version_format = "v${major}"
-symbol = "java"
-
 [nodejs]
-format = "[${symbol}=${version}]($style) "
-symbol = "node"
-
-[php]
-format = "[${symbol}${version}]($style) "
-symbol = "php"
+symbol = "js"
+format = "([$symbol=${version}]($style) )"
+version_format = "${major}.${minor}"
 
 [python]
-format = "[${symbol}=${version}( \\(${virtualenv}\\))]($style) "
 symbol = "py"
-
-[scala]
-disabled = true
+format = "([$symbol=${version}]($style) )"
+version_format = "${major}.${minor}"
 
 [terraform]
-format = "[${symbol}=${version}\\($workspace\\)]($style)"
 symbol = "tf"
+format = "([$symbol=${version}]($style) )"
+version_format = "${major}.${minor}"
+
+# cloud
+[aws]
+disabled = true
+[gcloud]
+disabled = true

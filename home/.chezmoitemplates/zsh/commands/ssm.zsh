@@ -1,5 +1,3 @@
-{{- /* vim: set ft=zsh : */ -}}
-
 ssm() {
   local profile=$(aws configure list-profiles | fzf)
   if [ -z "$profile" ] ; then; return; fi

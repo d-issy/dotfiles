@@ -1,18 +1,30 @@
-# yaml-language-server: $schema=https://json.schemastore.org/lazygit.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/jesseduffield/lazygit/master/schema/config.json
 gui:
   language: en
-  nerdFontsVersion: '3'
-  sidePanelWidth: 0.15
+  nerdFontsVersion: "3"
+  sidePanelWidth: 0.30
+  expandFocusedSidePanel: true
   theme:
     activeBorderColor:
-      - blue
+      - green
       - bold
     inactiveBorderColor:
       - white
+    searchingActiveBorderColor:
+      - cyan
+      - bold
+    optionsTextColor:
+      - blue
     selectedLineBgColor:
       - reverse
-    selectedRangeBgColor:
-      - reverse
+    cherryPickedCommitBgColor:
+      - cyan
+    cherryPickedCommitFgColor:
+      - blue
+    unstagedChangesColor:
+      - red
+    defaultFgColor:
+      - default
   commandLogSize: 2
   showRandomTip: false
 quitOnTopLevelReturn: true
@@ -21,5 +33,5 @@ keybinding:
     quit: Q
     return: q
   files:
-    commitChanges: ''
+    commitChanges: ""
     commitChangesWithEditor: c
