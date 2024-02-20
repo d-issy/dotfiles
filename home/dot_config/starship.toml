@@ -7,9 +7,9 @@ command_timeout = 500 # ms
 format = """\
 $directory\
 $localip\
-$aws\
 $python\
 $nodejs\
+$aws\
 $terraform\
 $line_break\
 $character\
@@ -91,5 +91,5 @@ version_format = "${major}.${minor}"
 
 # cloud
 [aws]
-format = "(aws:[$profile]($style))"
+format = "(aws:[$profile]($style) )"
 
