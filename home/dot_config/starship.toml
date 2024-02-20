@@ -7,6 +7,7 @@ command_timeout = 500 # ms
 format = """\
 $directory\
 $localip\
+$aws\
 $python\
 $nodejs\
 $terraform\
@@ -90,6 +91,5 @@ version_format = "${major}.${minor}"
 
 # cloud
 [aws]
-disabled = true
-[gcloud]
-disabled = true
+format = "(aws:[$profile]($style))"
+
