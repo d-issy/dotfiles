@@ -29,8 +29,8 @@ return {
     "telescope.nvim",
     opts = function(_, opts)
       -- disable trouble
-      opts.defaults.mappings.i["<c-t>"] = nil
-      opts.defaults.mappings.i["<a-t>"] = nil
+      opts.defaults.mappings.i["<c-t>"] = false
+      opts.defaults.mappings.i["<a-t>"] = false
     end,
   },
 }

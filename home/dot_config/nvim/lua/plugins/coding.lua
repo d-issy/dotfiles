@@ -1,14 +1,28 @@
 return {
   {
+    "nvim-cmp",
+    opts = function(_, opts)
+      -- no selection first time
+      local cmp = require "cmp"
+      opts.mapping = vim.tbl_deep_extend("force", opts.mapping, {
+        ["<CR>"] = cmp.mapping.confirm { select = false },
+      })
+      opts.preselect = cmp.PreselectMode.None
+      opts.completion = {
+        completeopt = "menu,menuone,noinsert,noselect",
+      }
+    end,
+  },
+  {
     "LuaSnip",
     keys = {
       {
-        "<C-k>",
+        "<C-l>",
         function() require("luasnip").expand_or_jump() end,
         mode = { "i", "s" },
       },
       {
-        "<C-l>",
+        "<C-k>",
         function()
           if require("luasnip").choice_active() then
             require("luasnip").change_choice(1)
@@ -36,11 +50,5 @@ return {
       })
     end,
   },
-
-  -- disable community snippets
-  { "friendly-snippets", enabled = false },
-
-  -- use nvim-autopairs instead of mini.pairs
-  { "mini.pairs", enabled = false },
-  { "windwp/nvim-autopairs", event = "InsertEnter", opts = {} },
+  { "windwp/nvim-autopairs", event = "InsertEnter", config = true },
 }

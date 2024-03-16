@@ -2,7 +2,7 @@
 #!{{ lookPath "zsh" }}
 
 # nvim config {{ output "find" (joinPath .chezmoi.sourceDir "dot_config") "-type" "f" | sha256sum }}
-chezmoi unmanaged --path-style absolute | grep .config/nvim/| xargs -r rm -rv
+chezmoi unmanaged --path-style absolute | grep .config/nvim/lua | xargs -r rm -rv
 
 {{ if eq .chezmoi.os "darwin" }}
 # nvim config {{ output "find" (joinPath .chezmoi.sourceDir "dot_hammerspoon") "-type" "f" | sha256sum }}

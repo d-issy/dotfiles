@@ -13,14 +13,25 @@ end
 vim.opt.rtp:prepend(lazypath)
 
 require("lazy").setup {
+  defaults = { lazy = true },
   spec = {
-    { "LazyVim/LazyVim", import = "lazyvim.plugins" },
-    { import = "lazyvim.plugins.extras.coding.copilot" },
+    {
+      "LazyVim/LazyVim",
+      import = "lazyvim.plugins",
+      opts = {
+        news = {
+          lazyvim = false,
+          neovim = false,
+        },
+      },
+    },
     { import = "lazyvim.plugins.extras.editor.navic" },
+    { import = "lazyvim.plugins.extras.util.mini-hipatterns" },
     { import = "lazyvim.plugins.extras.util.project" },
 
     -- custom plugin settings
     { import = "plugins" },
     { import = "plugins.lang" },
+    { import = "plugins.extras" },
   },
 }
