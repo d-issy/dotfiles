@@ -8,6 +8,7 @@ return {
       ["typescript"] = { "prettier" },
       ["typescriptreact"] = { "prettier" },
       ["terraform"] = { "terraform_fmt" },
+      ["terraform-vars"] = { "terraform_fmt" },
       ["tf"] = { "terraform_fmt" },
     },
   },
