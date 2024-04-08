@@ -3,10 +3,11 @@ return {
   opts = {
     formatters_by_ft = {
       ["python"] = { "black", "isort" },
-      ["javascript"] = { "prettier" },
-      ["javascriptreact"] = { "prettier" },
-      ["typescript"] = { "prettier" },
-      ["typescriptreact"] = { "prettier" },
+      ["javascript"] = { "prettierd" },
+      ["javascriptreact"] = { "prettierd" },
+      ["typescript"] = { "prettierd" },
+      ["typescriptreact"] = { "prettierd" },
+      ["markdown"] = { "prettierd" },
       ["terraform"] = { "terraform_fmt" },
       ["terraform-vars"] = { "terraform_fmt" },
       ["tf"] = { "terraform_fmt" },
