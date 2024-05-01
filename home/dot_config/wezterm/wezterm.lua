@@ -18,8 +18,7 @@ wezterm.on("toggle-opacity", function(window, pane)
 end)
 
 return {
-  -- apperance
-  color_scheme = "Edge Dark (base16)",
+  color_scheme = "Catppuccin Macchiato",
   font = wezterm.font_with_fallback {
     "Hack Nerd Font Mono",
     "Hiragino Mincho Pro W3",
