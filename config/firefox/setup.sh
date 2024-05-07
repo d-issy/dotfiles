@@ -17,10 +17,10 @@ function get_profile_dir() {
 		firefox_dir="${HOME}/.mozilla/firefox"
 	else
 		echo "not found"
-		exn 1
+		exit 1
 	fi
 
-	inifile=$(find ${firefox_dir} -name installs.ini 2>/dev/null | head -n 1)
+	inifile=${firefox_dir}/installs.ini
 	if [ ! -f "${inifile}" ]; then
 		echo "cannot find firefox profile automatically"
 		exit 1
@@ -35,18 +35,19 @@ function get_profile_dir() {
 }
 
 function show_diff() {
+	profile_dir=$(get_profile_dir)
 	for target in ${targets[@]}; do
 		if [ -d ${target} ]; then
 			for file in $(ls ${target}); do
-				diff --color=auto -u $(get_profile_dir)/${file} ${target}/${file} 2>/dev/null || (
-					echo wll copy ${target}/${file}
+				diff --color=auto -u ${profile_dir}/${target}/${file} ${target}/${file} 2>/dev/null || (
+					echo ${target}/${file}:
 					cat ${target}/${file}
 					echo
 				)
 			done
 		elif [ -f ${target} ]; then
-			diff --color=auto -u $(get_profile_dir)/${target} ${target} 2>/dev/null || (
-				echo will copy ${target}
+			diff --color=auto -u ${profile_dir}/${target} ${target} 2>/dev/null || (
+				echo ${target}:
 				cat ${target}
 				echo
 			)
