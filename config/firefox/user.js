@@ -1,6 +1,7 @@
 // disable annoy
 user_pref("browser.shell.checkDefaultBrowser", false);
 user_pref("browser.aboutConfig.showWarning", false);
+user_pref("browser.warnOnQuitShortcut", false);
 user_pref("browser.discovery.enabled", false);
 user_pref("extensions.htmlaboutaddons.recommendations.enabled", false);
 user_pref("extensions.getAddons.showPane", false); // [HIDDEN PREF]
@@ -50,11 +51,23 @@ user_pref("signon.firefoxRelay.feature", "disabled");
 user_pref("signon.generation.enabled", false);
 user_pref("signon.management.page.breach-alerts.enabled", false);
 user_pref("signon.rememberSignons", false);
+// for permissions
+user_pref("permissions.default.camera", 2);
+user_pref("permissions.default.desktop-notification", 2);
+user_pref("permissions.default.geo", 2);
+user_pref("permissions.default.microphone", 2);
+user_pref("permissions.default.xr", 2);
 // for mozilla notify
 user_pref("app.shield.optoutstudies.enabled", false);
 user_pref("browser.crashReports.unsubmittedCheck.autoSubmit2", false);
 user_pref("browser.crashReports.unsubmittedCheck.enabled", false);
 user_pref("browser.tabs.crashReporting.sendReport", false);
+// https only mode
+user_pref("dom.security.https_only_mode", true);
+// doh
+user_pref("doh-rollout.disable-heuristics", true);
+user_pref("network.trr.mode", 2);
+user_pref("network.trr.uri", "https://firefox.dns.nextdns.io/");
 
 // disable telemetry
 user_pref("datareporting.policy.dataSubmissionEnabled", false);
@@ -77,6 +90,15 @@ user_pref("browser.newtabpage.activity-stream.telemetry", false);
 
 // bookmarks
 user_pref("browser.toolbars.bookmarks.visibility", "never");
+
+// sync settings
+user_pref("services.sync.engine.creditcards", false);
+user_pref("services.sync.engine.addons", true);
+user_pref("services.sync.engine.bookmarks", true);
+user_pref("services.sync.engine.history", false);
+user_pref("services.sync.engine.passwords", false);
+user_pref("services.sync.engine.prefs", false);
+user_pref("services.sync.engine.tabs", false);
 
 // custom
 user_pref("toolkit.legacyUserProfileCustomizations.stylesheets", true);
