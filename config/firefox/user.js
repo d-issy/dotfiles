@@ -14,6 +14,7 @@ user_pref("browser.startup.page", 3); // 0=blank, 1=home, 2=last visited page, 3
 /// tab groups
 user_pref("browser.ctrlTab.sortByRecentlyUsed", false);
 user_pref("browser.link.open_newwindow", 3); // 1=tab, 2=window, 3=current tab, 0=same tab
+user_pref("browser.tabs.closeWindowWithLastTab", false);
 user_pref("browser.tabs.loadInBackground", true);
 user_pref("browser.tabs.warnOnClose", false);
 user_pref("browser.taskbar.previews.enable", false);
