@@ -20,7 +20,7 @@ user_pref("browser.tabs.warnOnClose", false);
 user_pref("browser.taskbar.previews.enable", false);
 /// browsing
 user_pref("accessibility.browsewithcaret", false);
-user_pref("accessibility.typeaheadfind", true);
+user_pref("accessibility.typeaheadfind", false);
 user_pref("browser.newtabpage.activity-stream.asrouter.userprefs.cfr.addons", false); // prettier-ignore
 user_pref("browser.newtabpage.activity-stream.asrouter.userprefs.cfr.features", false); // prettier-ignore
 user_pref("general.autoScroll", false);
