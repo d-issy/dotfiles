@@ -29,7 +29,7 @@ zellij = 'latest'
 zoxide = 'latest'
 
 duckdb = '0.10'
-neovim = '0.9'
+neovim = '0.10'
 terraform = 'latest'
 
 # cloud
