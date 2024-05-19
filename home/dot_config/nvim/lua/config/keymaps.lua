@@ -1,9 +1,9 @@
 vim.keymap.set("n", "<leader>w", "<cmd>w<cr><esc>", { silent = true, desc = "Write" })
 vim.keymap.set(
   "n",
-  "<leader>q",
-  function() require("lazyvim.util").terminal.open "lazyvim" end,
-  { silent = true, desc = "Open LazyVim" }
+  "<leader>gg",
+  function() require("lazyvim.util").terminal.open "lazygit" end,
+  { silent = true, desc = "LazyGit" }
 )
 
 -- disable terminal switching
