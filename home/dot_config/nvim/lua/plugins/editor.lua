@@ -36,14 +36,7 @@ return {
   {
     "mini.files",
     opts = {
-      options = {
-        use_as_default_expand = true,
-      },
-      mappings = {
-        -- disable default mappings
-        go_in = "",
-        go_out = "",
-      },
+      options = { use_as_default_expand = true },
     },
   },
 }
