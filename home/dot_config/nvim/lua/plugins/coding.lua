@@ -17,12 +17,12 @@ return {
     "LuaSnip",
     keys = {
       {
-        "<C-l>",
+        "<C-k>",
         function() require("luasnip").expand_or_jump() end,
         mode = { "i", "s" },
       },
       {
-        "<C-k>",
+        "<C-l>",
         function()
           if require("luasnip").choice_active() then
             require("luasnip").change_choice(1)
@@ -50,5 +50,4 @@ return {
       })
     end,
   },
-  { "windwp/nvim-autopairs", event = "InsertEnter", config = true },
 }

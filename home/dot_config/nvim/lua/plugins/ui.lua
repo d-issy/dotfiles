@@ -36,17 +36,6 @@ return {
     end,
   },
   {
-    "lualine.nvim",
-    enabled = false,
-    opts = function(_, opts)
-      opts.sections.lualine_a[1] = { function() return vim.fn.mode():sub(1, 1):upper() end }
-      opts.sections.lualine_y = { { "filetype", colored = false } }
-
-      table.remove(opts.sections.lualine_x, 1)
-      table.remove(opts.sections.lualine_z, 1)
-    end,
-  },
-  {
     "bufferline.nvim",
     opts = {
       options = {
@@ -54,5 +43,12 @@ return {
         show_close_icon = false,
       },
     },
+  },
+  {
+    "edgy.nvim",
+    opts = function(_, opts)
+      -- disable neo-tree
+      opts.left = {}
+    end,
   },
 }

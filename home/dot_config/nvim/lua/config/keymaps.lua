@@ -1,12 +1,10 @@
-local map = function(mode, lhs, rhs, desc)
-  local opts = { silent = true }
-  if desc then
-    opts.desc = desc
-  end
-  vim.keymap.set(mode, lhs, rhs, opts)
-end
-
-map("n", "<leader>w", "<cmd>w<cr><esc>", "Write")
+vim.keymap.set("n", "<leader>w", "<cmd>w<cr><esc>", { silent = true, desc = "Write" })
+vim.keymap.set(
+  "n",
+  "<leader>q",
+  function() require("lazyvim.util").terminal.open "lazyvim" end,
+  { silent = true, desc = "Open LazyVim" }
+)
 
 -- disable terminal switching
 vim.keymap.del("t", "<C-h>")

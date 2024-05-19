@@ -15,20 +15,26 @@ vim.opt.rtp:prepend(lazypath)
 require("lazy").setup {
   defaults = { lazy = true },
   spec = {
+    --lazyvim
     {
       "LazyVim/LazyVim",
       import = "lazyvim.plugins",
       opts = {
         colorscheme = "catppuccin",
-        news = {
-          lazyvim = false,
-          neovim = false,
-        },
+        news = { lazyvim = false, neovim = false },
       },
     },
-    { import = "lazyvim.plugins.extras.editor.navic" },
+    --lazyvim.extra
+    { import = "lazyvim.plugins.extras.ui.edgy" },
+
+    { import = "lazyvim.plugins.extras.coding.copilot" },
+    { import = "lazyvim.plugins.extras.coding.luasnip" },
+    { import = "lazyvim.plugins.extras.editor.mini-diff" },
+    { import = "lazyvim.plugins.extras.editor.mini-files" },
+    { import = "lazyvim.plugins.extras.editor.outline" },
+    { import = "lazyvim.plugins.extras.editor.refactoring" },
+    { import = "lazyvim.plugins.extras.ui.treesitter-context" },
     { import = "lazyvim.plugins.extras.util.mini-hipatterns" },
-    { import = "lazyvim.plugins.extras.util.project" },
 
     -- custom plugin settings
     { import = "plugins" },
