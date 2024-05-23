@@ -73,8 +73,6 @@ export GPG_TTY=$(tty)
 {{ if lookPath "mise" -}}
 {{ output "mise" "activate" "zsh" }}
 {{ output "mise" "completion" "zsh" }}
-{{ output "mise" "exec" "--" "starship" "init" "zsh" }}
-{{ output "mise" "exec" "--" "zoxide" "init" "zsh" }}
 {{- end }}
 
 {{ if lookPath "direnv" -}}
