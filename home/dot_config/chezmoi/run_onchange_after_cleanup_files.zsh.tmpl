@@ -1,10 +1,11 @@
 {{- /* vim: set ft=zsh : */ -}}
 #!{{ lookPath "zsh" }}
 
-# nvim config {{ output "find" (joinPath .chezmoi.sourceDir "dot_config") "-type" "f" | sha256sum }}
+# config {{ output "find" (joinPath .chezmoi.sourceDir "dot_config") "-type" "f" | sha256sum }}
 chezmoi unmanaged --path-style absolute | grep .config/nvim/lua | xargs -r rm -rv
+chezmoi unmanaged --path-style absolute | grep .config/zsh | xargs -r rm -rv
 
-{{ if eq .chezmoi.os "darwin" }}
+{{ if eq .chezmoi.os "darwin" -}}
 # nvim config {{ output "find" (joinPath .chezmoi.sourceDir "dot_hammerspoon") "-type" "f" | sha256sum }}
 chezmoi unmanaged --path-style absolute | grep .hammerspoon/ | xargs -r rm -rv
-{{ end }}
+{{- end }}

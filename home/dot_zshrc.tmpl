@@ -4,16 +4,6 @@ export XDG_CONFIG_HOME=$HOME/.config
 export XDG_CACHE_HOME=$HOME/.cache
 export XDG_DATA_HOME=$HOME/.local/share
 
-{{ if eq .chezmoi.os "linux" -}}
-export AWS_VAULT_BACKEND=pass
-export AWS_VAULT_PASS_PREFIX=aws-vault
-export GPG_TTY=$(tty)
-{{- end }}
-
-########
-# path #
-########
-
 path=(
   $HOME/bin(N-/)
   $HOME/.local/bin(N-/)
@@ -21,11 +11,10 @@ path=(
 )
 typeset -U PATH
 
-fpath=(
-  $HOME/.config/zsh/plugins/zsh-completions/src(N-/)
-  $fpath
-)
-typeset -U FPATH
+
+# plugins
+source $XDG_CONFIG_HOME/zsh/plugins/antidote/antidote.zsh
+antidote load $XDG_CONFIG_HOME/zsh/zsh_plugins
 
 ###########
 # bindkey #
@@ -38,24 +27,6 @@ bindkey -M viins '^N' down-line-or-history
 bindkey -M viins '^P' up-line-or-history
 # own
 bindkey -M viins '^R' zsh-history
-
-# vi cursor
-function zle-keymap-select () {
-  case $KEYMAP in
-    vicmd) echo -ne '\e[1 q';;
-    viins|main) echo -ne '\e[5 q';;
-  esac
-}
-zle -N zle-keymap-select
-
-function zle-line-init() {
-  zle -K viins
-  echo -ne "\e[5 q"
-}
-zle -N zle-line-init
-
-echo -ne '\e[5 q'
-function preexec() { echo -ne '\e[5 q'; }
 
 ##############
 # completion #
@@ -93,28 +64,82 @@ setopt share_history
 # commands #
 ############
 
-if which mise &>/dev/null; then
-  eval "$(mise activate zsh)"
-  eval "$(mise completion zsh)"
+{{ if lookPath "pass" -}}
+export AWS_VAULT_BACKEND=pass
+export AWS_VAULT_PASS_PREFIX=aws-vault
+export GPG_TTY=$(tty)
+{{- end }}
 
-  eval "$(mise exec -- direnv hook zsh)"
-  eval "$(mise exec -- starship init zsh)"
-  eval "$(mise exec -- zoxide init zsh)"
+{{ if lookPath "mise" -}}
+{{ output "mise" "activate" "zsh" }}
+{{ output "mise" "completion" "zsh" }}
+{{- end }}
 
-  alias v=nvim
-  export EDITOR=nvim
-fi
+{{ if lookPath "direnv" -}}
+{{ output "direnv" "hook" "zsh" }}
+{{- end }}
 
-# my commands
-{{ template "zsh/commands/zsh_history.zsh" }}
-{{ template "zsh/commands/ssm.zsh" }}
-{{ template "zsh/commands/external.zsh" }}
-{{ template "zsh/commands/zr.zsh" }}
+{{ if lookPath "starship" -}}
+{{ output "starship" "init" "zsh" }}
+{{- end }}
+
+{{ if lookPath "zoxide" -}}
+{{ output "zoxide" "init" "zsh" }}
+{{- end }}
+
+{{ if lookPath "nvim" -}}
+alias v=nvim
+export EDITOR=nvim
+{{- end }}
+
+###############
+# my commands #
+###############
+function zle-keymap-select () {
+  case $KEYMAP in
+    vicmd) echo -ne '\e[1 q';;
+    viins|main) echo -ne '\e[5 q';;
+  esac
+}
+zle -N zle-keymap-select
+
+function zle-line-init() {
+  zle -K viins
+  echo -ne "\e[5 q"
+}
+zle -N zle-line-init
+
+echo -ne '\e[5 q'
+function preexec() { echo -ne '\e[5 q'; }
+
+function zsh-history() {
+  if which mise &>/dev/null; then
+    BUFFER=`history -n 1 | fzf --reverse --query "$BUFFER"`
+    CURSOR=$#BUFFER
+    zle reset-prompt
+  else
+    zle history-incremental-search-backward
+  fi
+}
+zle -N zsh-history
+
+function ssm() {
+  local profile=$(aws configure list-profiles | fzf)
+  if [ -z "$profile" ] ; then; return; fi
+  local target=$(aws --profile $profile ec2 describe-instances --filters 'Name=instance-state-name,Values=running' --query 'Reservations[*].Instances[*].[Tags[?Key==`Name`]|[0].Value, InstanceId]' --output text | fzf | cut -f2)
+  if [ -z "$target" ] ; then; return; fi
+  aws --profile $profile ssm start-session --target $target
+}
+
+function zr() {
+  cd $(ghq list -p  | fzf --reverse)
+}
 
 #########
 # alias #
 #########
 alias ..='cd ..'
+alias t='tmux attach || tmux new'
 alias ch='chezmoi'
 alias cha='chezmoi apply -v'
 alias chc='cd $(chezmoi source-path)'
