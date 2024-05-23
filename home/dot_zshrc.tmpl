@@ -4,16 +4,6 @@ export XDG_CONFIG_HOME=$HOME/.config
 export XDG_CACHE_HOME=$HOME/.cache
 export XDG_DATA_HOME=$HOME/.local/share
 
-{{ if eq .chezmoi.os "linux" -}}
-export AWS_VAULT_BACKEND=pass
-export AWS_VAULT_PASS_PREFIX=aws-vault
-export GPG_TTY=$(tty)
-{{- end }}
-
-########
-# path #
-########
-
 path=(
   $HOME/bin(N-/)
   $HOME/.local/bin(N-/)
@@ -21,11 +11,44 @@ path=(
 )
 typeset -U PATH
 
-fpath=(
-  $HOME/.config/zsh/plugins/zsh-completions/src(N-/)
-  $fpath
-)
-typeset -U FPATH
+
+# plugins
+source $XDG_CONFIG_HOME/zsh/plugins/antidote/antidote.zsh
+antidote load $XDG_CONFIG_HOME/zsh/zsh_plugins
+
+export NVM_LAZY_LOAD=true
+export NVM_COMPLETION=true
+export EVALCACHE_DISABLE=true
+
+{{ if lookPath "pass" -}}
+export AWS_VAULT_BACKEND=pass
+export AWS_VAULT_PASS_PREFIX=aws-vault
+export GPG_TTY=$(tty)
+{{- end }}
+
+{{ if lookPath "mise" -}}
+{{ output "mise" "activate" "zsh" }}
+{{ output "mise" "completion" "zsh" }}
+{{ output "mise" "exec" "--" "starship" "init" "zsh" }}
+{{ output "mise" "exec" "--" "zoxide" "init" "zsh" }}
+{{- end }}
+
+{{ if lookPath "direnv" -}}
+{{ output "direnv" "hook" "zsh" }}
+{{- end }}
+
+{{ if lookPath "starship" -}}
+{{ output "starship" "init" "zsh" }}
+{{- end }}
+
+{{ if lookPath "zoxide" -}}
+{{ output "zoxide" "init" "zsh" }}
+{{- end }}
+
+{{ if lookPath "nvim" -}}
+alias v=nvim
+export EDITOR=nvim
+{{- end }}
 
 ###########
 # bindkey #
@@ -93,28 +116,16 @@ setopt share_history
 # commands #
 ############
 
-if which mise &>/dev/null; then
-  eval "$(mise activate zsh)"
-  eval "$(mise completion zsh)"
-
-  eval "$(mise exec -- direnv hook zsh)"
-  eval "$(mise exec -- starship init zsh)"
-  eval "$(mise exec -- zoxide init zsh)"
-
-  alias v=nvim
-  export EDITOR=nvim
-fi
-
 # my commands
 {{ template "zsh/commands/zsh_history.zsh" }}
 {{ template "zsh/commands/ssm.zsh" }}
-{{ template "zsh/commands/external.zsh" }}
 {{ template "zsh/commands/zr.zsh" }}
 
 #########
 # alias #
 #########
 alias ..='cd ..'
+alias t='tmux attach || tmux new'
 alias ch='chezmoi'
 alias cha='chezmoi apply -v'
 alias chc='cd $(chezmoi source-path)'
