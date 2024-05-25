@@ -6,5 +6,11 @@ vim.api.nvim_create_autocmd("BufEnter", {
   end,
 })
 
+local chezmoi = require "util.chezmoi"
+vim.api.nvim_create_autocmd("BufWritePost", {
+  pattern = chezmoi.pattern,
+  callback = chezmoi.apply,
+})
+
 -- disable auto groups
 vim.api.nvim_create_augroup("lazyvim_wrap_spell", { clear = true })
