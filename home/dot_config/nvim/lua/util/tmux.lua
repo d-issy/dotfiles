@@ -5,19 +5,20 @@ local M = {}
 function M.is_enabled() return vim.fn.getenv "TMUX" ~= vim.NIL end
 
 ---@param cmd? string|string[]
-function M.popup(cmd)
+---@param opts? table
+function M.popup(cmd, opts)
   local tmux_popup = {
     "tmux",
     "popup",
     "-d",
-    "#{pane_current_path}",
+    opts and opts.cwd or "#{pane_current_path}",
     "-h",
     "95%",
     "-w",
     "95%",
     "-E",
   }
-  vim.fn.system(array.concat(tmux_popup, array.of(cmd)))
+  vim.fn.system(vim.list_extend(tmux_popup, array.of(cmd)))
 end
 
 return M

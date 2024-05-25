@@ -1,14 +1,14 @@
-local array = require "util.array"
 local tmux = require "util.tmux"
 
 local M = {}
 
 ---@param cmd? string[]|string
-function M.open(cmd)
+---@param opts? table
+function M.open(cmd, opts)
   if tmux.is_enabled() then
-    tmux.popup(cmd)
+    tmux.popup(cmd, opts)
   else
-    require("lazyvim.util").terminal.open(array.of(cmd))
+    require("lazyvim.util").terminal.open(cmd, opts)
   end
 end
 
