@@ -1,4 +1,4 @@
-M = {}
+local M = {}
 
 ---@generic T
 ---@param value? T|T[]
