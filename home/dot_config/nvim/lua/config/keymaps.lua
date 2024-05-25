@@ -6,6 +6,13 @@ vim.keymap.set(
   { silent = true, desc = "LazyGit" }
 )
 
+vim.keymap.set(
+  "n",
+  "<leader>ft",
+  function() require("util.terminal").open() end,
+  { silent = true, desc = "Open Terminal" }
+)
+
 -- disable terminal switching
 vim.keymap.del("t", "<C-h>")
 vim.keymap.del("t", "<C-j>")
