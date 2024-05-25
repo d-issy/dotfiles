@@ -2,9 +2,6 @@ return {
   {
     "neo-tree.nvim",
     opts = {
-      source_selector = {
-        winbar = true,
-      },
       window = {
         width = 25,
         mappings = { ["/"] = "none" },
