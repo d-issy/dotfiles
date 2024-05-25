@@ -11,4 +11,9 @@ return {
     -- disable signature help keymap
     keys[#keys + 1] = { "<c-k>", false, mode = "i" }
   end,
+  opts = {
+    diagnostic = {
+      update_in_insert = false,
+    },
+  },
 }
