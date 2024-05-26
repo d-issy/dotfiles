@@ -6,6 +6,8 @@
   diff = true
 [init]
   defaultBranch = main
+[commit]
+  verbose = true
 [push]
   default = current
 [pull]
