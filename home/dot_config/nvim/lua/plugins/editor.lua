@@ -2,11 +2,8 @@ return {
   {
     "neo-tree.nvim",
     opts = {
-      source_selector = {
-        winbar = true,
-      },
       window = {
-        width = 30,
+        width = 25,
         mappings = { ["/"] = "none" },
       },
       buffers = {
@@ -32,5 +29,11 @@ return {
       opts.defaults.mappings.i["<c-t>"] = false
       opts.defaults.mappings.i["<a-t>"] = false
     end,
+  },
+  {
+    "mini.files",
+    opts = {
+      options = { use_as_default_expand = true },
+    },
   },
 }

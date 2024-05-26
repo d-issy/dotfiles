@@ -6,25 +6,27 @@ gui:
   expandFocusedSidePanel: true
   theme:
     activeBorderColor:
-      - green
+      - '#f5a97f'
       - bold
     inactiveBorderColor:
-      - white
-    searchingActiveBorderColor:
-      - cyan
-      - bold
+      - '#494d64'
     optionsTextColor:
-      - blue
+      - '#8aadf4'
     selectedLineBgColor:
-      - reverse
+      - '#363a4f'
     cherryPickedCommitBgColor:
-      - cyan
+      - '#363a4f'
     cherryPickedCommitFgColor:
-      - blue
+      - '#cad3f5'
     unstagedChangesColor:
-      - red
+      - '#ed8796'
     defaultFgColor:
-      - default
+      - '#cad3f5'
+    searchingActiveBorderColor:
+      - '#eed49f'
+  authorColors:
+    '*': '#b7bdf8'
+
   commandLogSize: 2
   showRandomTip: false
 quitOnTopLevelReturn: true

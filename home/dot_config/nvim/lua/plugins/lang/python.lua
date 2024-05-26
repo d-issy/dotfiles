@@ -1,55 +1,71 @@
-return {
-  {
-    "nvim-lspconfig",
-    opts = {
-      setup = {
-        ["pyright"] = function(server, _)
-          require("lspconfig")[server].setup {
-            settings = {
-              python = {
-                analysis = {
-                  autoSearchPaths = true,
-                  diagnosticMode = "workspace",
-                  useLibraryCodeForTypes = true,
-                },
-              },
-            },
-            -- automatic select interpreter
-            on_new_config = function(new_config, _)
-              local util = require "lspconfig.util"
-              local filepath = vim.api.nvim_buf_get_name(vim.api.nvim_get_current_buf())
-              local python_root = util.root_pattern(
-                ".venv",
-                "venv",
-                "poetry.lock",
-                "Pipfile.lock",
-                "pyproject.toml",
-                "requirements.txt",
-                "setup.py",
-                "setup.cfg",
-                ".python-version", -- pyenv
-                ".tool-versions", -- asdf
-                ".git" -- git
-              )(filepath)
-              new_config.root_dir = python_root
+local function get_python_root()
+  return require("lspconfig.util").root_pattern(
+    ".venv",
+    "venv",
+    "poetry.lock",
+    "Pipfile.lock",
+    "pyproject.toml",
+    "setup.py",
+    "setup.cfg",
+    ".python-version",
+    ".git"
+  )(vim.api.nvim_buf_get_name(vim.api.nvim_get_current_buf()))
+end
 
-              local check = function(file) return util.path.exists(util.path.join(python_root, file)) end
-              if check ".venv" then
-                new_config.settings.python.pythonPath = util.path.join(python_root, ".venv", "bin", "python")
-              elseif check "venv" then
-                new_config.settings.python.pythonPath = util.path.join(python_root, "venv", "bin", "python")
-              elseif check "poetry.lock" then
-                new_config.cmd = { "poetry", "run", "pyright-langserver", "--stdio" }
-              elseif check "Pipfile.lock" then
-                new_config.cmd = { "pipenv", "run", "pyright-langserver", "--stdio" }
-              else
-                -- use default config
-              end
-            end,
-          }
-          return true
-        end,
+local function pyright_opts(setup_name)
+  local path = require("lspconfig.util").path
+  local python_root = get_python_root()
+
+  local cmd = { setup_name .. "-langserver", "--stdio" }
+  if path.exists(path.join(python_root, "poetry.lock")) then
+    cmd = { "poetry", "run", setup_name .. "-langserver", "--stdio" }
+  elseif path.exists(path.join(python_root, "Pipfile.lock")) then
+    cmd = { "pipenv", "run", setup_name .. "-langserver", "--stdio" }
+  end
+
+  return {
+    root_dir = get_python_root,
+    cmd = cmd,
+    settings = {
+      [setup_name] = {
+        analysis = {
+          autoSearchPaths = true,
+          useLibraryCodeForTypes = true,
+          diagnosticMode = "workspace",
+
+          diagnosticSeverityOverrides = {
+            strictParameterNoneValue = "none",
+            -- warning
+            reportDeprecated = "warning",
+            reportMissingParameterType = "warning",
+            reportMissingTypeArgument = "warning",
+            reportMissingTypeStubs = "warning",
+            reportUnusedClass = "warning",
+            reportUnusedFunction = "warning",
+            reportUnusedImport = "warning",
+            reportUnusedVariable = "warning",
+            -- none
+            reportInplicitOverride = "none",
+            reportUnknownArgumentType = "none",
+            reportUnknownLambdaType = "none",
+            reportUnknownMemberType = "none",
+            reportUnknownParameterType = "none",
+            reportUnknownVariableType = "none",
+          },
+        },
       },
+    },
+  }
+end
+
+return {
+  "nvim-lspconfig",
+  opts = {
+    setup = {
+      basedpyright = function(server, _opts)
+        require("lspconfig")[server].setup(pyright_opts(server))
+        return true
+      end,
     },
   },
 }
