@@ -15,10 +15,10 @@ M.set = function(key, fn, desc, opts)
 end
 
 ---@param key string
----@param mode? string|string[]
-M.delete = function(key, mode)
-  mode = mode or { "n" }
-  vim.keymap.del(mode, key)
+---@param mods? string|string[]
+M.delete = function(key, mods)
+  mods = mods or { "n" }
+  vim.keymap.del(mods, key)
 end
 
 return M
