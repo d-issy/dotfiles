@@ -15,4 +15,6 @@ function M.file_history()
   M.open { args = { "-f", vim.fn.trim(path) } }
 end
 
+function M.commit_log() M.open { args = { "log" } } end
+
 return M
