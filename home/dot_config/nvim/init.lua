@@ -39,6 +39,6 @@ require("lazy").setup {
     -- custom plugin settings
     { import = "plugins" },
     { import = "plugins.extras" },
-    { import = "plugins.lsp" },
+    { import = "plugins.lang" },
   },
 }
