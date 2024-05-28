@@ -23,7 +23,7 @@ user_pref("accessibility.browsewithcaret", false);
 user_pref("accessibility.typeaheadfind", false);
 user_pref("browser.newtabpage.activity-stream.asrouter.userprefs.cfr.addons", false); // prettier-ignore
 user_pref("browser.newtabpage.activity-stream.asrouter.userprefs.cfr.features", false); // prettier-ignore
-user_pref("general.autoScroll", false);
+user_pref("general.autoScroll", true);
 user_pref("general.smoothScroll", true);
 user_pref("layout.css.always_underline_links", true);
 user_pref("media.hardwaremediakeys.enabled", false);
