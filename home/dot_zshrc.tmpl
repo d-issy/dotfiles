@@ -70,6 +70,10 @@ export AWS_VAULT_PASS_PREFIX=aws-vault
 export GPG_TTY=$(tty)
 {{- end }}
 
+{{ if lookPath "fzf" -}}
+export FZF_DEFAULT_OPTS='--reverse --border'
+{{- end }}
+
 {{ if lookPath "mise" -}}
 {{ output "mise" "activate" "zsh" }}
 {{ output "mise" "completion" "zsh" }}
@@ -114,7 +118,7 @@ function preexec() { echo -ne '\e[5 q'; }
 
 function zsh-history() {
   if which mise &>/dev/null; then
-    BUFFER=`history -n 1 | fzf --reverse --query "$BUFFER"`
+    BUFFER=`history -n 1 | fzf --query "$BUFFER"`
     CURSOR=$#BUFFER
     zle reset-prompt
   else
@@ -132,7 +136,31 @@ function ssm() {
 }
 
 function zr() {
-  cd $(ghq list -p  | fzf --reverse)
+  cd $(ghq list -p  | fzf)
+}
+
+function tm() {
+  if ! tmux has-session 2>/dev/null; then
+    tmux new-session -s main -c "${HOME}" -d
+  fi
+
+  target=$(
+    tmux list-sessions -F "#{session_name}" | fzf \
+      --header='Ctrl+c: new' \
+      --bind='ctrl-c:reload(zoxide query --list)'
+  )
+
+  if ! tmux has-session -t "${target}" 2>/dev/null; then
+    session_name=$(basename "${target}")
+    tmux new-session -s $session_name -c "${target}" -d
+    target="${session_name}"
+  fi
+
+  if [ -z "${TMUX}" ]; then
+    tmux attach-session -t "${target}"
+  else
+    tmux switch-client -t "${target}"
+  fi
 }
 
 #########
