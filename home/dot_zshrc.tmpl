@@ -145,9 +145,10 @@ function tm() {
   fi
 
   target=$(
-    tmux list-sessions -F "#{session_name}" | fzf \
-      --header='Ctrl+c: new' \
-      --bind='ctrl-c:reload(zoxide query --list)'
+    tmux list-sessions -F "#S" | fzf \
+      --header='Ctrl+C: new | Ctrl-D: delete' \
+      --bind='ctrl-c:reload(zoxide query --list)' \
+      --bind='ctrl-d:execute(tmux kill-session -t {1})+reload(tmux list-sessions -F "#S")'
   )
 
   if ! tmux has-session -t "${target}" 2>/dev/null; then
