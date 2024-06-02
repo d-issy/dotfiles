@@ -1,0 +1,14 @@
+packages:
+  - name: duckdb/duckdb
+    type: github_release
+    repo_owner: duckdb
+    repo_name: duckdb
+    description: DuckDB is an in-process SQL OLAP Database Management System
+    version_constraint: false
+    asset: 'duckdb_cli-{{.OS}}-{{.Arch}}.{{.Format}}'
+    format: zip
+    replacements:
+      darwin: osx
+    supported_envs:
+      - linux
+      - darwin
