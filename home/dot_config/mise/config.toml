@@ -1,42 +1,20 @@
 [tools]
-# languages
 deno = 'latest'
 flutter = 'latest'
 golang = '1.22'
 java = 'adoptopenjdk-21'
-kotlin = '1'
+kotlin = '2'
 lua = '5'
-node = ['18', '20', '21']
+node = ['20', '21']
 python = ['3.10', '3.11', '3.12']
 ruby = '3.3'
 rust = '1'
-scala = '3.3'
+scala = '3.4'
+terraform = ['latest', '1.5']
 
 # development tools
-chezmoi = 'latest'
-direnv = 'latest'
-exa = 'latest'
-fzf = 'latest'
-ghq = 'latest'
-github-cli = 'latest'
-jq = 'latest'
-lazygit = 'latest'
-ripgrep = 'latest'
-shellcheck = 'latest'
-starship = 'latest'
 tmux = 'latest'
-zellij = 'latest'
-zoxide = 'latest'
-
 duckdb = '0.10'
-neovim = '0.10'
-terraform = 'latest'
-
-# cloud
-awscli = 'latest'
-aws-vault = 'latest'
-aws-sam-cli = 'latest'
-gcloud = 'latest'
 
 [plugins]
 duckdb = 'https://github.com/asdf-community/asdf-duckdb'

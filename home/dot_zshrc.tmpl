@@ -6,6 +6,7 @@ export XDG_DATA_HOME=$HOME/.local/share
 
 path=(
   $HOME/bin(N-/)
+  $XDG_DATA_HOME/aquaproj-aqua/bin/(N-/)
   $HOME/.local/bin(N-/)
   $path
 )
@@ -64,19 +65,17 @@ setopt share_history
 # commands #
 ############
 
-{{ if lookPath "pass" -}}
-export AWS_VAULT_BACKEND=pass
-export AWS_VAULT_PASS_PREFIX=aws-vault
-export GPG_TTY=$(tty)
-{{- end }}
-
-{{ if lookPath "fzf" -}}
-export FZF_DEFAULT_OPTS='--reverse --border'
+{{ if lookPath "aqua" -}}
+export AQUA_GLOBAL_CONFIG=$XDG_CONFIG_HOME/aqua/config.yaml
 {{- end }}
 
 {{ if lookPath "mise" -}}
 {{ output "mise" "activate" "zsh" }}
 {{ output "mise" "completion" "zsh" }}
+{{- end }}
+
+{{ if lookPath "fzf" -}}
+export FZF_DEFAULT_OPTS='--reverse --border'
 {{- end }}
 
 {{ if lookPath "direnv" -}}
@@ -117,13 +116,9 @@ echo -ne '\e[5 q'
 function preexec() { echo -ne '\e[5 q'; }
 
 function zsh-history() {
-  if which mise &>/dev/null; then
-    BUFFER=`history -n 1 | fzf --query "$BUFFER"`
-    CURSOR=$#BUFFER
-    zle reset-prompt
-  else
-    zle history-incremental-search-backward
-  fi
+  BUFFER=`history -n 1 | fzf --query "$BUFFER"`
+  CURSOR=$#BUFFER
+  zle reset-prompt
 }
 zle -N zsh-history
 
@@ -174,23 +169,22 @@ alias cha='chezmoi apply -v'
 alias chc='cd $(chezmoi source-path)'
 alias chd='chezmoi diff'
 alias chu='chezmoi update -v'
-alias dc='docker-compose'
-alias g='git'
-alias ga='git add'
-alias gb='git branch'
-alias gbd='git branch -D'
+alias ag='aqua generate'
+alias ai='aqua install --all --only-link'
+alias dc='docker compose'
 alias gc='git commit -v'
 alias gcl='git clean -fd'
 alias gf='git fetch'
-alias gr='git restore'
-alias gs='git status'
-alias gsc='git switch -c'
-alias gsw='git switch'
-alias la='ls -lAF'
+alias ld='lazydocker'
 alias lg='lazygit'
-alias ll='ls -lF'
-alias ls='ls --color'
 alias resh='exec $SHELL -l'
-alias ts='tig status'
+
+{{ if lookPath "eza" -}}
+alias ls='eza --git --git-repos'
+alias ll='eza --git --git-repos --header --long'
+{{ else }}
+alias ls='ls --color'
+alias ll='ls -lAF'
+{{- end }}
 
 alias -g G='| grep --color=auto'
