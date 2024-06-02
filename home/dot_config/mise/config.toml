@@ -11,10 +11,3 @@ ruby = '3.3'
 rust = '1'
 scala = '3.4'
 terraform = ['latest', '1.5']
-
-# development tools
-tmux = 'latest'
-duckdb = '0.10'
-
-[plugins]
-duckdb = 'https://github.com/asdf-community/asdf-duckdb'
