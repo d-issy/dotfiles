@@ -1,0 +1,24 @@
+% python
+
+# Run python script
+python <python_files>
+
+
+;; package managers
+
+# poetry add package
+poetry add <package>
+
+# poetry add dev package
+poetry add --group dev <package>
+
+# poetry lock
+poetry lock
+
+# Run python script with poetry
+poetry run python <python_files>
+
+# Run python script with pipenv
+pipenv run python <python_files>
+
+$ python_files: find . -type f -name '*.py' -not -path '*/__pycache__/*'

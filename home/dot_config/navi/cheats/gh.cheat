@@ -1,0 +1,46 @@
+% gh, github
+
+# Github CLI
+gh <subcommand>
+
+;; commands
+
+# open github issue/pull/commit_hash/file etc...
+gh browse <target>
+
+# open repogistory settings
+gh browse --settings
+
+# open pull request
+gh pr view --web
+
+# create pull request
+gh pr create
+
+# create draft pull request
+gh pr create --draft
+
+# create pull request with base branch
+gh pr create --base <base_branch>
+
+# checkout pull request
+gh pr checkout
+
+# gh pr ready (draft to ready)
+gh pr ready
+
+# merge pull request
+gh pr merge
+
+# merge pull request with delete branch
+gh pr merge --delete-branch
+
+# close pull request
+gh pr close
+
+# github login via cli
+gh auth login
+
+$ subcommand: echo 'auth browse codespace gitst issue org pr project release repo' | tr ' ' '\n'
+$ base_branch: git branch | grep -v '*' | tr -d ' '
+$ branch: git branch | tr -d ' *'

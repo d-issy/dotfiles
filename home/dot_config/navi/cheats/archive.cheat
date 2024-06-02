@@ -1,0 +1,21 @@
+% tar, archive
+
+# compress to tar.gz
+tar czf <output>.tar.gz <files>
+
+# extract gz/bz2/xz
+tar xvf <tar_archived_files>
+
+# compress to zip
+zip -r <output>.zip <files>
+
+# compress to zip with compression level
+zip -r <compression_level> <output>.zip <files>
+
+# extract zip
+unzip <zip_file>
+
+$ files: ls
+$ tar_archived_files: find . -type f | grep -E '.*\.(gz|bz2|xz)$'
+$ zip_file: find . -type f | grep -E '.*\.zip$'
+$ compression_level: seq 0 9

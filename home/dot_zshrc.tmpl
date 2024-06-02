@@ -91,6 +91,10 @@ export FZF_DEFAULT_OPTS='--reverse --border'
 {{ output "zoxide" "init" "zsh" }}
 {{- end }}
 
+{{ if lookPath "navi" -}}
+{{ output "navi" "widget" "zsh" }}
+{{- end }}
+
 {{ if lookPath "nvim" -}}
 alias v=nvim
 export EDITOR=nvim

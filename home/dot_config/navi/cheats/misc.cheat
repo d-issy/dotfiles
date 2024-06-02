@@ -1,0 +1,4 @@
+% shell
+
+# Re-call last with sudo
+sudo !!
