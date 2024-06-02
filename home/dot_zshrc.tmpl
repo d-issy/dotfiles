@@ -6,8 +6,8 @@ export XDG_DATA_HOME=$HOME/.local/share
 
 path=(
   $HOME/bin(N-/)
-  $XDG_DATA_HOME/aquaproj-aqua/bin/(N-/)
   $HOME/.local/bin(N-/)
+  $XDG_DATA_HOME/aquaproj-aqua/bin/(N-/)
   $path
 )
 typeset -U PATH
@@ -65,13 +65,15 @@ setopt share_history
 # commands #
 ############
 
-{{ if lookPath "aqua" -}}
-export AQUA_GLOBAL_CONFIG=$XDG_CONFIG_HOME/aqua/config.yaml
-{{- end }}
-
 {{ if lookPath "mise" -}}
 {{ output "mise" "activate" "zsh" }}
 {{ output "mise" "completion" "zsh" }}
+{{- end }}
+
+{{ if lookPath "aqua" -}}
+export AQUA_GLOBAL_CONFIG=$XDG_CONFIG_HOME/aqua/config.yaml
+export AQUA_POLICY_CONFIG=$XDG_CONFIG_HOME/aqua/policy.yaml
+{{ output "aqua" "completion" "zsh" }}
 {{- end }}
 
 {{ if lookPath "fzf" -}}

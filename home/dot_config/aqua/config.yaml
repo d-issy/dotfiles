@@ -9,6 +9,11 @@
 registries:
   - type: standard
     ref: v4.188.0  # renovate: depName=aquaproj/aqua-registry
+
+  - name: local
+    type: local
+    path: local.yaml
+
 packages:
   - name: BurntSushi/ripgrep@14.1.0
   - name: Versent/saml2aws@v2.36.16
@@ -16,13 +21,16 @@ packages:
   - name: aws/aws-cli@2.15.62
   - name: cli/cli@v2.50.0
   - name: crates.io/eza@0.18.16
+  - name: denisidoro/navi@v2.23.0
   - name: direnv/direnv@v2.34.0
   - name: jesseduffield/lazydocker@v0.23.3
   - name: jesseduffield/lazygit@v0.42.0
+  - name: jqlang/jq@jq-1.7.1
   - name: junegunn/fzf@0.52.1
   - name: koalaman/shellcheck@v0.10.0
   - name: neovim/neovim@v0.10.0
   - name: noahgorstein/jqp@v0.6.0
+  - name: sharkdp/bat@v0.24.0
   - name: starship/starship@v1.19.0
   - name: terraform-docs/terraform-docs@v0.18.0
   - name: twistedpair/google-cloud-sdk@478.0.0
@@ -30,4 +38,6 @@ packages:
   - name: x-motemen/ghq@v1.6.1
   - name: zellij-org/zellij@v0.40.1
 
-  # - name: duckdb/duckdb@v0.10.3
+  # local
+  - name: duckdb/duckdb@v0.10.3
+    registry: local
