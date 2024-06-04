@@ -2,6 +2,7 @@ local DISABLED_PLUGINS = {
   "friendly-snippets",
   "lualine.nvim",
   "nvim-snippets",
+  "nvim-spectre",
 }
 
 local plugin_settings = {}

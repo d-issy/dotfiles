@@ -12,10 +12,5 @@ vim.api.nvim_create_autocmd("BufWritePost", {
   callback = chezmoi.apply,
 })
 
-vim.api.nvim_create_autocmd("FileType", {
-  pattern = { "spectre_panel" },
-  callback = function() vim.treesitter.stop() end,
-})
-
 -- disable auto groups
 vim.api.nvim_create_augroup("lazyvim_wrap_spell", { clear = true })
