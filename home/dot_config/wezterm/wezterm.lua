@@ -10,11 +10,12 @@ config.color_scheme = "Catppuccin Macchiato"
 config.font = wezterm.font_with_fallback {
   "0xProto",
   "UDEV Gothic 35",
-  "Jetbrains Mono",
+  "Cica",
   "Hack Nerd Font Mono",
+  "YuGothic",
 }
--- ligatures
-config.harfbuzz_features = { "calt=1", "clig=1", "liga=1" }
+config.warn_about_missing_glyphs = false
+config.harfbuzz_features = { "calt=1", "clig=1", "liga=1" } -- ligatures
 
 config.font_size = 14
 config.hide_tab_bar_if_only_one_tab = true
