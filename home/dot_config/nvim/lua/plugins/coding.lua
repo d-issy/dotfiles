@@ -38,7 +38,7 @@ return {
       local from_lua = require "luasnip.loaders.from_lua"
 
       luasnip.setup { update_events = "TextChanged,TextChangedI" }
-      from_lua.lazy_load { paths = "~/.config/nvim/lua/snippets/" }
+      from_lua.lazy_load { paths = { "~/.config/nvim/lua/snippets/" } }
 
       vim.api.nvim_create_autocmd("InsertLeave", {
         pattern = "*",
