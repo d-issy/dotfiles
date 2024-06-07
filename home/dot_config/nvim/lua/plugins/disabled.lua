@@ -3,6 +3,7 @@ local DISABLED_PLUGINS = {
   "lualine.nvim",
   "nvim-snippets",
   "nvim-spectre",
+  "tokyonight.nvim",
 }
 
 local plugin_settings = {}
