@@ -71,8 +71,7 @@ setopt share_history
 {{- end }}
 
 {{ if lookPath "aqua" -}}
-export AQUA_GLOBAL_CONFIG=$XDG_CONFIG_HOME/aqua/config.yaml
-export AQUA_POLICY_CONFIG=$XDG_CONFIG_HOME/aqua/policy.yaml
+export AQUA_GLOBAL_CONFIG=$XDG_CONFIG_HOME/aqua/aqua.yaml
 {{ output "aqua" "completion" "zsh" }}
 {{- end }}
 
