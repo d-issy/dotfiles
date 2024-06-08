@@ -9,7 +9,11 @@ function M.apply()
   if M.is_enabled() then
     local out = vim.fn.trim(vim.fn.system { "chezmoi", "apply", "--verbose", "--force" })
     if out ~= "" then
-      vim.notify("chezmoi applyed\n" .. out)
+      vim.notify(out, nil, {
+        title = "chezmoi apply",
+        render = "wrapped-compact",
+        top_down = true,
+      })
     end
   end
 end
