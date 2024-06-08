@@ -3,5 +3,5 @@
 ## setup
 
 ```sh
-config/firefox/setup.sh
+setup.sh
 ```
