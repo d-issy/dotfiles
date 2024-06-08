@@ -147,6 +147,10 @@ function tm() {
       --bind='ctrl-d:execute(tmux kill-session -t {1})+reload(tmux list-sessions -F "#S")'
   )
 
+  if [ -z "${target}" ]; then
+    return
+  fi
+
   if ! tmux has-session -t "${target}" 2>/dev/null; then
     session_name=$(basename "${target}")
     tmux new-session -s $session_name -c "${target}" -d
