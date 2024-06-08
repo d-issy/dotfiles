@@ -3,8 +3,6 @@
 # Github CLI
 gh <subcommand>
 
-;; commands
-
 # open github issue/pull/commit_hash/file etc...
 gh browse <target>
 
@@ -41,6 +39,16 @@ gh pr close
 # github login via cli
 gh auth login
 
+
 $ subcommand: echo 'auth browse codespace gitst issue org pr project release repo' | tr ' ' '\n'
 $ base_branch: git branch | grep -v '*' | tr -d ' '
 $ branch: git branch | tr -d ' *'
+
+
+% gh copilot
+
+# gh copilot suggest shell command
+gh copilot suggest --target shell
+
+# gh install/update copilot extension
+gh extension install github/gh-copilot --force

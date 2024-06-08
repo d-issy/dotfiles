@@ -3,7 +3,6 @@
 # Run python script
 python <python_files>
 
-
 ;; package managers
 
 # poetry add package

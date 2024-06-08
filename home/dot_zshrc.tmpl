@@ -168,6 +168,22 @@ function tm() {
   fi
 }
 
+function nv() {
+  cmd=$(navi --print)
+
+  if [ -z "$cmd" ]; then
+    echo "<no selection>"
+    sleep 0.5
+    return
+  fi
+
+  $SHELL --login -i -c "$cmd"
+
+  echo
+  echo "(process exit)"
+  read -k 1
+}
+
 #########
 # alias #
 #########

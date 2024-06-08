@@ -2,3 +2,7 @@
 
 # Re-call last with sudo
 sudo !!
+
+
+# current directory
+pwd

@@ -1,30 +1,27 @@
-% g, git
-
-;; aliases
-
-# Git :: g
-git 
-
-# Git Status :: gs
-git status
-
-
-;; commands
+% git
 
 # Initialize a git repository
 git init
 
+# Git Status :: gs
+git status
+
 # Change Branch :: gsw
 git switch <branch>
 
-# Git Clone :: gcl
-git clone <git_repo>
+$ branch: git branch | awk '{print $NF}'
 
+% ghq, git
 
-% ghq
-
-# GHQ Clone :: gcl
+# GHQ Clone repository
 ghq get <git_repo>
 
-$ branch: git branch | awk '{print $NF}'
 $ git_repo: echo git@github.com/<username>/<repo>.git
+
+% git, lazygit, lg
+
+# lazygit :: lg
+lazygit
+
+# lazygit branch
+lazygit branch
