@@ -16,6 +16,7 @@ typeset -U PATH
 source $XDG_CONFIG_HOME/zsh/plugins/antidote/antidote.zsh
 antidote load $XDG_CONFIG_HOME/zsh/zsh_plugins
 
+
 ###########
 # bindkey #
 ###########
@@ -42,6 +43,23 @@ setopt hist_ignore_space
 setopt hist_no_store
 setopt hist_reduce_blanks
 setopt share_history
+
+##############
+# completion #
+##############
+autoload -U compinit
+compinit
+
+autoload colors
+zstyle ':completion:*' completer _expand_alias _complete _ignored
+
+zstyle ':completion:*:descriptions' format '%F{blue} %B%d%b%f'
+zstyle ':completion:*:warnings' format '%F{yello} No matches for: %d%f'
+
+zstyle ':completion:*' group-name ''
+zstyle ':completion:*' matcher-list '' 'm:{a-zA-Z}={A-Za-z}' 'r:|[._-]=* r:|=*' 'l:|=* r:|=*'
+zstyle ':completion:*' menu select=2
+zstyle ':completion:*' verbose yes
 
 ############
 # commands #
@@ -184,20 +202,3 @@ alias ll='ls -lAF'
 {{- end }}
 
 alias -g G='| grep --color=auto'
-
-##############
-# completion #
-##############
-autoload -U compinit
-compinit
-
-autoload colors
-zstyle ':completion:*' completer _expand_alias _complete _ignored
-
-zstyle ':completion:*:descriptions' format '%F{blue} %B%d%b%f'
-zstyle ':completion:*:warnings' format '%F{yello} No matches for: %d%f'
-
-zstyle ':completion:*' group-name ''
-zstyle ':completion:*' matcher-list '' 'm:{a-zA-Z}={A-Za-z}' 'r:|[._-]=* r:|=*' 'l:|=* r:|=*'
-zstyle ':completion:*' menu select=2
-zstyle ':completion:*' verbose yes
