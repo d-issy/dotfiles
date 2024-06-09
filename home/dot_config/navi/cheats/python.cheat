@@ -1,0 +1,31 @@
+% python
+
+# Run python script
+python <python_file> <extra_args>
+
+# Run python module
+python -m <python_module> <extra_args>
+
+# poetry add package
+poetry add <package> <extra_args>
+
+# poetry add dev package
+poetry add --group dev <package> <extra_args>
+
+# poetry lock
+poetry lock
+
+# Run python script with poetry
+poetry run python <python_file> <extra_args>
+
+# Run python module with poetry
+poetry run python -m <python_module> <extra_args>
+
+# Run python script with pipenv
+pipenv run python <python_file> <extra_args>
+
+# Run python module with pipenv
+pipenv run python -m <python_module> <extra_args>
+
+$ python_file: find . -type f -name '*.py' -not -path '*/__pycache__/*' -not -path '*/__init__.py' | sed 's|^\./||'
+$ python_module: find . -type f -name '*.py' -not -path '*/__pycache__/*' -not -path '*/__init__.py' -not -path '*test*' | sed -e 's|^\./||' -e 's|\.py$||' -e 's|/|.|g'

@@ -1,0 +1,36 @@
+% git
+
+# Initialize a git repository
+git init
+
+# Git Status :: gs
+git status
+
+# Change Branch :: gsw
+git switch <branch>
+
+# git commit :: gc
+git commit
+
+# git fetch :: gf
+git fetch
+
+# git clean all :: gcl
+git clean -fd
+
+$ branch: git branch | awk '{print $NF}'
+
+% ghq, git
+
+# GHQ Clone repository
+ghq get <git_repo>
+
+$ git_repo: echo git@github.com/<username>/<repo>.git
+
+% git, lazygit, lg
+
+# lazygit :: lg
+lazygit
+
+# lazygit branch
+lazygit branch

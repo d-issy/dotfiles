@@ -1,0 +1,13 @@
+% aqua
+
+# install packages with lazy :: ai
+aqua install --all --only-link
+
+# add package :: ag
+aqua generate -i -o $(chezmoi source-path)/dot_config/aqua/aqua.yaml
+
+# list packages :: al
+aqua list --all --installed
+
+# remove package :: ar
+aqua rm -i

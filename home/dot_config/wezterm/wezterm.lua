@@ -22,6 +22,7 @@ config.hide_tab_bar_if_only_one_tab = true
 config.adjust_window_size_when_changing_font_size = false
 config.use_ime = true
 config.macos_forward_to_ime_modifier_mask = "SHIFT|CTRL"
+config.audible_bell = "Disabled"
 config.keys = {
   { key = "q", mods = "CTRL", action = wezterm.action.SendKey { key = "q", mods = "CTRL" } },
   { key = "u", mods = "CMD", action = wezterm.action.EmitEvent "toggle-opacity" },

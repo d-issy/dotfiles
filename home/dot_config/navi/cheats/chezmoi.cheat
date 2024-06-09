@@ -1,0 +1,13 @@
+% chezmoi
+
+# chezmoi diff :: chd
+chezmoi diff
+
+# chezmoi apply :: cha
+chezmoi apply --verbose
+
+# chezmoi update :: chu
+chezmoi update --verbose
+
+# go to chezmoi source path :: chc
+cd $(chezmoi source-path)

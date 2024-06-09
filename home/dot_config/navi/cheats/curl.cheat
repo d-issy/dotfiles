@@ -1,0 +1,9 @@
+% curl
+
+# curl
+curl <url>
+
+# curl with http method
+curl -X <method> <url>
+
+$ method: echo -e "GET\nPOST\nPUT\nDELETE\nPATCH\nHEAD\nOPTIONS\nTRACE"

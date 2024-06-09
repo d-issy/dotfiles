@@ -91,6 +91,10 @@ export FZF_DEFAULT_OPTS='--reverse --border'
 {{ output "zoxide" "init" "zsh" }}
 {{- end }}
 
+{{ if lookPath "navi" -}}
+{{ output "navi" "widget" "zsh" }}
+{{- end }}
+
 {{ if lookPath "nvim" -}}
 alias v=nvim
 export EDITOR=nvim
@@ -164,21 +168,25 @@ function tm() {
   fi
 }
 
+function nv() {
+  cmd=$(navi --print)
+
+  if [ -z "$cmd" ]; then
+    return
+  fi
+
+  $SHELL --login -i -c "$cmd"
+
+  echo
+  echo "(process exit)"
+  read -k 1
+}
+
 #########
 # alias #
 #########
 alias ..='cd ..'
-alias t='tmux attach || tmux new'
-alias ch='chezmoi'
-alias cha='chezmoi apply -v'
-alias chc='cd $(chezmoi source-path)'
-alias chd='chezmoi diff'
-alias chu='chezmoi update -v'
-alias ag='aqua generate'
-alias ai='aqua install --all --only-link'
 alias dc='docker compose'
-alias gc='git commit -v'
-alias gcl='git clean -fd'
 alias gf='git fetch'
 alias ld='lazydocker'
 alias lg='lazygit'
