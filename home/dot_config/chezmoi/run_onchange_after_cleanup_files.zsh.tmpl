@@ -11,3 +11,11 @@ chezmoi unmanaged --path-style absolute | grep .config/navi | xargs -r rm -rv
 # nvim config {{ output "find" (joinPath .chezmoi.sourceDir "dot_hammerspoon") "-type" "f" | sha256sum }}
 chezmoi unmanaged --path-style absolute | grep .hammerspoon/ | xargs -r rm -rv
 {{- end }}
+
+# after symlink lazy
+if which aqua &>/dev/null; then
+  aqua install --all --only-link
+fi
+
+# compile zshrc
+zcompile ~/.zshrc

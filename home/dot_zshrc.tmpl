@@ -7,11 +7,10 @@ export XDG_DATA_HOME=$HOME/.local/share
 path=(
   $HOME/bin(N-/)
   $HOME/.local/bin(N-/)
-  $XDG_DATA_HOME/aquaproj-aqua/bin/(N-/)
+  $XDG_DATA_HOME/aquaproj-aqua/bin(N-/)
   $path
 )
 typeset -U PATH
-
 
 # plugins
 source $XDG_CONFIG_HOME/zsh/plugins/antidote/antidote.zsh
@@ -28,23 +27,6 @@ bindkey -M viins '^N' down-line-or-history
 bindkey -M viins '^P' up-line-or-history
 # own
 bindkey -M viins '^R' zsh-history
-
-##############
-# completion #
-##############
-autoload -U compinit
-compinit
-
-autoload colors
-zstyle ':completion:*' completer _expand_alias _complete _ignored
-
-zstyle ':completion:*:descriptions' format '%F{blue} %B%d%b%f'
-zstyle ':completion:*:warnings' format '%F{yello} No matches for: %d%f'
-
-zstyle ':completion:*' group-name ''
-zstyle ':completion:*' matcher-list '' 'm:{a-zA-Z}={A-Za-z}' 'r:|[._-]=* r:|=*' 'l:|=* r:|=*'
-zstyle ':completion:*' menu select=2
-zstyle ':completion:*' verbose yes
 
 ###########
 # history #
@@ -121,6 +103,7 @@ echo -ne '\e[5 q'
 function preexec() { echo -ne '\e[5 q'; }
 
 function zsh-history() {
+  # TODO: into navi cheat sheet
   BUFFER=`history -n 1 | fzf --query "$BUFFER"`
   CURSOR=$#BUFFER
   zle reset-prompt
@@ -128,6 +111,7 @@ function zsh-history() {
 zle -N zsh-history
 
 function ssm() {
+  # TODO: into navi cheat sheet
   local profile=$(aws configure list-profiles | fzf)
   if [ -z "$profile" ] ; then; return; fi
   local target=$(aws --profile $profile ec2 describe-instances --filters 'Name=instance-state-name,Values=running' --query 'Reservations[*].Instances[*].[Tags[?Key==`Name`]|[0].Value, InstanceId]' --output text | fzf | cut -f2)
@@ -136,6 +120,7 @@ function ssm() {
 }
 
 function zr() {
+  # TODO: into navi cheat sheet
   cd $(ghq list -p  | fzf)
 }
 
@@ -187,10 +172,8 @@ function nv() {
 #########
 alias ..='cd ..'
 alias dc='docker compose'
-alias gf='git fetch'
 alias ld='lazydocker'
 alias lg='lazygit'
-alias resh='exec $SHELL -l'
 
 {{ if lookPath "eza" -}}
 alias ls='eza --git --git-repos'
@@ -201,3 +184,20 @@ alias ll='ls -lAF'
 {{- end }}
 
 alias -g G='| grep --color=auto'
+
+##############
+# completion #
+##############
+autoload -U compinit
+compinit
+
+autoload colors
+zstyle ':completion:*' completer _expand_alias _complete _ignored
+
+zstyle ':completion:*:descriptions' format '%F{blue} %B%d%b%f'
+zstyle ':completion:*:warnings' format '%F{yello} No matches for: %d%f'
+
+zstyle ':completion:*' group-name ''
+zstyle ':completion:*' matcher-list '' 'm:{a-zA-Z}={A-Za-z}' 'r:|[._-]=* r:|=*' 'l:|=* r:|=*'
+zstyle ':completion:*' menu select=2
+zstyle ':completion:*' verbose yes
