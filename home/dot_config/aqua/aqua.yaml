@@ -32,6 +32,6 @@ packages:
   - name: starship/starship@v1.19.0
   - name: terraform-docs/terraform-docs@v0.18.0
   - name: twistedpair/google-cloud-sdk@479.0.0
-  - name: twpayne/chezmoi@v2.48.2
+  - name: twpayne/chezmoi@v2.49.0
   - name: x-motemen/ghq@v1.6.1
   - name: zellij-org/zellij@v0.40.1
