@@ -3,7 +3,11 @@ return {
   {
     "echasnovski/mini.files",
     version = "*",
-    config = true,
+    opts = {
+      mappings = {
+        synchronize = ";",
+      },
+    },
     keys = {
       {
         "<leader>e",
