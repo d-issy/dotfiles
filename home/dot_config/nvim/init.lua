@@ -12,37 +12,12 @@ end
 
 vim.opt.rtp:prepend(lazypath)
 
+vim.g.mapleader = " "
+vim.g.mapleaderlocal = " "
+
 require("lazy").setup {
   defaults = { lazy = true },
   spec = {
-    --lazyvim
-    {
-      "LazyVim/LazyVim",
-      import = "lazyvim.plugins",
-      opts = {
-        colorscheme = "catppuccin",
-        news = { lazyvim = false, neovim = false },
-      },
-    },
-    --lazyvim.extra
-
-    { import = "lazyvim.plugins.extras.dap.core" },
-    { import = "lazyvim.plugins.extras.test.core" },
-
-    { import = "lazyvim.plugins.extras.ui.edgy" },
-
-    { import = "lazyvim.plugins.extras.coding.copilot" },
-    { import = "lazyvim.plugins.extras.coding.luasnip" },
-    { import = "lazyvim.plugins.extras.coding.mini-surround" },
-    { import = "lazyvim.plugins.extras.editor.mini-files" },
-    { import = "lazyvim.plugins.extras.editor.outline" },
-    { import = "lazyvim.plugins.extras.editor.refactoring" },
-    { import = "lazyvim.plugins.extras.ui.treesitter-context" },
-    { import = "lazyvim.plugins.extras.util.mini-hipatterns" },
-
-    -- custom plugin settings
     { import = "plugins" },
-    { import = "plugins.extras" },
-    { import = "plugins.lang" },
   },
 }

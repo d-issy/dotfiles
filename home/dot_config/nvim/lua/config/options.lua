@@ -13,13 +13,15 @@ vim.opt.smartcase = true
 vim.opt.autoindent = true
 vim.opt.smartindent = true
 vim.opt.breakindent = true
+vim.opt.expandtab = true
+vim.opt.shiftwidth = 2
+vim.opt.shiftround = false
 
 vim.opt.backup = false
 vim.opt.writebackup = false
 
 vim.opt.clipboard = ""
 vim.opt.cmdheight = 0
-vim.opt.expandtab = true
 vim.opt.hlsearch = true
 vim.opt.laststatus = 0
 vim.opt.showcmd = true
@@ -41,3 +43,9 @@ vim.opt.fillchars = {
   diff = "╱",
   eob = " ",
 }
+
+vim.opt.foldlevel = 99
+vim.opt.smoothscroll = true
+vim.opt.foldexpr = "v:lua.require'lazyvim.util'.ui.foldexpr()"
+vim.opt.foldmethod = "expr"
+vim.opt.foldtext = ""
