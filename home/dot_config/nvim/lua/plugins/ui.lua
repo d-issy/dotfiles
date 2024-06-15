@@ -11,7 +11,6 @@ return {
           local icon = level:match "error" and " " or " "
           return " " .. icon .. count
         end,
-        always_show_bufferline = false,
         show_buffer_close_icons = false,
         show_close_icon = false,
       },
@@ -39,8 +38,20 @@ return {
     config = true,
   },
   {
-    "nvim-tree/nvim-web-devicons",
-    event = { "BufReadPost" },
-    config = true,
+    "folke/noice.nvim",
+    event = {
+      "InsertCharPre",
+      "TextChangedI",
+      "CmdlineEnter",
+      "CmdlineLeave",
+      "BufReadPre",
+    },
+    opts = {
+      cmdline = { view = "cmdline" },
+      messages = { view = "mini" },
+    },
   },
+  { "nvim-tree/nvim-web-devicons" },
+  { "MunifTanjim/nui.nvim" },
+  { "rcarriga/nvim-notify" },
 }

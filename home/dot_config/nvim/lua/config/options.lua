@@ -16,6 +16,7 @@ vim.opt.writebackup = false
 
 vim.opt.clipboard = ""
 vim.opt.cmdheight = 0
+vim.opt.confirm = true
 vim.opt.hlsearch = true
 vim.opt.laststatus = 0
 vim.opt.showcmd = true
