@@ -9,6 +9,7 @@ return {
     ensure_installed = {
       "lua",
       "luadoc",
+      "markdown",
       "printf",
       "vim",
       "vimdoc",
@@ -18,7 +19,7 @@ return {
       enable = true,
       use_languagetree = true,
     },
-    indent = { enable = true },
+    indent = { enable = false },
   },
   config = function(_, opts)
     require("nvim-treesitter.configs").setup(opts)

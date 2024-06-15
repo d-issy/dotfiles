@@ -9,7 +9,6 @@ return {
     },
     config = function(_, opts)
       require("lazyvim").setup(opts)
-      require "config.options"
     end,
   },
   {

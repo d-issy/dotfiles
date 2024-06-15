@@ -1,9 +1,3 @@
-vim.g.mapleader = " "
-vim.g.mapleaderlocal = " "
-
-vim.g.root_spec = { "cwd" }
-vim.g.autoformat = true
-
 vim.opt.encoding = "utf-8"
 vim.opt.fileencoding = "utf-8"
 
