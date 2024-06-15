@@ -10,6 +10,15 @@ return {
     config = function(_, opts)
       require("lazyvim").setup(opts)
     end,
+    keys = {
+      {
+        "<leader>bd",
+        function()
+          require("lazyvim.util.ui").bufremove()
+        end,
+        desc = "Buffer Remove",
+      },
+    },
   },
   {
     "nvim-lua/plenary.nvim",

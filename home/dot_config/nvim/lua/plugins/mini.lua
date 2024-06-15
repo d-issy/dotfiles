@@ -8,23 +8,9 @@ return {
       {
         "<leader>e",
         function()
-          MiniFiles.open()
+          MiniFiles.open() ---@diagnostic disable-line: undefined-global
         end,
         desc = "Files",
-      },
-    },
-  },
-  {
-    "echasnovski/mini.bufremove",
-    version = "*",
-    opts = { silent = true },
-    keys = {
-      {
-        "<leader>bd",
-        function()
-          MiniBufremove.unshow()
-        end,
-        desc = "Buffer Delete",
       },
     },
   },
