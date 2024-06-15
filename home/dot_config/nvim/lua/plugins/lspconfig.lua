@@ -18,7 +18,7 @@ return {
     "mason.nvim",
     "telescope.nvim",
   },
-  event = { "BufReadPost", "BufNew" },
+  event = { "BufReadPost" },
   opts = {
     servers = servers,
   },
