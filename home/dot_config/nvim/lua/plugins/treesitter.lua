@@ -7,9 +7,11 @@ return {
     sync_install = true,
     auto_install = true,
     ensure_installed = {
+      "diff",
       "lua",
       "luadoc",
       "markdown",
+      "markdown_inline",
       "printf",
       "vim",
       "vimdoc",
