@@ -9,6 +9,8 @@ return {
     },
     config = function(_, opts)
       require("lazyvim").setup(opts)
+      pcall(require, "config.options")
+      pcall(require, "config.theme")
     end,
     keys = {
       {

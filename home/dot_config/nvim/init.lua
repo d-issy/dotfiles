@@ -23,5 +23,3 @@ require("lazy").setup {
     { import = "plugins" },
   },
 }
-
-pcall(require, "config.options")
