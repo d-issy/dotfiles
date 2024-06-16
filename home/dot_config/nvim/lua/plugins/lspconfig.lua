@@ -25,6 +25,17 @@ return {
   config = function(_, opts)
     local lsp_zero = require "lsp-zero"
     lsp_zero.on_attach(function(_, bufnr)
+      -- vim.lsp settings
+      local border = require("util.border").generate "FloatBorder"
+
+      vim.lsp.handlers["textDocument/hover"] = vim.lsp.with(vim.lsp.handlers.hover, {
+        border = border,
+      })
+
+      vim.lsp.handlers["textDocument/signatureHelp"] = vim.lsp.with(vim.lsp.handlers.signature_help, {
+        border = border,
+      })
+
       -- default
       lsp_zero.default_keymaps { bufnr = bufnr }
 
@@ -32,7 +43,9 @@ return {
       local function map(l, r, desc)
         vim.keymap.set("n", l, r, { buffer = bufnr, desc = desc, silent = true })
       end
+
       map("<leader>cr", "<cmd>lua vim.lsp.buf.rename()<cr>", "LSP Rename")
+      map("<leader>ca", "<cmd>lua vim.lsp.buf.code_action()<cr>", "LSP CodeAction")
       map("gr", "<cmd>Telescope lsp_references<cr>", "LSP References")
       map("gd", "<cmd>Telescope lsp_definitions<cr>", "LSP Defenition")
 
@@ -52,6 +65,11 @@ return {
         end
       end
       map("]d", goto_next, "LSP Next Diagnostic")
+
+      -- signature help
+      vim.keymap.set("i", "<C-h>", function()
+        vim.lsp.buf.signature_help()
+      end, { buffer = bufnr, remap = false })
     end)
 
     local handler = function(server)

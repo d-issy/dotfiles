@@ -55,6 +55,10 @@ return {
           view = "popup",
         },
       },
+      lsp = {
+        hover = { enabled = false },
+        signature = { enabled = false },
+      },
     },
   },
   { "nvim-tree/nvim-web-devicons" },
