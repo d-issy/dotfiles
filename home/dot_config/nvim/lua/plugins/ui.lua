@@ -48,11 +48,17 @@ return {
     },
     opts = {
       cmdline = { view = "cmdline" },
-      messages = { view = "mini" },
       routes = {
         {
-          filter = { event = "msg_show", find = "Treesitter" },
-          view = "popup",
+          filter = {
+            event = "msg_show",
+            any = {
+              { find = "%d+L, %d+B" },
+              { find = "; after #%d" },
+              { find = "; before #%d" },
+            },
+          },
+          view = "mini",
         },
       },
       lsp = {

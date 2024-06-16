@@ -39,7 +39,7 @@ local hl = {
   Keyword = { fg = c.pink },
   Exception = { fg = c.pink },
 
-  Operator = { fg = c.light_gray },
+  Operator = { fg = c.white },
 
   PreProc = { fg = c.medium_gray },
   Include = { fg = c.medium_gray },
@@ -52,7 +52,7 @@ local hl = {
   Structure = { fg = c.white },
   Typedef = { fg = c.white },
 
-  Special = { fg = c.medium_gray },
+  Special = { fg = c.white },
   SpecialChar = { fg = c.medium_gray },
   Tag = { fg = c.medium_gray },
   Delimiter = { fg = c.medium_gray },
@@ -60,6 +60,10 @@ local hl = {
   Debug = { fg = c.medium_gray },
 
   WinBar = { fg = c.white, bg = c.black },
+
+  ["@lsp.mod.global"] = { fg = c.medium_gray },
+  ["@lsp.type.property"] = { fg = c.light_gray },
+  ["@module"] = { fg = c.light_gray },
 }
 
 -- colorschme load
