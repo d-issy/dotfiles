@@ -7,7 +7,7 @@ function M.open(opts)
 
   require("util.terminal").open(cmd)
   require("util.git").refresh()
-  require("util.chezmoi").apply()
+  -- require("util.chezmoi").apply()
 end
 
 function M.file_history()
@@ -15,6 +15,8 @@ function M.file_history()
   M.open { args = { "-f", vim.fn.trim(path) } }
 end
 
-function M.commit_log() M.open { args = { "log" } } end
+function M.commit_log()
+  M.open { args = { "log" } }
+end
 
 return M
