@@ -3,6 +3,7 @@ local keymap = require "util.keymap"
 keymap.set("<leader>w", "<cmd>w<cr>", "Write")
 keymap.set("<leader>qq", "<cmd>qa<cr>", "Quit and Save All")
 keymap.set("<leader>md", "<cmd>delmarks! | delmarks A-Z0-9<cr>", "Delete All Marks")
+keymap.set("<esc>", "<cmd>noh<cr><esc>", "esc", { mods = { "i", "n" } })
 
 local lazygit = function()
   require("util.lazygit").open { cwd = require("lazyvim.util").root.git() }
