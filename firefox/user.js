@@ -69,6 +69,8 @@ user_pref("dom.security.https_only_mode", true);
 user_pref("doh-rollout.disable-heuristics", true);
 user_pref("network.trr.mode", 2);
 user_pref("network.trr.uri", "https://firefox.dns.nextdns.io/");
+// disable fill form
+user_pref("browser.formfill.enable", false);
 
 // disable telemetry
 user_pref("datareporting.policy.dataSubmissionEnabled", false);
