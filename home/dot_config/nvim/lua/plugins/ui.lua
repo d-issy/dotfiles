@@ -67,7 +67,8 @@ return {
       },
     },
   },
-  { "nvim-tree/nvim-web-devicons" },
+  { "brenoprata10/nvim-highlight-colors", event = { "UIEnter" }, opts = {} },
+  { "nvim-tree/nvim-web-devicons", event = { "UIEnter" }, opts = {} },
   { "MunifTanjim/nui.nvim" },
   { "rcarriga/nvim-notify" },
 }

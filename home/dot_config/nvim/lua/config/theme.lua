@@ -1,69 +1,57 @@
--- komau color pallet
-local c = {
-  black = "#222222",
-  medium_gray = "#767676",
-  white = "#F5EEE6",
-  light_black = "#424242",
-  lighter_black = "#545454",
-  subtle_black = "#303030",
-  light_gray = "#999999",
-  lighter_gray = "#CCCCCC",
-  lightest_gray = "#E5E5E5",
-  yellow = "#FED442",
-  pink = "#D73A49",
-  green = "#22863A",
-  red = "#B31D28",
-  orange = "#E36209",
-  blue = "#005CC5",
+local palette = {
+  bg = "#272727",
+  default = "#acacac",
+  low = "#797979",
+  search = "#f2f2aa",
+
+  string = "#a6da95",
+  error = "#ed8796",
+  warning = "#eed49f",
+  info = "#7dc4e4",
+  hint = "#8aadf4",
+
+  visual = "#ffffff",
+  visual_bg = "#383838",
 }
 
 local hl = {
-  Normal = { fg = c.white, bg = c.black },
-  Cursor = { fg = c.lighter_gray, bg = c.lighter_black },
-  Comment = { fg = c.lighter_black },
+  -- reset colors
+  Normal = { fg = palette.default, bg = palette.bg },
+  WinBar = { fg = palette.default, bg = palette.bg },
+  Comment = { fg = palette.low },
 
-  Constant = { fg = c.medium_gray },
-  Character = { fg = c.medium_gray },
-  Number = { fg = c.medium_gray },
-  Boolean = { fg = c.medium_gray },
-  Float = { fg = c.medium_gray },
-  String = { fg = c.medium_gray },
+  Visual = { fg = palette.visual, bg = palette.visual_bg },
 
-  Identifier = { fg = c.white },
-  Function = { fg = c.white },
+  Identifier = { fg = palette.default },
+  Function = { fg = palette.default },
+  Constant = { fg = palette.default },
+  String = { fg = palette.default },
+  Statement = { fg = palette.default },
+  Variable = { fg = palette.default },
+  PreProc = { fg = palette.default },
+  Type = { fg = palette.default },
+  Todo = { fg = palette.default },
 
-  Statement = { fg = c.pink },
-  Conditional = { fg = c.pink },
-  Repeat = { fg = c.pink },
-  Label = { fg = c.pink },
-  Keyword = { fg = c.pink },
-  Exception = { fg = c.pink },
+  Search = { fg = palette.search, bg = palette.bg },
+  CurSearch = { fg = palette.search, bg = palette.bg, underline = true },
+  ["@variable"] = { fg = palette.default },
 
-  Operator = { fg = c.white },
+  -- set
+  Special = { fg = palette.low },
+  Operator = { fg = palette.low },
+  ["@punctuation.bracket"] = { fg = palette.low },
+  ["@punctuation.delimiter"] = { fg = palette.low },
 
-  PreProc = { fg = c.medium_gray },
-  Include = { fg = c.medium_gray },
-  Define = { fg = c.medium_gray },
-  Macro = { fg = c.medium_gray },
-  Precondit = { fg = c.medium_gray },
+  DiagnosticError = { fg = palette.error },
+  DiagnosticWarn = { fg = palette.warning },
+  DiagnosticInfo = { fg = palette.info },
+  DiagnosticHint = { fg = palette.hint },
 
-  Type = { fg = c.white },
-  StorageClass = { fg = c.white },
-  Structure = { fg = c.white },
-  Typedef = { fg = c.white },
+  DiagnosticUnnecessary = { fg = palette.hint, underline = true },
+  DiagnosticUnderlineError = { fg = palette.error, underline = true },
 
-  Special = { fg = c.white },
-  SpecialChar = { fg = c.medium_gray },
-  Tag = { fg = c.medium_gray },
-  Delimiter = { fg = c.medium_gray },
-  SpecialComment = { fg = c.medium_gray },
-  Debug = { fg = c.medium_gray },
-
-  WinBar = { fg = c.white, bg = c.black },
-
-  ["@lsp.mod.global"] = { fg = c.medium_gray },
-  ["@lsp.type.property"] = { fg = c.light_gray },
-  ["@module"] = { fg = c.light_gray },
+  -- sql
+  ["@type.builtin.sql"] = { fg = palette.default },
 }
 
 -- colorschme load
