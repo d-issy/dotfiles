@@ -37,8 +37,24 @@ return {
     event = { "BufReadPost" },
     config = true,
   },
+  {
+    "stevearc/dressing.nvim",
+    opts = {},
+    init = function()
+      ---@diagnostic disable-next-line: duplicate-set-field
+      vim.ui.select = function(...)
+        require("lazy").load { plugins = { "dressing.nvim" } }
+        return vim.ui.select(...)
+      end
+      ---@diagnostic disable-next-line: duplicate-set-field
+      vim.ui.input = function(...)
+        require("lazy").load { plugins = { "dressing.nvim" } }
+        return vim.ui.input(...)
+      end
+    end,
+  },
   { "brenoprata10/nvim-highlight-colors", event = { "UIEnter" }, opts = {} },
-  { "nvim-tree/nvim-web-devicons", event = { "UIEnter" }, opts = {} },
+  { "nvim-tree/nvim-web-devicons" },
   { "MunifTanjim/nui.nvim" },
   { "rcarriga/nvim-notify" },
 }
