@@ -106,6 +106,7 @@ local hl = {
   TelescopeNormal = { fg = palette.ui, bg = palette.bg },
   TelescopeBorder = { fg = palette.border },
   TelescopeSelection = { bg = palette.visual },
+  TelescopeMatching = { fg = palette.search },
 
   -- GitSigns
   GitSignsAdd = { fg = palette.add },
