@@ -3,6 +3,7 @@ return {
   dependencies = {
     "hrsh7th/cmp-nvim-lsp",
     "hrsh7th/cmp-path",
+    "copilot-cmp",
     "lsp-zero.nvim",
     "LuaSnip",
     "saadparwaiz1/cmp_luasnip",
@@ -14,9 +15,10 @@ return {
 
     return {
       sources = cmp.config.sources {
-        { name = "luasnip" },
-        { name = "nvim_lsp" },
-        { name = "path" },
+        { name = "luasnip", group_index = 2 },
+        { name = "nvim_lsp", group_index = 2 },
+        { name = "path", group_index = 2 },
+        { name = "copilot", group_index = 3 },
       },
       mapping = cmp.mapping.preset.insert {
         ["<Tab>"] = cmp.mapping.confirm { select = false },

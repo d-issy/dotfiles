@@ -36,10 +36,9 @@ return {
         border = border,
       })
 
-      -- default
+      -- keymaps
       lsp_zero.default_keymaps { bufnr = bufnr }
 
-      -- custom
       local function map(l, r, desc)
         vim.keymap.set("n", l, r, { buffer = bufnr, desc = desc, silent = true })
       end
