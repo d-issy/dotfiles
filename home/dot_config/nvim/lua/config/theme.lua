@@ -129,9 +129,9 @@ local hl = {
   DiagnosticUnnecessary = { link = "DiagnosticUnderlineHint" },
   DiagnosticDeprecated = { strikethrough = true, sp = palette.warning },
 
-  DiffAdd = { bg = palette.add },
-  DiffChange = { bg = palette.change },
-  DiffDelete = { bg = palette.delete },
+  DiffAdd = { fg = palette.bg, bg = palette.add },
+  DiffChange = { fg = palette.bg, bg = palette.change },
+  DiffDelete = { fg = palette.bg, bg = palette.delete },
 }
 
 -- colorschme load
