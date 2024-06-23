@@ -19,4 +19,24 @@ return {
       end,
     })
   end,
+  keys = {
+    {
+      "<C-k>",
+      function()
+        require("luasnip").expand_or_jump()
+      end,
+      mode = { "i", "s" },
+    },
+    {
+      "<C-l>",
+      function()
+        if require("luasnip").choice_active() then
+          require("luasnip").change_choice(1)
+        else
+          require("luasnip").jump(-1)
+        end
+      end,
+      mode = { "i", "s" },
+    },
+  },
 }
