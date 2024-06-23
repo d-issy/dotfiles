@@ -23,6 +23,4 @@ return {
     },
   },
   { "nvim-lua/plenary.nvim", event = { "UIEnter" } },
-  { "nvim-neotest/nvim-nio" },
-  { "antoinemadec/FixCursorHold.nvim" },
 }

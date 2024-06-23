@@ -3,8 +3,9 @@ return {
   dependencies = {
     "nvim-neotest/neotest-go",
     "nvim-neotest/neotest-python",
-    "nvim-neotest/nvim-nio",
+    -- requirements
     "antoinemadec/FixCursorHold.nvim",
+    "nvim-neotest/nvim-nio",
   },
   config = function()
     local neotest_ns = vim.api.nvim_create_namespace "neotest"
