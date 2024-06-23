@@ -4,7 +4,7 @@ return {
   event = { "BufReadPost" },
   opts = {
     formatters_by_ft = {
-      ['lua'] = { 'stylua' },
+      ["lua"] = { "stylua" },
       ["python"] = { "black", "isort" },
       ["go"] = { "goimports", "gofumpt" },
 
