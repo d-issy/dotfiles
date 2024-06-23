@@ -12,7 +12,7 @@ return {
       {
         "<leader>e",
         function()
-          MiniFiles.open() ---@diagnostic disable-line: undefined-global
+          require("mini.files").open()
         end,
         desc = "Files",
       },

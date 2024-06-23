@@ -37,36 +37,6 @@ return {
     event = { "BufReadPost" },
     config = true,
   },
-  {
-    "folke/noice.nvim",
-    event = {
-      "InsertCharPre",
-      "TextChangedI",
-      "CmdlineEnter",
-      "CmdlineLeave",
-      "BufReadPre",
-    },
-    opts = {
-      cmdline = { view = "cmdline" },
-      routes = {
-        {
-          filter = {
-            event = "msg_show",
-            any = {
-              { find = "%d+L, %d+B" },
-              { find = "; after #%d" },
-              { find = "; before #%d" },
-            },
-          },
-          view = "mini",
-        },
-      },
-      lsp = {
-        hover = { enabled = false },
-        signature = { enabled = false },
-      },
-    },
-  },
   { "brenoprata10/nvim-highlight-colors", event = { "UIEnter" }, opts = {} },
   { "nvim-tree/nvim-web-devicons", event = { "UIEnter" }, opts = {} },
   { "MunifTanjim/nui.nvim" },
