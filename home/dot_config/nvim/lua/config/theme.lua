@@ -1,4 +1,6 @@
 local palette = {
+  none = "NONE",
+
   bg = "#282828",
   default = "#9c9c9c",
 
@@ -57,13 +59,15 @@ local hl = {
   ["@function.builtin"] = { link = "Function" },
   ["@constant.builtin"] = { link = "Constant" },
   ["@module"] = { fg = palette.low },
-
-  -- python
-  ["@lsp.type.namespace.python"] = { fg = palette.default },
+  ["@lsp.mod.global"] = { fg = palette.low },
+  ["@lsp.mod.defaultLibrary"] = { fg = palette.low },
 
   -- go
   ["@variable.parameter.go"] = { fg = palette.low },
   ["@property.go"] = { fg = palette.low },
+
+  -- python
+  ["@lsp.type.namespace.python"] = { fg = palette.default },
 
   -- sql
   ["@type.builtin.sql"] = { fg = palette.default },
@@ -71,6 +75,10 @@ local hl = {
   -------------
   -- plugins --
   -------------
+
+  -- Copilot
+  CopilotSuggestion = { fg = palette.low },
+  CopilotAnnotation = { fg = palette.ui },
 
   -- DropBar
   Directory = { fg = palette.folder },
@@ -82,7 +90,17 @@ local hl = {
   MiniFilesCursorLine = { bg = palette.visual },
 
   -- Cmp
+  CmpDocumentation = { fg = palette.default },
+  CmpDocumentationBorder = { fg = palette.border },
+  CmpGhostText = { fg = palette.low },
+
+  CmpItemAbbr = { fg = palette.default, bg = palette.none },
   CmpItemAbbrDeprecated = { link = "DiagnosticDeprecated" },
+
+  CmpItemMenu = { fg = palette.ui, bg = palette.none },
+
+  CmpItemKind = { fg = palette.ui, bg = palette.none },
+  CmpItemKindCopilot = { fg = "#6cc644", bg = palette.none },
 
   -- Telescope
   TelescopeNormal = { fg = palette.ui, bg = palette.bg },
