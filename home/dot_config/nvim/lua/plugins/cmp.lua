@@ -15,10 +15,10 @@ return {
 
     return {
       sources = cmp.config.sources {
-        { name = "luasnip", group_index = 2 },
-        { name = "nvim_lsp", group_index = 2 },
-        { name = "path", group_index = 2 },
-        { name = "copilot", group_index = 3 },
+        { name = "luasnip", group_index = 1 },
+        { name = "nvim_lsp", group_index = 1 },
+        { name = "path", group_index = 1 },
+        { name = "copilot", group_index = 2 },
       },
       mapping = cmp.mapping.preset.insert {
         ["<Tab>"] = cmp.mapping.confirm { select = false },
