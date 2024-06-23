@@ -12,8 +12,16 @@ chezmoi unmanaged --path-style absolute | grep .config/navi/cheats | xargs -r rm
 chezmoi unmanaged --path-style absolute | grep .hammerspoon/ | xargs -r rm -rv
 {{- end }}
 
+{{ if (and (eq .chezmoi.os "linux") (.chezmoi.kernel.osrelease | lower | contains "microsoft")) -}}
+# on WSL {{ output "cat" (joinPath .chezmoi.sourceDir "dot_config" "wezterm" "wezterm.lua") | sha256sum }}
+if [ -d "/mnt/c/Users/$(whoami)" ]; then
+  cp -v ~/.config/wezterm/wezterm.lua /mnt/c/Users/$(whoami)/.wezterm.lua
+fi
+{{- end }}
+
+
 {{ if lookPath "aqua" -}}
-# after symlink lazy
+# symlink lazy {{ output "cat" (joinPath .chezmoi.sourceDir "dot_config" "aqua" "aqua.yaml") | sha256sum }}
 aqua install --all --only-link
 {{- end }}
 
