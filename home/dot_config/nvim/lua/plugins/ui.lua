@@ -6,6 +6,7 @@ return {
     opts = {
       options = {
         diagnostics = "nvim_lsp",
+        diagnostics_update_in_insert = true,
         ---@diagnostic disable-next-line: unused-local
         diagnostics_indicator = function(count, level, diagnostics_dict, context)
           local icon = level:match "error" and " " or " "
@@ -51,6 +52,32 @@ return {
         require("lazy").load { plugins = { "dressing.nvim" } }
         return vim.ui.input(...)
       end
+    end,
+  },
+  {
+    "folke/which-key.nvim",
+    event = "VeryLazy",
+    opts = {
+      defaults = {
+        mode = { "n", "v" },
+        ["g"] = { name = "+goto" },
+        ["gs"] = { name = "+surround" },
+        ["z"] = { name = "+fold" },
+        ["]"] = { name = "+next" },
+        ["["] = { name = "+prev" },
+        ["<leader>b"] = { name = "+buffer" },
+        ["<leader>c"] = { name = "+code" },
+        ["<leader>f"] = { name = "+find" },
+        ["<leader>g"] = { name = "+git" },
+        ["<leader>gh"] = { name = "+hunks", ["_"] = "which_key_ignore" },
+        ["<leader>q"] = { name = "+quit/session" },
+        ["<leader>u"] = { name = "+ui" },
+      },
+    },
+    config = function(_, opts)
+      local wk = require "which-key"
+      wk.setup(opts)
+      wk.register(opts.defaults)
     end,
   },
   { "brenoprata10/nvim-highlight-colors", event = { "UIEnter" }, opts = {} },

@@ -45,6 +45,7 @@ return {
 
       map("<leader>cr", "<cmd>lua vim.lsp.buf.rename()<cr>", "LSP Rename")
       map("<leader>ca", "<cmd>lua vim.lsp.buf.code_action()<cr>", "LSP CodeAction")
+      map("<leader>cs", "<cmd>Telescope lsp_document_symbols<cr>", "LSP Symbols")
       map("gr", "<cmd>Telescope lsp_references<cr>", "LSP References")
       map("gd", "<cmd>Telescope lsp_definitions<cr>", "LSP Defenition")
 
