@@ -8,13 +8,23 @@ return {
         synchronize = ";",
       },
     },
+    -- stylua: ignore
     keys = {
-      {
-        "<leader>e",
-        function()
-          require("mini.files").open()
-        end,
-        desc = "Files",
+      { "<leader>e", function() require("mini.files").open() end, desc = "Files" },
+    },
+  },
+  {
+    "echasnovski/mini.surround",
+    event = { "BufReadPre" },
+    opts = {
+      mappings = {
+        add = "gsa",
+        delete = "gsd",
+        find = "gsf",
+        find_left = "gsF",
+        highlight = "gsh",
+        replace = "gsr",
+        update_n_lines = "gsn",
       },
     },
   },
