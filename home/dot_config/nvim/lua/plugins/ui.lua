@@ -39,6 +39,16 @@ return {
     config = true,
   },
   {
+    "folke/flash.nvim",
+    event = "VeryLazy",
+    opts = {},
+    --stylua: ignore
+    keys = {
+      { "gj", mode = { "n", "x", "o" }, function() require("flash").jump() end, desc = "Flash" },
+      { "gJ", mode = { "n", "o", "x" }, function() require("flash").treesitter() end, desc = "Flash Treesitter" },
+    },
+  },
+  {
     "stevearc/dressing.nvim",
     opts = {},
     init = function()
