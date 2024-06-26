@@ -1,3 +1,4 @@
+---@class util.border
 local M = {}
 
 ---Generate Border Setting

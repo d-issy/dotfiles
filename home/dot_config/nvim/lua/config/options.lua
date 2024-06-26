@@ -42,8 +42,6 @@ vim.opt.fillchars = {
 
 vim.opt.foldlevel = 99
 vim.opt.smoothscroll = true
-vim.opt.foldexpr = "v:lua.require'lazyvim.util'.ui.foldexpr()"
+vim.opt.foldexpr = "v:lua.require'util.fold'.expr()"
 vim.opt.foldmethod = "expr"
 vim.opt.foldtext = ""
-
-vim.opt.formatexpr = "v:lua.require'lazyvim.util'.format.formatexpr()"

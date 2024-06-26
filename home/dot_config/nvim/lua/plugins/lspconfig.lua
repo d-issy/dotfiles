@@ -3,7 +3,7 @@ local servers = {
     settings = {
       Lua = {
         workspace = {
-          library = vim.api.nvim_get_runtime_file("", true),
+          library = vim.list_slice(vim.api.nvim_get_runtime_file("", true), 2),
         },
       },
     },

@@ -1,3 +1,4 @@
+---@class util.keymap
 local M = {}
 
 ---@class KeymapOption

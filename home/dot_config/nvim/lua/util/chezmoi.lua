@@ -1,3 +1,4 @@
+---@class util.chezmoi
 local M = {}
 
 M.pattern = os.getenv "HOME" .. "/.local/share/chezmoi/home/*"
@@ -7,6 +8,7 @@ function M.is_enabled()
   return vim.fn.executable "chezmoi" == 1
 end
 
+--- chezmoi apply automatically
 function M.apply()
   if not M.is_enabled() then
     return

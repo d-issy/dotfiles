@@ -19,7 +19,12 @@ vim.g.maplocalleader = "\\"
 
 require("lazy").setup {
   defaults = { lazy = true },
+  ui = {
+    border = require("util.border").generate "",
+  },
   spec = {
     { import = "plugins" },
   },
 }
+
+require "config"
