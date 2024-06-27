@@ -14,6 +14,9 @@ return {
     local border = require "util.border"
 
     return {
+      cmpletion = {
+        completeopt = "menu,menuone,noinsert,noselect",
+      },
       sources = cmp.config.sources {
         { name = "luasnip", group_index = 1 },
         { name = "nvim_lsp", group_index = 1 },
@@ -22,6 +25,16 @@ return {
       },
       mapping = cmp.mapping.preset.insert {
         ["<Tab>"] = cmp.mapping.confirm { select = false },
+      },
+      sorting = {
+        priority_weight = 3,
+        comparators = {
+          cmp.config.compare.length,
+          cmp.config.compare.offset,
+          cmp.config.compare.kind,
+          cmp.config.compare.locality,
+          cmp.config.compare.order,
+        },
       },
       snippet = {
         expand = function(args)
@@ -35,6 +48,11 @@ return {
         },
         completion = {
           border = border.generate "CmpBorder",
+        },
+      },
+      experimental = {
+        ghost_text = {
+          hl_group = "GmpGhostText",
         },
       },
     }

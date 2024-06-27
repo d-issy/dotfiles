@@ -17,7 +17,6 @@ vim.opt.writebackup = false
 
 vim.opt.clipboard = ""
 vim.opt.cmdheight = 0
-vim.opt.completeopt = { "menu", "menuone", "noselect" }
 vim.opt.confirm = true
 vim.opt.cursorline = true
 vim.opt.hlsearch = true
