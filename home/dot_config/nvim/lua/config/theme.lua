@@ -139,7 +139,6 @@ if vim.g.colors_name then
   vim.cmd "hi clear"
 end
 
-vim.g.termguicolors = true
 vim.g.colors_name = "mytheme"
 
 for group, opts in pairs(hl) do

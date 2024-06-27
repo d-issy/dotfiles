@@ -17,14 +17,22 @@ vim.opt.writebackup = false
 
 vim.opt.clipboard = ""
 vim.opt.cmdheight = 0
+vim.opt.completeopt = { "menu", "menuone", "noselect" }
 vim.opt.confirm = true
+vim.opt.cursorline = true
 vim.opt.hlsearch = true
 vim.opt.laststatus = 0
+vim.opt.pumblend = 10
+vim.opt.pumheight = 10
+vim.opt.scrolloff = 4
 vim.opt.showcmd = true
 vim.opt.splitbelow = true
 vim.opt.splitkeep = "cursor"
 vim.opt.splitright = true
+vim.opt.termguicolors = true
 vim.opt.title = true
+vim.opt.wildmode = { "longest:full", "full" }
+vim.opt.winminwidth = 5
 vim.opt.wrap = false
 
 vim.opt.backspace = { "start", "eol", "indent" }
