@@ -28,4 +28,12 @@ return {
       require("nvim-treesitter.configs").setup(opts)
     end,
   },
+  {
+    "nvim-treesitter/nvim-treesitter-context",
+    event = { "BufReadPost" },
+    opts = {},
+    config = function(_, opts)
+      require("treesitter-context").setup(opts)
+    end,
+  },
 }

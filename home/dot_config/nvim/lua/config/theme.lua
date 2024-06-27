@@ -8,6 +8,7 @@ local palette = {
 
   ui = "#cfcfcf",
   visual = "#383838",
+  cursor = "#323232",
 
   low = "#686868",
   search = "#f2f2aa",
@@ -27,6 +28,9 @@ local palette = {
 
 local hl = {
   Normal = { fg = palette.default, bg = palette.bg },
+
+  CursorLine = { bg = palette.cursor },
+  NCursorLine = { link = "CursorLine" },
 
   WinBar = { fg = palette.ui, bg = palette.bg },
   WinBarNC = { link = "WinBar" },
@@ -107,6 +111,9 @@ local hl = {
   TelescopeBorder = { fg = palette.border },
   TelescopeSelection = { bg = palette.visual },
   TelescopeMatching = { fg = palette.search },
+
+  -- TreeSitter
+  TreeSitterContext = { bg = palette.cursor },
 
   -- GitSigns
   GitSignsAdd = { fg = palette.add },
