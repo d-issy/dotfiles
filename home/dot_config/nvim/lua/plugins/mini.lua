@@ -114,6 +114,7 @@ return {
         pattern = {
           "fzf",
           "help",
+          "lazy",
           "mason",
           "notify",
         },
