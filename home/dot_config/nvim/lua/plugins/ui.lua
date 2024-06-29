@@ -83,6 +83,9 @@ return {
         ["<leader>q"] = { name = "+quit/session" },
         ["<leader>u"] = { name = "+ui" },
       },
+      window = {
+        border = require("util.border").generate "WhichKeyBorder",
+      },
     },
     config = function(_, opts)
       local wk = require "which-key"

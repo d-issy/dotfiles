@@ -23,7 +23,7 @@ return {
         callback = function(args)
           local win = args.data.win_id
           local config = vim.api.nvim_win_get_config(win)
-          config.border = require("util.border").generate()
+          config.border = require("util.border").generate "MiniFilesBorder"
           vim.api.nvim_win_set_config(win, config)
         end,
       })
@@ -46,19 +46,19 @@ return {
             local unstaged = git_file:sub(2, 2)
             local path = git_root .. "/" .. git_file:sub(4)
             if staged == "R" then
-              status[path] = { text = "~", hl = "DiffChanged" }
+              status[path] = { text = "~", hl = "MiniFilesChange" }
             end
             if unstaged == "M" then
-              status[path] = { text = "~", hl = "DiffChanged" }
+              status[path] = { text = "~", hl = "MiniFilesChange" }
             end
             if unstaged == "?" then
-              status[path] = { text = "+", hl = "DiffAdded" }
+              status[path] = { text = "+", hl = "MiniFilesAdd" }
             end
           end
 
           -- buf file changes
           for _, change in ipairs(vim.fn.getbufinfo { bufmodified = 1 }) do
-            status[change.name] = { text = "*", hl = "DiffModified" }
+            status[change.name] = { text = "*", hl = "MiniFilesChange" }
           end
 
           local lines = vim.api.nvim_buf_line_count(buf)

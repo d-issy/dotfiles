@@ -4,7 +4,7 @@ local palette = {
   bg = "#282828",
   default = "#9c9c9c",
 
-  border = "#ffffff",
+  border = "#8c8c8c",
 
   ui = "#cfcfcf",
   visual = "#383838",
@@ -31,6 +31,9 @@ local hl = {
 
   CursorLine = { bg = palette.cursor },
   NCursorLine = { link = "CursorLine" },
+
+  NormalFloat = { bg = palette.bg },
+  FloatBorder = { fg = palette.border },
 
   WinBar = { fg = palette.ui, bg = palette.bg },
   WinBarNC = { link = "WinBar" },
@@ -90,8 +93,9 @@ local hl = {
   -- MiniFiles
   MiniFilesDirectory = { fg = palette.folder },
   MiniFilesNormal = { fg = palette.ui },
-  MiniFilesBorder = { fg = palette.border },
   MiniFilesCursorLine = { bg = palette.visual },
+  MiniFilesAdd = { fg = palette.add },
+  MiniFilesChange = { fg = palette.change },
 
   -- Cmp
   CmpDocumentation = { fg = palette.default },
