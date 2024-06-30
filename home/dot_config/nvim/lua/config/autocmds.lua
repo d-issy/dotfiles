@@ -34,7 +34,11 @@ vim.api.nvim_create_autocmd("FileType", {
 
 -- terminal mode
 vim.api.nvim_create_autocmd({ "TermOpen", "WinEnter" }, {
-  group = augroup "terminal_insert",
+  group = augroup "terminal_open",
   pattern = "term://*",
-  command = "startinsert",
+  callback = function()
+    vim.cmd "startinsert"
+    vim.cmd "setlocal nonumber"
+    vim.cmd "setlocal norelativenumber"
+  end,
 })
