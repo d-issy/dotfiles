@@ -14,6 +14,14 @@ return {
         end,
         show_buffer_close_icons = false,
         show_close_icon = false,
+
+        custom_filter = function(buf)
+          -- ignore terminal buffers
+          if vim.bo[buf].buftype == "terminal" then
+            return false
+          end
+          return true
+        end,
       },
     },
     keys = {
