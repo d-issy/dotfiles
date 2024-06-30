@@ -8,8 +8,12 @@ return {
     "MasonUninstallAll",
     "MasonLog",
   },
+  keys = {
+    { "<leader>cm", "<cmd>Mason<cr>", desc = "LSP Mason" },
+  },
   opts = {
     ensure_installed = { "stylua", "lua-language-server" },
+    ui = { border = require("util.border").generate() },
   },
   config = function(_, opts)
     require("mason").setup(opts)
