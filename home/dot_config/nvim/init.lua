@@ -1,5 +1,7 @@
 local lazypath = vim.fn.stdpath "data" .. "/lazy/lazy.nvim"
-if not (vim.uv or vim.loop).fs_stat(lazypath) then
+
+---@diagnostic disable-next-line: undefined-field
+if not vim.uv.fs_stat(lazypath) then
   vim.fn.system {
     "git",
     "clone",
@@ -12,37 +14,17 @@ end
 
 vim.opt.rtp:prepend(lazypath)
 
+vim.g.mapleader = " "
+vim.g.maplocalleader = "\\"
+
 require("lazy").setup {
   defaults = { lazy = true },
+  ui = {
+    border = require("util.border").generate(),
+  },
   spec = {
-    --lazyvim
-    {
-      "LazyVim/LazyVim",
-      import = "lazyvim.plugins",
-      opts = {
-        colorscheme = "catppuccin",
-        news = { lazyvim = false, neovim = false },
-      },
-    },
-    --lazyvim.extra
-
-    { import = "lazyvim.plugins.extras.dap.core" },
-    { import = "lazyvim.plugins.extras.test.core" },
-
-    { import = "lazyvim.plugins.extras.ui.edgy" },
-
-    { import = "lazyvim.plugins.extras.coding.copilot" },
-    { import = "lazyvim.plugins.extras.coding.luasnip" },
-    { import = "lazyvim.plugins.extras.coding.mini-surround" },
-    { import = "lazyvim.plugins.extras.editor.mini-files" },
-    { import = "lazyvim.plugins.extras.editor.outline" },
-    { import = "lazyvim.plugins.extras.editor.refactoring" },
-    { import = "lazyvim.plugins.extras.ui.treesitter-context" },
-    { import = "lazyvim.plugins.extras.util.mini-hipatterns" },
-
-    -- custom plugin settings
     { import = "plugins" },
-    { import = "plugins.extras" },
-    { import = "plugins.lang" },
   },
 }
+
+require "config"

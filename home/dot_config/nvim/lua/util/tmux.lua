@@ -1,11 +1,17 @@
-local array = require "util.array"
+--- @class util.tmux
 local M = {}
 
----@return boolean
-function M.is_enabled() return vim.fn.getenv "TMUX" ~= vim.NIL end
+local array = require "util.array"
 
----@param cmd? string|string[]
----@param opts? table
+--- Check if tmux is enabled.
+--- @return boolean
+function M.is_enabled()
+  return vim.fn.getenv "TMUX" ~= vim.NIL
+end
+
+--- Run command in tmux popup.
+--- @param cmd? string|string[]
+--- @param opts? table
 function M.popup(cmd, opts)
   local tmux_popup = {
     "tmux",
@@ -18,7 +24,7 @@ function M.popup(cmd, opts)
     "95%",
     "-E",
   }
-  vim.fn.system(vim.list_extend(tmux_popup, array.of(cmd)))
+  vim.fn.system(vim.list_extend(tmux_popup, array.new(cmd)))
 end
 
 return M
