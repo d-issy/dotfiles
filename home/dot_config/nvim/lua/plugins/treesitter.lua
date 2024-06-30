@@ -20,6 +20,9 @@ return {
       incremental_selection = { enable = true },
       highlight = {
         enable = true,
+        disable = function(lang)
+          return vim.list_contains({ "help" }, lang)
+        end,
         use_languagetree = true,
       },
       indent = { enable = true },
