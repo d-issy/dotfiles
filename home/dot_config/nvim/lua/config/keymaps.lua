@@ -21,7 +21,8 @@ map.setup {
 
   -- terminal
   { "<leader><tab><tab>", "10<c-w>s<cmd>terminal<cr>", desc = "Terminal" },
-  { "<leader><tab>v", "<c-w>v<cmd>terminal<cr>", desc = "Terminal" },
+  { "<leader><tab>v", "<c-w>v<cmd>terminal<cr>", mode = "n", desc = "Terminal" },
+  { "<leader><tab>v", "<c-\\><c-n><c-w>v<cmd>terminal<cr>", mode = "t", desc = "Terminal" },
   { "<leader><esc>", "<c-\\><c-n>", mode = "t", desc = "ESC" },
   { "<c-w>c", "<c-\\><c-n><c-w>c", mode = "t", desc = "Close" },
   { "<c-w>h", "<c-\\><c-n><c-w>h", mode = "t", desc = "Left" },
