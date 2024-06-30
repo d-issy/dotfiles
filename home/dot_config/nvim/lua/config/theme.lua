@@ -68,6 +68,8 @@ local hl = {
   ["@module"] = { fg = palette.low },
   ["@lsp.mod.global"] = { fg = palette.low },
   ["@lsp.mod.defaultLibrary"] = { fg = palette.low },
+  ["@lsp.typemod.keyword.documentation"] = { fg = palette.default },
+  ["@lsp.type.type"] = { fg = palette.low },
 
   -- go
   ["@variable.parameter.go"] = { fg = palette.low },

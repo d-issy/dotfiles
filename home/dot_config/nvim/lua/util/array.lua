@@ -1,10 +1,10 @@
----@class util.array
+--- @class util.array
 local M = {}
 
---- Create new array
----@generic T
----@param value? T|T[]
----@return T[]
+--- Create new array.
+--- @generic T
+--- @param value? T|T[]
+--- @return T[]
 function M.new(value)
   if value == nil or value == vim.NIL then
     return {}

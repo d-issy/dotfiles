@@ -1,15 +1,16 @@
----@class util.keymap
+--- @class util.keymap
 local M = {}
 
----@class KeymapOption
----@field mods? string|string[]
----@field remap? boolean
----@field noremap? boolean
+--- @class KeymapOption
+--- @field mods? string|string[]
+--- @field remap? boolean
+--- @field noremap? boolean
 
----@param key string
----@param fn string|function
----@param desc string
----@param opts? KeymapOption
+--- Set a keymap.
+--- @param key string
+--- @param fn string|function
+--- @param desc string
+--- @param opts? KeymapOption
 M.set = function(key, fn, desc, opts)
   local mods = opts and opts.mods or { "n" }
   opts = vim.tbl_deep_extend("force", { silent = true, desc = desc }, opts or {})
@@ -18,8 +19,9 @@ M.set = function(key, fn, desc, opts)
   vim.keymap.set(mods, key, fn, opts)
 end
 
----@param key string
----@param mods? string|string[]
+--- Delete a keymap.
+--- @param key string
+--- @param mods? string|string[]
 M.delete = function(key, mods)
   mods = mods or { "n" }
   vim.keymap.del(mods, key)

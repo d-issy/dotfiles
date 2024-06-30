@@ -1,6 +1,7 @@
+--- @class util.git
 local M = {}
 
----@enum util.git.FLAGS
+--- @enum util.git.FLAGS
 FLAGS = {
   NONE = 0,
   MODIFIED = 1,
@@ -15,7 +16,7 @@ FLAGS = {
 M.FLAGS = FLAGS
 
 --- Get the root directory of the git repository.
----@return string?
+--- @return string?
 function M.root()
   local cmd = vim.system({ "git", "rev-parse", "--show-toplevel" }, { text = true }):wait()
   if cmd.code ~= 0 then
@@ -25,8 +26,8 @@ function M.root()
 end
 
 --- Get the status of the git repository.
----@param git_root string
----@return table<string, {staged: util.git.FLAGS, unstaged: util.git.FLAGS}>
+--- @param git_root string
+--- @return table<string, {staged: util.git.FLAGS, unstaged: util.git.FLAGS}>
 function M.get_status(git_root)
   local cmd = vim.system({ "git", "status", "--ignored", "--porcelain" }, { text = true }):wait()
   if cmd.code ~= 0 then
@@ -42,9 +43,9 @@ function M.get_status(git_root)
   return status
 end
 
---- Convert the flag to a readable string.
----@pram flag string
----@return util.git.FLAGS
+--- Convert the git status flag to the util.git.FLAGS.
+--- @param flag string
+--- @return util.git.FLAGS
 function M.map_status(flag)
   local flags = {
     M = FLAGS.MODIFIED,

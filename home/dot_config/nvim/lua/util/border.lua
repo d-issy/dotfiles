@@ -1,9 +1,9 @@
 ---@class util.border
 local M = {}
 
----Generate Border Setting
----@param hl_name? string
----@return table
+--- Generate Border with highlight name.
+--- @param hl_name? string
+--- @return table
 function M.generate(hl_name)
   hl_name = hl_name or ""
   return {

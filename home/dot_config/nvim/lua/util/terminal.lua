@@ -1,14 +1,14 @@
-local tmux = require "util.tmux"
-local array = require "util.array"
-
 ---@class util.terminal
 local M = {}
+
+local tmux = require "util.tmux"
+local array = require "util.array"
 
 ---@class util.terminal.CmdOptions
 ---@field cwd? string
 ---@field env? table<string,string>
 
---- run command
+--- run command.
 ---@param cmd string|string[]
 ---@param opts? util.terminal.CmdOptions
 function M.run(cmd, opts)

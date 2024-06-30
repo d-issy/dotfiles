@@ -3,12 +3,13 @@ local M = {}
 
 M.pattern = os.getenv "HOME" .. "/.local/share/chezmoi/home/*"
 
----@return boolean
+--- Check if chezmoi is enabled.
+--- @return boolean
 function M.is_enabled()
   return vim.fn.executable "chezmoi" == 1
 end
 
---- chezmoi apply automatically
+--- Apply chezmoi.
 function M.apply()
   if not M.is_enabled() then
     return

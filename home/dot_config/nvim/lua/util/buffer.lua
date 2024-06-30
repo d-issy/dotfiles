@@ -1,7 +1,7 @@
----@class util.buffer
+--- @class util.buffer
 local M = {}
 
---- Remove buffer smartly
+--- Removes the current buffer.
 function M.remove()
   local buf = vim.api.nvim_get_current_buf()
 
