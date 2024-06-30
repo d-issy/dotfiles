@@ -12,11 +12,11 @@ return {
       local mini_files = require "mini.files"
       mini_files.setup(opts)
 
-      local ns_mini_files_git = vim.api.nvim_create_namespace "mini_files_git"
       local augroup = function(name)
         return vim.api.nvim_create_augroup("mini_files_" .. name, { clear = true })
       end
 
+      local ns_mini_files_git = vim.api.nvim_create_namespace "mini_files_git"
       vim.api.nvim_create_autocmd("User", {
         group = augroup "border",
         pattern = "MiniFilesWindowOpen",
@@ -32,13 +32,11 @@ return {
         group = augroup "status",
         pattern = "MiniFilesBufferUpdate",
         callback = function(args)
-          local git = require "util.git"
-          local buf = args.data.buf_id
-
           ---@type table<string, {text: string, hl: string}>
           local sign = {}
 
           -- git
+          local git = require "util.git"
           local git_root = git.root()
           if git_root ~= nil then
             local status = git.get_status(git_root)
@@ -58,6 +56,7 @@ return {
             sign[change.name] = { text = "*", hl = "MiniFilesChange" }
           end
 
+          local buf = args.data.buf_id
           local lines = vim.api.nvim_buf_line_count(buf)
           for i = 1, lines do
             local entry = mini_files.get_fs_entry(buf, i)

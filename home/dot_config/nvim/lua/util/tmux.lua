@@ -1,4 +1,4 @@
----@class util.tmux
+--- @class util.tmux
 local M = {}
 
 local array = require "util.array"
@@ -10,8 +10,8 @@ function M.is_enabled()
 end
 
 --- Run command in tmux popup.
----@param cmd? string|string[]
----@param opts? table
+--- @param cmd? string|string[]
+--- @param opts? table
 function M.popup(cmd, opts)
   local tmux_popup = {
     "tmux",

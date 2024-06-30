@@ -1,4 +1,4 @@
----@class util.lazygit
+--- @class util.lazygit
 local M = {}
 
 ---  lazygit open.
