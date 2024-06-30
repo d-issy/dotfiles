@@ -1,3 +1,5 @@
+local map = require "util.map"
+
 local servers = {
   lua_ls = {
     settings = {
@@ -39,37 +41,27 @@ return {
       -- keymaps
       lsp_zero.default_keymaps { bufnr = bufnr }
 
-      local function map(l, r, desc)
-        vim.keymap.set("n", l, r, { buffer = bufnr, desc = desc, silent = true })
-      end
-
-      map("<leader>cr", "<cmd>lua vim.lsp.buf.rename()<cr>", "LSP Rename")
-      map("<leader>ca", "<cmd>lua vim.lsp.buf.code_action()<cr>", "LSP CodeAction")
-      map("<leader>cs", "<cmd>Telescope lsp_document_symbols<cr>", "LSP Symbols")
-      map("gr", "<cmd>Telescope lsp_references<cr>", "LSP References")
-      map("gd", "<cmd>Telescope lsp_definitions<cr>", "LSP Defenition")
-
       -- goto
       local goto_opts = { popup_opts = { border = "single" } }
-
+      -- stylua: ignore
       local function goto_prev()
-        if vim.diagnostic.get_prev() then
-          vim.diagnostic.goto_prev(goto_opts)
-        end
+        if vim.diagnostic.get_prev() then vim.diagnostic.goto_prev(goto_opts) end
       end
-      map("[d", goto_prev, "LSP Prev Diagnostic")
-
+      -- stylua: ignore
       local function goto_next()
-        if vim.diagnostic.get_next() then
-          vim.diagnostic.goto_next(goto_opts)
-        end
+        if vim.diagnostic.get_next() then vim.diagnostic.goto_next(goto_opts) end
       end
-      map("]d", goto_next, "LSP Next Diagnostic")
 
-      -- signature help
-      vim.keymap.set("i", "<C-h>", function()
-        vim.lsp.buf.signature_help()
-      end, { buffer = bufnr, remap = false })
+      map.setup({
+        { "<leader>cr", "<cmd>lua vim.lsp.buf.rename()<cr>", desc = "LSP Rename" },
+        { "<leader>ca", "<cmd>lua vim.lsp.buf.code_action()<cr>", desc = "LSP CodeAction" },
+        { "<leader>cs", "<cmd>Telescope lsp_document_symbols<cr>", desc = "LSP Symbols" },
+        { "gr", "<cmd>Telescope lsp_references<cr>", desc = "LSP References" },
+        { "gd", "<cmd>Telescope lsp_definitions<cr>", desc = "LSP Defenition" },
+        { "[d", goto_prev, desc = "LSP Prev Diagnostic" },
+        { "]d", goto_next, dsc = "LSP Next Diagnostic" },
+        { "<C-h>", vim.lsp.buf.signature_help, mode = "i", desc = "LSP Signature Help" },
+      }, { buffer = bufnr })
     end)
 
     local handler = function(server)

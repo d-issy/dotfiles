@@ -1,3 +1,5 @@
+local map = require "util.map"
+
 return {
   {
     "lewis6991/gitsigns.nvim",
@@ -14,27 +16,31 @@ return {
       on_attach = function(buffer)
         local gs = require "gitsigns"
 
-        local function map(mode, l, r, desc)
-          vim.keymap.set(mode, l, r, { buffer = buffer, desc = desc })
+        local nav_hunk = function(direction)
+          return function()
+            gs.nav_hunk(direction)
+          end
         end
 
-        -- stylua: ignore start
-        map("n", "]h", function() gs.nav_hunk("next") end, "Next Hunk")
-        map("n", "[h", function() gs.nav_hunk("prev") end, "Prev Hunk")
-        map("n", "]H", function() gs.nav_hunk("last") end, "Last Hunk")
-        map("n", "[H", function() gs.nav_hunk("first") end, "First Hunk")
-        map({ "n", "v" }, "<leader>ghs", ":Gitsigns stage_hunk<CR>", "Stage Hunk")
-        map({ "n", "v" }, "<leader>ghr", ":Gitsigns reset_hunk<CR>", "Reset Hunk")
-        map("n", "<leader>ghS", gs.stage_buffer, "Stage Buffer")
-        map("n", "<leader>ghu", gs.undo_stage_hunk, "Undo Stage Hunk")
-        map("n", "<leader>ghR", gs.reset_buffer, "Reset Buffer")
-        map("n", "<leader>ghp", gs.preview_hunk_inline, "Preview Hunk Inline")
-        map("n", "<leader>ghb", function() gs.blame_line({ full = true }) end, "Blame Line")
-        map("n", "<leader>ghB", function() gs.blame() end, "Blame Buffer")
-        map("n", "<leader>ghd", gs.diffthis, "Diff This")
-        map("n", "<leader>ghD", function() gs.diffthis("~") end, "Diff This ~")
-        map({ "o", "x" }, "ih", ":<C-U>Gitsigns select_hunk<CR>", "GitSigns Select Hunk")
-        -- stylua: ignore end
+        map.setup({
+          { "]h", nav_hunk "next", desc = "Next Hunk" },
+          { "[h", nav_hunk "prev", desc = "Prev Hunk" },
+          { "]H", nav_hunk "last", desc = "Last Hunk" },
+          { "[H", nav_hunk "first", desc = "First Hunk" },
+          { "<leader>ghs", ":Gitsigns stage_hunk<CR>", mode = { "n", "v" }, desc = "Stage Hunk" },
+          { "<leader>ghr", ":Gitsigns reset_hunk<CR>", mode = { "n", "v" }, desc = "Reset Hunk" },
+          { "<leader>ghS", gs.stage_buffer, desc = "Stage Buffer" },
+          { "<leader>ghu", gs.undo_stage_hunk, desc = "Undo Stage Hunk" },
+          { "<leader>ghR", gs.reset_buffer, desc = "Reset Buffer" },
+          { "<leader>ghp", gs.preview_hunk_inline, desc = "Preview Hunk Inline" },
+          { "<leader>ghd", gs.diffthis, desc = "Diff This" },
+          { "ih", ":<C-U>Gitsigns select_hunk<CR>", mode = { "o", "x" }, desc = "GitSigns Select Hunk" },
+          -- stylua: ignore start
+          { "<leader>ghb", function() gs.blame_line({ full = true }) end, desc="Blame Line" },
+          { "<leader>ghB", function() gs.blame() end, desc="Blame Buffer" },
+          { "<leader>ghD", function() gs.diffthis("~") end, desc="Diff This ~" },
+          --stylua: ignore end
+        }, { buffer = buffer })
       end,
     },
   },
