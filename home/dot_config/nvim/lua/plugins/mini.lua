@@ -32,33 +32,30 @@ return {
         group = augroup "status",
         pattern = "MiniFilesBufferUpdate",
         callback = function(args)
+          local git = require "util.git"
           local buf = args.data.buf_id
 
           ---@type table<string, {text: string, hl: string}>
-          local status = {}
+          local sign = {}
 
           -- git
-          local git_root = vim.trim(vim.fn.system { "git", "rev-parse", "--show-toplevel" })
-          local status_out = vim.fn.system { "git", "status", "--porcelain" }
-
-          for git_file in vim.gsplit(status_out, "\n") do
-            local staged = git_file:sub(1, 1)
-            local unstaged = git_file:sub(2, 2)
-            local path = git_root .. "/" .. git_file:sub(4)
-            if staged == "R" then
-              status[path] = { text = "~", hl = "MiniFilesChange" }
-            end
-            if unstaged == "M" then
-              status[path] = { text = "~", hl = "MiniFilesChange" }
-            end
-            if unstaged == "?" then
-              status[path] = { text = "+", hl = "MiniFilesAdd" }
+          local git_root = git.root()
+          if git_root ~= nil then
+            local status = git.get_status(git_root)
+            for path, flags in pairs(status) do
+              if flags.unstaged == git.FLAGS.RENAMED then
+                sign[path] = { text = "~", hl = "MiniFilesChange" }
+              elseif flags.unstaged == git.FLAGS.MODIFIED then
+                sign[path] = { text = "~", hl = "MiniFilesChange" }
+              elseif flags.unstaged == git.FLAGS.UNTRACKED then
+                sign[path] = { text = "+", hl = "MiniFilesAdd" }
+              end
             end
           end
 
-          -- buf file changes
+          -- file changes (not saved)
           for _, change in ipairs(vim.fn.getbufinfo { bufmodified = 1 }) do
-            status[change.name] = { text = "*", hl = "MiniFilesChange" }
+            sign[change.name] = { text = "*", hl = "MiniFilesChange" }
           end
 
           local lines = vim.api.nvim_buf_line_count(buf)
@@ -69,10 +66,10 @@ return {
             end
 
             local path = entry.path
-            if status[path] then
+            if sign[path] then
               vim.api.nvim_buf_set_extmark(buf, ns_mini_files_git, i - 1, 0, {
-                sign_text = status[path].text,
-                sign_hl_group = status[path].hl,
+                sign_text = sign[path].text,
+                sign_hl_group = sign[path].hl,
                 priority = 2,
                 invalidate = true,
               })
