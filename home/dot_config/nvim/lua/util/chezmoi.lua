@@ -18,11 +18,7 @@ function M.apply()
   if out == "" then
     return
   end
-  vim.notify(out, nil, {
-    title = "chezmoi apply",
-    render = "wrapped-compact",
-    top_down = true,
-  })
+  vim.api.nvim_notify(out, vim.log.levels.INFO, { title = "chezmoi apply" })
 end
 
 return M
