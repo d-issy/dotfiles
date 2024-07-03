@@ -32,7 +32,7 @@ packages:
   - name: sharkdp/bat@v0.24.0
   - name: starship/starship@v1.19.0
   - name: terraform-docs/terraform-docs@v0.18.0
-  - name: twistedpair/google-cloud-sdk@482.0.0
+  - name: twistedpair/google-cloud-sdk@483.0.0
   - name: twpayne/chezmoi@v2.50.0
   - name: x-motemen/ghq@v1.6.1
   - name: zellij-org/zellij@v0.40.1
