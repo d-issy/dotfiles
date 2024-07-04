@@ -21,7 +21,13 @@ return {
         { name = "luasnip", group_index = 1 },
         { name = "nvim_lsp", group_index = 1 },
         { name = "path", group_index = 1 },
-        { name = "copilot", group_index = 2 },
+        {
+          name = "copilot",
+          group_index = 2,
+          entry_filter = function()
+            return require("util.copilot").enabled()
+          end,
+        },
       },
       mapping = cmp.mapping.preset.insert {
         ["<Tab>"] = cmp.mapping.confirm { select = false },

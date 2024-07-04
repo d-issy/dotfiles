@@ -17,6 +17,7 @@ return {
     vim.api.nvim_create_autocmd("InsertLeave", {
       pattern = "*",
       callback = function()
+        require("util.copilot").on()
         if luasnip.session.current_nodes[vim.api.nvim_get_current_buf()] then
           luasnip.unlink_current()
         end
@@ -27,7 +28,10 @@ return {
     {
       "<C-k>",
       function()
-        require("luasnip").expand_or_jump()
+        if require("luasnip").expand_or_jumpable() then
+          require("util.copilot").off()
+          require("luasnip").expand_or_jump()
+        end
       end,
       mode = { "i", "s" },
     },
