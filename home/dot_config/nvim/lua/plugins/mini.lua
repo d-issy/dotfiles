@@ -1,5 +1,4 @@
 return {
-  { "echasnovski/mini.nvim", version = "*" },
   {
     "echasnovski/mini.files",
     version = "*",
@@ -120,6 +119,21 @@ return {
           vim.b.miniindentscope_disable = true
         end,
       })
+    end,
+  },
+  {
+    "echasnovski/mini.icons",
+    version = false,
+    opts = {},
+    specs = {
+      { "nvim-tree/nvim-web-devicons", enabled = false, optional = true },
+    },
+    init = function()
+      package.preload["nvim-web-devicons"] = function()
+        package.loaded["nvim-web-devicons"] = {}
+        require("mini.icons").mock_nvim_web_devicons()
+        return package.loaded["nvim-web-devicons"]
+      end
     end,
   },
 }

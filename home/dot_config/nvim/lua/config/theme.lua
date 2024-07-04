@@ -99,6 +99,17 @@ local hl = {
   MiniFilesAdd = { fg = palette.add },
   MiniFilesChange = { fg = palette.change },
 
+  -- MiniIcons
+  MiniIconsAzure = { fg = palette.folder },
+  MiniIconsBlue = { fg = palette.info },
+  MiniIconsCyan = { fg = palette.hint },
+  MiniIconsGreen = { fg = palette.add },
+  MiniIconsGrey = { fg = palette.low },
+  MiniIconsOrange = { fg = palette.warning },
+  MiniIconsPurple = { fg = palette.low },
+  MiniIconsRed = { fg = palette.error },
+  MiniIconsYellow = { fg = palette.change },
+
   -- Cmp
   CmpDocumentation = { fg = palette.default },
   CmpDocumentationBorder = { fg = palette.border },
