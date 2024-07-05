@@ -34,7 +34,9 @@ return {
   {
     "nvim-treesitter/nvim-treesitter-context",
     event = { "BufReadPost" },
-    opts = {},
+    opts = {
+      max_lines = 5,
+    },
     config = function(_, opts)
       require("treesitter-context").setup(opts)
     end,
