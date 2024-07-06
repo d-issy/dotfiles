@@ -14,6 +14,11 @@ map.setup {
   { "n", "nzz", desc = "Next" },
   { "N", "Nzz", desc = "Previous" },
 
+  -- copy and paste
+  { "gy", '"+y', mode = { "n", "x" }, desc = "Copy to system clipboard" },
+  { "gp", '"+p', mode = { "n" }, desc = "Paste from system clipboard" },
+  { "gp", '"+P', mode = { "x" }, desc = "Paste from system clipboard" },
+
   -- toggle
   { "<leader>uw", toggle.option "wrap", desc = "Toggle wrap" },
   { "<leader>ul", toggle.option { "number", "relativenumber" }, desc = "Toggle number" },
