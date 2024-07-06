@@ -43,6 +43,9 @@ map.setup {
   { "<c-w>k", "<c-\\><c-n><c-w>k", mode = "t", desc = "Up" },
   { "<c-w>l", "<c-\\><c-n><c-w>l", mode = "t", desc = "Right" },
 
+  -- lazynvim
+  { "<leader>l", "<cmd>Lazy<cr>", desc = "Lazy" },
+
   -- lazygit
   { "<leader>gg", lazygit.open, desc = "Lazygit" },
   { "<leader>gf", lazygit.file_history, desc = "Current File History" },
