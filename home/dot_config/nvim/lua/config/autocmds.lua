@@ -2,14 +2,6 @@ local function augroup(name)
   return vim.api.nvim_create_augroup(name, { clear = true })
 end
 
--- save to auto chezmoi apply when change
-local chezmoi = require "util.chezmoi"
-vim.api.nvim_create_autocmd("BufWritePost", {
-  group = augroup "chezmoi_update",
-  pattern = chezmoi.pattern,
-  callback = chezmoi.apply,
-})
-
 -- highlight when yank
 vim.api.nvim_create_autocmd("TextYankPost", {
   group = augroup "highlight_yank",
@@ -41,4 +33,12 @@ vim.api.nvim_create_autocmd({ "TermOpen", "WinEnter" }, {
     vim.cmd "setlocal nonumber"
     vim.cmd "setlocal norelativenumber"
   end,
+})
+
+-- save to auto chezmoi apply when change
+local chezmoi = require "util.chezmoi"
+vim.api.nvim_create_autocmd("BufWritePost", {
+  group = augroup "chezmoi_update",
+  pattern = chezmoi.pattern,
+  callback = chezmoi.apply,
 })
