@@ -24,6 +24,19 @@ vim.api.nvim_create_autocmd("FileType", {
   end,
 })
 
+-- bigfile
+vim.api.nvim_create_autocmd("BufReadPre", {
+  group = augroup "bigfile",
+  pattern = "*",
+  callback = function(event)
+    local file_util = require "util.file"
+    local buf = event.buf
+    if file_util.is_big(buf) then
+      file_util.disable_futures_for_bigfile(buf)
+    end
+  end,
+})
+
 -- terminal mode
 vim.api.nvim_create_autocmd({ "TermOpen", "WinEnter" }, {
   group = augroup "terminal_open",
