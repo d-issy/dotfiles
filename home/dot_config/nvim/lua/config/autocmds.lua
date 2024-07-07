@@ -2,14 +2,6 @@ local function augroup(name)
   return vim.api.nvim_create_augroup(name, { clear = true })
 end
 
--- save to auto chezmoi apply when change
-local chezmoi = require "util.chezmoi"
-vim.api.nvim_create_autocmd("BufWritePost", {
-  group = augroup "chezmoi_update",
-  pattern = chezmoi.pattern,
-  callback = chezmoi.apply,
-})
-
 -- highlight when yank
 vim.api.nvim_create_autocmd("TextYankPost", {
   group = augroup "highlight_yank",
@@ -32,6 +24,19 @@ vim.api.nvim_create_autocmd("FileType", {
   end,
 })
 
+-- bigfile
+vim.api.nvim_create_autocmd("BufReadPre", {
+  group = augroup "bigfile",
+  pattern = "*",
+  callback = function(event)
+    local file_util = require "util.file"
+    local buf = event.buf
+    if file_util.is_big(buf) then
+      file_util.disable_futures_for_bigfile(buf)
+    end
+  end,
+})
+
 -- terminal mode
 vim.api.nvim_create_autocmd({ "TermOpen", "WinEnter" }, {
   group = augroup "terminal_open",
@@ -41,4 +46,12 @@ vim.api.nvim_create_autocmd({ "TermOpen", "WinEnter" }, {
     vim.cmd "setlocal nonumber"
     vim.cmd "setlocal norelativenumber"
   end,
+})
+
+-- save to auto chezmoi apply when change
+local chezmoi = require "util.chezmoi"
+vim.api.nvim_create_autocmd("BufWritePost", {
+  group = augroup "chezmoi_update",
+  pattern = chezmoi.pattern,
+  callback = chezmoi.apply,
 })

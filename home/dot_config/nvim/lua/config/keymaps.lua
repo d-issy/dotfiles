@@ -14,6 +14,11 @@ map.setup {
   { "n", "nzz", desc = "Next" },
   { "N", "Nzz", desc = "Previous" },
 
+  -- copy and paste
+  { "gy", '"+y', mode = { "n", "x" }, desc = "Copy to system clipboard" },
+  { "gp", '"+p', mode = { "n" }, desc = "Paste from system clipboard" },
+  { "gp", '"+P', mode = { "x" }, desc = "Paste from system clipboard" },
+
   -- toggle
   { "<leader>uw", toggle.option "wrap", desc = "Toggle wrap" },
   { "<leader>ul", toggle.option { "number", "relativenumber" }, desc = "Toggle number" },
@@ -37,6 +42,9 @@ map.setup {
   { "<c-w>j", "<c-\\><c-n><c-w>j", mode = "t", desc = "Down" },
   { "<c-w>k", "<c-\\><c-n><c-w>k", mode = "t", desc = "Up" },
   { "<c-w>l", "<c-\\><c-n><c-w>l", mode = "t", desc = "Right" },
+
+  -- lazynvim
+  { "<leader>l", "<cmd>Lazy<cr>", desc = "Lazy" },
 
   -- lazygit
   { "<leader>gg", lazygit.open, desc = "Lazygit" },

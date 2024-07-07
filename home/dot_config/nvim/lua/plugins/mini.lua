@@ -1,7 +1,6 @@
 return {
   {
     "echasnovski/mini.files",
-    version = "*",
     opts = {
       mappings = {
         synchronize = ";",
@@ -100,7 +99,6 @@ return {
   },
   {
     "echasnovski/mini.indentscope",
-    version = "*",
     event = { "BufReadPost" },
     opts = {
       symbol = "│",
@@ -123,17 +121,25 @@ return {
   },
   {
     "echasnovski/mini.icons",
-    version = false,
     opts = {},
-    specs = {
-      { "nvim-tree/nvim-web-devicons", enabled = false, optional = true },
-    },
     init = function()
       package.preload["nvim-web-devicons"] = function()
         package.loaded["nvim-web-devicons"] = {}
         require("mini.icons").mock_nvim_web_devicons()
         return package.loaded["nvim-web-devicons"]
       end
+    end,
+  },
+  {
+    "echasnovski/mini.hipatterns",
+    event = { "BufReadPost" },
+    opts = function()
+      local hipatterns = require "mini.hipatterns"
+      return {
+        highlighters = {
+          hex_color = hipatterns.gen_highlighter.hex_color(),
+        },
+      }
     end,
   },
 }

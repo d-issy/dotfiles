@@ -1,4 +1,5 @@
 return {
+  { "nvim-lua/plenary.nvim" },
   {
     "akinsho/bufferline.nvim",
     version = "*",
@@ -102,7 +103,5 @@ return {
       wk.register(opts.defaults)
     end,
   },
-  { "brenoprata10/nvim-highlight-colors", event = { "UIEnter" }, opts = {} },
-  { "nvim-lua/plenary.nvim" },
   { "MunifTanjim/nui.nvim" },
 }

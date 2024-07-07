@@ -21,6 +21,9 @@ return {
       highlight = {
         enable = true,
         disable = function(lang)
+          if require("util.file").is_big() then
+            return true
+          end
           return vim.list_contains({ "help" }, lang)
         end,
         use_languagetree = true,
