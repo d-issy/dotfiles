@@ -1,3 +1,4 @@
+--- @class util.file
 local M = {}
 
 --- Check if file is big

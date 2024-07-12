@@ -1,3 +1,4 @@
+--- @class util.copilot
 local M = {}
 
 --- Check if copilot is enabled
