@@ -1,11 +1,26 @@
 --- @class util.buffer
 local M = {}
 
---- Removes the current buffer.
-function M.remove()
-  local buf = vim.api.nvim_get_current_buf()
+local TARGET_BUFTYPE = { "acwrite", "quickfix", "help", "terminal" }
+local TARGET_FILETYPE = { "grug-far" }
 
-  if vim.bo.modified then
+--- Check if the buffer is managed or ignored.
+--- @param buf? number
+function M.is_managed(buf)
+  buf = buf or vim.api.nvim_get_current_buf()
+
+  return not (
+    vim.list_contains(TARGET_BUFTYPE, vim.bo[buf].buftype)
+    or vim.list_contains(TARGET_FILETYPE, vim.bo[buf].filetype)
+  )
+end
+
+--- Removes the current buffer.
+--- @param buf? number
+function M.remove(buf)
+  buf = buf or vim.api.nvim_get_current_buf()
+
+  if vim.bo[buf].modified then
     local choice = vim.fn.confirm(("Save changes to %q?"):format(vim.fn.bufname()), "&Yes\n&No\n&Cancel")
     if choice == 0 then -- Cancel
       return

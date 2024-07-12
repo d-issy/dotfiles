@@ -3,6 +3,8 @@ return {
   cmd = { "GrugFar" },
   opts = {
     windowCreationCommand = "split",
+    sratrInsertMode = false,
+    window = { height = 10 },
     keymaps = {
       qflist = { n = "<c-q>" },
       refresh = { n = "<c-r>" },
@@ -18,6 +20,6 @@ return {
     },
   },
   keys = {
-    { "<leader>fr", "<cmd>GrugFar<cr>", "find/replace Text" },
+    { "<leader>fr", "<cmd>GrugFar<cr><cmd>resize 15<cr>I", "find/replace Text" },
   },
 }
