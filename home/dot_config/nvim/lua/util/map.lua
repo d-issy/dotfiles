@@ -1,16 +1,16 @@
---- @class util.keymap
+--- @class util.map
 local M = {}
 
 local array = require "util.array"
 
---- @class util.keymap.KeyMapTable
+--- @class util.map.KeyMapTable
 --- @field [1] string lhs
 --- @field [2]? string|fun() rhs
 --- @field [3]? table opts
 --- @field mode? string|string[]
 --- @field desc? string
 
---- @param keys util.keymap.KeyMapTable[]
+--- @param keys util.map.KeyMapTable[]
 --- @param default_opts table?
 function M.setup(keys, default_opts)
   for _, key in ipairs(keys) do

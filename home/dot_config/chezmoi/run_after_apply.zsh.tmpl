@@ -5,17 +5,17 @@
 chezmoi unmanaged --path-style absolute | grep .config/nvim/lua | xargs -r rm -rv
 chezmoi unmanaged --path-style absolute | grep .config/zsh | xargs -r rm -rv
 chezmoi unmanaged --path-style absolute | grep .config/aqua | xargs -r rm -rv
-chezmoi unmanaged --path-style absolute | grep .config/navi | xargs -r rm -rv
+chezmoi unmanaged --path-style absolute | grep .config/navi/cheats | xargs -r rm -rv
 
 {{ if eq .chezmoi.os "darwin" -}}
 # nvim config {{ output "find" (joinPath .chezmoi.sourceDir "dot_hammerspoon") "-type" "f" | sha256sum }}
 chezmoi unmanaged --path-style absolute | grep .hammerspoon/ | xargs -r rm -rv
 {{- end }}
 
+{{ if lookPath "aqua" -}}
 # after symlink lazy
-if which aqua &>/dev/null; then
-  aqua install --all --only-link
-fi
+aqua install --all --only-link
+{{- end }}
 
 # compile zshrc
 zcompile ~/.zshrc

@@ -1,3 +1,4 @@
+--- @class util.toggle
 local M = {}
 
 --- Toggle vim options
