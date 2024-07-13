@@ -34,5 +34,5 @@ packages:
   - name: terraform-docs/terraform-docs@v0.18.0
   - name: twistedpair/google-cloud-sdk@483.0.0
   - name: twpayne/chezmoi@v2.50.0
-  - name: x-motemen/ghq@v1.6.1
+  - name: x-motemen/ghq@v1.6.2
   - name: zellij-org/zellij@v0.40.1
