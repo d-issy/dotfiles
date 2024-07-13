@@ -25,14 +25,12 @@ return {
     }
   end,
   keys = {
-    { "<leader>,", "<leader>fb", remap = true },
-    { "<leader>/", "<leader>fg", remap = true },
-    { "<leader><space>", "<leader>ff", remap = true },
+    { "<leader>,", "<cmd>Telescope buffers<cr>", desc = "Buffers" },
+    { "<leader>/", "<cmd>Telescope live_grep<cr>", desc = "Grep" },
+    { "<leader><space>", "<cmd>Telescope find_files<cr>", desc = "Files" },
     { "<leader>fa", "<cmd>Telescope<cr>", desc = "Actions" },
-    { "<leader>fb", "<cmd>Telescope buffers<cr>", desc = "Buffers" },
     { "<leader>fd", "<cmd>Telescope diagnostics<cr>", desc = "Diagnostics" },
     { "<leader>ff", "<cmd>Telescope find_files<cr>", desc = "Files" },
-    { "<leader>fg", "<cmd>Telescope live_grep<cr>", desc = "Git Grep" },
     { "<leader>fh", "<cmd>Telescope help_tags<cr>", desc = "Help" },
     { "<leader>fk", "<cmd>Telescope keymaps<cr>", desc = "Keymaps" },
     { "<leader>fl", "<cmd>Telescope current_buffer_fuzzy_find<cr>", desc = "Lines" },

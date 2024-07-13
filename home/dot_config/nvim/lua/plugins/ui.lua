@@ -69,33 +69,46 @@ return {
   },
   {
     "folke/which-key.nvim",
-    event = "VeryLazy",
+    -- event = "VeryLazy",
     opts = {
-      defaults = {
-        mode = { "n", "v" },
-        ["g"] = { name = "+goto" },
-        ["gs"] = { name = "+surround" },
-        ["z"] = { name = "+fold" },
-        ["]"] = { name = "+next" },
-        ["["] = { name = "+prev" },
-        ["<leader>a"] = { name = "+ai" },
-        ["<leader>b"] = { name = "+buffer" },
-        ["<leader>c"] = { name = "+code" },
-        ["<leader>f"] = { name = "+find" },
-        ["<leader>g"] = { name = "+git" },
-        ["<leader>gh"] = { name = "+hunks", ["_"] = "which_key_ignore" },
-        ["<leader>q"] = { name = "+quit/session" },
-        ["<leader>u"] = { name = "+ui" },
+      preset = "helix",
+      spec = {
+        {
+          mode = { "n", "v" },
+          { "g", group = "goto" },
+          { "gs", group = "surround" },
+          { "z", group = "fold" },
+          { "]", group = "next" },
+          { "[", group = "prev" },
+          { "<leader><tab>", group = "terminal" },
+          { "<leader>a", group = "ai" },
+          { "<leader>b", group = "buffer" },
+          { "<leader>c", group = "code" },
+          { "<leader>f", group = "find" },
+          { "<leader>g", group = "git" },
+          { "<leader>gh", group = "hunks" },
+          { "<leader>q", group = "quit/session" },
+          { "<leader>t", group = "test" },
+          { "<leader>u", group = "ui" },
+        },
       },
-      window = {
+      icons = {
+        rules = {
+          { pattern = "ai", icon = "󰭆", color = "grey" },
+          { pattern = "blame", cat = "filetype", name = "git" },
+          { pattern = "commit", cat = "filetype", name = "git" },
+          { pattern = "delete", icon = "󰆴", color = "red" },
+          { pattern = "hunk", cat = "filetype", name = "git" },
+          { plugin = "CopilotChat.nvim", icon = "", color = "grey" },
+          { plugin = "gitsigns.nvim", cat = "filetype", name = "git" },
+          { plugin = "grug-far.nvim", icon = "󰛔 ", color = "blue" },
+          { plugin = "mini.files", cat = "filetype", name = "netrw" },
+        },
+      },
+      win = {
         border = require("util.border").generate "WhichKeyBorder",
       },
     },
-    config = function(_, opts)
-      local wk = require "which-key"
-      wk.setup(opts)
-      wk.register(opts.defaults)
-    end,
   },
   { "MunifTanjim/nui.nvim" },
 }

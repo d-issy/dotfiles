@@ -6,10 +6,10 @@ local buffer = require "util.buffer"
 
 map.setup {
   -- basic
-  { "<leader>w", "<cmd>w<cr>", desc = "Write" },
+  { "<leader>w", "<cmd>w<cr>", desc = "File Write" },
   { "<leader>qq", "<cmd>qa<cr>", mode = { "n", "t" }, desc = "Quit and Save All" },
   { "<leader>md", "<cmd>delmarks! | delmarks A-Z0-9<cr>", desc = "Delete All Marks" },
-  { "<leader>bd", buffer.remove, desc = "Buffer Remove" },
+  { "<leader>bd", buffer.delete, desc = "Buffer Delete" },
   { "<esc>", "<cmd>noh<cr><esc>", desc = "esc", mode = { "i", "n" } },
   { "n", "nzz", desc = "Next" },
   { "N", "Nzz", desc = "Previous" },

@@ -15,9 +15,9 @@ function M.is_managed(buf)
   )
 end
 
---- Removes the current buffer.
+--- Delete the current buffer.
 --- @param buf? number
-function M.remove(buf)
+function M.delete(buf)
   buf = buf or vim.api.nvim_get_current_buf()
 
   if vim.bo[buf].modified then

@@ -20,6 +20,6 @@ return {
     },
   },
   keys = {
-    { "<leader>fr", "<cmd>GrugFar<cr><cmd>resize 15<cr>I", "find/replace Text" },
+    { "<leader>fr", "<cmd>GrugFar<cr><cmd>resize 15<cr>I", desc = "Replace" },
   },
 }

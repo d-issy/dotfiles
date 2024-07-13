@@ -4,11 +4,11 @@ return {
     version = "*",
     opts = {
       win_opts = {
-        zindex = 1000,
+        zindex = 3000,
       },
     },
     keys = {
-      { "<leader>uk", "<cmd>Screenkey<cr>", desc = "Screenkey" },
+      { "<leader>uk", "<cmd>Screenkey<cr>", desc = "Toggle Screenkey" },
     },
   },
 }
