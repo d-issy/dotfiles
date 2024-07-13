@@ -1,6 +1,8 @@
 --- @class util.toggle
 local M = {}
 
+local log = require "util.log"
+
 --- Toggle vim options
 --- @param options string|string[]
 --- @return function
@@ -14,12 +16,12 @@ function M.option(options)
       if vim.opt_local[option]:get() then
         vim.opt_local[option] = false
         if notify then
-          vim.api.nvim_notify("Disabled", vim.log.levels.WARN, { title = "Option (" .. option .. ")" })
+          log.warn("Disabled", "Option (" .. option .. ")")
         end
       else
         vim.opt_local[option] = true
         if notify then
-          vim.api.nvim_notify("Enabled", vim.log.levels.INFO, { title = "Option (" .. option .. ")" })
+          log.info("Enabled", "Option (" .. option .. ")")
         end
       end
     end

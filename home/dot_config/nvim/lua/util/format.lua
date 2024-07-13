@@ -1,7 +1,9 @@
---- @class util.format
+---@class util.format
 local M = {}
 
---- Check if autoformat is enabled
+local log = require "util.log"
+
+-- Check if autoformat is enabled
 --- @return boolean
 function M.enabled()
   local buf = vim.api.nvim_get_current_buf()
@@ -17,19 +19,20 @@ function M.enabled()
   return g == nil or g
 end
 
---- Toggle autoformat
+-- Toggle autoformat
 --- @param buf? boolean
 function M.toggle(buf)
   local autoformat = not M.enabled()
   local msg = autoformat and "enabled" or "disabled"
+  local level = autoformat and "info" or "warn"
 
   if buf then
     vim.b.autoformat = autoformat
-    vim.api.nvim_notify(msg, vim.log.levels.INFO, { title = "Autoformat (buffer)" })
+    log.with(level, msg, "Autoformat (buffer) ")
   else
     vim.g.autoformat = autoformat
     vim.b.autoformat = nil
-    vim.api.nvim_notify(msg, vim.log.levels.INFO, { title = "Autoformat (global)" })
+    log.with(level, msg, "Autoformat (global) ")
   end
 end
 
