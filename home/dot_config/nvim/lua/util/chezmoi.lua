@@ -1,6 +1,8 @@
 ---@class util.chezmoi
 local M = {}
 
+local log = require "util.log"
+
 M.pattern = os.getenv "HOME" .. "/.local/share/chezmoi/home/*"
 
 -- Check if chezmoi is installed.
@@ -23,9 +25,9 @@ function M.toggle()
   local enabled = not M.is_enabled()
   vim.g.chezmoi = enabled
   if enabled then
-    vim.api.nvim_notify("Enabled", vim.log.levels.INFO, { title = "chezmoi" })
+    log.info("Enabled", "chezmoi")
   else
-    vim.api.nvim_notify("Disabled", vim.log.levels.WARN, { title = "chezmoi" })
+    log.warn("Disabled", "chezmoi")
   end
 end
 
@@ -35,10 +37,7 @@ function M.apply()
     return
   end
   local out = vim.fn.trim(vim.fn.system { "chezmoi", "apply", "--verbose", "--force" })
-  if out == "" then
-    return
-  end
-  vim.api.nvim_notify(out, vim.log.levels.INFO, { title = "chezmoi apply" })
+  log.info(out, "chezmoi title")
 end
 
 return M
