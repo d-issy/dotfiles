@@ -38,7 +38,7 @@ return {
     {
       "<leader>uF",
       require("util.format").toggle,
-      { desc = "Toggle Global AutoFormat" },
+      desc = "Toggle Global AutoFormat",
     },
   },
   init = function()
