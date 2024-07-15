@@ -9,7 +9,7 @@ return {
   {
     "folke/noice.nvim",
     event = "VeryLazy",
-    dependencies = { "nvim-notify" },
+    dependencies = { "nvim-notify", "fzf-lua" },
     opts = {
       cmdline = { view = "cmdline" },
       routes = {
@@ -43,6 +43,9 @@ return {
         hover = { enabled = false },
         signature = { enabled = false },
       },
+    },
+    keys = {
+      { "<leader>fn", "<cmd>NoiceFzf<cr>", desc = "Noice Mesasges" },
     },
   },
 }

@@ -5,7 +5,7 @@ local function pick(kind)
     if not items then
       return
     end
-    require("CopilotChat.integrations.telescope").pick(items)
+    require("CopilotChat.integrations.fzflua").pick(items)
   end
 end
 
@@ -86,40 +86,15 @@ return {
         },
       }
     end,
+    -- stylua: ignore
     keys = {
       { "<c-s>", "<CR>", ft = "copilot-chat", desc = "Submit Prompt", remap = true },
       { "<leader>a", "", desc = "+ai", mode = { "n", "v" } },
-      {
-        "<leader>aa",
-        function()
-          return require("CopilotChat").toggle()
-        end,
-        desc = "Toggle (CopilotChat)",
-        mode = { "n", "v" },
-      },
-      {
-        "<leader>ax",
-        function()
-          return require("CopilotChat").reset()
-        end,
-        desc = "Clear (CopilotChat)",
-        mode = { "n", "v" },
-      },
-      {
-        "<leader>aq",
-        function()
-          local input = vim.fn.input "Quick Chat: "
-          if input ~= "" then
-            require("CopilotChat").ask(input)
-          end
-        end,
-        desc = "Quick Chat (CopilotChat)",
-        mode = { "n", "v" },
-      },
-      -- Show help actions with telescope
+      { "<leader>aa", function() return require("CopilotChat").toggle() end, mode = { "n", "v" }, desc = "Toggle (CopilotChat)" },
       { "<leader>ad", pick "help", desc = "Diagnostic Help (CopilotChat)", mode = { "n", "v" } },
-      -- Show prompts actions with telescope
       { "<leader>ap", pick "prompt", desc = "Prompt Actions (CopilotChat)", mode = { "n", "v" } },
+      { "<leader>aq", function() local input = vim.fn.input "Quick Chat: " if input ~= "" then require("CopilotChat").ask(input) end end, mode = { "n", "v" }, desc = "Quick Chat (CopilotChat)" },
+      { "<leader>ax", function() return require("CopilotChat").reset() end, mode = { "n", "v" }, desc = "Clear (CopilotChat)" },
     },
     config = function(_, opts)
       local chat = require "CopilotChat"

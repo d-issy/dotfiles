@@ -18,7 +18,6 @@ return {
     "neovim/nvim-lspconfig",
     "williamboman/mason-lspconfig.nvim",
     "mason.nvim",
-    "telescope.nvim",
   },
   event = { "BufReadPost" },
   opts = {
@@ -52,15 +51,19 @@ return {
         if vim.diagnostic.get_next() then vim.diagnostic.goto_next(goto_opts) end
       end
 
+      -- stylua: ignore
       map.setup({
-        { "<leader>cr", "<cmd>lua vim.lsp.buf.rename()<cr>", desc = "LSP Rename" },
-        { "<leader>ca", "<cmd>lua vim.lsp.buf.code_action()<cr>", desc = "LSP CodeAction" },
-        { "<leader>cs", "<cmd>Telescope lsp_document_symbols<cr>", desc = "LSP Symbols" },
-        { "gr", "<cmd>Telescope lsp_references<cr>", desc = "LSP References" },
-        { "gd", "<cmd>Telescope lsp_definitions<cr>", desc = "LSP Defenition" },
+        { "<C-h>", vim.lsp.buf.signature_help, mode = "i", desc = "LSP Signature Help" },
+        { "<leader>ca", vim.lsp.buf.code_action, desc = "LSP CodeAction" },
+        { "<leader>cr", vim.lsp.buf.rename, desc = "LSP Rename" },
         { "[d", goto_prev, desc = "LSP Prev Diagnostic" },
         { "]d", goto_next, dsc = "LSP Next Diagnostic" },
-        { "<C-h>", vim.lsp.buf.signature_help, mode = "i", desc = "LSP Signature Help" },
+
+        -- fzf-lua
+        { "<leader>cs", "<cmd>FzfLua lsp_document_symbols<cr>", desc = "LSP Symbols" },
+        { "<leader>cS", "<cmd>FzfLua lsp_workspace_symbols<cr>", desc = "LSP Symbols" },
+        { "gd", function() require("fzf-lua").lsp_definitions { jump_to_single_result = true } end, desc = "LSP Definitions" },
+        { "gr", function() require("fzf-lua").lsp_references { ignore_current_line = true } end, desc = "LSP References" },
       }, { buffer = bufnr })
     end)
 
