@@ -123,12 +123,6 @@ local hl = {
   CmpItemKind = { fg = palette.ui, bg = palette.none },
   CmpItemKindCopilot = { fg = "#6cc644", bg = palette.none },
 
-  -- Telescope
-  TelescopeNormal = { fg = palette.ui, bg = palette.bg },
-  TelescopeBorder = { fg = palette.border },
-  TelescopeSelection = { bg = palette.visual },
-  TelescopeMatching = { fg = palette.search },
-
   -- TreeSitter
   TreeSitterContext = { bg = palette.cursor },
 
