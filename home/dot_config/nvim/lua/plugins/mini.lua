@@ -98,6 +98,11 @@ return {
     },
   },
   {
+    "echasnovski/mini.align",
+    event = { "BufReadPre" },
+    opts = {},
+  },
+  {
     "echasnovski/mini.indentscope",
     event = { "BufReadPost" },
     opts = {
