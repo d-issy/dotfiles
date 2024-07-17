@@ -61,7 +61,7 @@ return {
 
         -- fzf-lua
         { "<leader>cs", "<cmd>FzfLua lsp_document_symbols<cr>", desc = "LSP Symbols" },
-        { "<leader>cS", "<cmd>FzfLua lsp_workspace_symbols<cr>", desc = "LSP Symbols" },
+        { "<leader>cS", "<cmd>FzfLua lsp_live_workspace_symbols<cr>", desc = "LSP Symbols" },
         { "gd", function() require("fzf-lua").lsp_definitions { jump_to_single_result = true } end, desc = "LSP Definitions" },
         { "gr", function() require("fzf-lua").lsp_references { ignore_current_line = true } end, desc = "LSP References" },
       }, { buffer = bufnr })
