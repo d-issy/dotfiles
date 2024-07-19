@@ -36,6 +36,7 @@ return {
       vim.lsp.handlers["textDocument/signatureHelp"] = vim.lsp.with(vim.lsp.handlers.signature_help, {
         border = border,
       })
+      vim.diagnostic.config { update_in_insert = true }
 
       -- keymaps
       lsp_zero.default_keymaps { bufnr = bufnr }
