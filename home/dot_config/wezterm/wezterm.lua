@@ -1,4 +1,5 @@
 local wezterm = require "wezterm"
+local act = wezterm.action
 
 local config = {}
 
@@ -6,7 +7,10 @@ if wezterm.config_builder then
   config = wezterm.config_builder()
 end
 
+-- UI
 config.color_scheme = "Catppuccin Macchiato"
+config.font_size = 14
+config.adjust_window_size_when_changing_font_size = false
 config.font = wezterm.font_with_fallback {
   "0xProto",
   "UDEV Gothic 35",
@@ -17,12 +21,13 @@ config.font = wezterm.font_with_fallback {
 config.warn_about_missing_glyphs = false
 config.harfbuzz_features = { "calt=1", "clig=1", "liga=1" } -- ligatures
 
-config.font_size = 14
+-- config
 config.hide_tab_bar_if_only_one_tab = true
-config.adjust_window_size_when_changing_font_size = false
 config.use_ime = true
 config.macos_forward_to_ime_modifier_mask = "SHIFT|CTRL"
 config.audible_bell = "Disabled"
+
+-- keybind
 config.keys = {
   { key = "q", mods = "CTRL", action = wezterm.action.SendKey { key = "q", mods = "CTRL" } },
   { key = "u", mods = "CMD", action = wezterm.action.EmitEvent "toggle-opacity" },

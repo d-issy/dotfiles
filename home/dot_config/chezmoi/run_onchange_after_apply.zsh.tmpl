@@ -8,12 +8,19 @@ chezmoi unmanaged --path-style absolute | grep .config/aqua | xargs -r rm -rv
 chezmoi unmanaged --path-style absolute | grep .config/navi/cheats | xargs -r rm -rv
 
 {{ if eq .chezmoi.os "darwin" -}}
-# nvim config {{ output "find" (joinPath .chezmoi.sourceDir "dot_hammerspoon") "-type" "f" | sha256sum }}
+# hammerspoon on macOS {{ output "find" (joinPath .chezmoi.sourceDir "dot_hammerspoon") "-type" "f" | sha256sum }}
 chezmoi unmanaged --path-style absolute | grep .hammerspoon/ | xargs -r rm -rv
 {{- end }}
 
+{{ if (and (eq .chezmoi.os "linux") (.chezmoi.kernel.osrelease | lower | contains "microsoft")) -}}
+# wezterm on WSL {{ output "cat" (joinPath .chezmoi.sourceDir "dot_config" "wezterm" "wezterm.lua") | sha256sum }}
+if [ -d "/mnt/c/Users/$(whoami)" ]; then
+  cp -v ~/.config/wezterm/wezterm.lua /mnt/c/Users/$(whoami)/.wezterm.lua
+fi
+{{- end }}
+
 {{ if lookPath "aqua" -}}
-# after symlink lazy
+# symlink lazy {{ output "cat" (joinPath .chezmoi.sourceDir "dot_config" "aqua" "aqua.yaml") | sha256sum }}
 aqua install --all --only-link
 {{- end }}
 
