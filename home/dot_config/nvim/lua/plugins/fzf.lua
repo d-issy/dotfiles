@@ -45,23 +45,12 @@ return {
     -- git
     { "<leader>gs", "<cmd>FzfLua git_status<cr>", desc = "Git Status" },
     -- code
+    { "gd", "<cmd>FzfLua lsp_definitions jump_to_single_result=true<cr>", desc = "Go to Definitions" },
+    { "gD", "<cmd>FzfLua lsp_declarations<cr>", desc = "Go to Declarations" },
+    { "gi", "<cmd>FzfLua lsp_implementations<cr>", desc = "Go to Implementation" },
+    { "gr", "<cmd>FzfLua lsp_references ignore_current_line=true<cr>", desc = "Show References" },
     { "<leader>ca", "<cmd>FzfLua lsp_code_actions<cr>", desc = "Code Action" },
-    { "<leader>ci", "<cmd>FzfLua lsp_implementations<cr>", desc = "Go to Implementation" },
     { "<leader>cs", "<cmd>FzfLua lsp_document_symbols<cr>", desc = "Document Symbols" },
     { "<leader>cS", "<cmd>FzfLua lsp_live_workspace_symbols<cr>", desc = "LSP Workspace Symbols" },
-    {
-      "gd",
-      function()
-        require("fzf-lua").lsp_definitions { jump_to_single_result = true }
-      end,
-      desc = "Go to Definitions",
-    },
-    {
-      "gr",
-      function()
-        require("fzf-lua").lsp_references { ignore_current_line = true }
-      end,
-      desc = "Show References",
-    },
   },
 }

@@ -41,23 +41,12 @@ return {
       -- keymaps
       lsp_zero.default_keymaps { bufnr = bufnr }
 
-      -- goto
-      local goto_opts = { popup_opts = { border = "single" } }
-      -- stylua: ignore
-      local function goto_prev()
-        if vim.diagnostic.get_prev() then vim.diagnostic.goto_prev(goto_opts) end
-      end
-      -- stylua: ignore
-      local function goto_next()
-        if vim.diagnostic.get_next() then vim.diagnostic.goto_next(goto_opts) end
-      end
-
       -- stylua: ignore
       map.setup({
         { "<C-h>", vim.lsp.buf.signature_help, mode = "i", desc = "LSP Signature Help" },
+        { "[d", vim.diagnostic.goto_prev, desc = "LSP Prev Diagnostic" },
+        { "]d", vim.diagnostic.goto_next, dsc = "LSP Next Diagnostic" },
         { "<leader>cr", vim.lsp.buf.rename, desc = "LSP Rename" },
-        { "[d", goto_prev, desc = "LSP Prev Diagnostic" },
-        { "]d", goto_next, dsc = "LSP Next Diagnostic" },
       }, { buffer = bufnr })
     end)
 
