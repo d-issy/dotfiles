@@ -69,8 +69,12 @@ return {
   {
     "folke/which-key.nvim",
     event = "VeryLazy",
+    opts_extend = { "spec" },
     opts = {
       preset = "helix",
+      triggers = {
+        { "<auto>", mode = "nv" },
+      },
       spec = {
         {
           mode = { "n", "v" },
@@ -106,6 +110,15 @@ return {
       },
       win = {
         border = require("util.border").generate "WhichKeyBorder",
+      },
+    },
+    keys = {
+      {
+        "<leader>?",
+        function()
+          require("which-key").show { global = false }
+        end,
+        desc = "Buffer Keymaps (which-key)",
       },
     },
   },
