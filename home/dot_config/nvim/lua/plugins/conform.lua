@@ -1,19 +1,36 @@
 return {
   "stevearc/conform.nvim",
   dependencies = { "mason.nvim" },
-  event = { "BufReadPost" },
+  event = { "BufWritePre" },
+  cmd = { "ConformInfo" },
   opts = {
+    default_format_opts = {
+      timeout_ms = 3000,
+      async = false,
+      quiet = false,
+      lsp_format = "fallback",
+    },
     formatters_by_ft = {
-      ["lua"] = { "stylua" },
-      ["python"] = { "black", "isort" },
-      ["go"] = { "goimports", "gofumpt" },
+      ["python"] = function(buf)
+        if require("conform").get_formatter_info("ruff_format", buf).available then
+          return { "ruff_format" }
+        else
+          return { "black", "isort" }
+        end
+      end,
 
-      ["javascript"] = { { "prettierd", "prettier" } },
-      ["javascriptreact"] = { { "prettierd", "prettier" } },
-      ["typescript"] = { { "prettierd", "prettier" } },
-      ["typescriptreact"] = { { "prettierd", "prettier" } },
-      ["markdown"] = { { "prettierd", "prettier" }, "markdownlint", "markdown-doc" },
-      ["markdown.mdx"] = { { "prettierd", "prettier" }, "markdownlint", "markdown-doc" },
+      ["go"] = { "goimports", "gofumpt" },
+      ["json"] = { "jq" },
+      ["lua"] = { "stylua" },
+      ["rust"] = { "rustfmt" },
+      ["sh"] = { "shfmt" },
+
+      ["javascript"] = { "prettierd", "prettier", stop_after_first = true },
+      ["javascriptreact"] = { "prettierd", "prettier", stop_after_first = true },
+      ["typescript"] = { "prettierd", "prettier", stop_after_first = true },
+      ["typescriptreact"] = { "prettierd", "prettier", stop_after_first = true },
+      ["markdown"] = { "prettierd", "prettier", stop_after_first = true },
+      ["markdown.mdx"] = { "prettierd", "prettier", stop_after_first = true },
 
       ["terraform"] = { "terraform_fmt" },
       ["terraform-vars"] = { "terraform_fmt" },
@@ -24,8 +41,9 @@ return {
     {
       "<leader>cf",
       function()
-        require("conform").format { async = true, lsp_fallback = true }
+        require("conform").format { async = true }
       end,
+      mode="",
       desc = "Format Buffer",
     },
     {
@@ -51,11 +69,7 @@ return {
       pattern = "*",
       callback = function(args)
         if format.enabled() then
-          conform.format {
-            bufnr = args.buf,
-            lsp_fallback = true,
-            timeout_ms = 500,
-          }
+          conform.format { bufnr = args.buf }
         end
       end,
     })
