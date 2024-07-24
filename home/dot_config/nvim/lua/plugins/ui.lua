@@ -46,8 +46,8 @@ return {
     opts = {},
     --stylua: ignore
     keys = {
-      { "gl", mode = { "n", "o", "x" }, function() require("flash").jump() end, desc = "Flash" },
-      { "gL", mode = { "n", "o", "x" }, function() require("flash").treesitter() end, desc = "Flash Treesitter" },
+      { "<leader>j", mode = { "n", "o", "x" }, function() require("flash").jump() end, desc = "Flash" },
+      { "<leader>J", mode = { "n", "o", "x" }, function() require("flash").treesitter() end, desc = "Flash Treesitter" },
     },
   },
   {
