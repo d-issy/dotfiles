@@ -33,13 +33,35 @@ return {
     { "<leader>,", "<cmd>FzfLua buffers<cr>", desc = "Buffers" },
     { "<leader>/", "<cmd>FzfLua live_grep<cr>", desc = "Grep" },
     { "<leader><space>", "<cmd>FzfLua files<cr>", desc = "Files" },
+    -- find
     { "<leader>fa", "<cmd>FzfLua builtin<cr>", desc = "Actions" },
-    { "<leader>fd", "<cmd>FzfLua lsp_document_diagnostics<cr>", desc = "Diagnostics" },
+    { "<leader>fd", "<cmd>FzfLua diagnostics_workspace<cr>", desc = "Diagnostics" },
     { "<leader>ff", "<cmd>FzfLua files<cr>", desc = "Files" },
     { "<leader>fh", "<cmd>FzfLua help_tags<cr>", desc = "Help" },
+    { "<leader>fj", "<cmd>FzfLua jumps<cr>", desc = "Jumps" },
     { "<leader>fk", "<cmd>FzfLua keymaps<cr>", desc = "Keymaps" },
     { "<leader>fl", "<cmd>FzfLua blines<cr>", desc = "Lines" },
     { "<leader>fs", "<cmd>FzfLua spell_suggest<cr>", desc = "Spell Suggest" },
+    -- git
     { "<leader>gs", "<cmd>FzfLua git_status<cr>", desc = "Git Status" },
+    -- code
+    { "<leader>ca", "<cmd>FzfLua lsp_code_actions<cr>", desc = "Code Action" },
+    { "<leader>ci", "<cmd>FzfLua lsp_implementations<cr>", desc = "Go to Implementation" },
+    { "<leader>cs", "<cmd>FzfLua lsp_document_symbols<cr>", desc = "Document Symbols" },
+    { "<leader>cS", "<cmd>FzfLua lsp_live_workspace_symbols<cr>", desc = "LSP Workspace Symbols" },
+    {
+      "gd",
+      function()
+        require("fzf-lua").lsp_definitions { jump_to_single_result = true }
+      end,
+      desc = "Go to Definitions",
+    },
+    {
+      "gr",
+      function()
+        require("fzf-lua").lsp_references { ignore_current_line = true }
+      end,
+      desc = "Show References",
+    },
   },
 }
