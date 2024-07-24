@@ -12,6 +12,18 @@
         "patch"
       ],
       "automerge": true
+    },
+    {
+      "description": "Update gcloud",
+      "matchPackageNames": [
+        "google-cloud-sdk"
+      ],
+      "matchUpdateTypes": [
+        "major",
+        "minor",
+        "patch"
+      ],
+      "automerge": true
     }
   ]
 }
