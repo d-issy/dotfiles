@@ -1,0 +1,6 @@
+% make
+
+# run make
+make <target>
+
+$ target: make -qp | awk -F':' '/^[a-zA-Z0-9][^$#\/\t=]*:([^=]|$)/ && !/^\.PHONY/ {print $1}' | sort -u | grep -v "^Makefile\|^GNUmakefile\|^makefile"

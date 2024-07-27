@@ -22,15 +22,12 @@ gh pr create --draft
 gh pr create --base <base_branch>
 
 # checkout pull request
-gh pr checkout <pull>
+gh pr checkout <pull_number>
 
 # gh pr ready (draft to ready)
 gh pr ready
 
 # merge pull request
-gh pr merge
-
-# merge pull request with delete branch
 gh pr merge --delete-branch
 
 # close pull request
@@ -38,6 +35,9 @@ gh pr close
 
 # list pull request
 gh pr list
+
+# approve pull request
+echo '<pull_numbers>' | xargs -n1 -P4 gh pr review --approve
 
 # list pull request by me
 gh pr list --author '@me'
@@ -48,7 +48,8 @@ gh auth login
 $ subcommand: echo 'auth browse codespace gitst issue org pr project release repo' | tr ' ' '\n'
 $ base_branch: git branch | grep -v '*' | tr -d ' '
 $ branch: git branch | tr -d ' *'
-$ pull: gh pr list --- --column 1 --delimiter '\t'
+$ pull_number: gh pr list --- --column 1 --delimiter '\t'
+$ pull_numbers: gh pr list  --- --column 1 --delimiter '\t' --multi
 
 % gh copilot
 

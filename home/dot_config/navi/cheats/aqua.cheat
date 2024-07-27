@@ -11,3 +11,6 @@ aqua list --all --installed
 
 # remove package :: ar
 aqua rm -i
+
+# remove all package
+# aqua rm -i --all

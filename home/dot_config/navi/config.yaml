@@ -12,12 +12,13 @@ style:
 
 finder:
   command: fzf # equivalent to the --finder option
-  # overrides: --tac # equivalent to the --fzf-overrides option
-  # overrides_var: --tac # equivalent to the --fzf-overrides-var option
+  overrides: --no-exact
+  overrides_var: --no-select-1 --no-exact
 
 cheats:
   paths:
     - ~/.config/navi/cheats
+    - ~/navi/cheats # put private chetas
 
 shell:
   command: zsh
