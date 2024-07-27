@@ -1,0 +1,61 @@
+% docker
+
+# docker processlist
+docker ps
+
+# docker cleanup
+docker system prune
+
+# docker images
+docker images
+
+# docker pull image
+docker pull <image>
+
+# docker remove images
+docker rmi <image_ids>
+
+# docker run
+docker run --rm -it <image_id>
+
+# docker stop
+docker stop <container_ids>
+
+# docker kill
+docker kill <container_ids>
+
+# docker logs
+docker logs -f --tail 100 <container_id>
+
+# docker stats
+docker stats
+
+$ image_id: docker images --- --headers 1 --column 3
+$ image_ids: docker images --- --headers 1 --column 3 --multi --expand
+$ container_id: docker ps --- --headers 1 --column 1
+$ container_ids: docker ps --- --headers 1 --column 1 --multi --expand
+
+% docker compose
+
+# :: dc
+docker compose 
+
+# docker compose up :: dcup
+docker compose up
+
+# docker compose up with deamon :: dcupd
+docker compose up -d
+
+# docker compose down :: dcd
+docker compose down
+
+# docker compose up service :: dcups
+docker compose up <service_name>
+
+# docker compose up service with deamon ::dcupsd
+docker compose up <service_name> -d
+
+# docker compose stop
+docker compose stop <service_name>
+
+$ service_name: docker compose config --services
