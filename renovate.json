@@ -4,6 +4,11 @@
     "config:recommended",
     "github>aquaproj/aqua-renovate-config#2.3.1"
   ],
+  "ignorePaths": [
+    "**/node_modules/**",
+    "**/bower_components/**",
+    "home/dot_config/mise/config.toml"
+  ],
   "packageRules": [
     {
       "description": "Update no major versions",
