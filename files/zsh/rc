@@ -126,14 +126,3 @@ function nv() {
   echo "(process exit)"
   read -k 1
 }
-
-#########
-# alias #
-#########
-alias ..='cd ..'
-alias dc='docker compose'
-alias ld='lazydocker'
-alias lg='lazygit'
-
-
-alias -g G='| grep --color=auto'

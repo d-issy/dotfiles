@@ -6,8 +6,10 @@
       pkgs.duckdb
       pkgs.eza
       pkgs.fzf
+      pkgs.gh
       pkgs.jq
       pkgs.jqp
+      pkgs.lazydocker
       pkgs.neovim
     ];
     programs = {

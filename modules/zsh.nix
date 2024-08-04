@@ -11,6 +11,18 @@
     autosuggestion.enable = true;
     syntaxHighlighting.enable = true;
 
-    initExtra = builtins.readFile ../home/dot_zshrc;
+    # alias
+    shellAliases = {
+      ".." = "cd..";
+      dc = "docker compose";
+      ld = "lazydocker";
+      lg = "lazygit";
+    };
+    shellGlobalAliases = {
+      G = "| grep --color=auto";
+    };
+
+    initExtra = builtins.readFile ../files/zsh/rc;
+    profileExtra = builtins.readFile ../files/zsh/profile;
   };
 }

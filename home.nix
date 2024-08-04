@@ -16,6 +16,7 @@ in
     ./modules/lazygit.nix
     ./modules/misc.nix
     ./modules/mise.nix
+    ./modules/navi.nix
     ./modules/starship.nix
     ./modules/tmux.nix
     ./modules/zsh.nix

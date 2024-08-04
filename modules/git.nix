@@ -33,5 +33,5 @@
     };
   };
 
-  xdg.configFile."git/ignore".source = ../home/dot_config/git/ignore;
+  xdg.configFile."git/ignore".source = ../files/git/ignore;
 }
