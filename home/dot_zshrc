@@ -1,0 +1,139 @@
+###########
+# bindkey #
+###########
+# vi
+bindkey -v
+bindkey -M viins '^A' beginning-of-line
+bindkey -M viins '^E' end-of-line
+bindkey -M viins '^N' down-line-or-history
+bindkey -M viins '^P' up-line-or-history
+
+# own
+bindkey -M viins '^R' zsh-history
+
+###########
+# history #
+###########
+HISTFILE=$HOME/.zsh_history
+HISTSIZE=10000
+SAVEHIST=10000
+
+setopt appendhistory
+setopt hist_ignore_all_dups
+setopt hist_ignore_dups
+setopt hist_ignore_space
+setopt hist_no_store
+setopt hist_reduce_blanks
+setopt share_history
+
+##############
+# completion #
+##############
+autoload -U compinit
+compinit
+
+autoload colors
+zstyle ':completion:*' completer _expand_alias _complete _ignored
+
+zstyle ':completion:*:descriptions' format '%F{blue} %B%d%b%f'
+zstyle ':completion:*:warnings' format '%F{yello} No matches for: %d%f'
+
+zstyle ':completion:*' group-name ''
+zstyle ':completion:*' matcher-list '' 'm:{a-zA-Z}={A-Za-z}' 'r:|[._-]=* r:|=*' 'l:|=* r:|=*'
+zstyle ':completion:*' menu select=2
+zstyle ':completion:*' verbose yes
+
+###############
+# my commands #
+###############
+function zle-keymap-select () {
+  case $KEYMAP in
+    vicmd) echo -ne '\e[1 q';;
+    viins|main) echo -ne '\e[5 q';;
+  esac
+}
+zle -N zle-keymap-select
+
+function zle-line-init() {
+  zle -K viins
+  echo -ne "\e[5 q"
+}
+zle -N zle-line-init
+
+echo -ne '\e[5 q'
+function preexec() { echo -ne '\e[5 q'; }
+
+function zsh-history() {
+  BUFFER=`history -n 1 | fzf --query "$BUFFER"`
+  CURSOR=$#BUFFER
+  zle reset-prompt
+}
+zle -N zsh-history
+
+function ssm() {
+  # TODO: into navi cheat sheet
+  local profile=$(aws configure list-profiles | fzf)
+  if [ -z "$profile" ] ; then; return; fi
+  local target=$(aws --profile $profile ec2 describe-instances --filters 'Name=instance-state-name,Values=running' --query 'Reservations[*].Instances[*].[Tags[?Key==`Name`]|[0].Value, InstanceId]' --output text | fzf | cut -f2)
+  if [ -z "$target" ] ; then; return; fi
+  aws --profile $profile ssm start-session --target $target
+}
+
+function zr() {
+  # TODO: into navi cheat sheet
+  cd $(ghq list -p  | fzf)
+}
+
+function tm() {
+  if ! tmux has-session 2>/dev/null; then
+    tmux new-session -s main -c "${HOME}" -d
+  fi
+
+  target=$(
+    tmux list-sessions -F "#S" | fzf \
+      --header='Ctrl+C: new | Ctrl-D: delete' \
+      --bind='ctrl-c:reload(zoxide query --list)' \
+      --bind='ctrl-d:execute(tmux kill-session -t {1})+reload(tmux list-sessions -F "#S")'
+  )
+
+  if [ -z "${target}" ]; then
+    return
+  fi
+
+  if ! tmux has-session -t "${target}" 2>/dev/null; then
+    session_name=$(basename "${target}")
+    tmux new-session -s $session_name -c "${target}" -d
+    target="${session_name}"
+  fi
+
+  if [ -z "${TMUX}" ]; then
+    tmux attach-session -t "${target}"
+  else
+    tmux switch-client -t "${target}"
+  fi
+}
+
+function nv() {
+  cmd=$(navi --print)
+
+  if [ -z "$cmd" ]; then
+    return
+  fi
+
+  $SHELL --login -i -c "$cmd"
+
+  echo
+  echo "(process exit)"
+  read -k 1
+}
+
+#########
+# alias #
+#########
+alias ..='cd ..'
+alias dc='docker compose'
+alias ld='lazydocker'
+alias lg='lazygit'
+
+
+alias -g G='| grep --color=auto'
