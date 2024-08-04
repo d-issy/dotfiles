@@ -19,11 +19,11 @@ sh -c "$(curl -fsLS get.chezmoi.io)" -- init --apply d-issy
 
 ```sh
 # for linux
-nix run home-manger -- switch --flake .#linux
+nix run . -- switch --flake --impure .#linux
 
 # for macOS Sillicon
-nix run home-manger -- switch --flake .#macos
+nix run . -- switch --flake --impure .#macos
 
 # for macOS Intel
-nix run home-manger -- switch --flake .#macos-intel
+nix run . -- switch --flake --impure .#macos-intel
 ```
