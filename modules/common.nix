@@ -1,6 +1,10 @@
 {
   home.stateVersion = "24.11";
 
+  home.sessionVariables = {
+    NIX_CONFIG = "extra-experimental-features = nix-command flakes";
+  };
+
   programs.home-manager.enable = true;
   xdg.enable = true;
 
