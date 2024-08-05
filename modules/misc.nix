@@ -5,7 +5,6 @@
       pkgs.chezmoi
       pkgs.duckdb
       pkgs.eza
-      pkgs.fzf
       pkgs.gh
       pkgs.jq
       pkgs.jqp

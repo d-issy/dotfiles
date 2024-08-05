@@ -6,6 +6,7 @@
 
   imports = [
     ./eza.nix
+    ./fzf.nix
     ./git.nix
     ./lazygit.nix
     ./misc.nix
