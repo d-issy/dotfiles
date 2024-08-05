@@ -11,8 +11,8 @@
 
   outputs = { nixpkgs, home-manager, ... }: {
     # defaultPackage.x86_64-linux = home-manager.defaultPackage.x86_64-linux;
-    # defaultPackage.x86_64-darwin = home-manager.defaultPackage.x86_64-darwin;
-    # defaultPackage.aarch64-darwin = home-manager.defaultPackage.aarch64-darwin;
+    defaultPackage.x86_64-darwin = home-manager.defaultPackage.x86_64-darwin;
+    defaultPackage.aarch64-darwin = home-manager.defaultPackage.aarch64-darwin;
 
     homeConfigurations = {
       linux = home-manager.lib.homeManagerConfiguration {
@@ -22,14 +22,14 @@
         };
       };
 
-      mac = home-manager.lib.homeManagerConfiguration {
+      macos = home-manager.lib.homeManagerConfiguration {
         modules = [ ./home.macos.nix ];
         pkgs = import nixpkgs {
           system = "aarch64-darwin";
         };
       };
 
-      mac_intel = home-manager.lib.homeManagerConfiguration {
+      macos_intel = home-manager.lib.homeManagerConfiguration {
         modules = [ ./home.macos.nix ];
         pkgs = import nixpkgs {
           system = "x86_64-darwin";
