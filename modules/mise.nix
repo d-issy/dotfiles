@@ -33,5 +33,7 @@
         };
       };
     };
+
+    home.file.".default-python-packages".source = ../files/.default-python-packages;
   };
 }
