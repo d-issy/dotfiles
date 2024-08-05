@@ -13,6 +13,7 @@
     ./mise.nix
     ./starship.nix
     ./tmux.nix
+    ./wezterm.nix
     ./zsh.nix
   ];
 }
