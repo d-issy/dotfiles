@@ -14,16 +14,15 @@ d-issy's dotfiles
 ## init
 
 ```sh
-sh -c "$(curl -fsLS get.chezmoi.io)" -- init --apply d-issy
-```
+# first time setup
+export NIX_CONFIG="extra-experimental-features = nix-command flakes"
 
-```sh
 # for linux
-nix run . -- switch --flake --impure .#linux
+nix run . -- switch --flake .#linux
 
 # for macOS Sillicon
-nix run . -- switch --flake --impure .#macos
+nix run . -- switch --flake .#macos
 
 # for macOS Intel
-nix run . -- switch --flake --impure .#macos-intel
+nix run . -- switch --flake .#macos-intel
 ```

@@ -6,4 +6,3 @@
 
   imports = [ ./modules/common.nix ];
 }
-

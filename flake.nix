@@ -10,7 +10,7 @@
   };
 
   outputs = { nixpkgs, home-manager, ... }: {
-    # defaultPackage.x86_64-linux = home-manager.defaultPackage.x86_64-linux;
+    defaultPackage.x86_64-linux = home-manager.defaultPackage.x86_64-linux;
     defaultPackage.x86_64-darwin = home-manager.defaultPackage.x86_64-darwin;
     defaultPackage.aarch64-darwin = home-manager.defaultPackage.aarch64-darwin;
 
@@ -36,7 +36,5 @@
         };
       };
     };
-
   };
 }
-
