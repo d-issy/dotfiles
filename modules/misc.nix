@@ -2,7 +2,6 @@
 {
   config = {
     home.packages = [
-      pkgs.chezmoi
       pkgs.duckdb
       pkgs.eza
       pkgs.gh
