@@ -1,8 +1,0 @@
-README.md
-
-.config/vim/*
-scripts/
-
-{{ if ne .chezmoi.os "darwin" }}
-.hammerspoon
-{{ end }}
