@@ -7,10 +7,6 @@
       EDITOR = "nvim";
     };
 
-    # programs.zsh.initExtra = ''
-    #   eval "$(${pkgs.navi}/bin/navi widget zsh)"
-    # '';
-
     programs.zsh.shellAliases = {
       v = "nvim";
     };

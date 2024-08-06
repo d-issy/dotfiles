@@ -4,19 +4,21 @@ d-issy's dotfiles
 
 ## Require
 
-- nix
 - os
-  - macOS
+  - macOS (aarch64/x64_86)
   - WSL2 on Windows / Linux
-- mise (asdf)
-- aqua
+- nix
 
 ## init
 
 ```sh
-# first time setup
+git clone https://github.com/d-issy/dotfiles.git ~/code/github.com/d-issy/dotfiles
 export NIX_CONFIG="extra-experimental-features = nix-command flakes"
+```
 
+## apply
+
+```
 # for linux
 nix run . -- switch --flake .#linux
 
