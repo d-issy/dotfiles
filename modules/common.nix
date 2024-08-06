@@ -9,6 +9,7 @@
   xdg.enable = true;
 
   imports = [
+    ./aqua.nix
     ./eza.nix
     ./fzf.nix
     ./git.nix

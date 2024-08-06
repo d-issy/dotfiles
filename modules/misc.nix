@@ -2,13 +2,12 @@
 {
   config = {
     home.packages = [
-      pkgs.duckdb
       pkgs.eza
       pkgs.gh
-      pkgs.ripgrep
+      pkgs.ghq
       pkgs.jq
-      pkgs.jqp
       pkgs.lazydocker
+      pkgs.ripgrep
     ];
     programs = {
       direnv.enable = true;
