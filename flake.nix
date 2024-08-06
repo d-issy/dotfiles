@@ -10,9 +10,11 @@
   };
 
   outputs = { nixpkgs, home-manager, ... }: {
-    defaultPackage.x86_64-linux = home-manager.defaultPackage.x86_64-linux;
-    defaultPackage.x86_64-darwin = home-manager.defaultPackage.x86_64-darwin;
-    defaultPackage.aarch64-darwin = home-manager.defaultPackage.aarch64-darwin;
+    packages = {
+      x86_64-linux = home-manager.packages.x86_64-linux;
+      x86_64-darwin = home-manager.packages.x86_64-darwin;
+      aarch64-darwin = home-manager.packages.aarch64-darwin;
+    };
 
     homeConfigurations = {
       linux = home-manager.lib.homeManagerConfiguration {
