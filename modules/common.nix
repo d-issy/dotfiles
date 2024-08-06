@@ -16,7 +16,7 @@
     ./misc.nix
     ./mise.nix
     ./navi.nix
-    ./nvim.nix
+    ./neovim.nix
     ./starship.nix
     ./tmux.nix
     ./wezterm.nix

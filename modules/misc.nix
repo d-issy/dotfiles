@@ -5,10 +5,10 @@
       pkgs.duckdb
       pkgs.eza
       pkgs.gh
+      pkgs.ripgrep
       pkgs.jq
       pkgs.jqp
       pkgs.lazydocker
-      pkgs.neovim
     ];
     programs = {
       direnv.enable = true;
