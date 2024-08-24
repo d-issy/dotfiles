@@ -2,9 +2,9 @@
 {
   config = {
     home.packages = [
-      pkgs.eza
       pkgs.gh
       pkgs.ghq
+      pkgs.htop
       pkgs.jq
       pkgs.lazydocker
       pkgs.ripgrep

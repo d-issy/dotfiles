@@ -41,6 +41,9 @@
       ];
 
       extraConfig = ''
+        bind-key -T prefix s display-popup -E "$SHELL --login -i -c 'tm'"
+        bind-key -T prefix g display-popup -w '80%' -h '80%' -d "#{pane_current_path}" -E "$SHELL --login -i -c 'nv tmux-popup'"
+
         # bind
         bind \" split-window -v -c '#{pane_current_path}'
         bind \' split-window -h -c '#{pane_current_path}'

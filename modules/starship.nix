@@ -6,7 +6,6 @@ in
 {
   programs.starship = {
     enable = true;
-    enableZshIntegration = true;
     settings = settings;
   };
 }
