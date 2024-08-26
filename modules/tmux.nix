@@ -7,14 +7,12 @@
       enable = true;
 
       baseIndex = 1;
-
-      prefix = "C-q";
-      keyMode = "vi";
       customPaneNavigationAndResize = true;
-      resizeAmount = 5;
-      mouse = true;
-
       historyLimit = 9999999;
+      keyMode = "vi";
+      mouse = true;
+      prefix = "C-q";
+      resizeAmount = 5;
 
       plugins = with pkgs; [
         tmuxPlugins.sensible
@@ -41,10 +39,9 @@
       ];
 
       extraConfig = ''
+        # bind
         bind-key -T prefix s display-popup -E "$SHELL --login -i -c 'tm'"
         bind-key -T prefix g display-popup -w '80%' -h '80%' -d "#{pane_current_path}" -E "$SHELL --login -i -c 'nv tmux-popup'"
-
-        # bind
         bind \" split-window -v -c '#{pane_current_path}'
         bind \' split-window -h -c '#{pane_current_path}'
 
@@ -65,6 +62,10 @@
         # disable bell
         set-option -g bell-action none
         set-option -g visual-bell off
+
+        # basic
+        set -g renumber-windows on
+        setw -g automatic-rename on
       '';
     };
   };
