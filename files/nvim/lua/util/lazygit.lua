@@ -7,7 +7,6 @@ function M.open(args)
   local cmd = vim.list_extend({ "lazygit" }, args or {})
   require("util.terminal").run(cmd)
   vim.cmd "checktime"
-  require("util.chezmoi").apply()
 end
 
 --- lazygit file history.
