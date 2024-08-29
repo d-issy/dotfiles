@@ -50,11 +50,3 @@ vim.api.nvim_create_autocmd({ "TermOpen", "WinEnter" }, {
     vim.cmd "setlocal norelativenumber"
   end,
 })
-
--- save to auto chezmoi apply when change
-local chezmoi = require "util.chezmoi"
-vim.api.nvim_create_autocmd("BufWritePost", {
-  group = augroup "chezmoi_update",
-  pattern = chezmoi.pattern,
-  callback = chezmoi.apply,
-})

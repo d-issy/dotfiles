@@ -3,7 +3,6 @@ local map = require "util.map"
 local toggle = require "util.toggle"
 local buffer = require "util.buffer"
 
-local chezmoi = require "util.chezmoi"
 local lazygit = require "util.lazygit"
 
 map.setup {
@@ -27,7 +26,6 @@ map.setup {
   { "<leader>ur", toggle.option "relativenumber", desc = "Toggle relativenumber" },
   { "<leader>us", toggle.option "spell", desc = "Toggle spell" },
   { "<leader>uw", toggle.option "wrap", desc = "Toggle wrap" },
-  { "<leader>uC", chezmoi.toggle, desc = "Toggle chezmoi" },
 
   -- resize
   { "<c-up>", "<cmd>resize +2<cr>", mode = { "n", "t" }, desc = "Resize Up" },
