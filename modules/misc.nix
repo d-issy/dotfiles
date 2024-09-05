@@ -2,6 +2,7 @@
 {
   config = {
     home.packages = [
+      pkgs.devbox
       pkgs.gh
       pkgs.ghq
       pkgs.htop
