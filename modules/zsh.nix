@@ -14,6 +14,7 @@
     # alias
     shellAliases = {
       ".." = "cd..";
+      dev = "devbox";
       dc = "docker compose";
       ld = "lazydocker";
       lg = "lazygit";
