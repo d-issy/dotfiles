@@ -11,12 +11,6 @@ bindkey -M viins '^P' up-line-or-history
 # own
 bindkey -M viins '^R' zsh-history
 
-###########
-# history #
-###########
-# setopt hist_no_store
-# setopt hist_reduce_blanks
-
 ##############
 # completion #
 ##############
