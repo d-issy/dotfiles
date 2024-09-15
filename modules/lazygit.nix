@@ -36,5 +36,9 @@
         };
       };
     };
+
+    programs.zsh.shellAliases = {
+      lg = "lazygit";
+    };
   };
 }

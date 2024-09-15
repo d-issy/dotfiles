@@ -3,11 +3,9 @@
   config = {
     home.packages = [
       pkgs.devbox
-      pkgs.gh
       pkgs.ghq
       pkgs.htop
       pkgs.jq
-      pkgs.lazydocker
       pkgs.ripgrep
     ];
     programs = {

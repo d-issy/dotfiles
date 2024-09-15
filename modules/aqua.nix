@@ -1,18 +1,18 @@
 { config, pkgs, ... }:
 
 let
-  package = pkgs.buildGoModule rec {
+  aqua = pkgs.buildGoModule rec {
     pname = "aqua";
-    version = "2.30.0";
+    version = "2.31.0";
 
     src = pkgs.fetchFromGitHub {
       owner = "aquaproj";
       repo = "aqua";
       rev = "v${version}";
-      hash = "sha256-Sg79G4Qfi8+bplAbyC4h8yUSvY4xTJldYRuVUN6vVIQ=";
+      hash = "sha256-ZQLqTsMWntnF1wTs5iQdC7T44skSsc0oSC8SEPhZ7PY=";
     };
 
-    vendorHash = "sha256-y26yOt3Jo2Jh9BVhIIK3lqJq7I3AFMrT99Ip6nNqe2I=";
+    vendorHash = "sha256-XnZPDuD+geTKStBon7tJsQPb4sU+vTmH71bWiqRgCyU=";
 
     ldflags = [
       "-s"
@@ -26,7 +26,7 @@ let
   };
 in
 {
-  home.packages = [ package ];
+  home.packages = [ aqua ];
   home.sessionVariables = {
     AQUA_GLOBAL_CONFIG = "${config.xdg.configHome}/aquaproj-aqua/aqua.yaml";
   };

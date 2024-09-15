@@ -12,7 +12,9 @@
     ./aqua.nix
     ./eza.nix
     ./fzf.nix
+    ./gh.nix
     ./git.nix
+    ./lazydocker.nix
     ./lazygit.nix
     ./misc.nix
     ./mise.nix

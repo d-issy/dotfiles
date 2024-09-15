@@ -14,23 +14,12 @@ bindkey -M viins '^R' zsh-history
 ###########
 # history #
 ###########
-HISTFILE=$HOME/.zsh_history
-HISTSIZE=10000
-SAVEHIST=10000
-
-setopt appendhistory
-setopt hist_ignore_all_dups
-setopt hist_ignore_dups
-setopt hist_ignore_space
-setopt hist_no_store
-setopt hist_reduce_blanks
-setopt share_history
+# setopt hist_no_store
+# setopt hist_reduce_blanks
 
 ##############
 # completion #
 ##############
-autoload -U compinit
-compinit
 
 autoload colors
 zstyle ':completion:*' completer _expand_alias _complete _ignored
