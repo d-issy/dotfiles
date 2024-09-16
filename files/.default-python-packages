@@ -1,7 +1,0 @@
-pipenv
-poetry
-ipython
-black
-isort
-visidata
-pyarrow

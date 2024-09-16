@@ -9,10 +9,15 @@
   xdg.enable = true;
 
   imports = [
-    ./aqua.nix
+    ./aws.nix
+    ./bat.nix
     ./eza.nix
     ./fzf.nix
+    ./gcloud.nix
+    ./gh.nix
+    ./ghq.nix
     ./git.nix
+    ./lazydocker.nix
     ./lazygit.nix
     ./misc.nix
     ./mise.nix
