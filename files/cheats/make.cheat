@@ -3,4 +3,4 @@
 # run make
 make <target>
 
-$ target: make -qp | awk -F':' '/^[a-zA-Z0-9][^$#\/\t=]*:([^=]|$)/ && !/^\.PHONY/ {print $1}' | sort -u | grep -v "^Makefile\|^GNUmakefile\|^makefile"
+$ target: make -qp | awk -F':' '/^[a-z0-9][^:]*\s*:([^=]|$)/ {print $1}' | sort -u

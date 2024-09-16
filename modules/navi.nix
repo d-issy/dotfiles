@@ -21,7 +21,7 @@ let
     finder = {
       command = "fzf";
       overrides = "--no-exact";
-      overrides_var = "--no-exact --no-select-1";
+      overrides_var = "--no-exact";
     };
     cheats.paths = [
       "~/cheats/"
