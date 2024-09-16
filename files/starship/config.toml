@@ -2,7 +2,7 @@
 
 add_newline = false
 scan_timeout = 10
-command_timeout = 500 # ms
+command_timeout = 100 # ms
 
 format = """\
 $directory\
