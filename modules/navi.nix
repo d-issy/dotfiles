@@ -35,6 +35,20 @@ in
 
     programs.zsh.initExtra = ''
       eval "$(${pkgs.navi}/bin/navi widget zsh)"
+
+      function nv() {
+        cmd=$(${pkgs.navi}/bin/navi --print)
+
+        if [ -z "$cmd" ]; then
+          return
+        fi
+
+        $SHELL --login -i -c "$cmd"
+
+        echo
+        echo "(process exit)"
+        read -k 1
+      }
     '';
 
     xdg.configFile."navi/config.yaml" = mkIf (settings != { }) {

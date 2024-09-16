@@ -53,20 +53,6 @@ function zsh-history() {
 }
 zle -N zsh-history
 
-function ssm() {
-  # TODO: into navi cheat sheet
-  local profile=$(aws configure list-profiles | fzf)
-  if [ -z "$profile" ] ; then; return; fi
-  local target=$(aws --profile $profile ec2 describe-instances --filters 'Name=instance-state-name,Values=running' --query 'Reservations[*].Instances[*].[Tags[?Key==`Name`]|[0].Value, InstanceId]' --output text | fzf | cut -f2)
-  if [ -z "$target" ] ; then; return; fi
-  aws --profile $profile ssm start-session --target $target
-}
-
-function zr() {
-  # TODO: into navi cheat sheet
-  cd $(ghq list -p  | fzf)
-}
-
 function tm() {
   if ! tmux has-session 2>/dev/null; then
     tmux new-session -s main -c "${HOME}" -d
@@ -94,18 +80,4 @@ function tm() {
   else
     tmux switch-client -t "${target}"
   fi
-}
-
-function nv() {
-  cmd=$(navi --print)
-
-  if [ -z "$cmd" ]; then
-    return
-  fi
-
-  $SHELL --login -i -c "$cmd"
-
-  echo
-  echo "(process exit)"
-  read -k 1
 }

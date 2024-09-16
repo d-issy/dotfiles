@@ -24,7 +24,6 @@ let
       ignorecase = false;
       autocrlf = false;
     };
-    ghq.root = "~/code";
     url."git@github.com:".insteadOf = "https://github.com/";
   };
   ignores = [
