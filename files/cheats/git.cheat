@@ -18,6 +18,9 @@ git fetch
 # git clean all :: gcl
 git clean -fd
 
+# git maintenance run
+git maintenance run
+
 $ branch: git branch | awk '{print $NF}'
 
 % ghq

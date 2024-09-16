@@ -1,0 +1,23 @@
+% gcloud
+
+# gcloud Login Auth
+gcloud auth login
+
+# gcloud Login Application Default Credentials
+gcloud auth application-default login
+
+# gcloud List Configurations
+gcloud config configurations list
+
+# gcloud Activate
+gcloud config configurations activate <configuration-name>
+
+# gcloud Set Project
+gcloud config set project <project-id>
+
+# gcloud List Config
+gcloud config list
+
+$ configuration-name: gcloud config configurations list --- --headers 1 --column 1 --fzf-overrides '--no-select-1'
+$ project-id: gcloud projects list --- --headers 1 --column 1 --fzf-overrides '--no-select-1'
+
