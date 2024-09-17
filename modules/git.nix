@@ -202,6 +202,5 @@ in
     userEmail = email;
     extraConfig = config;
     ignores = ignores;
-    difftastic.enable = true;
   };
 }
