@@ -3,7 +3,6 @@
   config = {
     home.packages = [
       pkgs.curl
-      pkgs.visidata
       pkgs.devbox
       pkgs.duckdb
       pkgs.glow
@@ -13,6 +12,7 @@
       pkgs.jq
       pkgs.jqp
       pkgs.ripgrep
+      pkgs.visidata
       pkgs.wget
     ];
     programs = {
