@@ -1,9 +1,13 @@
 { config, pkgs, ... }:
 {
   config = {
-    programs.bat.enable = true;
-    programs.zsh.shellAliases = {
-      cat = "bat";
+    home.shellAliases = { cat = "bat"; };
+
+    programs.bat = {
+      enable = true;
+      config = {
+        theme = "1337";
+      };
     };
   };
 

@@ -3,13 +3,8 @@
 {
   config = {
     home.packages = [ pkgs.neovim ];
-    home.sessionVariables = {
-      EDITOR = "nvim";
-    };
-
-    programs.zsh.shellAliases = {
-      v = "nvim";
-    };
+    home.sessionVariables = { EDITOR = "nvim"; };
+    home.shellAliases = { v = "nvim"; };
 
     xdg.configFile."nvim" = {
       source = ../files/nvim;

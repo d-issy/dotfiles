@@ -2,6 +2,8 @@
 
 {
   config = {
+    home.shellAliases = { lg = "lazygit"; };
+
     programs.lazygit = {
       enable = true;
       settings = {
@@ -35,10 +37,6 @@
           };
         };
       };
-    };
-
-    programs.zsh.shellAliases = {
-      lg = "lazygit";
     };
   };
 }
