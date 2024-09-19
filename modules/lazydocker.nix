@@ -2,12 +2,7 @@
 
 {
   config = {
-    home.packages = [
-      pkgs.lazydocker
-    ];
-
-    programs.zsh.shellAliases = {
-      ld = "lazydocker";
-    };
+    home.packages = [ pkgs.lazydocker ];
+    home.shellAliases = { ld = "lazydocker"; };
   };
 }
