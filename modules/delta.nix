@@ -3,8 +3,6 @@
 {
   config = {
     home.packages = [ pkgs.delta ];
-    home.shellAliases = { gd = "git delta"; };
-
     programs.git.extraConfig = {
       interactive.diffFilter = "delta --color-only";
       diff = {
@@ -25,7 +23,5 @@
         pager = "delta --paging=never";
       };
     };
-
-
   };
 }
