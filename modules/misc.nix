@@ -8,7 +8,6 @@
       pkgs.glow
       pkgs.gnumake
       pkgs.grpcurl
-      pkgs.htop
       pkgs.jq
       pkgs.jqp
       pkgs.ripgrep

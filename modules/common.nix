@@ -11,6 +11,7 @@
   imports = [
     ./aws.nix
     ./bat.nix
+    ./bottom.nix
     ./delta.nix
     ./difftastic.nix
     ./eza.nix
