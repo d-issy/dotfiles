@@ -12,6 +12,7 @@
     ./aws.nix
     ./bat.nix
     ./delta.nix
+    ./difftastic.nix
     ./eza.nix
     ./fzf.nix
     ./gcloud.nix
