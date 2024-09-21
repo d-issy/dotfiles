@@ -23,7 +23,5 @@
         pager = "delta --paging=never";
       };
     };
-
-
   };
 }
