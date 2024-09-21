@@ -31,7 +31,7 @@ let
     ];
 
     # basic
-    character.vimcmd_symbol = "[NOMAL](green)";
+    character.vimcmd_symbol = "[N](green)";
     fill = {
       symbol = "-";
       disabled = false;
