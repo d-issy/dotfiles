@@ -4,5 +4,8 @@
   home.username = "issy";
   home.homeDirectory = "/Users/issy";
 
-  imports = [ ./modules/common.nix ];
+  imports = [
+    ./modules/common.nix
+    ./modules/hammerspoon.nix
+  ];
 }
