@@ -12,6 +12,7 @@
     ./aws.nix
     ./bat.nix
     ./bottom.nix
+    ./duckdb.nix
     ./delta.nix
     ./difftastic.nix
     ./eza.nix
