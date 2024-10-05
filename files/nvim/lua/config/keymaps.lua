@@ -49,6 +49,5 @@ map.setup {
 
   -- lazygit
   { "<leader>gg", lazygit.open, desc = "Lazygit" },
-  { "<leader>gf", lazygit.file_history, desc = "Current File History" },
   { "<leader>gl", lazygit.commit_log, desc = "Commit Log" },
 }

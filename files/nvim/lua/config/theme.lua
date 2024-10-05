@@ -24,6 +24,11 @@ local palette = {
   add = "#a3be8c",
   change = "#ebcb8b",
   delete = "#bf616a",
+  diff_text = "#81a1c1",
+
+  add_bg = "#204510",
+  change_bg = "#605000",
+  delete_bg = "#9f514a",
 }
 
 local hl = {
@@ -131,6 +136,14 @@ local hl = {
   GitSignsChange = { fg = palette.change },
   GitSignsDelete = { fg = palette.delete },
 
+  -- DiffView
+  DiffviewFolderSign = { fg = palette.folder },
+  DiffviewFilePanelInsertions = { fg = palette.add },
+  DiffViewFilePanelDeletions = { fg = palette.delete },
+  diffAdded = { fg = palette.add },
+  diffChanaged = { fg = palette.change },
+  diffRemoved = { fg = palette.delete },
+
   -----------
   -- other --
   -----------
@@ -147,9 +160,10 @@ local hl = {
   DiagnosticUnnecessary = { link = "DiagnosticUnderlineHint" },
   DiagnosticDeprecated = { strikethrough = true, sp = palette.warning },
 
-  DiffAdd = { fg = palette.bg, bg = palette.add },
-  DiffChange = { fg = palette.bg, bg = palette.change },
-  DiffDelete = { fg = palette.bg, bg = palette.delete },
+  DiffAdd = { bg = palette.add_bg },
+  DiffChange = { bg = palette.change_bg },
+  DiffDelete = { bg = palette.delete_bg },
+  DiffText = { fg = palette.bg, bg = palette.change },
 }
 
 -- colorschme load
