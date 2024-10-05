@@ -4,7 +4,6 @@
     home.packages = [
       pkgs.curl
       pkgs.devbox
-      pkgs.duckdb
       pkgs.glow
       pkgs.gnumake
       pkgs.grpcurl
