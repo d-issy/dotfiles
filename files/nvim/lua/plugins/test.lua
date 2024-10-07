@@ -1,8 +1,8 @@
 return {
   "nvim-neotest/neotest",
   dependencies = {
-    "nvim-neotest/neotest-go",
     "nvim-neotest/neotest-python",
+    "fredrikaverpil/neotest-golang",
     -- requirements
     "antoinemadec/FixCursorHold.nvim",
     "nvim-neotest/nvim-nio",
@@ -19,8 +19,8 @@ return {
     }, neotest_ns)
     require("neotest").setup {
       adapters = {
+        require "neotest-golang" {},
         require "neotest-python" {},
-        require "neotest-go" { recursive_run = true },
       },
     }
   end,

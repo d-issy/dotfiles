@@ -14,12 +14,13 @@ vim.api.nvim_create_autocmd("TextYankPost", {
 vim.api.nvim_create_autocmd("FileType", {
   group = augroup "close_with_q",
   pattern = {
-    "help",
-    "qf",
     "gitsigns.blame",
+    "help",
+    "neotest-output",
     "neotest-output-panel",
     "neotest-summary",
     "notify",
+    "qf",
   },
   callback = function(event)
     vim.bo[event.buf].buflisted = false
