@@ -55,7 +55,10 @@ return {
       if server_opts then
         require("lspconfig")[server].setup(server_opts)
       else
-        require("lspconfig")[server].setup {}
+        local capabilities = require("cmp_nvim_lsp").default_capabilities()
+        require("lspconfig")[server].setup {
+          capabilities = capabilities,
+        }
       end
     end
 
