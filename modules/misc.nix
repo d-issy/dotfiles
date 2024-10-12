@@ -1,6 +1,12 @@
 { config, pkgs, ... }:
 {
   config = {
+    home.shellAliases = {
+      ".." = "cd..";
+      dev = "devbox";
+      dc = "docker compose";
+    };
+
     home.packages = [
       pkgs.curl
       pkgs.devbox

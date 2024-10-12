@@ -29,11 +29,6 @@
     ];
 
     # alias
-    shellAliases = {
-      ".." = "cd..";
-      dev = "devbox";
-      dc = "docker compose";
-    };
     shellGlobalAliases = {
       G = "| grep --color=auto";
     };
