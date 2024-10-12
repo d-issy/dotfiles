@@ -26,5 +26,5 @@ nix run . -- switch --flake .#linux
 nix run . -- switch --flake .#macos
 
 # for macOS Intel
-nix run . -- switch --flake .#macos-intel
+nix run . -- switch --flake .#macos_intel
 ```

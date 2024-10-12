@@ -6,6 +6,9 @@
     programs.tmux = {
       enable = true;
 
+      terminal = "screen-256color";
+      shell = "${pkgs.zsh}/bin/zsh";
+
       baseIndex = 1;
       customPaneNavigationAndResize = true;
       historyLimit = 9999999;
@@ -39,6 +42,8 @@
       ];
 
       extraConfig = ''
+        set -g default-command "${pkgs.nushell}/bin/nu"
+
         # bind
         bind-key -T prefix s display-popup -E "$SHELL --login -i -c 'tm'"
         bind-key -T prefix g display-popup -w '80%' -h '80%' -d "#{pane_current_path}" -E "$SHELL --login -i -c 'nv tmux-popup'"
