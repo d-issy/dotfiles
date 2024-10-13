@@ -27,7 +27,6 @@
       direnv.enable = true;
       carapace.enable = true;
       zoxide.enable = true;
-
     };
   };
 }
