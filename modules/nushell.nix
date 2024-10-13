@@ -13,6 +13,7 @@ in
       shellAliases = home.shellAliases // {
         ll = "ls -l";
         la = "ls -la";
+        where = "which -a";
       };
 
       environmentVariables = lib.attrsets.mapAttrs (name: value: ''"${value}"'') (home.sessionVariables // {
@@ -85,6 +86,11 @@ in
           $env.config.ls.use_ls_colors = false
           $env.config.cursor_shape.vi_insert = "line"
           $env.config.cursor_shape.vi_normal = "block"
+
+          $env.config.completions = {
+            case_sensitive: false
+            use_ls_colors: false
+          }
 
           ${use (map getModulePath modules)}
           ${use (map getCompletionPath completions)}
