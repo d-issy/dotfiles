@@ -7,6 +7,10 @@
       dc = "docker compose";
     };
 
+    home.sessionVariables = {
+      CARAPACE_BRIDGES = "fish,zsh,bash,inshellisense";
+    };
+
     home.packages = [
       pkgs.curl
       pkgs.devbox
@@ -21,7 +25,9 @@
     ];
     programs = {
       direnv.enable = true;
+      carapace.enable = true;
       zoxide.enable = true;
+
     };
   };
 }
