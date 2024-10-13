@@ -13,16 +13,14 @@ let
       vi_insert = "line";
     };
   };
-
-  keybindings = [
-    {
-      name = "hello";
-      modifier = "control";
-      keycode = "char_g";
-      mode = "vi_insert";
-      event = { send = "ExecuteHostCommand"; cmd = "fzf"; };
-    }
-  ];
+  environments = {
+    PROMPT_INDICATOR_VI_NORMAL = "";
+    PROMPT_INDICATOR_VI_INSERT = "";
+  };
+  alias = {
+    ll = "ls -l";
+    la = "ls -la";
+  };
 in
 {
   config = mkIf enable {
@@ -33,22 +31,15 @@ in
       in
       {
         enable = true;
-
-        shellAliases = home.shellAliases // {
-          ll = "ls -l";
-          la = "ls -la";
-        };
-
-        environmentVariables = lib.attrsets.mapAttrs (name: value: ''"${value}"'')
-          (home.sessionVariables // {
-            PROMPT_INDICATOR_VI_NORMAL = "";
-            PROMPT_INDICATOR_VI_INSERT = "";
-          });
+        shellAliases = home.shellAliases // alias;
+        environmentVariables = lib.attrsets.mapAttrs
+          (name: value: ''"${value}"'')
+          (home.sessionVariables // environments);
 
         nuConfig = nuConfig;
-        keybindings = keybindings;
 
-        extraConfig = mkIf (cfg.nuConfig != { } || cfg.keybindings != [ ]) ''
+        extraConfig = mkIf (cfg.nuConfig != { } || cnf.functions != { } || cfg.keybindings != [ ]) ''
+          ${concatStringsSep "\n" cfg.functions}
           $env.config = ${builtins.toJSON cfg.nuConfig}
           $env.config.keybindings = ${builtins.toJSON cfg.keybindings}
         '';
@@ -63,6 +54,20 @@ in
       keybindEventType = types.attrsOf types.anything;
     in
     {
+      functions = mkOption {
+        type = types.listOf types.str;
+        default = [ ];
+        example = ""
+          [
+            ''
+              def hello [name: string] -> string {
+                $"Hello, ($name)!!"
+              }
+            ''
+          ]
+          "";
+      };
+
       nuConfig = mkOption {
         type = jsonFormat.type;
         default = { };
@@ -73,9 +78,18 @@ in
           (types.submodule {
             options = {
               name = mkOption { type = types.str; };
-              modifier = mkOption { type = keybindModifierType; };
-              keycode = mkOption { type = types.str; };
-              mode = mkOption { type = types.oneOf [ keybindModeType (types.listOf keybindModeType) ]; };
+              modifier = mkOption {
+                type = keybindModifierType;
+                default = "control";
+              };
+              keycode = mkOption {
+                type = types.str;
+                example = "char_a";
+              };
+              mode = mkOption {
+                type = types.oneOf [ keybindModeType (types.listOf keybindModeType) ];
+                default = "vi_insert";
+              };
               event = mkOption {
                 type = types.nullOr (types.oneOf [ keybindEventType (types.listOf keybindEventType) ]);
                 default = null;
