@@ -12,9 +12,9 @@
     ./aws.nix
     ./bat.nix
     ./bottom.nix
-    ./duckdb.nix
     ./delta.nix
     ./difftastic.nix
+    ./duckdb.nix
     ./eza.nix
     ./fzf.nix
     ./gcloud.nix
@@ -27,6 +27,7 @@
     ./mise.nix
     ./navi.nix
     ./neovim.nix
+    ./nushell.nix
     ./starship.nix
     ./tmux.nix
     ./wezterm.nix
