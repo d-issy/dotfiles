@@ -38,8 +38,8 @@ in
 
         nuConfig = nuConfig;
 
-        extraConfig = mkIf (cfg.nuConfig != { } || cnf.functions != { } || cfg.keybindings != [ ]) ''
-          ${concatStringsSep "\n" cfg.functions}
+        extraConfig = ''
+          ${cfg.initExtraFirst}
           $env.config = ${builtins.toJSON cfg.nuConfig}
           $env.config.keybindings = ${builtins.toJSON cfg.keybindings}
         '';
@@ -54,49 +54,45 @@ in
       keybindEventType = types.attrsOf types.anything;
     in
     {
-      functions = mkOption {
-        type = types.listOf types.str;
-        default = [ ];
-        example = ""
-          [
-            ''
-              def hello [name: string] -> string {
-                $"Hello, ($name)!!"
-              }
-            ''
-          ]
-          "";
+      initExtraFirst = mkOption {
+        default = "";
+        type = types.lines;
+        example = ''
+          def hello [name: string] -> string {
+            $ "Hello, ($name)!!"
+          }
+        '';
       };
 
       nuConfig = mkOption {
-        type = jsonFormat.type;
         default = { };
+        type = jsonFormat.type;
       };
 
       keybindings = mkOption {
+        default = [ ];
         type = types.listOf
           (types.submodule {
             options = {
               name = mkOption { type = types.str; };
               modifier = mkOption {
-                type = keybindModifierType;
                 default = "control";
+                type = keybindModifierType;
               };
               keycode = mkOption {
                 type = types.str;
                 example = "char_a";
               };
               mode = mkOption {
-                type = types.oneOf [ keybindModeType (types.listOf keybindModeType) ];
                 default = "vi_insert";
+                type = types.oneOf [ keybindModeType (types.listOf keybindModeType) ];
               };
               event = mkOption {
-                type = types.nullOr (types.oneOf [ keybindEventType (types.listOf keybindEventType) ]);
                 default = null;
+                type = types.nullOr (types.oneOf [ keybindEventType (types.listOf keybindEventType) ]);
               };
             };
           });
-        default = [ ];
       };
     };
 }
