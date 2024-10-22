@@ -1,16 +1,3 @@
-###########
-# bindkey #
-###########
-# vi
-bindkey -v
-bindkey -M viins '^A' beginning-of-line
-bindkey -M viins '^E' end-of-line
-bindkey -M viins '^N' down-line-or-history
-bindkey -M viins '^P' up-line-or-history
-
-# own
-bindkey -M viins '^R' zsh-history
-
 ##############
 # completion #
 ##############
@@ -51,7 +38,11 @@ function zsh-history() {
   CURSOR=$#BUFFER
   zle reset-prompt
 }
-zle -N zsh-history
+
+function zvm_after_init() {
+  zvm_define_widget zsh-history zsh-history
+  zvm_bindkey viins '^R' zsh-history
+}
 
 function tm() {
   if ! tmux has-session 2>/dev/null; then
