@@ -23,7 +23,6 @@ let
     right_format = lib.strings.concatStringsSep "" [
       "$git_branch"
       "$git_metrics"
-      "$cmd_duration"
       "$memory_usage"
       "$battery"
       "$time"
