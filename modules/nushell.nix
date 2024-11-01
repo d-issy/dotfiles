@@ -32,9 +32,7 @@ in
       {
         enable = true;
         shellAliases = home.shellAliases // alias;
-        environmentVariables = lib.attrsets.mapAttrs
-          (name: value: ''"${value}"'')
-          (home.sessionVariables // environments);
+        environmentVariables = home.sessionVariables // environments;
 
         nuConfig = nuConfig;
 
