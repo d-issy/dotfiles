@@ -5,3 +5,6 @@ sudo !!
 
 # current directory
 pwd
+
+# lazy docker :: lg
+lazydocker
