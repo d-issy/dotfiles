@@ -1,7 +1,7 @@
 { config, pkgs, ... }:
 
 let
-  version = "1.1.1";
+  version = "1.1.2";
 
   platform =
     if pkgs.stdenv.isDarwin then "osx-universal"
@@ -10,9 +10,9 @@ let
     else throw "Unsupported platform";
 
   hashs = {
-    "linux-amd64" = "7f3f1a26e98b3f1fcc673ffb81d2daf43c07689ed60e88173d6a4fd307f118ae";
-    "linux-aarch64" = "9e1d2183453451050f6151bffb2425b78aa278f98acaca68a2671e36a9583be7";
-    "osx-universal" = "d6db79a6651ad6b0a35bb11fe9affdac9758ebef7b61b8e3f3f6a5a66fb4bf56";
+    "linux-amd64" = "461d949dd4e8e03949dddf65398426adeaa67b459c2fca1316208bcac36aaac7";
+    "linux-aarch64" = "d0040fe19970f3b104e4858acd449a09242f9189f591b943a6f43281c11fc4df";
+    "osx-universal" = "444ccaf4f4b68c92488dba239190837718c070251a08b603939ff9eb72a3eaef";
   };
 
   duckdb = pkgs.stdenv.mkDerivation {
