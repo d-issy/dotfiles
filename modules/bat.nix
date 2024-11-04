@@ -1,4 +1,5 @@
 { config, pkgs, ... }:
+
 {
   config = {
     home.shellAliases = { cat = "bat"; };
@@ -10,5 +11,4 @@
       };
     };
   };
-
 }

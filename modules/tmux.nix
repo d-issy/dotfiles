@@ -1,5 +1,6 @@
-{ config, pkgs, ... }:
+{ config, lib, pkgs, ... }:
 
+with lib;
 {
   options = { };
   config = {
@@ -45,8 +46,8 @@
         set -g default-command "${pkgs.nushell}/bin/nu"
 
         # bind
-        bind-key -T prefix s display-popup -E "$SHELL --login -i -c 'tm'"
-        bind-key -T prefix g display-popup -w '80%' -h '80%' -d "#{pane_current_path}" -E "$SHELL --login -i -c 'nv tmux-popup'"
+        bind-key -T prefix s display-popup                                             -E "nu --login -i -c 'tm'"
+        bind-key -T prefix g display-popup -w '95%' -h '95%' -d "#{pane_current_path}" -E "nu --login -i -c 'nv'"
         bind \" split-window -v -c '#{pane_current_path}'
         bind \' split-window -h -c '#{pane_current_path}'
 
@@ -73,5 +74,66 @@
         setw -g automatic-rename on
       '';
     };
+
+    programs.zsh.initExtra = ''
+      function tm() {
+        if ! tmux has-session 2>/dev/null; then
+          tmux new-session -s main -c $HOME -d
+        fi
+
+        target=$(
+          tmux list-sessions -F "#S" | fzf \
+            --header='Ctrl+C: new | Ctrl-D: delete' \
+            --bind='ctrl-c:reload(zoxide query --list)' \
+            --bind='ctrl-d:execute(tmux kill-session -t {1})+reload(tmux list-sessions -F "#S")'
+        )
+
+        if [ -z "$target" ]; then
+          return
+        fi
+
+        if ! tmux has-session -t "$target" 2>/dev/null; then
+          session_name=$(basename "$target")
+          tmux new-session -s $session_name -c "$target" -d
+          target="$session_name"
+        fi
+
+        if [ -z "$TMUX" ]; then
+          tmux attach-session -t "$target"
+        else
+          tmux switch-client -t "$target"
+        fi
+      }
+    '';
+
+    programs.nushell.extraConfig = ''
+      export def tm [] {
+        if (tmux has-session | complete | get exit_code | $in != 0) {
+          tmux new-session -s main -c $env.HOME -d
+        }
+
+        mut target = (
+          tmux list-sessions -F "#S" | fzf
+            --header='Ctrl+C: new | Ctrl-D: delete'
+            --bind='ctrl-c:reload(zoxide query --list)'
+            --bind='ctrl-d:execute(tmux kill-session -t {1})+reload(tmux list-sessions -F "#S")'
+          | complete | get "stdout" | str trim
+        )
+
+        if ($target | is-empty) { return }
+        if (tmux has-session -t $target | complete | get exit_code | $in != 0) {
+          echo hello
+          let session_name = $target | path basename
+          tmux new-session -s $session_name -c $target -d
+          $target = $session_name
+        }
+
+        if ($env.TMUX | is-empty) {
+          tmux attach-session -t $target
+        } else {
+          tmux switch-client -t $target
+        }
+      }
+    '';
   };
 }

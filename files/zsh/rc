@@ -43,32 +43,3 @@ function zvm_after_init() {
   zvm_define_widget zsh-history zsh-history
   zvm_bindkey viins '^R' zsh-history
 }
-
-function tm() {
-  if ! tmux has-session 2>/dev/null; then
-    tmux new-session -s main -c "${HOME}" -d
-  fi
-
-  target=$(
-    tmux list-sessions -F "#S" | fzf \
-      --header='Ctrl+C: new | Ctrl-D: delete' \
-      --bind='ctrl-c:reload(zoxide query --list)' \
-      --bind='ctrl-d:execute(tmux kill-session -t {1})+reload(tmux list-sessions -F "#S")'
-  )
-
-  if [ -z "${target}" ]; then
-    return
-  fi
-
-  if ! tmux has-session -t "${target}" 2>/dev/null; then
-    session_name=$(basename "${target}")
-    tmux new-session -s $session_name -c "${target}" -d
-    target="${session_name}"
-  fi
-
-  if [ -z "${TMUX}" ]; then
-    tmux attach-session -t "${target}"
-  else
-    tmux switch-client -t "${target}"
-  fi
-}
