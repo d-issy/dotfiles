@@ -35,36 +35,30 @@ in
 
     programs.zsh.initExtra = ''
       eval "$(${pkgs.navi}/bin/navi widget zsh)"
-
-      function nv() {
-        cmd=$(${pkgs.navi}/bin/navi --print)
-
-        if [ -z "$cmd" ]; then
-          return
-        fi
-
-        $SHELL --login -i -c "$cmd"
-
-        echo
-        echo "(process exit)"
-        read -k 1
-      }
     '';
 
     programs.nushell = {
       extraConfig = ''
-        export def navi_widget [] {
-          let input = (commandline)
-          let last_command = ($input | navi fn widget::last_command | str trim)
+        export def nv [] {
+          let cmd = navi --print | complete | get "stdout" | str trim
+          match ($cmd | is-empty) {
+            true => { return }
+            false => { exec $cmd }
+          }
+          echo "\n(process exit)"
+          input
+        }
 
-          match ($last_command | is-empty) {
-            true => {^navi --print | complete | get "stdout"}
+        export def _navi_widget [] {
+          let input = (commandline)
+
+          match ($input | is-empty) {
+            true => {navi --print | complete | get "stdout"}
             false => {
-              let find = $"($last_command)_NAVIEND"
-              let replacement = (^navi --print --query $'($last_command)' --best-match | complete | get "stdout")
+              let replacement = (navi --print --query $input --best-match | complete | get "stdout" | str trim)
 
               match ($replacement | str trim | is-empty) {
-                false => {$"($input)_NAVIEND" | str replace $find $replacement}
+                false => $replacement
                 true => $input
               }
             }
@@ -82,7 +76,7 @@ in
           mode: [emacs, vi_normal, vi_insert],
           event: {
             send: executehostcommand,
-            cmd: navi_widget,
+            cmd: _navi_widget,
           }
         }
 
