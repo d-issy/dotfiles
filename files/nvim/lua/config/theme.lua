@@ -61,6 +61,8 @@ local hl = {
   Keyword = { fg = palette.low },
   Operator = { fg = palette.low },
 
+  PMenu = { fg = palette.default, bg = palette.bg },
+
   ---------
   -- lsp --
   ---------
@@ -169,6 +171,7 @@ local hl = {
 -- colorschme load
 if vim.g.colors_name then
   vim.cmd "hi clear"
+  vim.opt.termguicolors = true
 end
 
 vim.g.colors_name = "mytheme"
