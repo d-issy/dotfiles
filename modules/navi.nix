@@ -43,10 +43,13 @@ in
           let cmd = navi --print | complete | get "stdout" | str trim
           match ($cmd | is-empty) {
             true => { return }
-            false => { exec $cmd }
+            false => {
+              try {
+                nu -c $cmd
+              } catch { |err| $err.msg }
+            }
           }
-          echo "\n(process exit)"
-          input
+          input "\n(process exit)"
         }
 
         export def _navi_widget [] {
