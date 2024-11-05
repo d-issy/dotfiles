@@ -8,7 +8,12 @@ if wezterm.config_builder then
 end
 
 -- UI
-config.color_scheme = "Catppuccin Macchiato"
+local theme = "Catppuccin Macchiato"
+local scheme = wezterm.get_builtin_color_schemes()[theme]
+scheme.background = "#282828"
+config.color_scheme = theme
+config.color_schemes = { [theme] = scheme }
+
 config.font_size = 14
 config.adjust_window_size_when_changing_font_size = false
 config.font = wezterm.font_with_fallback {
