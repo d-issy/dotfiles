@@ -13,7 +13,7 @@
     '';
 
     programs.nushell.extraConfig = ''
-      export def zr [] {
+      export def --env zr [] {
         cd (${pkgs.ghq}/bin/ghq list -p  | fzf)
       }
     '';
