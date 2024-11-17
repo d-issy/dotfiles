@@ -3,17 +3,12 @@
   config = {
     home.shellAliases = {
       ".." = "cd..";
-      dev = "devbox";
       dc = "docker compose";
-    };
-
-    home.sessionVariables = {
-      CARAPACE_BRIDGES = "fish,zsh,bash,inshellisense";
     };
 
     home.packages = [
       pkgs.curl
-      pkgs.devbox
+      pkgs.duckdb
       pkgs.glow
       pkgs.gnumake
       pkgs.grpcurl
@@ -23,9 +18,9 @@
       pkgs.visidata
       pkgs.wget
     ];
+
     programs = {
       direnv.enable = true;
-      carapace.enable = true;
       zoxide.enable = true;
     };
   };
