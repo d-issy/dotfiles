@@ -11,10 +11,10 @@
   imports = [
     ./aws.nix
     ./bat.nix
+    ./carapace.nix
     ./bottom.nix
     ./delta.nix
     ./difftastic.nix
-    ./duckdb.nix
     ./eza.nix
     ./fzf.nix
     ./gcloud.nix

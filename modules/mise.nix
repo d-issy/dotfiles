@@ -15,12 +15,12 @@ with lib;
           java = "adoptopenjdk-21";
           kotlin = "2";
           lua = "5";
-          node = [ "20" "22" ];
-          python = [ "3.12" "3.11" ];
+          node = "22";
+          python = [ "3.13" "3.12" ];
           ruby = "3.3";
           rust = "1";
-          scala = "3.4";
-          terraform = [ "latest" "1.5" ];
+          scala = "3.5";
+          terraform = "1";
         };
       };
 
