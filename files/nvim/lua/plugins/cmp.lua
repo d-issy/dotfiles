@@ -2,6 +2,7 @@ return {
   -- "hrsh7th/nvim-cmp",
   "iguanacucumber/magazine.nvim",
   name = "nvim-cmp",
+  version = "0.3", -- 0.4 is verry buggy
   dependencies = {
     "hrsh7th/cmp-nvim-lsp",
     "hrsh7th/cmp-path",
