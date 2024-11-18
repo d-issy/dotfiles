@@ -3,4 +3,4 @@
 # go run
 go run <main-file>
 
-$ main-file: find -name main.go
+$ main-file: find . -name main.go
