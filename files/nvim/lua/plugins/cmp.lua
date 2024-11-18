@@ -9,7 +9,6 @@ return {
     "copilot-cmp",
     "lsp-zero.nvim",
     "LuaSnip",
-    "saadparwaiz1/cmp_luasnip",
   },
   event = { "InsertEnter" },
   opts = function()
@@ -21,7 +20,6 @@ return {
         completeopt = "menu,menuone,noinsert,noselect",
       },
       sources = cmp.config.sources {
-        { name = "luasnip", group_index = 1 },
         { name = "nvim_lsp", group_index = 1 },
         { name = "path", group_index = 1 },
         {
@@ -44,11 +42,6 @@ return {
           cmp.config.compare.locality,
           cmp.config.compare.order,
         },
-      },
-      snippet = {
-        expand = function(args)
-          require("luasnip").lsp_expand(args.body)
-        end,
       },
       window = {
         documentation = {
