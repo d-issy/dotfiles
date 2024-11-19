@@ -24,6 +24,7 @@ return {
       ["lua"] = { "stylua" },
       ["rust"] = { "rustfmt" },
       ["sh"] = { "shfmt" },
+      ["proto"] = { "buf" },
 
       ["javascript"] = { "prettierd", "prettier", stop_after_first = true },
       ["javascriptreact"] = { "prettierd", "prettier", stop_after_first = true },
@@ -43,7 +44,7 @@ return {
       function()
         require("conform").format { async = true }
       end,
-      mode="",
+      mode = { "n", "v" },
       desc = "Format Buffer",
     },
     {
