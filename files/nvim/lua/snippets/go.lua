@@ -1,4 +1,4 @@
---@cspell: disable
+---@diagnostic disable: unused-local
 local ls = require "luasnip"
 local s = ls.snippet
 local sn = ls.snippet_node
@@ -25,77 +25,113 @@ local postfix = require("luasnip.extras.postfix").postfix
 local types = require "luasnip.util.types"
 local parse = require("luasnip.util.parser").parse_snippet
 
+local S = require "util.snippet"
+
 return {
-  s("main", {
-    t { "package main", "", "" },
-    t { "func main() {", "\t" },
-    i(0),
-    t { "", "}" },
-  }, { condition = function(line) return line == "main" end }),
-  s("fn", {
-    t "func ",
-    i(1),
-    t "(",
-    i(2),
-    t ") ",
-    m(3, ",", "("),
-    i(3),
-    m(3, ",", ")"),
-    m(3, ".", " "),
-    t { "{", "\t" },
-    i(0),
-    t { " ", "}" },
-  }, { condition = function(line) return line == "fn" end }),
-  s("if", { t "if ", i(1), t { " {", "\t" }, i(0), t { "", "}" } }),
-  s("elif", { t " else if ", i(1), t { " {", "\t" }, i(0), t { "", "}" } }),
-  s("el", { t { " else {", "\t" }, i(0), t { "", "}" } }),
-  s("iferr", { t { "if err != nil {", "\t" }, i(0), t { "", "}" } }),
-  s("for", { t "for ", i(1), m(1, ".", " "), t { "{", "\t" }, i(0), t { "", "}" } }),
-  s("st", {
-    m(1, ".", "type "),
-    i(1),
+  S.fmt(
+    { trig = "main", condition = S.conds.line_start },
+    [[
+      package main
+
+      func main() {{
+        {}
+      }}
+    ]]
+  ),
+  S.fmt(
+    { trig = "fn", condition = S.conds.line_start },
+    [[
+      func {}({}) {}{}{}{}{{
+        {}
+      }}
+    ]],
+    {
+      i(1),
+      i(2),
+      m(3, ",", "("),
+      i(3),
+      m(3, ",", ")"),
+      m(3, ".", " "),
+      i(0),
+    }
+  ),
+  S.fmt(
+    "if",
+    [[
+      if {} {{
+        {}
+      }}
+    ]]
+  ),
+  S.fmt(
+    { trig = "%s*elif", regTrig = true },
+    [[
+       else if {} {{
+      }}
+    ]]
+  ),
+  S.fmt(
+    { trig = "%s*el", regTrig = true },
+    [[
+       else {{
+      }}
+    ]]
+  ),
+  S.fmt(
+    "iferr",
+    [[
+      if err != nil {{
+        {}
+      }}
+    ]]
+  ),
+  S.fmt(
+    "for",
+    [[
+      for {}{}{{
+        {}
+      }}
+    ]],
+    { i(1), m(1, ".", " "), i(0) }
+  ),
+  S.fmt("st", [[struct{}{{{}{}{}}}{}{}]], {
     m(1, ".", " "),
-    t "struct",
-    m(1, ".", " "),
-    t "{",
     m(1, ".", "\n\t"),
-    i(2),
-    m(1, ".", "\n"),
-    t "}",
-    m(1, "^$", "{"),
-    i(0),
-    m(1, "^$", "}"),
-  }),
-  s("in", {
-    m(1, ".", "type "),
     i(1),
+    m(1, ".", "\n"),
+    m(1, "^$", "{}"),
+    i(0),
+  }),
+  S.fmt("in", [[interface{}{{{}{}{}}}{}{}]], {
     m(1, ".", " "),
-    t "interface",
-    m(1, ".", " "),
-    t "{",
     m(1, ".", "\n\t"),
-    i(2),
-    m(1, ".", "\n"),
-    t "}",
-    m(1, "^$", "{"),
-    i(0),
-    m(1, "^$", "}"),
-  }),
-  s("m", { t "map[", i(1), t "]", i(0) }),
-  s("t", t "true"),
-  s("f", t "false"),
-  s("b", t "bool"),
-  s("s", t "string"),
-  s("e", t "error"),
-  s("br", t "break"),
-  s("con", t "continue"),
-  s("const", { t "const ", i(1), t " = ", i(0) }),
-  s("r", { t "return", m(1, ".", " "), i(1) }),
-  s("test", {
-    t "func Test",
     i(1),
-    t { "(t *testing.T) {", "\t" },
+    m(1, ".", "\n"),
+    m(1, "^$", "{}"),
     i(0),
-    t { "", "}" },
-  }, { condition = function(line) return line == "test" end }),
+  }),
+  S.fmt("ty", "type {} {}"),
+  S.fmt("m", "map[{}]{}"),
+  S.fmt("[", "[]{}"),
+  S.alias("n", "nil"),
+  S.alias("t", "true"),
+  S.alias("f", "false"),
+  S.alias("b", "bool"),
+  S.alias("s", "string"),
+  S.alias("e", "error"),
+  S.alias("br", "break"),
+  S.alias("con", "continue"),
+  S.fmt("r", "return{}{}", { m(1, ".", " "), i(1) }),
+  S.fmt("re", "return {}{}err", { i(1), m(1, ".", ", ") }),
+  S.fmt("rn", "return nil{}{}", { m(1, ".", ", "), i(1) }),
+  S.fmt("rt", "return true{}{}", { m(1, ".", ", "), i(1) }),
+  S.fmt("rf", "return false{}{}", { m(1, ".", ", "), i(1) }),
+  S.fmt("c", "const {} = {}"),
+  S.fmt("v", "var {} {}{}", { i(1), m(2, "^[A-Z]", "*"), i(2) }),
+  S.fmt("vm", "var {} = make({}{}{})", { i(1), i(2), m(2, ",", " "), i(3) }),
+  S.alias("ve", "var err error"),
+  S.alias("ctx", "ctx context.Context"),
+  S.alias("ctxb", "ctx := context.Background()"),
+  S.alias("ctxt", "ctx := context.TODO()"),
+  S.alias("ctxc", "ctx, cancel := context.WithCancel(context.Background())"),
 }
