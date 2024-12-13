@@ -5,7 +5,20 @@ return {
   opts = {
     bigfile = { enabled = true },
     gitbrowse = { enabled = true },
-    indent = { enabled = true },
+    indent = {
+      enabled = true,
+      indent = { only_current = true },
+      chunk = {
+        enabled = true,
+        char = {
+          corner_top = "╭",
+          corner_bottom = "╰",
+          horizontal = "─",
+          vertical = "│",
+          arrow = "─",
+        },
+      },
+    },
     input = { enabled = true },
     notifier = {
       enabled = true,
@@ -13,7 +26,13 @@ return {
     },
     quickfile = { enabled = true },
     scope = { enabled = true },
-    scroll = { enabled = true },
+    scroll = {
+      enabled = true,
+      only_current = true,
+      animate = {
+        duration = 5,
+      },
+    },
     words = { enabled = true },
   },
   keys = {
