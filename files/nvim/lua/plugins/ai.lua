@@ -23,6 +23,9 @@ return {
   {
     "yetone/avante.nvim",
     event = "VeryLazy",
+    enabled = function()
+      return vim.env.XDG_CONFIG_HOME == vim.fn.expand "~/.config"
+    end,
     lazy = false,
     version = false,
     build = "make",
