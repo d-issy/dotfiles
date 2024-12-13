@@ -122,6 +122,5 @@ return {
       },
     },
   },
-  { "TaDaa/vimade", event = "VeryLazy" },
   { "MunifTanjim/nui.nvim" },
 }
