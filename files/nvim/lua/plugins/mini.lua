@@ -20,28 +20,6 @@ return {
     opts = {},
   },
   {
-    "echasnovski/mini.indentscope",
-    event = { "BufReadPost" },
-    opts = {
-      symbol = "│",
-      options = { try_as_border = true },
-    },
-    init = function()
-      vim.api.nvim_create_autocmd("FileType", {
-        pattern = {
-          "fzf",
-          "help",
-          "lazy",
-          "mason",
-          "notify",
-        },
-        callback = function()
-          vim.b.miniindentscope_disable = true
-        end,
-      })
-    end,
-  },
-  {
     "echasnovski/mini.icons",
     opts = {},
     init = function()
