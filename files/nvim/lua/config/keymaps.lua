@@ -1,8 +1,5 @@
 local map = require "util.map"
-
-local toggle = require "util.toggle"
 local buffer = require "util.buffer"
-
 local lazygit = require "util.lazygit"
 
 map.setup {
@@ -19,13 +16,6 @@ map.setup {
   { "gy", '"+y', mode = { "n", "x" }, desc = "Copy to system clipboard" },
   { "gp", '"+p', mode = { "n" }, desc = "Paste from system clipboard" },
   { "gp", '"+P', mode = { "x" }, desc = "Paste from system clipboard" },
-
-  -- toggle
-  { "<leader>ul", toggle.option { "number", "relativenumber" }, desc = "Toggle number" },
-  { "<leader>un", toggle.option "number", desc = "Toggle relativenumber" },
-  { "<leader>ur", toggle.option "relativenumber", desc = "Toggle relativenumber" },
-  { "<leader>us", toggle.option "spell", desc = "Toggle spell" },
-  { "<leader>uw", toggle.option "wrap", desc = "Toggle wrap" },
 
   -- resize
   { "<c-up>", "<cmd>resize +2<cr>", mode = { "n", "t" }, desc = "Resize Up" },
