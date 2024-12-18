@@ -55,7 +55,7 @@ return {
       if server_opts then
         require("lspconfig")[server].setup(server_opts)
       else
-        local capabilities = require("cmp_nvim_lsp").default_capabilities()
+        local capabilities = require("blink.cmp").get_lsp_capabilities()
         require("lspconfig")[server].setup {
           capabilities = capabilities,
         }

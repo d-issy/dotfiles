@@ -117,18 +117,18 @@ local hl = {
   MiniIconsRed = { fg = palette.error },
   MiniIconsYellow = { fg = palette.change },
 
-  -- Cmp
-  CmpDocumentation = { fg = palette.default },
-  CmpDocumentationBorder = { fg = palette.border },
-  CmpGhostText = { fg = palette.low },
+  -- BlinkCmp
+  BlinkCmpDoc = { fg = palette.default },
+  BlinkCmpDocBorder = { fg = palette.border },
+  BlinkCmpGhostText = { fg = palette.low },
 
-  CmpItemAbbr = { fg = palette.default, bg = palette.none },
-  CmpItemAbbrDeprecated = { link = "DiagnosticDeprecated" },
+  BlinkCmpLabel = { fg = palette.default, bg = palette.none },
+  BlinkCmpLabelDeprecated = { link = "DiagnosticDeprecated" },
 
-  CmpItemMenu = { fg = palette.ui, bg = palette.none },
+  BlinkCmpMenu = { fg = palette.ui, bg = palette.none },
 
-  CmpItemKind = { fg = palette.ui, bg = palette.none },
-  CmpItemKindCopilot = { fg = "#6cc644", bg = palette.none },
+  BlinkCmpKind = { fg = palette.ui, bg = palette.none },
+  BlinkCmpKindCopilot = { fg = "#6cc644", bg = palette.none },
 
   -- TreeSitter
   TreeSitterContext = { bg = palette.cursor },
