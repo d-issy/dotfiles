@@ -30,10 +30,21 @@ return {
       enabled = true,
       only_current = true,
       animate = {
-        duration = 5,
+        duration = { step = 10, total = 100 },
       },
     },
     words = { enabled = true },
+    styles = {
+      input = {
+        keys = {
+          i_esc = { "<esc>", "stopinsert", mode = "i" },
+          i_cr = { "<cr>", "confirm", mode = "i" },
+          i_tab = { "<tab>", { "cmp_select_next", "cmp" }, mode = "i" },
+          cr = { "<cr>", { "confirm" } },
+          q = "cancel",
+        },
+      },
+    },
   },
   keys = {
     { "<leader>z", "<cmd>lua require('snacks').zen.zoom()<CR>" },
