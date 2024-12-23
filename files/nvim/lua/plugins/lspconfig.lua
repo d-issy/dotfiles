@@ -44,7 +44,6 @@ return {
 
       -- stylua: ignore
       map.setup({
-        { "<C-h>", vim.lsp.buf.signature_help, mode = "i", desc = "LSP Signature Help" },
         { "[d", vim.diagnostic.goto_prev, desc = "LSP Prev Diagnostic" },
         { "]d", vim.diagnostic.goto_next, dsc = "LSP Next Diagnostic" },
         { "<leader>cr", vim.lsp.buf.rename, desc = "LSP Rename" },
