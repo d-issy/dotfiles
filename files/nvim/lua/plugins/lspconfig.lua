@@ -25,9 +25,10 @@ return {
   },
   config = function(_, opts)
     local lsp_zero = require "lsp-zero"
+    local border = require("util.border").generate "FloatBorder"
+
     vim.diagnostic.config { update_in_insert = true }
 
-    local border = require("util.border").generate "FloatBorder"
     lsp_zero.ui {
       float_border = border,
       sign_text = {
@@ -42,10 +43,25 @@ return {
       lsp_zero.default_keymaps { bufnr = bufnr }
       lsp_zero.highlight_symbol(client, bufnr)
 
+      local goto_next = function()
+        vim.diagnostic.goto_next {
+          float = {
+            border = border, ---@diagnostic disable-line: assign-type-mismatch
+          },
+        }
+      end
+      local goto_prev = function()
+        vim.diagnostic.goto_prev {
+          float = {
+            border = border, ---@diagnostic disable-line: assign-type-mismatch
+          },
+        }
+      end
+
       -- stylua: ignore
       map.setup({
-        { "[d", vim.diagnostic.goto_prev, desc = "LSP Prev Diagnostic" },
-        { "]d", vim.diagnostic.goto_next, dsc = "LSP Next Diagnostic" },
+        { "[d", goto_prev, desc = "LSP Prev Diagnostic" },
+        { "]d", goto_next, dsc = "LSP Next Diagnostic" },
         { "<leader>cr", vim.lsp.buf.rename, desc = "LSP Rename" },
       }, { buffer = bufnr })
     end)
