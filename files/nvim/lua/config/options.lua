@@ -38,6 +38,11 @@ vim.opt.backspace = { "start", "eol", "indent" }
 vim.opt.path:append { "**" }
 vim.opt.wildignore:append { "*/node_modules/*" }
 
+vim.opt.list = true
+vim.opt.listchars = {
+  trail = " ",
+}
+
 vim.opt.fillchars = {
   foldopen = "",
   foldclose = "",

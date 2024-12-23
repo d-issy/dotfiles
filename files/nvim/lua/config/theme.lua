@@ -2,17 +2,16 @@ local palette = {
   none = "NONE",
 
   bg = "#282828",
-  default = "#9c9c9c",
+  default = "#f9f9f9",
 
   border = "#8c8c8c",
 
   ui = "#cfcfcf",
-  visual = "#383838",
-  cursor = "#323232",
+  visual = "#454545",
+  cursor = "#383838",
 
-  low = "#686868",
+  low = "#8c8c8c",
   search = "#f2f2aa",
-  cmp = "#f9f9f9",
 
   error = "#ed8796",
   warning = "#eed49f",
@@ -60,6 +59,8 @@ local hl = {
   Special = { fg = palette.low },
   Keyword = { fg = palette.low },
   Operator = { fg = palette.low },
+
+  Whitespace = { bg = palette.visual },
 
   PMenu = { fg = palette.default, bg = palette.bg },
 
