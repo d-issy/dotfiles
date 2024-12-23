@@ -25,21 +25,22 @@ return {
   },
   config = function(_, opts)
     local lsp_zero = require "lsp-zero"
-    lsp_zero.on_attach(function(_, bufnr)
-      -- vim.lsp settings
-      local border = require("util.border").generate "FloatBorder"
+    vim.diagnostic.config { update_in_insert = true }
 
-      vim.lsp.handlers["textDocument/hover"] = vim.lsp.with(vim.lsp.handlers.hover, {
-        border = border,
-      })
+    local border = require("util.border").generate "FloatBorder"
+    lsp_zero.ui {
+      float_border = border,
+      sign_text = {
+        error = "✘",
+        warn = "▲",
+        hint = "⚑",
+        info = "»",
+      },
+    }
 
-      vim.lsp.handlers["textDocument/signatureHelp"] = vim.lsp.with(vim.lsp.handlers.signature_help, {
-        border = border,
-      })
-      vim.diagnostic.config { update_in_insert = true }
-
-      -- keymaps
+    lsp_zero.on_attach(function(client, bufnr)
       lsp_zero.default_keymaps { bufnr = bufnr }
+      lsp_zero.highlight_symbol(client, bufnr)
 
       -- stylua: ignore
       map.setup({
