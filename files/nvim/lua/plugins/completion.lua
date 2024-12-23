@@ -1,6 +1,6 @@
 return {
   "saghen/blink.cmp",
-  version = "*",
+  version = "v0.*",
   event = { "InsertEnter" },
   dependencies = {
     "giuxtaposition/blink-cmp-copilot",
@@ -28,9 +28,6 @@ return {
         draw = {
           treesitter = { "lsp" },
           columns = { { "label", "label_description", gap = 1 }, { "kind" } },
-          components = {
-            kind_icon = { with = { fill = true } },
-          },
         },
       },
       ghost_text = {
@@ -38,9 +35,7 @@ return {
       },
     },
     sources = {
-      completion = {
-        enabled_providers = { "lsp", "path", "copilot" },
-      },
+      default = { "lsp", "path", "copilot" },
       providers = {
         copilot = {
           name = "Copilot",
