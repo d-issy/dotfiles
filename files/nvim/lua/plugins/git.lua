@@ -44,13 +44,4 @@ return {
       end,
     },
   },
-  {
-    "claydugo/browsher.nvim",
-    config = function()
-      require("browsher").setup()
-    end,
-    keys = {
-      { "<leader>go", "<cmd>Browsher commit<cr>", mode = { "n", "v" }, desc = "Open Browser" },
-    },
-  },
 }
