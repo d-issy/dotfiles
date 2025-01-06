@@ -47,9 +47,14 @@ return {
     },
   },
   keys = {
-    { "<leader>z", "<cmd>lua require('snacks').zen.zoom()<CR>" },
-    { "<leader>gB", "<cmd>lua require('snacks').gitbrowse.open({ what = 'commit' })<CR>", mode = { "n", "v" } },
-    { "<leader>cR", "<cmd>lua require('snacks').rename.rename_file()<CR>" },
+    { "<leader>z", "<cmd>lua require('snacks').zen.zoom()<CR>", desc = "Zoom" },
+    {
+      "<leader>gB",
+      "<cmd>lua require('snacks').gitbrowse.open({ what = 'commit' })<CR>",
+      mode = { "n", "v" },
+      desc = "Open commit",
+    },
+    { "<leader>cR", "<cmd>lua require('snacks').rename.rename_file()<CR>", desc = "File Rename" },
   },
   init = function()
     local snacks = require "snacks"
