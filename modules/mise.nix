@@ -22,16 +22,14 @@ with lib;
           scala = "3.5";
           terraform = "1";
         };
-      };
-
-      settings = {
-        legacy_version_file = true;
-        trusted_config_paths = [ "~/.config/mise" ];
-        jobs = 2;
-        experimental = true;
-        not_found_auto_install = false;
-        status = {
-          missing_tools = "never";
+        settings = {
+          jobs = 2;
+          trusted_config_paths = [ "~/.config/mise" ];
+          idiomatic_version_file = true;
+          not_found_auto_install = false;
+          status = {
+            missing_tools = "never";
+          };
         };
       };
     };
