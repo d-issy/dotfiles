@@ -60,8 +60,6 @@ local hl = {
   Keyword = { fg = palette.low },
   Operator = { fg = palette.low },
 
-  Whitespace = { bg = palette.visual },
-
   PMenu = { fg = palette.default, bg = palette.bg },
 
   ---------

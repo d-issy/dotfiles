@@ -40,7 +40,8 @@ vim.opt.wildignore:append { "*/node_modules/*" }
 
 vim.opt.list = true
 vim.opt.listchars = {
-  trail = " ",
+  tab = "  ",
+  trail = "-",
 }
 
 vim.opt.fillchars = {
