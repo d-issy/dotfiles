@@ -19,6 +19,9 @@ return {
   },
   opts = {
     use_default_keymaps = false,
+    float = {
+      border = require("util.border").generate(),
+    },
     keymaps = {
       ["q"] = "actions.close",
       ["g?"] = "actions.show_help",
@@ -30,19 +33,24 @@ return {
       ["H"] = "actions.parent",
       ["L"] = "actions.select",
       ["<BS>"] = "actions.open_cwd",
-      [";"] = "<cmd>w<cr>",
       ["`"] = "actions.cd",
       ["~"] = { "actions.cd", opts = { scope = "tab" }, desc = ":tcd to the current oil directory", mode = "n" },
       ["gs"] = "actions.change_sort",
       ["gx"] = "actions.open_external",
       ["g."] = "actions.toggle_hidden",
       ["g\\"] = "actions.toggle_trash",
-    },
-    columns = {
-      "icon",
-      "size",
-      "permissions",
-      "mtime",
+      [";"] = { "<cmd>w<cr>", desc = "Sync File" },
+      ["gd"] = {
+        function()
+          vim.g.oil_detail = not vim.g.oil_detail
+          if vim.g.oil_detail then
+            require("oil").set_columns { "icon", "permissions", "size", "mtime" }
+          else
+            require("oil").set_columns { "icon" }
+          end
+        end,
+        desc = "toggle file detail view",
+      },
     },
   },
 }
