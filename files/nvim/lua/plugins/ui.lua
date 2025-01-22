@@ -41,6 +41,14 @@ return {
     config = true,
   },
   {
+    "folke/noice.nvim",
+    event = "VeryLazy",
+    opts = {
+      cmdline = { view = "cmdline" },
+      lsp = { progress = { enabled = false } },
+    },
+  },
+  {
     "folke/flash.nvim",
     event = "VeryLazy",
     opts = {},
@@ -49,22 +57,6 @@ return {
       { "<leader>j", mode = { "n", "o", "x" }, function() require("flash").jump() end, desc = "Flash" },
       { "<leader>J", mode = { "n", "o", "x" }, function() require("flash").treesitter() end, desc = "Flash Treesitter" },
     },
-  },
-  {
-    "stevearc/dressing.nvim",
-    opts = {},
-    init = function()
-      ---@diagnostic disable-next-line: duplicate-set-field
-      vim.ui.select = function(...)
-        require("lazy").load { plugins = { "dressing.nvim" } }
-        return vim.ui.select(...)
-      end
-      ---@diagnostic disable-next-line: duplicate-set-field
-      vim.ui.input = function(...)
-        require("lazy").load { plugins = { "dressing.nvim" } }
-        return vim.ui.input(...)
-      end
-    end,
   },
   {
     "folke/which-key.nvim",

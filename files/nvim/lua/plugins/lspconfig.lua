@@ -62,7 +62,6 @@ return {
       map.setup({
         { "[d", goto_prev, desc = "LSP Prev Diagnostic" },
         { "]d", goto_next, dsc = "LSP Next Diagnostic" },
-        { "<leader>cr", vim.lsp.buf.rename, desc = "LSP Rename" },
       }, { buffer = bufnr })
     end)
 

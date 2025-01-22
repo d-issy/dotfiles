@@ -1,5 +1,6 @@
 return {
   "folke/snacks.nvim",
+  dependencies = { "todo-comments.nvim" },
   priority = 1000,
   lazy = false,
   opts = {
@@ -24,6 +25,12 @@ return {
       enabled = true,
       timeout = 3000,
     },
+    picker = {
+      sources = {
+        buffers = { current = false },
+        pickers = { layout = { preview = false } },
+      },
+    },
     quickfile = { enabled = true },
     scope = { enabled = true },
     scroll = {
@@ -33,6 +40,7 @@ return {
         duration = { step = 10, total = 100 },
       },
     },
+    toggle = { enabled = true },
     words = { enabled = true },
     styles = {
       input = {
@@ -47,14 +55,43 @@ return {
     },
   },
   keys = {
-    { "<leader>z", "<cmd>lua require('snacks').zen.zoom()<CR>", desc = "Zoom" },
+    { "<leader><space>", "<cmd>lua require('snacks').picker.smart()<cr>", desc = "Smart Search" },
+    { "<leader>'", "<cmd>lua require('snacks').picker.marks()<cr>", desc = "Marks" },
+    { '<leader>"', "<cmd>lua require('snacks').picker.registers()<cr>", desc = "Registers" },
+    { "<leader>,", "<cmd>lua require('snacks').picker.buffers()<cr>", desc = "Buffers" },
+    { "<leader>/", "<cmd>lua require('snacks').picker.grep()<cr>", desc = "Grep" },
+    { "<leader>fa", "<cmd>lua require('snacks').picker.pickers()<cr>", desc = "Actions" },
+    { "<leader>ff", "<cmd>lua require('snacks').picker.files()<cr>", desc = "Files" },
+    { "<leader>fh", "<cmd>lua require('snacks').picker.help()<cr>", desc = "Actions" },
+    { "<leader>fl", "<cmd>lua require('snacks').picker.lines()<cr>", desc = "Lines" },
+    { "<leader>fu", "<cmd>lua require('snacks').picker.undo()<cr>", desc = "Undo" },
+    { "<leader>fs", "<cmd>lua require('snacks').picker.spelling()<cr>", desc = "Spell" },
+    { "<leader>z", "<cmd>lua require('snacks').zen.zoom()<cr>", desc = "Zoom" },
+    { "<leader>gs", "<cmd>lua require('snacks').picker.git_status()<cr>", desc = "Git Status" },
+    { "gd", "<cmd>lua require('snacks').picker.lsp_definitions()<cr>", desc = "LSP Definitions" },
+    { "gG", "<cmd>lua require('snacks').picker.lsp_declarations()<cr>", desc = "LSP Declarations" },
+    { "gr", "<cmd>lua require('snacks').picker.lsp_references()<cr>", desc = "LSP References" },
+    { "gi", "<cmd>lua require('snacks').picker.lsp_implementations()<cr>", desc = "LSP Implementation" },
+    { "gI", "<cmd>lua require('snacks').picker.lsp_type_definitions()<cr>", desc = "LSP Type Definition" },
+    { "<leader>cs", "<cmd>lua require('snacks').picker.lsp_symbols()<cr>", desc = "LSP Symbols" },
+    { "<leader>cd", "<cmd>lua require('snacks').picker.diagnostics_buffer()<cr>", desc = "Diagnostic" },
+    { "<leader>cD", "<cmd>lua require('snacks').picker.diagnostics()<cr>", desc = "Diagnostic (Workspace)" },
+    { "<leader>cS", "<cmd>lua require('snacks').picker.lsp_workspace_symbols()<cr>", desc = "LSP Symbols (Workspace)" },
+    { "<leader>cR", "<cmd>lua require('snacks').rename.rename_file()<cr>", desc = "File Rename" },
+    { "<leader>ca", vim.lsp.buf.code_action, desc = "LSP Code Action" },
+    { "<leader>cr", vim.lsp.buf.rename, desc = "LSP Rename" },
+    { "<leader>ft", "<cmd>lua require('snacks').picker.todo_comments()<cr>", desc = "Todo" },
+    {
+      "<leader>fT",
+      "<cmd>lua require('snacks').picker.todo_comments({ keywords = { 'TODO', 'FIX', 'FIXME' } })<cr>",
+      desc = "Todo/Fix/Fixme",
+    },
     {
       "<leader>gB",
-      "<cmd>lua require('snacks').gitbrowse.open({ what = 'commit' })<CR>",
+      "<cmd>lua require('snacks').gitbrowse.open({ what = 'commit' })<cr>",
       mode = { "n", "v" },
       desc = "Open commit",
     },
-    { "<leader>cR", "<cmd>lua require('snacks').rename.rename_file()<CR>", desc = "File Rename" },
   },
   init = function()
     local snacks = require "snacks"
@@ -65,5 +102,21 @@ return {
     snacks.toggle.diagnostics():map "<leader>ud"
     snacks.toggle.line_number():map "<leader>un"
     snacks.toggle.indent():map "<leader>ug"
+
+    vim.api.nvim_create_autocmd("LspProgress", {
+      ---@param ev {data: {client_id: integer, params: lsp.ProgressParams}}
+      callback = function(ev)
+        local spinner = { "⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏" }
+        vim.notify(vim.lsp.status(), vim.log.levels.INFO, {
+          id = "lsp_progress",
+          title = "LSP Progress",
+          ---@diagnostic disable: undefined-field
+          opts = function(notif)
+            notif.icon = ev.data.params.value.kind == "end" and " "
+              or spinner[math.floor(vim.uv.hrtime() / (1e6 * 80)) % #spinner + 1]
+          end,
+        })
+      end,
+    })
   end,
 }
