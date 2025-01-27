@@ -28,6 +28,7 @@ return {
     picker = {
       sources = {
         buffers = { current = false },
+        lsp_references = { auto_confirm = false },
         pickers = { layout = { preview = false } },
       },
     },
@@ -100,8 +101,9 @@ return {
     snacks.toggle.option("spell", { name = "Spell" }):map "<leader>us"
     snacks.toggle.option("wrap", { name = "Wrap" }):map "<leader>uw"
     snacks.toggle.diagnostics():map "<leader>ud"
-    snacks.toggle.line_number():map "<leader>un"
     snacks.toggle.indent():map "<leader>ug"
+    snacks.toggle.inlay_hints():map "<leader>ui"
+    snacks.toggle.line_number():map "<leader>un"
 
     vim.api.nvim_create_autocmd("LspProgress", {
       ---@param ev {data: {client_id: integer, params: lsp.ProgressParams}}

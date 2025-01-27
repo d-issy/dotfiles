@@ -32,7 +32,13 @@ return {
       },
       ghost_text = {
         enabled = true,
+        show_with_selection = true,
+        show_without_selection = false,
       },
+    },
+    signature = {
+      enabled = true,
+      window = { border = border },
     },
     sources = {
       default = { "lsp", "path", "copilot" },
@@ -51,10 +57,6 @@ return {
           end,
         },
       },
-    },
-    signature = {
-      enabled = true,
-      window = { border = border },
     },
   },
 }
