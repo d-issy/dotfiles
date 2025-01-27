@@ -1,9 +1,36 @@
 local map = require "util.map"
 
 local servers = {
+  gopls = {
+    settings = {
+      gopls = {
+        codelenses = {
+          generate = true,
+          gc_details = true,
+          test = true,
+          tidy = true,
+          upgrade_dependency = true,
+          vendor = true,
+        },
+        hints = {
+          assignVariableTypes = false,
+          compositeLiteralFields = true,
+          compositeLiteralTypes = true,
+          constantValues = false,
+          functionTypeParameters = true,
+          parameterNames = true,
+          rangeVariableTypes = false,
+        },
+      },
+    },
+  },
   lua_ls = {
     settings = {
       Lua = {
+        hint = {
+          enable = true,
+          arrayIndex = "Disable",
+        },
         workspace = {
           library = vim.list_slice(vim.api.nvim_get_runtime_file("", true), 2),
         },
@@ -13,57 +40,52 @@ local servers = {
 }
 
 return {
-  "VonHeikemen/lsp-zero.nvim",
+  "neovim/nvim-lspconfig",
   dependencies = {
-    "neovim/nvim-lspconfig",
     "williamboman/mason-lspconfig.nvim",
     "mason.nvim",
+    "blink.cmp",
   },
   event = { "BufReadPost" },
   opts = {
     servers = servers,
   },
   config = function(_, opts)
-    local lsp_zero = require "lsp-zero"
     local border = require("util.border").generate "FloatBorder"
 
-    vim.diagnostic.config { update_in_insert = true }
-
-    lsp_zero.ui {
-      float_border = border,
-      sign_text = {
-        error = "✘",
-        warn = "▲",
-        hint = "⚑",
-        info = "»",
+    vim.lsp.inlay_hint.enable()
+    vim.lsp.handlers["textDocument/hover"] = vim.lsp.with(vim.lsp.handlers.hover, { border = border })
+    vim.lsp.handlers["textDocument/signatureHelp"] = vim.lsp.with(vim.lsp.handlers.signature_help, { border = border })
+    vim.diagnostic.config {
+      float = true,
+      update_in_insert = true,
+      severity_sort = true,
+      signs = {
+        text = {
+          [vim.diagnostic.severity.ERROR] = "✘",
+          [vim.diagnostic.severity.WARN] = "▲",
+          [vim.diagnostic.severity.HINT] = "⚑",
+          [vim.diagnostic.severity.INFO] = "»",
+        },
       },
     }
 
-    lsp_zero.on_attach(function(client, bufnr)
-      lsp_zero.default_keymaps { bufnr = bufnr }
-      lsp_zero.highlight_symbol(client, bufnr)
+    ---@diagnostic disable: assign-type-mismatch
+    local goto_next = function()
+      vim.diagnostic.goto_next { float = { border = border } }
+    end
 
-      local goto_next = function()
-        vim.diagnostic.goto_next {
-          float = {
-            border = border, ---@diagnostic disable-line: assign-type-mismatch
-          },
-        }
-      end
-      local goto_prev = function()
-        vim.diagnostic.goto_prev {
-          float = {
-            border = border, ---@diagnostic disable-line: assign-type-mismatch
-          },
-        }
-      end
+    local goto_prev = function()
+      vim.diagnostic.goto_prev { float = { border = border } }
+    end
+    ---@diagnostic enable: assign-type-mismatch
 
-      -- stylua: ignore
-      map.setup({
-        { "[d", goto_prev, desc = "LSP Prev Diagnostic" },
-        { "]d", goto_next, dsc = "LSP Next Diagnostic" },
-      }, { buffer = bufnr })
-    end)
+    map.setup {
+      { "[d", goto_prev, desc = "LSP Prev Diagnostic" },
+      { "]d", goto_next, dsc = "LSP Next Diagnostic" },
+      { "<leader>cc", vim.lsp.codelens.run, desc = "Run Codelens" },
+      { "<leader>cC", vim.lsp.codelens.refresh, desc = "Run Codelens (Refresh)" },
+    }
 
     local handler = function(server)
       local server_opts = opts.servers[server]

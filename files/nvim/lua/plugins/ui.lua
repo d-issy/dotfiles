@@ -45,7 +45,12 @@ return {
     event = "VeryLazy",
     opts = {
       cmdline = { view = "cmdline" },
-      lsp = { progress = { enabled = false } },
+      lsp = {
+        hover = { enabled = false },
+        message = { enabled = false },
+        progress = { enabled = false },
+        signature = { enabled = false },
+      },
     },
   },
   {

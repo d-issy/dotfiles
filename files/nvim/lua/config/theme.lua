@@ -11,6 +11,7 @@ local palette = {
   cursor = "#383838",
 
   low = "#8c8c8c",
+  inlayHint = "#686868",
   search = "#f2f2aa",
 
   error = "#ed8796",
@@ -65,6 +66,8 @@ local hl = {
   ---------
   -- lsp --
   ---------
+
+  LspInlayHint = { fg = palette.inlayHint },
 
   -- lsp
   ["@punctuation"] = { link = "Special" },
