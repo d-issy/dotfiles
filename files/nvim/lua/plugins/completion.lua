@@ -9,8 +9,11 @@ return {
     "zbirenbaum/copilot.lua",
   },
   opts = {
+    snippets = { preset = "luasnip" },
     keymap = {
       preset = "super-tab",
+      ["<C-h>"] = { "show_signature", "hide_signature", "fallback" },
+      ["<C-k>"] = {}, -- disable signature
     },
     completion = {
       accept = {
@@ -41,7 +44,7 @@ return {
       window = { border = border },
     },
     sources = {
-      default = { "lsp", "path", "copilot" },
+      default = { "lsp", "path", "snippets", "copilot" },
       providers = {
         copilot = {
           name = "Copilot",
