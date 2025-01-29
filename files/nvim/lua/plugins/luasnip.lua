@@ -34,6 +34,7 @@ return {
         end
       end,
       mode = { "i", "s" },
+      desc = "Snippet Expand or Jump",
     },
     {
       "<C-l>",
@@ -45,6 +46,7 @@ return {
         end
       end,
       mode = { "i", "s" },
+      desc = "Snippet Change Choice",
     },
   },
 }
