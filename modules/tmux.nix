@@ -123,7 +123,6 @@ with lib;
 
         if ($target | is-empty) { return }
         if (tmux has-session -t $target | complete | get exit_code | $in != 0) {
-          echo hello
           let session_name = $target | path basename
           tmux new-session -s $session_name -c $target -d
           $target = $session_name

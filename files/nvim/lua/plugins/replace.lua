@@ -2,9 +2,11 @@ return {
   "MagicDuck/grug-far.nvim",
   cmd = { "GrugFar" },
   opts = {
-    windowCreationCommand = "split",
-    sratrInsertMode = false,
-    window = { height = 10 },
+    windowCreationCommand = "15split",
+    openTargetWindow = {
+      preferredLocation = "above",
+    },
+    sratrInsertMode = true,
     keymaps = {
       qflist = { n = "<c-q>" },
       refresh = { n = "<c-r>" },
@@ -20,6 +22,6 @@ return {
     },
   },
   keys = {
-    { "<leader>fr", "<cmd>GrugFar<cr><cmd>resize 15<cr>I", desc = "Replace" },
+    { "<leader>fr", "<cmd>GrugFar<cr>", desc = "Find or Replace" },
   },
 }
