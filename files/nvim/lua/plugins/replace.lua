@@ -6,7 +6,7 @@ return {
     openTargetWindow = {
       preferredLocation = "above",
     },
-    sratrInsertMode = true,
+    startInsertMode = true,
     keymaps = {
       qflist = { n = "<c-q>" },
       refresh = { n = "<c-r>" },

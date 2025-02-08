@@ -22,7 +22,7 @@ export NIX_CONFIG="extra-experimental-features = nix-command flakes"
 # for linux
 nix run . -- switch --flake .#linux
 
-# for macOS Sillicon
+# for macOS Silicon
 nix run . -- switch --flake .#macos
 
 # for macOS Intel

@@ -15,6 +15,7 @@
       pkgs.jq
       pkgs.jqp
       pkgs.ripgrep
+      pkgs.typos
       pkgs.visidata
       pkgs.wget
     ];

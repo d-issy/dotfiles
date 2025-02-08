@@ -12,7 +12,11 @@ return {
     { "<leader>cm", "<cmd>Mason<cr>", desc = "LSP Mason" },
   },
   opts = {
-    ensure_installed = { "stylua", "lua-language-server" },
+    ensure_installed = {
+      "stylua",
+      "lua-language-server",
+      "typos-lsp",
+    },
     ui = { border = require("util.border").generate() },
   },
   config = function(_, opts)

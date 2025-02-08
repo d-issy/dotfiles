@@ -11,7 +11,9 @@ WinManager = (function()
   hs.window.highlight.ui.frameColor = { 0, 1.0, 0, 0.5 }
 
   local M = { _ = {} }
-  local currentWindow = function() return hs.window.frontmostWindow() end
+  local currentWindow = function()
+    return hs.window.frontmostWindow()
+  end
 
   local moveGrid = function(win, rect)
     rect = rect or {}
@@ -65,16 +67,16 @@ WinManager = (function()
   end
 
   local startArrangeMode = function()
-    M._.arangeMode:start()
+    M._.arrangeMode:start()
     hs.window.highlight.start()
   end
 
   local stopArrangeMode = function()
-    M._.arangeMode:stop()
+    M._.arrangeMode:stop()
     hs.window.highlight.stop()
   end
 
-  M._.arangeMode = hs.eventtap.new({ hs.eventtap.event.types.keyDown }, function(event)
+  M._.arrangeMode = hs.eventtap.new({ hs.eventtap.event.types.keyDown }, function(event)
     local quit = true
     local key = hs.keycodes.map[event:getKeyCode()]
     local win = currentWindow()
@@ -130,17 +132,29 @@ WinManager = (function()
   end)
 
   M.arrangeMode = function()
-    if not M._.arangeMode:isEnabled() then
+    if not M._.arrangeMode:isEnabled() then
       startArrangeMode()
     end
   end
 
-  M.moveLeft = function(win) moveGrid(win, { w = 2, x = 1 }) end
-  M.moveRight = function(win) moveGrid(win, { w = 2, x = 2 }) end
-  M.moveFull = function(win) moveGrid(win) end
-  M.moveCenter = function(win) (win or currentWindow()):centerOnScreen() end
-  M.toggleZoom = function() currentWindow():toggleZoom() end
-  M.toggleFullScreen = function() currentWindow():toggleFullScreen() end
+  M.moveLeft = function(win)
+    moveGrid(win, { w = 2, x = 1 })
+  end
+  M.moveRight = function(win)
+    moveGrid(win, { w = 2, x = 2 })
+  end
+  M.moveFull = function(win)
+    moveGrid(win)
+  end
+  M.moveCenter = function(win)
+    (win or currentWindow()):centerOnScreen()
+  end
+  M.toggleZoom = function()
+    currentWindow():toggleZoom()
+  end
+  M.toggleFullScreen = function()
+    currentWindow():toggleFullScreen()
+  end
 
   M.focusApplication = function(app)
     local fn = function()
