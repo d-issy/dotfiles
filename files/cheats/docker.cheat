@@ -43,7 +43,7 @@ docker compose
 # docker compose up :: dcup
 docker compose up
 
-# docker compose up with deamon :: dcupd
+# docker compose up with daemon :: dcupd
 docker compose up -d
 
 # docker compose down :: dcd
@@ -52,7 +52,7 @@ docker compose down
 # docker compose up service :: dcups
 docker compose up <service_name>
 
-# docker compose up service with deamon ::dcupsd
+# docker compose up service with daemon ::dcupsd
 docker compose up <service_name> -d
 
 # docker compose stop

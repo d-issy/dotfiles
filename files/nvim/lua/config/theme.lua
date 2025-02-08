@@ -145,7 +145,7 @@ local hl = {
   DiffviewFilePanelInsertions = { fg = palette.add },
   DiffViewFilePanelDeletions = { fg = palette.delete },
   diffAdded = { fg = palette.add },
-  diffChanaged = { fg = palette.change },
+  diffChanged = { fg = palette.change },
   diffRemoved = { fg = palette.delete },
 
   -----------

@@ -7,7 +7,7 @@ user_pref("extensions.htmlaboutaddons.recommendations.enabled", false);
 user_pref("extensions.getAddons.showPane", false); // [HIDDEN PREF]
 user_pref("extensions.pocket.enabled", false);
 
-// statup
+// startup
 user_pref("browser.startup.page", 3); // 0=blank, 1=home, 2=last visited page, 3=resume previous session
 
 // basics
