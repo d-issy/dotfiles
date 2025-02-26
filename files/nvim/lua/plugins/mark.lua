@@ -5,7 +5,4 @@ return {
     default_mappings = true,
     signs = true,
   },
-  config = function(_, opts)
-    require("marks").setup(opts)
-  end,
 }
