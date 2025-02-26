@@ -26,6 +26,32 @@ return {
     },
     opts = {
       provider = "copilot",
+      copilot = {
+        model = "claude-3.7-sonnet",
+      },
+      file_selector = {
+        provider = "snacks",
+      },
+      windows = {
+        sidebar_header = {
+          enabled = true,
+          align = "right",
+          rounded = false,
+        },
+        input = {
+          prefix = "",
+        },
+        ask = {
+          floating = true,
+        },
+      },
+    },
+  },
+  {
+    "MeanderingProgrammer/render-markdown.nvim",
+    ft = "Avante",
+    opts = {
+      file_types = { "Avante" },
     },
   },
 }
