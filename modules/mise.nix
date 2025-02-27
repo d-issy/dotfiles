@@ -11,12 +11,12 @@ with lib;
         tools = {
           deno = "latest";
           flutter = "latest";
-          golang = "1.22";
+          golang = "1.24";
           java = "adoptopenjdk-21";
           kotlin = "2";
           lua = "5";
           node = "22";
-          python = [ "3.13" "3.12" ];
+          python = "3";
           ruby = "3.3";
           rust = "1";
           scala = "3.5";
