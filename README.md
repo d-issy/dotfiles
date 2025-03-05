@@ -18,7 +18,7 @@ export NIX_CONFIG="extra-experimental-features = nix-command flakes"
 
 ## apply
 
-```
+```sh
 # for linux
 nix run . -- switch --flake .#linux
 

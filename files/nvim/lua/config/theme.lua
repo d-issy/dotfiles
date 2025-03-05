@@ -2,6 +2,7 @@ local palette = {
   none = "NONE",
 
   bg = "#282828",
+  bg_light = "#323232",
   default = "#f9f9f9",
 
   border = "#8c8c8c",
@@ -147,6 +148,10 @@ local hl = {
   diffAdded = { fg = palette.add },
   diffChanged = { fg = palette.change },
   diffRemoved = { fg = palette.delete },
+
+  -- RenderMarkdownCode
+  RenderMarkdownCode = { bg = palette.bg_light },
+  RenderMarkdownCodeInline = { bg = palette.bg_light },
 
   -----------
   -- other --
