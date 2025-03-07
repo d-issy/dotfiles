@@ -42,7 +42,7 @@ return {
         lsp_implementations = { layout = { preset = "bottom_pane" }, focus = "list" },
         lsp_references = { auto_confirm = false, layout = { preset = "bottom_pane" }, focus = "list" },
         lsp_type_definitions = { layout = { preset = "bottom_pane" }, focus = "list" },
-        lsp_symbols = { layout = { preset = "bottom_pane" }, focus = "list" },
+        lsp_symbols = { layout = { preset = "bottom_pane" } },
         lsp_workspace_symbols = { layout = { preset = "bottom_pane" } },
         git_status = { layout = { preset = "bottom_pane" }, sort = { fields = { "sort" } } },
       },
