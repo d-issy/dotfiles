@@ -7,9 +7,8 @@
       settings = {
         show_preview = true;
         style = "full";
-        inline_height = 15;
-        keymap_mode = "vim-insert";
         filter_mode_shell_up_key_binding = "session";
+        workspaces = true;
         history_filter = [
           "^_"
           "^set-env "
