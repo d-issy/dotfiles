@@ -9,6 +9,7 @@
     home.packages = [
       pkgs.curl
       pkgs.duckdb
+      pkgs.fastly
       pkgs.glow
       pkgs.gnumake
       pkgs.grpcurl
