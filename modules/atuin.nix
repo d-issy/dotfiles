@@ -1,4 +1,6 @@
-{ config, pkgs, ... }:
+{ config, lib, pkgs, ... }:
+
+with lib;
 
 {
   config = {
@@ -16,5 +18,19 @@
         ];
       };
     };
+
+    programs.nushell.extraConfig = mkAfter ''
+      $env.config = (
+      $env.config | upsert keybindings (
+        $env.config.keybindings | append {
+            name: atuin_search
+            modifier: control
+            keycode: char_p
+            mode: [emacs, vi_normal, vi_insert]
+            event: { send: executehostcommand cmd: (_atuin_search_cmd "--shell-up-key-binding") }
+          }
+        )
+      )
+    '';
   };
 }
