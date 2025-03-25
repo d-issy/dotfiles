@@ -33,6 +33,7 @@ with lib;
         };
       };
     };
+
     programs.nushell.extraConfig = mkAfter ''
       $env.config = ($env.config? | default {})
       $env.config.hooks = ($env.config.hooks? | default {})

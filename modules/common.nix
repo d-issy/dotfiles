@@ -9,6 +9,7 @@
   xdg.enable = true;
 
   imports = [
+    ./atuin.nix
     ./aws.nix
     ./bat.nix
     ./carapace.nix
