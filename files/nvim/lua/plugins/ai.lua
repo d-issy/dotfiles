@@ -1,3 +1,21 @@
+local llm_vendors = {
+  ["claude@3.5-sonnet"] = {
+    __inherited_from = "copilot",
+    model = "claude-3.5-sonnet",
+  },
+  ["claude@3.7-sonnet"] = {
+    __inherited_from = "copilot",
+    model = "claude-3.7-sonnet",
+  },
+  ["google@gemma3:b12"] = {
+    __inherited_from = "openai",
+    endpoint = "https://openrouter.ai/api/v1",
+    api_key_name = "OPENROUTER_API_KEY",
+    model = "google/gemma-3-12b-it:free",
+    disable_tools = true,
+  },
+}
+
 return {
   {
     "zbirenbaum/copilot.lua",
@@ -25,10 +43,8 @@ return {
       "zbirenbaum/copilot.lua",
     },
     opts = {
-      provider = "copilot",
-      copilot = {
-        model = "claude-3.7-sonnet",
-      },
+      provider = "claude@3.7-sonnet",
+      vendors = llm_vendors,
       file_selector = {
         provider = "snacks",
       },
@@ -44,6 +60,26 @@ return {
         ask = {
           floating = true,
         },
+      },
+    },
+    keys = {
+      {
+        "<leader>ap",
+        function()
+          local providers = {}
+          for provider_name, _ in pairs(llm_vendors) do
+            table.insert(providers, provider_name)
+          end
+          vim.ui.select(providers, {
+            prompt = "Select Avante Provider",
+          }, function(choice)
+            if choice then
+              vim.cmd("AvanteSwitchProvider " .. choice)
+              vim.notify("Switched to " .. choice .. " provider", vim.log.levels.INFO)
+            end
+          end)
+        end,
+        desc = "Avante Switch Provider",
       },
     },
   },
