@@ -2,8 +2,8 @@ local border = require("util.border").generate "FloatBorder"
 
 return {
   "saghen/blink.cmp",
-  version = "v0.*",
-  event = { "InsertEnter" },
+  version = "1.*",
+  event = { "InsertEnter", "CmdlineEnter" },
   dependencies = {
     "giuxtaposition/blink-cmp-copilot",
     "zbirenbaum/copilot.lua",
@@ -14,6 +14,16 @@ return {
       preset = "super-tab",
       ["<C-h>"] = { "show_signature", "hide_signature", "fallback" },
       ["<C-k>"] = {}, -- disable signature
+    },
+    cmdline = {
+      keymap = {
+        preset = "cmdline",
+      },
+      completion = {
+        menu = {
+          auto_show = true,
+        },
+      },
     },
     completion = {
       accept = {
