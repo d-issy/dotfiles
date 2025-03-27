@@ -25,7 +25,6 @@ let
       "$git_metrics"
       "$memory_usage"
       "$battery"
-      "$time"
       "$cmd_duration"
     ];
 

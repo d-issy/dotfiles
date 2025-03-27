@@ -24,20 +24,32 @@ with lib;
         {
           plugin = tmuxPlugins.catppuccin;
           extraConfig = ''
-            set -g @catppuccin_flavour 'macchiato' # latte, frappe, macchiato, mocha
-            set -g @catppuccin_status_background "default"
-            set -g @catppuccin_window_current_fill "number"
-            set -g @catppuccin_status_modules_left "session"
-            set -g @catppuccin_status_modules_right "date_time"
-            set -g @catppuccin_window_default_fill "number"
-            set -g @catppuccin_window_default_text "#W"
-            set -g @catppuccin_window_current_fill "number"
-            set -g @catppuccin_window_current_text "#W"
-            set -g @catppuccin_window_left_separator " █"
-            set -g @catppuccin_window_right_separator "█"
-            set -g @catppuccin_status_left_separator "█"
-            set -g @catppuccin_status_right_separator "█"
-            set -g @catppuccin_date_time_text "%Y-%m-%d"
+            set -g @catppuccin_flavor "macchiato" # latte, frappe, macchiato, mocha
+            set -g @catppuccin_status_background "none"
+            set -g @catppuccin_window_status_style "none"
+            set -g @catppuccin_pane_status_enabled "off"
+            set -g @catppuccin_pane_border_status "off"
+
+            set -g window-status-format " #I#{?#{!=:#{window_name},Window},: #W,} "
+            set -g window-status-style "bg=#{@thm_bg},fg=#{@thm_rosewater}"
+            set -g window-status-last-style "bg=#{@thm_bg},fg=#{@thm_peach}"
+            set -g window-status-activity-style "bg=#{@thm_red},fg=#{@thm_bg}"
+            set -g window-status-bell-style "bg=#{@thm_red},fg=#{@thm_bg},bold"
+            set -gF window-status-separator "#[bg=#{@thm_bg},fg=#{@thm_overlay_0}]│"
+            set -g window-status-current-format " #I#{?#{!=:#{window_name},Window},: #W,} "
+            set -g window-status-current-style "bg=#{@thm_peach},fg=#{@thm_bg},bold"
+
+            set -g  status-left-length 100
+            set -g status-left ""
+            set -ga status-left "#{?client_prefix,#{#[bg=#{@thm_red},fg=#{@thm_bg},bold]  #S },#{#[bg=#{@thm_bg},fg=#{@thm_green}]  #S }}"
+            set -ga status-left "#[bg=#{@thm_bg},fg=#{@thm_maroon}]  #{pane_current_command} "
+
+            set -g status-right-length 100
+            set -g status-right ""
+            set -ga status-right "#[bg=#{@thm_bg},fg=#{@thm_yellow}]#{?window_zoomed_flag,  zoom ,}"
+            set -ga status-right "#[bg=#{@thm_bg},fg=#{@thm_blue}] 󰭦 %Y-%m-%d 󰅐 %H:%M "
+
+            set -g status-justify "absolute-centre"
           '';
         }
       ];
@@ -73,6 +85,7 @@ with lib;
         # basic
         set -g renumber-windows on
         setw -g automatic-rename on
+        set -g automatic-rename-format "Window"
       '';
     };
 
