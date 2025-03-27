@@ -7,11 +7,32 @@ local llm_vendors = {
     __inherited_from = "copilot",
     model = "claude-3.7-sonnet",
   },
+  ["google@gemma3:b1"] = {
+    __inherited_from = "openai",
+    endpoint = "https://openrouter.ai/api/v1",
+    api_key_name = "OPENROUTER_API_KEY",
+    model = "google/gemma-3-1b-it:free",
+    disable_tools = true,
+  },
+  ["google@gemma3:b4"] = {
+    __inherited_from = "openai",
+    endpoint = "https://openrouter.ai/api/v1",
+    api_key_name = "OPENROUTER_API_KEY",
+    model = "google/gemma-3-4b-it:free",
+    disable_tools = true,
+  },
   ["google@gemma3:b12"] = {
     __inherited_from = "openai",
     endpoint = "https://openrouter.ai/api/v1",
     api_key_name = "OPENROUTER_API_KEY",
     model = "google/gemma-3-12b-it:free",
+    disable_tools = true,
+  },
+  ["google@gemma3:b27"] = {
+    __inherited_from = "openai",
+    endpoint = "https://openrouter.ai/api/v1",
+    api_key_name = "OPENROUTER_API_KEY",
+    model = "google/gemma-3-27b-it:free",
     disable_tools = true,
   },
 }
