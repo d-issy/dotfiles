@@ -19,12 +19,16 @@ vim.g.maplocalleader = "\\"
 
 require("lazy").setup {
   defaults = { lazy = true },
-  ui = {
-    border = require("util.border").generate(),
-  },
+  ui = { border = "rounded" },
   spec = {
     { import = "plugins" },
+    {
+      "config",
+      event = "VeryLazy",
+      dir = vim.fn.stdpath "config" .. "/lua/config",
+      config = function()
+        require "config"
+      end,
+    },
   },
 }
-
-require "config"

@@ -1,11 +1,12 @@
 local map = require "util.map"
 local buffer = require "util.buffer"
 local lazygit = require "util.lazygit"
+local quit = require "util.quit"
 
 map.setup {
   -- basic
   { "<leader>w", "<cmd>w<cr>", desc = "File Write" },
-  { "<leader>qq", "<cmd>qa<cr>", mode = { "n", "t" }, desc = "Quit and Save All" },
+  { "<leader>qq", quit.all, mode = { "n", "t" }, desc = "Quit and Save All" },
   { "<leader>md", "<cmd>delmarks! | delmarks A-Z0-9<cr>", desc = "Delete All Marks" },
   { "<leader>bd", buffer.delete, desc = "Buffer Delete" },
   { "<esc>", "<cmd>noh<cr><esc>", desc = "esc", mode = { "i", "n" } },

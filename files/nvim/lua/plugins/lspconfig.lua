@@ -59,15 +59,12 @@ return {
     servers = servers,
   },
   config = function(_, opts)
-    local border = require("util.border").generate "FloatBorder"
-
     vim.lsp.inlay_hint.enable()
-    vim.lsp.handlers["textDocument/hover"] = vim.lsp.with(vim.lsp.handlers.hover, { border = border })
-    vim.lsp.handlers["textDocument/signatureHelp"] = vim.lsp.with(vim.lsp.handlers.signature_help, { border = border })
     vim.diagnostic.config {
       float = true,
       update_in_insert = true,
       severity_sort = true,
+      virtual_lines = { current_line = true },
       signs = {
         text = {
           [vim.diagnostic.severity.ERROR] = "✘",
@@ -78,19 +75,20 @@ return {
       },
     }
 
-    ---@diagnostic disable: assign-type-mismatch
-    local goto_next = function()
-      vim.diagnostic.goto_next { float = { border = border } }
+    local jump = function(idx)
+      return function()
+        vim.diagnostic.jump { count = idx }
+      end
     end
 
-    local goto_prev = function()
-      vim.diagnostic.goto_prev { float = { border = border } }
+    local hover = function()
+      vim.lsp.buf.hover { border = "rounded" }
     end
-    ---@diagnostic enable: assign-type-mismatch
 
     map.setup {
-      { "[d", goto_prev, desc = "LSP Prev Diagnostic" },
-      { "]d", goto_next, dsc = "LSP Next Diagnostic" },
+      { "[d", jump(-1), desc = "LSP Prev Diagnostic" },
+      { "]d", jump(1), dssc = "LSP Next Diagnostic" },
+      { "K", hover, desc = "LSP Hover" },
       { "<leader>cc", vim.lsp.codelens.run, desc = "Run Codelens" },
       { "<leader>cC", vim.lsp.codelens.refresh, desc = "Run Codelens (Refresh)" },
     }
@@ -100,9 +98,8 @@ return {
       if server_opts then
         require("lspconfig")[server].setup(server_opts)
       else
-        local capabilities = require("blink.cmp").get_lsp_capabilities()
         require("lspconfig")[server].setup {
-          capabilities = capabilities,
+          capabilities = require("blink.cmp").get_lsp_capabilities(),
         }
       end
     end

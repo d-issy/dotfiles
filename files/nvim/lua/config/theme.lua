@@ -1,187 +1,179 @@
 local palette = {
-  none = "NONE",
-
-  bg = "#282828",
-  bg_light = "#323232",
-  default = "#f9f9f9",
-
-  border = "#8c8c8c",
-
-  ui = "#cfcfcf",
-  visual = "#454545",
-  cursor = "#383838",
-
-  low = "#8c8c8c",
-  inlayHint = "#686868",
-  search = "#f2f2aa",
-
-  error = "#ed8796",
-  warning = "#eed49f",
-  info = "#7dc4e4",
-  hint = "#8aadf4",
-
-  folder = "#54aeff",
-
-  add = "#a3be8c",
-  change = "#ebcb8b",
-  delete = "#bf616a",
-  diff_text = "#81a1c1",
-
-  add_bg = "#204510",
-  change_bg = "#605000",
-  delete_bg = "#9f514a",
+  none = "none",
+  base = "#24273a",
+  surface0 = "#363a4f",
+  surface1 = "#494d64",
+  surface2 = "#5b6078",
+  mantle = "#1e2030",
+  crust = "#181926",
+  text = "#cad3f5",
+  overlay0 = "#6e738d",
+  overlay1 = "#8087a2",
+  overlay2 = "#939ab7",
+  pink = "#f5bde6",
+  mauve = "#ca9ee6",
+  red = "#ed8796",
+  maroon = "#ee99a0",
+  peach = "#f5a97f",
+  yellow = "#eed49f",
+  green = "#a6da95",
+  teal = "#81c8be",
+  sky = "#99d1db",
+  sapphire = "#7dc4e4",
+  blue = "#8aadf4",
+  lavender = "#b7bdf8",
 }
 
 local hl = {
-  Normal = { fg = palette.default, bg = palette.bg },
+  Normal = { fg = palette.text, bg = palette.base },
 
-  CursorLine = { bg = palette.cursor },
+  CursorLine = { bg = palette.surface0 },
   NCursorLine = { link = "CursorLine" },
+  StatusLine = { fg = palette.surface2, bg = palette.surface2 },
+  StatusLineNC = { fg = palette.surface2, bg = palette.surface2 },
 
-  NormalFloat = { bg = palette.bg },
-  FloatBorder = { fg = palette.border },
-
-  WinBar = { fg = palette.ui, bg = palette.bg },
+  PMenu = { bg = palette.mantle },
+  NormalFloat = { bg = palette.mantle },
+  FloatBorder = { fg = palette.surface0, bg = palette.mantle },
+  FloatTitle = { bg = palette.mantle },
+  WinBar = { bg = palette.surface0 },
   WinBarNC = { link = "WinBar" },
-  Comment = { fg = palette.low },
-  Visual = { bg = palette.visual },
-  Search = { fg = palette.search, bg = palette.bg },
-  CurSearch = { fg = palette.search, bg = palette.bg, underline = true },
 
-  Identifier = { fg = palette.default },
-  Function = { fg = palette.default },
-  Constant = { fg = palette.default },
-  String = { fg = palette.default },
-  Statement = { fg = palette.default },
-  Variable = { fg = palette.default },
-  PreProc = { fg = palette.default },
-  Type = { fg = palette.default },
-  Todo = { fg = palette.default },
+  Visual = { bg = palette.surface0 },
+  Comment = { fg = palette.overlay0 },
+  Search = { fg = palette.yellow },
+  CurSearch = { fg = palette.yellow, underline = true },
 
-  Special = { fg = palette.low },
-  Keyword = { fg = palette.low },
-  Operator = { fg = palette.low },
+  Identifier = { fg = palette.text },
+  Function = { fg = palette.text },
+  Constant = { fg = palette.text },
+  String = { fg = palette.text },
+  Statement = { fg = palette.text },
+  Variable = { fg = palette.text },
+  PreProc = { fg = palette.text },
+  Type = { fg = palette.text },
+  Todo = { fg = palette.text },
 
-  PMenu = { fg = palette.default, bg = palette.bg },
+  Special = { fg = palette.overlay2 },
+  Keyword = { fg = palette.overlay2 },
+  Operator = { fg = palette.overlay2 },
 
   ---------
   -- lsp --
   ---------
 
-  LspInlayHint = { fg = palette.inlayHint },
+  LspInlayHint = { fg = palette.overlay0 },
 
   -- lsp
   ["@punctuation"] = { link = "Special" },
   ["@variable"] = { link = "Variable" },
   ["@function.builtin"] = { link = "Function" },
   ["@constant.builtin"] = { link = "Constant" },
-  ["@module"] = { fg = palette.low },
-  ["@lsp.mod.global"] = { fg = palette.low },
-  ["@lsp.mod.defaultLibrary"] = { fg = palette.low },
-  ["@lsp.typemod.keyword.documentation"] = { fg = palette.default },
-  ["@lsp.type.type"] = { fg = palette.low },
+  ["@module"] = { fg = palette.overlay0 },
+  ["@lsp.mod.global"] = { fg = palette.overlay0 },
+  ["@lsp.mod.defaultLibrary"] = { fg = palette.overlay0 },
+  ["@lsp.typemod.keyword.documentation"] = { fg = palette.text },
+  ["@lsp.type.type"] = { fg = palette.overlay0 },
 
   -- go
-  ["@variable.parameter.go"] = { fg = palette.low },
-  ["@property.go"] = { fg = palette.low },
+  ["@variable.parameter.go"] = { fg = palette.overlay0 },
+  ["@property.go"] = { fg = palette.overlay0 },
 
   -- python
-  ["@lsp.type.namespace.python"] = { fg = palette.default },
+  ["@lsp.type.namespace.python"] = { fg = palette.text },
 
   -- sql
-  ["@type.builtin.sql"] = { fg = palette.default },
+  ["@type.builtin.sql"] = { fg = palette.text },
+
+  -- markdown
+  ["@markup.raw.block.markdown"] = { bg = palette.mantle },
+
+  -- diagnostics
+  DiagnosticError = { fg = palette.red },
+  DiagnosticWarn = { fg = palette.yellow },
+  DiagnosticInfo = { fg = palette.sapphire },
+  DiagnosticHint = { fg = palette.sapphire },
+
+  DiagnosticUnderlineError = { fg = palette.red, underline = true },
+  DiagnosticUnderlineWarn = { fg = palette.yellow },
+  DiagnosticUnderlineInfo = { underline = true },
+  DiagnosticUnderlineHint = { underline = true },
+
+  DiagnosticUnnecessary = { underline = true },
+  DiagnosticDeprecated = { underline = true },
 
   -------------
   -- plugins --
   -------------
 
-  -- Copilot
-  CopilotSuggestion = { fg = palette.low },
-  CopilotAnnotation = { fg = palette.ui },
-
-  -- DropBar
-  Directory = { fg = palette.folder },
-
-  -- MiniFiles
-  MiniFilesDirectory = { fg = palette.folder },
-  MiniFilesNormal = { fg = palette.ui },
-  MiniFilesCursorLine = { bg = palette.visual },
-  MiniFilesAdd = { fg = palette.add },
-  MiniFilesChange = { fg = palette.change },
-
-  -- MiniIcons
-  MiniIconsAzure = { fg = palette.folder },
-  MiniIconsBlue = { fg = palette.info },
-  MiniIconsCyan = { fg = palette.hint },
-  MiniIconsGreen = { fg = palette.add },
-  MiniIconsGrey = { fg = palette.low },
-  MiniIconsOrange = { fg = palette.warning },
-  MiniIconsPurple = { fg = palette.low },
-  MiniIconsRed = { fg = palette.error },
-  MiniIconsYellow = { fg = palette.change },
-
   -- BlinkCmp
-  BlinkCmpDoc = { fg = palette.default },
-  BlinkCmpDocBorder = { fg = palette.border },
-  BlinkCmpGhostText = { fg = palette.low },
+  BlinkCmpDoc = { fg = palette.base },
+  BlinkCmpDocBorder = { fg = palette.overlay0 },
+  BlinkCmpGhostText = { fg = palette.overlay0 },
 
-  BlinkCmpLabel = { fg = palette.default, bg = palette.none },
+  BlinkCmpLabel = { fg = palette.text, bg = palette.none },
   BlinkCmpLabelDeprecated = { link = "DiagnosticDeprecated" },
 
   BlinkCmpMenu = { fg = palette.ui, bg = palette.none },
 
-  BlinkCmpKind = { fg = palette.ui, bg = palette.none },
+  BlinkCmpKind = { fg = palette.default, bg = palette.none },
   BlinkCmpKindCopilot = { fg = "#6cc644", bg = palette.none },
 
-  -- TreeSitter
-  TreeSitterContext = { bg = palette.cursor },
+  -- Copilot
+  CopilotSuggestion = { fg = palette.overlay0 },
+  CopilotAnnotation = { fg = palette.base },
+
+  -- DropBar
+  Directory = { fg = palette.sapphire },
 
   -- GitSigns
-  GitSignsAdd = { fg = palette.add },
-  GitSignsChange = { fg = palette.change },
-  GitSignsDelete = { fg = palette.delete },
+  GitSignsAdd = { fg = palette.green },
+  GitSignsChange = { fg = palette.peach },
+  GitSignsDelete = { fg = palette.red },
 
-  -- DiffView
-  DiffviewFolderSign = { fg = palette.folder },
-  DiffviewFilePanelInsertions = { fg = palette.add },
-  DiffViewFilePanelDeletions = { fg = palette.delete },
-  diffAdded = { fg = palette.add },
-  diffChanged = { fg = palette.change },
-  diffRemoved = { fg = palette.delete },
+  -- MiniIcons
+  MiniIconsAzure = { fg = palette.sapphire },
+  MiniIconsBlue = { fg = palette.blue },
+  MiniIconsCyan = { fg = palette.sapphire },
+  MiniIconsGreen = { fg = palette.green },
+  MiniIconsGrey = { fg = palette.overlay0 },
+  MiniIconsOrange = { fg = palette.peach },
+  MiniIconsPurple = { fg = palette.pink },
+  MiniIconsRed = { fg = palette.red },
+  MiniIconsYellow = { fg = palette.yellow },
+
+  -- TreeSitter
+  TreeSitterContext = { bg = palette.surface1 },
 
   -- RenderMarkdownCode
-  RenderMarkdownCode = { bg = palette.bg_light },
-  RenderMarkdownCodeInline = { bg = palette.bg_light },
+  RenderMarkdownCode = { bg = palette.mantle },
+  RenderMarkdownCodeInline = { bg = palette.mantle },
+  RenderMarkdownH1Bg = { fg = palette.blue, bg = palette.surface0 },
+  RenderMarkdownH2Bg = { fg = palette.yellow, bg = palette.surface0 },
+  RenderMarkdownH3Bg = { fg = palette.green, bg = palette.surface0 },
+  RenderMarkdownH4Bg = { fg = palette.teal, bg = palette.surface0 },
+  RenderMarkdownH5Bg = { fg = palette.mauve, bg = palette.surface0 },
+  RenderMarkdownH6Bg = { fg = palette.pink, bg = palette.surface0 },
+
+  -- Snacks
+  SnacksPickerBorder = { fg = palette.base, bg = palette.base },
 
   -----------
   -- other --
   -----------
-  DiagnosticError = { fg = palette.error },
-  DiagnosticWarn = { fg = palette.warning },
-  DiagnosticInfo = { fg = palette.info },
-  DiagnosticHint = { fg = palette.hint },
-
-  DiagnosticUnderlineError = { undercurl = true, sp = palette.error },
-  DiagnosticUnderlineWarn = { undercurl = true, sp = palette.warning },
-  DiagnosticUnderlineInfo = { undercurl = true, sp = palette.info },
-  DiagnosticUnderlineHint = { undercurl = true, sp = palette.hint },
-
-  DiagnosticUnnecessary = { link = "DiagnosticUnderlineHint" },
-  DiagnosticDeprecated = { strikethrough = true, sp = palette.warning },
-
-  DiffAdd = { bg = palette.add_bg },
-  DiffChange = { bg = palette.change_bg },
-  DiffDelete = { bg = palette.delete_bg },
-  DiffText = { fg = palette.bg, bg = palette.change },
+  DiffAdd = { fg = palette.base, bg = palette.green },
+  DiffChange = { fg = palette.base, bg = palette.yellow },
+  DiffDelete = { fg = palette.base, bg = palette.red },
+  DiffText = { fg = palette.base, bg = palette.peach },
 }
 
--- colorschme load
 if vim.g.colors_name then
   vim.cmd "hi clear"
-  vim.opt.termguicolors = true
 end
-
 vim.g.colors_name = "mytheme"
+
+vim.opt.termguicolors = true
+vim.opt.pumblend = 20
 
 for group, opts in pairs(hl) do
   vim.api.nvim_set_hl(0, group, opts)

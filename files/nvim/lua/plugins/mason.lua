@@ -17,7 +17,7 @@ return {
       "lua-language-server",
       "typos-lsp",
     },
-    ui = { border = require("util.border").generate() },
+    ui = { border = "rounded" },
   },
   config = function(_, opts)
     require("mason").setup(opts)

@@ -1,5 +1,3 @@
-local border = require("util.border").generate "FloatBorder"
-
 return {
   "saghen/blink.cmp",
   version = "1.*",
@@ -34,10 +32,10 @@ return {
       documentation = {
         auto_show = true,
         auto_show_delay_ms = 200,
-        window = { border = border },
+        window = { border = "rounded" },
       },
       menu = {
-        border = border,
+        border = "rounded",
         draw = {
           treesitter = { "lsp" },
           columns = { { "label", "label_description", gap = 1 }, { "kind" } },
@@ -51,7 +49,7 @@ return {
     },
     signature = {
       enabled = true,
-      window = { border = border },
+      window = { border = "rounded" },
     },
     sources = {
       default = { "lsp", "path", "snippets", "copilot" },
