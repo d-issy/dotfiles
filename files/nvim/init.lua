@@ -24,7 +24,13 @@ require("lazy").setup {
   },
   spec = {
     { import = "plugins" },
+    {
+      "config",
+      event = "VeryLazy",
+      dir = vim.fn.stdpath "config" .. "/lua/config",
+      config = function()
+        require "config"
+      end,
+    },
   },
 }
-
-require "config"

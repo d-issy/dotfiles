@@ -21,7 +21,6 @@ vim.opt.confirm = true
 vim.opt.cursorline = true
 vim.opt.hlsearch = true
 vim.opt.laststatus = 0
-vim.opt.pumblend = 30
 vim.opt.pumheight = 10
 vim.opt.scrolloff = 4
 vim.opt.showcmd = true
