@@ -105,9 +105,7 @@ return {
           { plugin = "mini.files", cat = "filetype", name = "netrw" },
         },
       },
-      win = {
-        border = require("util.border").generate "WhichKeyBorder",
-      },
+      win = { border = "rounded" },
     },
     keys = {
       {

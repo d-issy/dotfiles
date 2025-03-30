@@ -41,9 +41,6 @@ return {
         input = {
           prefix = "",
         },
-        ask = {
-          floating = true,
-        },
       },
     },
   },

@@ -20,7 +20,9 @@ return {
   opts = {
     use_default_keymaps = false,
     float = {
-      border = require("util.border").generate(),
+      border = "rounded",
+      max_width = 0.9,
+      max_height = 0.8,
     },
     keymaps = {
       ["q"] = "actions.close",

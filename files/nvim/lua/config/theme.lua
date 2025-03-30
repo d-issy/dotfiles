@@ -34,7 +34,7 @@ local hl = {
 
   PMenu = { bg = palette.mantle },
   NormalFloat = { bg = palette.mantle },
-  FloatBorder = { fg = palette.surface0 },
+  FloatBorder = { fg = palette.surface0, bg = palette.mantle },
   FloatTitle = { bg = palette.mantle },
   WinBar = { bg = palette.surface0 },
   WinBarNC = { link = "WinBar" },
@@ -155,12 +155,16 @@ local hl = {
   RenderMarkdownH5Bg = { fg = palette.mauve, bg = palette.surface0 },
   RenderMarkdownH6Bg = { fg = palette.pink, bg = palette.surface0 },
 
+  -- Snacks
+  SnacksPickerBorder = { fg = palette.base, bg = palette.base },
+
   -----------
   -- other --
   -----------
-  DiffAdd = { bg = palette.green },
-  DiffChange = { bg = palette.yellow },
-  DiffDelete = { bg = palette.red },
+  DiffAdd = { fg = palette.base, bg = palette.green },
+  DiffChange = { fg = palette.base, bg = palette.yellow },
+  DiffDelete = { fg = palette.base, bg = palette.red },
+  DiffText = { fg = palette.base, bg = palette.peach },
 }
 
 if vim.g.colors_name then
