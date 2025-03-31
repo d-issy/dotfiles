@@ -10,7 +10,6 @@ end
 -- UI
 local theme = "Catppuccin Macchiato"
 local scheme = wezterm.get_builtin_color_schemes()[theme]
-scheme.background = "#282828"
 config.color_scheme = theme
 config.color_schemes = { [theme] = scheme }
 
