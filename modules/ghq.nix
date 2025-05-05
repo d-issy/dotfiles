@@ -6,7 +6,7 @@
 
     programs.git.extraConfig.ghq.root = "~/code";
 
-    programs.zsh.initExtra = ''
+    programs.zsh.initContent = ''
       function zr() {
         cd $(${pkgs.ghq}/bin/ghq list -p  | fzf)
       }

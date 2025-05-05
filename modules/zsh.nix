@@ -33,7 +33,7 @@
       G = "| grep --color=auto";
     };
 
-    initExtra = builtins.readFile ../files/zsh/rc;
+    initContent = builtins.readFile ../files/zsh/rc;
 
     profileExtra = ''
       if [ -f /opt/homebrew/bin/brew ]; then

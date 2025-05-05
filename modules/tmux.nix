@@ -89,7 +89,7 @@ with lib;
       '';
     };
 
-    programs.zsh.initExtra = ''
+    programs.zsh.initContent = ''
       function tm() {
         if ! tmux has-session 2>/dev/null; then
           tmux new-session -s main -c $HOME -d
