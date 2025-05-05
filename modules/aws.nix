@@ -10,7 +10,7 @@
     ];
 
     # TODO: move to navi
-    programs.zsh.initExtra = ''
+    programs.zsh.initContent = ''
       function ssm() {
         local profile=$(aws configure list-profiles | fzf)
         if [ -z "$profile" ] ; then; return; fi

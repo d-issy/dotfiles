@@ -33,7 +33,7 @@ in
   config = {
     home.packages = [ pkgs.navi ];
 
-    programs.zsh.initExtra = ''
+    programs.zsh.initContent = ''
       eval "$(${pkgs.navi}/bin/navi widget zsh)"
     '';
 
