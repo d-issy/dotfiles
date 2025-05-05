@@ -1,0 +1,2 @@
+- Always provide concise answers unless asked in Japanese.
+- Do not perform Git operations (commit, push, add, etc.) as the user needs to review the content before making any decisions. However, Git status and other read-only commands to check the current state are acceptable.

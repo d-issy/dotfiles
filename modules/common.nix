@@ -13,6 +13,7 @@
     ./aws.nix
     ./bat.nix
     ./carapace.nix
+    ./codex.nix
     ./bottom.nix
     ./delta.nix
     ./difftastic.nix
