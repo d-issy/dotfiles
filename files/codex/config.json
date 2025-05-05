@@ -1,0 +1,6 @@
+{
+  "model": "o4-mini",
+  "approvalMode": "auto-edit",
+  "fullAutoErrorMode": "ask-user",
+  "notify": true
+}
