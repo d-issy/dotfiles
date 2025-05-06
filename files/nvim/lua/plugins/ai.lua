@@ -64,7 +64,7 @@ return {
       "zbirenbaum/copilot.lua",
     },
     opts = {
-      provider = "claude@3.7-sonnet",
+      provider = "copilot",
       vendors = llm_vendors,
       file_selector = {
         provider = "snacks",
