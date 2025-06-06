@@ -16,4 +16,5 @@ jobs:
       - uses: actions/checkout@v4
       - uses: JohnnyMorganz/stylua-action@v4
         with:
+          version: 0.20.0
           args: --check .
