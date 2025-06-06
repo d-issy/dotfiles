@@ -10,7 +10,7 @@ M.is_big = function(buf)
   return file_size > 1572864 -- 1.5MB
 end
 
---- Disable futures for big file
+--- Disable features for big file
 --- @param buf? number
 M.disable_futures_for_bigfile = function(buf)
   buf = buf or vim.api.nvim_get_current_buf()
