@@ -4,7 +4,7 @@ local M = {}
 --- @enum (key) util.log.LEVELS
 M.levels = {
   debug = vim.log.levels.DEBUG,
-  trance = vim.log.levels.TRACE,
+  trace = vim.log.levels.TRACE,
   info = vim.log.levels.INFO,
   warn = vim.log.levels.WARN,
   error = vim.log.levels.ERROR,
