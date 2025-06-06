@@ -5,7 +5,7 @@ d-issy's dotfiles
 ## Require
 
 - os
-  - macOS (aarch64/x64_86)
+  - macOS (aarch64/x86_64)
   - WSL2 on Windows / Linux
 - nix
 
