@@ -9,7 +9,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 See @README.md for setup and apply commands.
 
 ### GitHub CLI
-- `gh pr create` - Creates pull request and pushes branch automatically (no need for separate `git push`)
+- `git push -u origin [branch]` is required before `gh pr create`
+- `gh pr create` - Creates pull request after branch is pushed
 - Pull request body should not include "Test plan" section - keep it simple
 
 ## Architecture
