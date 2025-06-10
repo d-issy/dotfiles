@@ -2,16 +2,9 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-**Important: Always respond in Japanese when working in this repository.**
-
 ## Commands
 
 See @README.md for setup and apply commands.
-
-### GitHub CLI
-- `git push -u origin [branch]` is required before `gh pr create`
-- `gh pr create` - Creates pull request after branch is pushed
-- Pull request body should not include "Test plan" section - keep it simple
 
 ## Architecture
 
