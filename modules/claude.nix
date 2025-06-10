@@ -5,10 +5,14 @@
       text = ''
         # Global Claude Code Instructions
 
-        **Important: Always respond in Japanese when working with code.**
+        ## Language Settings
+        - Always respond in the same language as the user's message
+        - If the user writes in Japanese, respond in Japanese
+        - If the user writes in English, respond in English
+        - Code comments and documentation should follow the project's existing language conventions
 
         ## Git Commit Messages
-        Follow Conventional Commits format:
+        Follow Conventional Commits format (always in English):
         - `feat:` for new features
         - `fix:` for bug fixes
         - `docs:` for documentation changes
@@ -22,7 +26,7 @@
         - Create focused PRs with clear titles
         - Keep PR body concise and descriptive
         - No "Test plan" sections unless specifically requested
-        - PR title and body should use the language requested by the user (default to their language)
+        - PR title and body should follow LanguageSettings.
 
         ## General Development
         - Always check existing code patterns before implementing
