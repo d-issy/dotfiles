@@ -4,6 +4,7 @@
     home.shellAliases = {
       ".." = "cd..";
       dc = "docker compose";
+      cc = "claude";
     };
 
     home.packages = [
