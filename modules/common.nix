@@ -24,6 +24,7 @@
     ./gh.nix
     ./ghq.nix
     ./git.nix
+    ./gitworktree.nix
     ./lazydocker.nix
     ./lazygit.nix
     ./misc.nix
