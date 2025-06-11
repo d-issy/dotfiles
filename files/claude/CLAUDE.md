@@ -46,3 +46,64 @@ Follow Conventional Commits format (always in English):
 - Use Task tool for complex multi-step searches
 - Only use Bash for rg (ripgrep) when Grep tool is insufficient
 - REASON: Dedicated tools are safer (respect .gitignore), more powerful, and prevent secrets exposure
+
+## Worktree Development Workflow
+
+### Directory Structure
+All worktrees should be created in `../worktrees/` directory relative to the main repository:
+```
+~/code/github.com/[user]/
+├── [repository]/      # Main repository
+└── worktrees/         # Worktree directory
+    ├── feat-tool-xyz/ # Feature development
+    ├── fix-bug-123/   # Bug fixes
+    └── review-pr-456/ # PR reviews
+```
+
+### Worktree Management Commands
+
+**Create New Worktree:**
+```bash
+# For new feature branch
+git worktree add ../worktrees/feat-[description] -b feat/[description]
+
+# For bug fix
+git worktree add ../worktrees/fix-[description] -b fix/[description]
+
+# For existing branch
+git worktree add ../worktrees/[branch-name] [branch-name]
+
+# For PR review
+git worktree add ../worktrees/pr-[number] origin/pull/[number]/head
+```
+
+**Cleanup Workflow:**
+When finished with a worktree, perform complete cleanup:
+```bash
+# 1. Return to main repository
+cd [main-repository-path]
+
+# 2. Remove worktree
+git worktree remove ../worktrees/[worktree-name]
+
+# 3. Delete merged branch (if applicable)
+git branch -d [branch-name]
+
+# 4. Prune any orphaned worktrees
+git worktree prune
+```
+
+### Parallel Claude Code Sessions
+Each worktree can run independent Claude Code sessions:
+- Main repo: Primary development and coordination
+- Feature worktrees: Isolated feature development
+- Review worktrees: Safe PR review and testing
+- Experiment worktrees: Configuration testing without affecting main environment
+
+### Best Practices
+1. **Naming Convention**: Use descriptive names matching branch names
+2. **Isolation**: Each worktree operates independently for builds/tests
+3. **Testing**: Test changes in worktrees before merging
+4. **Cleanup**: Always clean up completed worktrees to avoid clutter
+5. **Coordination**: Use main repo for git operations (fetch, push, etc.)
+6. **Claude Code**: Run separate Claude Code instances in each worktree for parallel development
