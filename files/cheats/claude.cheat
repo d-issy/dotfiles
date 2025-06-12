@@ -1,0 +1,22 @@
+% claude, claude-code, ai
+
+# Start Claude Code session :: cc
+claude
+
+# Start Claude Code session with specific model :: ccm
+claude --model <model>
+
+# Continue most recent conversation :: ccc
+claude --continue
+
+# Resume session with selection interface :: ccr
+claude --resume
+
+# Resume session with specific model :: ccrm
+claude --resume --model <model>
+
+# Run one-off query and exit :: ccp
+claude -p "<query>"
+
+$ model: echo -e "sonnet\nopus"
+$ query: echo -e "explain this code\nreview my changes\nhelp with debugging"
