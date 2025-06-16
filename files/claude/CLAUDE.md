@@ -13,11 +13,20 @@
 - Follow the project's existing code style
 - NEVER commit directly to main branch - always use worktrees for all changes
 - When asked to commit changes, create worktree first, then commit in the worktree
-- Before committing, always show current location and branch status, then proceed with commit:
-  - Show current directory (pwd)
-  - Show current branch (git branch --show-current)
-  - Show staged changes (git status --short)
-  - Proceed with commit immediately after displaying status (user will interrupt if needed)
+- Before committing, always display status using this exact template format:
+
+```
+## コミット前状況確認
+
+**現在の場所**: [pwd output]
+**ブランチ**: [git branch --show-current output]
+**変更したファイル一覧**:
+- [list each modified file from git status --short, one per line]
+
+[Action description - what will be committed]
+```
+
+Use this template exactly, then proceed with commit immediately after (user will interrupt if needed)
 
 ## Tool Usage
 - When working in a repository, prioritize project-specific CLAUDE.md instructions over these global guidelines
@@ -54,8 +63,8 @@ project/
 # Step 1: Pre-checks (MANDATORY)
 git checkout main && git pull origin main && git status
 
-# Step 2: Prepare .worktree directory (if needed)
-[ ! -d .worktree ] && mkdir .worktree
+# Step 2: Prepare .worktree directory
+mkdir .worktree
 
 # Step 3: Create worktree from latest main
 git worktree add .worktree/project-feat-auth -b feat/auth
