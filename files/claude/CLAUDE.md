@@ -16,11 +16,11 @@
 - Before committing, always display status using this exact template format:
 
 ```
-## コミット前状況確認
+## Pre-commit Status Check
 
-**現在の場所**: [pwd output]
-**ブランチ**: [git branch --show-current output]
-**変更したファイル一覧**:
+**Current Location**: [pwd output]
+**Branch**: [git branch --show-current output]
+**Modified Files**:
 - [list each modified file from git status --short, one per line]
 
 [Action description - what will be committed]
