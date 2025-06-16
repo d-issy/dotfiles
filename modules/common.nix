@@ -14,7 +14,6 @@
     ./bat.nix
     ./carapace.nix
     ./claude.nix
-    ./codex.nix
     ./bottom.nix
     ./delta.nix
     ./difftastic.nix

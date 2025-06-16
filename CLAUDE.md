@@ -2,6 +2,39 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Global Configuration Management
+
+When asked about "global" configuration for any tool, follow this systematic approach:
+
+### 1. Search for Nix Module
+First, search for the corresponding Nix module in `modules/` directory:
+- Look for `modules/[tool-name].nix` (e.g., `modules/git.nix`, `modules/wezterm.nix`)
+- Check `modules/common.nix` imports to understand which tools are configured
+
+### 2. Locate Configuration Files
+Find associated configuration files in `files/` directory:
+- Look for `files/[tool-name]/` directory (e.g., `files/nvim/`, `files/claude/`)
+- Check for direct configuration files referenced in the module
+
+### 3. Understand the Structure
+Analyze how the module links to configuration files:
+- **Direct configuration**: Settings defined within the Nix module
+- **File symlinking**: External files linked via `xdg.configFile` or `home.file`
+- **Mixed approach**: Combination of both methods
+
+### 4. Make Appropriate Changes
+- **Module changes**: Modify settings directly in the `.nix` file
+- **Configuration file changes**: Edit files in `files/` directory
+- **New configurations**: Create both module and configuration files as needed
+
+### Example: Claude Code Configuration
+- **Module**: `modules/claude.nix` - Manages Claude Code configuration files
+- **Global Instructions**: `files/claude/CLAUDE.md` - Global behavior and workflow instructions
+- **Settings**: `files/claude/settings.json` - Security permissions and tool restrictions
+- **Cheat Sheet**: `files/cheats/claude.cheat` - Quick reference commands
+
+These files are automatically deployed to `~/.claude/` directory through Home Manager.
+
 ## Commands
 
 See @README.md for setup and apply commands.
