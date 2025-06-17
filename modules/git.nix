@@ -192,6 +192,9 @@ let
     "### direnv ###"
     ".direnv"
     ".envrc"
+    ""
+    "### Git Worktree ###"
+    ".worktree"
   ];
 
 in
