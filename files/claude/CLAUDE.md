@@ -13,6 +13,7 @@
 - Follow the project's existing code style
 - NEVER commit directly to main branch - always use worktrees for all changes
 - When asked to commit changes, create worktree first, then commit in the worktree
+- NEVER commit or push automatically - always wait for explicit user instruction
 - Before committing, always display status using this exact template format:
 
 ```
@@ -26,7 +27,7 @@
 [Action description - what will be committed]
 ```
 
-Use this template exactly, then proceed with commit immediately after (user will interrupt if needed)
+Use this template exactly, then proceed with commit (user can interrupt if needed)
 
 ## Tool Usage
 - When working in a repository, prioritize project-specific CLAUDE.md instructions over these global guidelines
@@ -161,9 +162,34 @@ Follow Conventional Commits format (always in English):
 - EXCEPTION: `git add .` means "add current directory", which stages everything - this is forbidden
 - ALLOWED: `git add .filename` means "add the specific dotfile" - this is perfectly fine
 
-### Pull Request Guidelines
-- Create focused PRs with clear titles
+### Pull Request Management
+
+**Creating Pull Requests:**
+- Use `gh pr create --draft` command to create draft PRs by default (unless user specifies otherwise)
+- Create focused PRs with clear titles following conventional commit format
 - Keep PR body concise and descriptive
 - No "Test plan" sections unless specifically requested
-- PR title and body should follow LanguageSettings.
+- PR title and body should follow LanguageSettings
+- Use `gh pr ready [number]` to mark draft PR as ready for review
 
+**Checking PR Status:**
+- When unsure if PR exists, check first with `gh pr list --head [branch-name]` or `gh pr status`
+- If PR doesn't exist, create new PR with `gh pr create --draft`
+- If PR exists, view current details with `gh pr view [number]` before editing
+
+**Editing Pull Requests:**
+- Review existing PR content with `gh pr view [number]` to understand current context
+- Use `gh pr edit [number] --title "new title"` for title-only changes
+- Use `gh pr edit [number] --body "new body"` for body-only changes
+- Always preserve important context when editing PR descriptions
+
+**Reviewing Pull Requests:**
+- Use `gh pr view [number]` to display PR details and status
+- Use `gh pr diff [number]` to review code changes
+- Use `gh pr checks [number]` to verify CI/CD status
+- Use `gh pr list` to see all open PRs in repository
+
+**PR Status Monitoring:**
+- Check PR status before merging with `gh pr checks`
+- Review CI/CD results and resolve any failures
+- Ensure all required reviews are completed
