@@ -192,6 +192,7 @@ function blockCommand(reason) {
     JSON.stringify({
       decision: "block",
       reason: reason,
+      message: reason || "", // Note: CLI expects 'message' property (not documented)
     }),
   );
   process.exit(0);
@@ -206,6 +207,7 @@ function approveCommand(command) {
     JSON.stringify({
       decision: "approve",
       reason: `${command} command allowed`,
+      message: `${command} command allowed` || "", // Note: CLI expects 'message' property (not documented)
     }),
   );
   process.exit(0);
