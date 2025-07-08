@@ -151,8 +151,8 @@ const SECURITY_PATTERNS = [
   /\.env/,
 
   // Development directories to protect
-  /\.git\//,
-  /\.git$/,
+  /\/\.git\//,
+  /\/\.git$/,
   /node_modules\//,
   /node_modules$/,
   /\.next\//,
@@ -212,15 +212,14 @@ function approveCommand(command) {
 }
 
 /**
- * Check if a command should be blocked
+ * Check if a command matches a pattern (prefix match)
  * @param {string} commandText - The command to check
- * @param {string} blockedCommand - The command to block (prefix match)
- * @returns {boolean} True if the command should be blocked
+ * @param {string} pattern - The pattern to match
+ * @returns {boolean} True if the command matches the pattern
  */
-function isBlockedCommand(commandText, blockedCommand) {
-  const blockedPattern = new RegExp(`\\b${blockedCommand}\\b`);
-  const allowedPattern = /\brg\b/;
-  return blockedPattern.test(commandText) && !allowedPattern.test(commandText);
+function matchesCommand(commandText, pattern) {
+  const trimmedText = commandText.trim();
+  return trimmedText === pattern || trimmedText.startsWith(pattern + " ");
 }
 
 /**
@@ -330,7 +329,7 @@ function processCommand(toolName, toolInput) {
           }
         } else if (restriction.command) {
           // Simple command match (with rg exception)
-          if (isBlockedCommand(command, restriction.command)) {
+          if (matchesCommand(command, restriction.command)) {
             blockCommand(restriction.message);
           }
         }
@@ -347,9 +346,8 @@ function processCommand(toolName, toolInput) {
           approveCommand(approval.command || "pattern");
         }
       } else if (approval.command) {
-        // Simple command match for approval
-        const commandPattern = new RegExp(`\\b${approval.command}\\b`);
-        if (commandPattern.test(contentToCheck)) {
+        // Simple command match for approval (prefix match)
+        if (matchesCommand(contentToCheck, approval.command)) {
           approveCommand(approval.command);
         }
       }
