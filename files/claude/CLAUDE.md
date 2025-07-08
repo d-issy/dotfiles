@@ -31,16 +31,11 @@ Use this template exactly, then proceed with commit (user can interrupt if neede
 
 ## Tool Usage
 - When working in a repository, prioritize project-specific CLAUDE.md instructions over these global guidelines
-- ALWAYS prefer Claude Code dedicated tools over Bash commands
-- ALWAYS prefer MultiEdit over Edit when making multiple changes to the same file
-- Use LS tool instead of Bash(ls:*)
-- Use Glob tool instead of Bash(find:*) for file pattern matching
-- Use Grep tool instead of Bash(grep:*) for content searching
-- Use Read tool instead of Bash(cat:*), Bash(head:*), Bash(tail:*)
 - Use Task tool for complex multi-step searches
-- For file deletion in Git repositories, use `git rm` instead of `rm`
-- Only use Bash for rg (ripgrep) when Grep tool is insufficient
-- REASON: Dedicated tools are safer (respect .gitignore), more powerful, and prevent secrets exposure
+- **NEVER use single Task tool** - always launch multiple Task tools in parallel
+- **MANDATORY**: When using Task tool, create at least 2-3 parallel tasks
+- Single Task execution is FORBIDDEN - always prefer concurrent Task execution
+- Exception: Only use single Task when the search scope is extremely narrow and specific
 
 ## Git Workflow with Worktree Development
 
@@ -156,11 +151,8 @@ Follow Conventional Commits format (always in English):
 - `chore:` for updating build tasks, package manager configs, etc
 
 ### Staging and Commits
-- Use specific file paths with `git add` - NEVER use `git add .` or `git add -A`
 - Multiple files can be staged in a single `git add` command (e.g., `git add file1.txt file2.txt`)
 - Dotfiles (files starting with .) can be added individually (e.g., `git add .gitignore .env.example`)
-- EXCEPTION: `git add .` means "add current directory", which stages everything - this is forbidden
-- ALLOWED: `git add .filename` means "add the specific dotfile" - this is perfectly fine
 
 ### Pull Request Management
 
