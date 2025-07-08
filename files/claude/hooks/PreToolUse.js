@@ -127,12 +127,12 @@ const TOOL_RESTRICTIONS = [
 
   // Claude Code tools
   {
-    toolName: "LS",
-    message: `Use "rg --files --max-depth 1" instead of LS tool for security (respects .gitignore)`,
-  },
-  {
     toolName: "Glob",
     message: `Use "rg --files --glob 'pattern'" instead of Glob tool for security (respects .gitignore)`,
+  },
+  {
+    toolName: "Grep",
+    message: `Use "rg" for code search instead of Grep tool - rg provides more detailed results and better performance`,
   },
 ];
 
@@ -367,7 +367,6 @@ async function main() {
     const toolName = data.tool_name;
 
     processCommand(toolName, data.tool_input);
-
     // Allow all other commands to proceed (no output = continue as normal)
     process.exit(0);
   } catch (error) {
