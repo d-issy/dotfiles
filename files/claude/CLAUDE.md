@@ -13,8 +13,8 @@
 - Always check existing code patterns before implementing
 - Run linters and tests before committing
 - Follow the project's existing code style
-- NEVER commit directly to main branch - always use worktrees for all changes
-- When asked to commit changes, create worktree first, then commit in the worktree
+- Prefer using worktrees for complex changes or when explicitly requested
+- When worktrees are requested, create worktree first, then commit in the worktree
 - NEVER commit or push automatically - always wait for explicit user instruction
 - Before committing, always display status using this exact template format:
 
@@ -31,9 +31,27 @@
 
 Use this template exactly, then proceed with commit (user can interrupt if needed)
 
-## Git Workflow with Worktree Development
+## Git Workflow
 
-### Worktree Development Workflow (Recommended)
+### Standard Git Workflow
+For most changes, use standard Git workflow:
+
+```bash
+# Create feature branch from main
+git switch main
+git pull origin main
+git switch -c feat/feature-name
+
+# Make changes and commit
+git add files
+git commit -m "commit message"
+git push -u origin feat/feature-name
+
+# Create PR
+gh pr create --draft
+```
+
+### Worktree Development Workflow (Optional - Use When Requested)
 
 **Directory Structure:**
 All worktrees should be created in `.worktree/` directory within the main repository:
@@ -196,3 +214,37 @@ Follow Conventional Commits format (always in English):
 - Check PR status before merging with `gh pr checks`
 - Review CI/CD results and resolve any failures
 - Ensure all required reviews are completed
+
+## Git Operations Rules
+
+### Sequential Execution Policy
+When performing Git operations, execute commands one at a time to ensure proper error handling and status verification:
+
+**Allowed to batch in parallel:**
+- `git add file1.txt file2.txt file3.txt` (multiple files in single add command)
+- Read-only operations like `git status`, `git diff`, `git log`
+
+**Must execute sequentially:**
+- All other Git operations (switch, commit, push, pull, merge, rebase, etc.)
+- Each command should complete before executing the next
+- Verify command success before proceeding
+
+### Example Workflow
+```bash
+# ✅ Correct - Sequential execution
+git switch main
+git pull origin main
+git switch -c feat/new-feature
+git add file1.txt file2.txt  # Multiple files OK in single add
+git commit -m "message"
+git push -u origin feat/new-feature
+
+# ❌ Incorrect - Parallel execution
+git switch main && git pull origin main && git switch -c feat/new-feature
+```
+
+### Rationale
+- Prevents race conditions and state conflicts
+- Enables proper error handling at each step
+- Ensures repository state is consistent between operations
+- Allows for user intervention if issues occur
