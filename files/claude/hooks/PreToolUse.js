@@ -234,6 +234,74 @@ function containsSecurityPatterns(command) {
 }
 
 /**
+ * Check if a command contains command chaining operators
+ * @param {string} command - The command to check
+ * @returns {boolean} True if the command contains chaining operators
+ */
+function containsCommandChaining(command) {
+  // Command chaining operators to detect
+  const chainingPatterns = [
+    /&&/, // AND operator
+    /\|\|/, // OR operator
+    /;/, // Command separator
+    /\|(?!\|)/, // Pipe operator (but not ||)
+  ];
+
+  return chainingPatterns.some((pattern) => pattern.test(command));
+}
+
+/**
+ * Check if a command is in the approved list
+ * @param {string} command - The command to check
+ * @returns {boolean} True if the command is approved
+ */
+function isCommandApproved(command) {
+  const trimmedCommand = command.trim();
+
+  // Check against explicit approvals
+  for (const approval of TOOL_APPROVALS) {
+    if (approval.toolName === "Bash") {
+      if (approval.regex && approval.pattern) {
+        // Regex pattern match for approval
+        if (approval.pattern.test(trimmedCommand)) {
+          return true;
+        }
+      } else if (approval.command) {
+        // Simple command match for approval (prefix match)
+        if (matchesCommand(trimmedCommand, approval.command)) {
+          return true;
+        }
+      }
+    }
+  }
+
+  return false;
+}
+
+/**
+ * Check if all commands in a chained command are approved
+ * @param {string} command - The full command to check
+ * @returns {boolean} True if all commands are approved
+ */
+function areAllCommandsApproved(command) {
+  const commands = splitChainedCommand(command);
+  return commands.every((cmd) => isCommandApproved(cmd.trim()));
+}
+
+/**
+ * Split a command by chaining operators and return individual commands
+ * @param {string} command - The command to split
+ * @returns {string[]} Array of individual commands
+ */
+function splitChainedCommand(command) {
+  // Split by various operators and filter out the operators themselves
+  return command
+    .split(/\s*&&\s*|\s*\|\|\s*|\s*;\s*|\s*\|\s*/)
+    .filter((cmd) => cmd.trim())
+    .map((cmd) => cmd.trim());
+}
+
+/**
  * Check if a path is outside the current working directory
  * @param {string} filePath - The file path to check
  * @returns {boolean} True if the path is outside the current directory
@@ -301,6 +369,23 @@ function processCommand(toolName, toolInput) {
     contentToCheck = (toolInput?.path || "") + " " + (toolInput?.pattern || "");
   } else {
     contentToCheck = JSON.stringify(toolInput);
+  }
+
+  // Check for command chaining in Bash commands first
+  if (toolName === "Bash" && containsCommandChaining(contentToCheck)) {
+    // Allow chaining if all commands are approved
+    if (!areAllCommandsApproved(contentToCheck)) {
+      // Detect which operator was used for a more specific message
+      let operator = "chaining operators";
+      if (contentToCheck.includes("&&")) operator = "'&&'";
+      else if (contentToCheck.includes("||")) operator = "'||'";
+      else if (contentToCheck.includes(";")) operator = "';'";
+      else if (contentToCheck.includes("|")) operator = "'|'";
+
+      blockCommand(
+        `Cannot use ${operator} in commands. Please execute commands separately for proper error handling.\n\nNote: Commands that are individually approved can be chained together.`,
+      );
+    }
   }
 
   // Check for security-sensitive patterns
