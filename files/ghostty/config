@@ -19,6 +19,7 @@ window-padding-balance = true
 
 mouse-hide-while-typing = true
 resize-overlay = never
+link-url = true
 
 # macOS specific
 macos-option-as-alt = left
