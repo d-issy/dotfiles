@@ -22,6 +22,7 @@
     ./gcloud.nix
     ./gh.nix
     ./ghq.nix
+    ./ghostty.nix
     ./git.nix
     ./lazydocker.nix
     ./lazygit.nix
