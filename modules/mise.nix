@@ -26,6 +26,7 @@ with lib;
           jobs = 2;
           trusted_config_paths = [ "~/.config/mise" ];
           idiomatic_version_file = true;
+          idiomatic_version_file_enable_tools = [ "ruby" ];
           not_found_auto_install = false;
           status = {
             missing_tools = "never";
