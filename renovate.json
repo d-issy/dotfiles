@@ -8,5 +8,18 @@
   },
   "nix": {
     "enabled": true
-  }
+  },
+  "platformAutomerge": true,
+  "automerge": true,
+  "packageRules": [
+    {
+      "matchUpdateTypes": ["patch", "minor"],
+      "automerge": true
+    },
+    {
+      "matchManagers": ["github-actions"],
+      "automerge": true,
+      "automergeType": "pr"
+    }
+  ]
 }
