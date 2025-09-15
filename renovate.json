@@ -8,5 +8,14 @@
   },
   "nix": {
     "enabled": true
-  }
+  },
+  "packageRules": [
+    {
+      "matchManagers": [
+        "github-actions"
+      ],
+      "automerge": true,
+      "automergeType": "pr"
+    }
+  ]
 }
