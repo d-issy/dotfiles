@@ -1,15 +1,1 @@
-{
-  "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "~/.claude/hooks/PreToolUse.js"
-          }
-        ]
-      }
-    ]
-  }
-}
+{}
