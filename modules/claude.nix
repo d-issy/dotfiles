@@ -22,7 +22,7 @@ in
       mkdir -p "$claudeDir"
       if [ -f "$settingsFile" ]; then
         echo "Merging Claude settings..."
-        ${pkgs.jq}/bin/jq -s '.[0] * .[1]' "$settingsFile" <(echo "$overrides") > "$settingsFile.tmp"
+        ${pkgs.jq}/bin/jq -s '.[0] + .[1]' "$settingsFile" <(echo "$overrides") > "$settingsFile.tmp"
         mv "$settingsFile.tmp" "$settingsFile"
       else
         echo "Creating new Claude settings..."
