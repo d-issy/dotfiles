@@ -1,5 +1,5 @@
 # UI
-theme = catppuccin-macchiato
+theme = "Catppuccin Macchiato"
 font-size = 14
 
 font-family = ""
