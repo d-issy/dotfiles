@@ -1,52 +1,5 @@
 local map = require "util.map"
 
-local servers = {
-  gopls = {
-    settings = {
-      gopls = {
-        codelenses = {
-          generate = true,
-          gc_details = true,
-          test = true,
-          tidy = true,
-          upgrade_dependency = true,
-          vendor = true,
-        },
-        hints = {
-          assignVariableTypes = false,
-          compositeLiteralFields = true,
-          compositeLiteralTypes = true,
-          constantValues = false,
-          functionTypeParameters = true,
-          parameterNames = true,
-          rangeVariableTypes = false,
-        },
-      },
-    },
-  },
-  lua_ls = {
-    settings = {
-      Lua = {
-        diagnostics = {
-          globals = { "vim", "hs" },
-        },
-        hint = {
-          enable = true,
-          arrayIndex = "Disable",
-        },
-        workspace = {
-          library = vim.list_slice(vim.api.nvim_get_runtime_file("", true), 2),
-        },
-      },
-    },
-  },
-  typos_lsp = {
-    init_options = {
-      diagnosticSeverity = "Hint",
-    },
-  },
-}
-
 return {
   "neovim/nvim-lspconfig",
   dependencies = {
@@ -54,11 +7,18 @@ return {
     "mason.nvim",
     "blink.cmp",
   },
-  event = { "BufReadPost" },
-  opts = {
-    servers = servers,
-  },
-  config = function(_, opts)
+  event = { "VeryLazy" },
+  config = function()
+    local capabilities = require("blink.cmp").get_lsp_capabilities()
+    local function configure_lsp(name, config)
+      vim.lsp.config(name, vim.tbl_deep_extend("force", { capabilities = capabilities }, config or {}))
+    end
+
+    configure_lsp("*", {})
+    configure_lsp("lua_ls", require "lsp.lua_ls")
+    configure_lsp("gopls", require "lsp.gopls")
+    configure_lsp("typos_lsp", require "lsp.typos_lsp")
+
     vim.lsp.inlay_hint.enable()
     vim.diagnostic.config {
       float = true,
@@ -75,6 +35,11 @@ return {
       },
     }
 
+    require("mason-lspconfig").setup {
+      automatic_enable = true,
+      automatic_installation = false,
+    }
+
     local jump = function(idx)
       return function()
         vim.diagnostic.jump { count = idx }
@@ -87,16 +52,10 @@ return {
 
     map.setup {
       { "[d", jump(-1), desc = "LSP Prev Diagnostic" },
-      { "]d", jump(1), dssc = "LSP Next Diagnostic" },
+      { "]d", jump(1), desc = "LSP Next Diagnostic" },
       { "K", hover, desc = "LSP Hover" },
       { "<leader>cc", vim.lsp.codelens.run, desc = "Run Codelens" },
       { "<leader>cC", vim.lsp.codelens.refresh, desc = "Run Codelens (Refresh)" },
     }
-
-    local capabilities = require("blink.cmp").get_lsp_capabilities()
-    for server_name, server_opts in pairs(opts.servers) do
-      server_opts.capabilities = capabilities
-      require("lspconfig")[server_name].setup(server_opts)
-    end
   end,
 }
