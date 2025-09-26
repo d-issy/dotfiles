@@ -17,9 +17,8 @@ with lib;
           lua = "5";
           node = "22";
           python = "3";
-          ruby = "3.3";
+          ruby = "3.4";
           rust = "1";
-          scala = "3.5";
           terraform = "1";
         };
         settings = {

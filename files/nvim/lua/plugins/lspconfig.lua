@@ -50,7 +50,7 @@ local servers = {
 return {
   "neovim/nvim-lspconfig",
   dependencies = {
-    "williamboman/mason-lspconfig.nvim",
+    "mason-org/mason-lspconfig.nvim",
     "mason.nvim",
     "blink.cmp",
   },
@@ -93,19 +93,10 @@ return {
       { "<leader>cC", vim.lsp.codelens.refresh, desc = "Run Codelens (Refresh)" },
     }
 
-    local handler = function(server)
-      local server_opts = opts.servers[server]
-      if server_opts then
-        require("lspconfig")[server].setup(server_opts)
-      else
-        require("lspconfig")[server].setup {
-          capabilities = require("blink.cmp").get_lsp_capabilities(),
-        }
-      end
+    local capabilities = require("blink.cmp").get_lsp_capabilities()
+    for server_name, server_opts in pairs(opts.servers) do
+      server_opts.capabilities = capabilities
+      require("lspconfig")[server_name].setup(server_opts)
     end
-
-    require("mason-lspconfig").setup {
-      handlers = { handler },
-    }
   end,
 }
