@@ -94,50 +94,35 @@ return {
     }
 
     local capabilities = require("blink.cmp").get_lsp_capabilities()
+
+    -- Set global capabilities for all LSP servers
     vim.lsp.config("*", { capabilities = capabilities })
 
-    local servers = opts.servers or {}
-    local setup_handlers = type(opts.setup) == "table" and opts.setup or {}
-    local enabled = {}
-
-    local function configure(server)
-      if enabled[server] then
-        return
-      end
-
-      local server_opts = vim.tbl_deep_extend("force", {}, servers[server] or {})
-      server_opts.capabilities = vim.tbl_deep_extend("force", {}, capabilities, server_opts.capabilities or {})
-
-      local handler = setup_handlers[server] or setup_handlers["*"]
-      if handler then
-        if handler(server, server_opts) then
-          enabled[server] = true
-          return
-        end
-      end
-
-      vim.lsp.config(server, server_opts)
-      vim.lsp.enable(server)
-      enabled[server] = true
-    end
-    for server in pairs(servers) do
-      configure(server)
+    -- Configure each defined server
+    for server_name, server_config in pairs(opts.servers or {}) do
+      vim.lsp.config(server_name, server_config)
+      vim.lsp.enable(server_name)
     end
 
+    -- Setup mason-lspconfig integration
     local mason_lspconfig = require "mason-lspconfig"
-    mason_lspconfig.setup { automatic_enable = false }
+    mason_lspconfig.setup { automatic_installation = false }
 
-    for _, server in ipairs(mason_lspconfig.get_installed_servers()) do
-      configure(server)
+    -- Enable Mason-installed servers that aren't explicitly configured
+    for _, server_name in ipairs(mason_lspconfig.get_installed_servers()) do
+      if not opts.servers[server_name] then
+        vim.lsp.enable(server_name)
+      end
     end
 
+    -- Auto-enable newly installed servers from Mason
     local mappings = mason_lspconfig.get_mappings()
     local registry = require "mason-registry"
     registry:on("package:install:success", function(pkg)
-      local server = mappings.package_to_lspconfig[pkg.name]
-      if server then
+      local server_name = mappings.package_to_lspconfig[pkg.name]
+      if server_name and not opts.servers[server_name] then
         vim.schedule(function()
-          configure(server)
+          vim.lsp.enable(server_name)
         end)
       end
     end)
