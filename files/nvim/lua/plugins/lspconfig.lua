@@ -87,7 +87,7 @@ return {
 
     map.setup {
       { "[d", jump(-1), desc = "LSP Prev Diagnostic" },
-      { "]d", jump(1), dssc = "LSP Next Diagnostic" },
+      { "]d", jump(1), desc = "LSP Next Diagnostic" },
       { "K", hover, desc = "LSP Hover" },
       { "<leader>cc", vim.lsp.codelens.run, desc = "Run Codelens" },
       { "<leader>cC", vim.lsp.codelens.refresh, desc = "Run Codelens (Refresh)" },
@@ -97,34 +97,48 @@ return {
     vim.lsp.config("*", { capabilities = capabilities })
 
     local servers = opts.servers or {}
-    for server, server_opts in pairs(servers) do
-      vim.lsp.config(server, vim.tbl_deep_extend("force", {}, server_opts or {}))
+    local setup_handlers = type(opts.setup) == "table" and opts.setup or {}
+    local enabled = {}
+
+    local function configure(server)
+      if enabled[server] then
+        return
+      end
+
+      local server_opts = vim.tbl_deep_extend("force", {}, servers[server] or {})
+      server_opts.capabilities = vim.tbl_deep_extend("force", {}, capabilities, server_opts.capabilities or {})
+
+      local handler = setup_handlers[server] or setup_handlers["*"]
+      if handler then
+        if handler(server, server_opts) then
+          enabled[server] = true
+          return
+        end
+      end
+
+      vim.lsp.config(server, server_opts)
+      vim.lsp.enable(server)
+      enabled[server] = true
+    end
+
+    for server in pairs(servers) do
+      configure(server)
     end
 
     local mason_lspconfig = require "mason-lspconfig"
     mason_lspconfig.setup { automatic_enable = false }
 
-    local enabled = {}
-    for server in pairs(servers) do
-      vim.lsp.enable(server)
-      enabled[server] = true
-    end
-
     for _, server in ipairs(mason_lspconfig.get_installed_servers()) do
-      if not enabled[server] then
-        vim.lsp.enable(server)
-        enabled[server] = true
-      end
+      configure(server)
     end
 
     local mappings = mason_lspconfig.get_mappings()
     local registry = require "mason-registry"
     registry:on("package:install:success", function(pkg)
       local server = mappings.package_to_lspconfig[pkg.name]
-      if server and not enabled[server] then
-        enabled[server] = true
+      if server then
         vim.schedule(function()
-          vim.lsp.enable(server)
+          configure(server)
         end)
       end
     end)
