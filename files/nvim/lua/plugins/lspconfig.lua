@@ -93,19 +93,40 @@ return {
       { "<leader>cC", vim.lsp.codelens.refresh, desc = "Run Codelens (Refresh)" },
     }
 
-    local handler = function(server)
-      local server_opts = opts.servers[server]
-      if server_opts then
-        require("lspconfig")[server].setup(server_opts)
-      else
-        require("lspconfig")[server].setup {
-          capabilities = require("blink.cmp").get_lsp_capabilities(),
-        }
+    local capabilities = require("blink.cmp").get_lsp_capabilities()
+    vim.lsp.config("*", { capabilities = capabilities })
+
+    local servers = opts.servers or {}
+    for server, server_opts in pairs(servers) do
+      vim.lsp.config(server, vim.tbl_deep_extend("force", {}, server_opts or {}))
+    end
+
+    local mason_lspconfig = require "mason-lspconfig"
+    mason_lspconfig.setup { automatic_enable = false }
+
+    local enabled = {}
+    for server in pairs(servers) do
+      vim.lsp.enable(server)
+      enabled[server] = true
+    end
+
+    for _, server in ipairs(mason_lspconfig.get_installed_servers()) do
+      if not enabled[server] then
+        vim.lsp.enable(server)
+        enabled[server] = true
       end
     end
 
-    require("mason-lspconfig").setup {
-      handlers = { handler },
-    }
+    local mappings = mason_lspconfig.get_mappings()
+    local registry = require "mason-registry"
+    registry:on("package:install:success", function(pkg)
+      local server = mappings.package_to_lspconfig[pkg.name]
+      if server and not enabled[server] then
+        enabled[server] = true
+        vim.schedule(function()
+          vim.lsp.enable(server)
+        end)
+      end
+    end)
   end,
 }
