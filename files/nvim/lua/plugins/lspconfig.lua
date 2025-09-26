@@ -50,7 +50,7 @@ local servers = {
 return {
   "neovim/nvim-lspconfig",
   dependencies = {
-    "williamboman/mason-lspconfig.nvim",
+    "mason-org/mason-lspconfig.nvim",
     "mason.nvim",
     "blink.cmp",
   },
@@ -120,7 +120,6 @@ return {
       vim.lsp.enable(server)
       enabled[server] = true
     end
-
     for server in pairs(servers) do
       configure(server)
     end
