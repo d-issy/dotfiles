@@ -35,6 +35,7 @@ config.audible_bell = "Disabled"
 config.keys = {
   { key = "q", mods = "CTRL", action = wezterm.action.SendKey { key = "q", mods = "CTRL" } },
   { key = "u", mods = "CMD", action = wezterm.action.EmitEvent "toggle-opacity" },
+  { key = "Enter", mods = "SHIFT", action = wezterm.action.SendString "\x1b\r" },
 }
 
 local wsl_domains = wezterm.default_wsl_domains()
