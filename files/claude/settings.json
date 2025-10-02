@@ -1,7 +1,5 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
-  "model": "opusplan",
-  "outputStyle": "Explanatory",
   "hooks": {
     "SessionStart": [
       {
@@ -14,5 +12,72 @@
         ]
       }
     ]
-  }
+  },
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "WebFetch(domain:developer.apple.com)",
+      "WebFetch(domain:docs.claude.com)",
+      "WebFetch(domain:github.com)",
+      "Bash(docker compose config:*)",
+      "Bash(docker compose events:*)",
+      "Bash(docker compose images:*)",
+      "Bash(docker compose logs:*)",
+      "Bash(docker compose ls:*)",
+      "Bash(docker compose port:*)",
+      "Bash(docker compose ps:*)",
+      "Bash(docker compose top:*)",
+      "Bash(docker compose version:*)",
+      "Bash(docker diff:*)",
+      "Bash(docker history:*)",
+      "Bash(docker images:*)",
+      "Bash(docker info:*)",
+      "Bash(docker inspect:*)",
+      "Bash(docker logs:*)",
+      "Bash(docker network ls:*)",
+      "Bash(docker port:*)",
+      "Bash(docker ps:*)",
+      "Bash(docker stats:*)",
+      "Bash(docker top:*)",
+      "Bash(docker version:*)",
+      "Bash(docker volume ls:*)",
+      "Bash(gh issue list:*)",
+      "Bash(gh pr checks:*)",
+      "Bash(gh pr diff:*)",
+      "Bash(gh pr list:*)",
+      "Bash(gh pr status:*)",
+      "Bash(gh pr view:*)",
+      "Bash(git blame:*)",
+      "Bash(git describe:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git ls-files:*)",
+      "Bash(git merge-base:*)",
+      "Bash(git merge-tree:*)",
+      "Bash(git reflog:*)",
+      "Bash(git restore:*)",
+      "Bash(git rev-parse:*)",
+      "Bash(git show:*)",
+      "Bash(git status:*)",
+      "Bash(git switch:*)",
+      "Bash(ls:*)",
+      "Bash(pwd:*)",
+      "Bash(rg:*)"
+    ],
+    "deny": [
+      "Edit(*.env)",
+      "Read(*.env)",
+      "Write(*.env)",
+      "Bash(find:*)",
+      "Bash(git checkout:*)",
+      "Bash(grep:*)",
+      "Bash(sudo:*)"
+    ],
+    "ask": [
+      "Bash(rm:*)",
+      "Bash(rmdir:*)"
+    ]
+  },
+  "model": "sonnet",
+  "outputStyle": "Explanatory"
 }
