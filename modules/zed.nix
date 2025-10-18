@@ -4,34 +4,64 @@ let
   utils = import ../utils { inherit config pkgs lib; };
 
   settings = {
+    # Keymap
+    base_keymap = "VSCode";
     vim_mode = true;
+
+    # Font
     ui_font_size = 16;
     buffer_font_size = 16;
+
+    # Theme
     theme = {
       mode = "system";
       light = "One Light";
       dark = "One Dark";
     };
+
+    # Startup
+    restore_on_startup = "last_workspace";
   };
 
   keymap = [
+    # Workspace context
     {
       context = "Workspace";
       bindings = {};
     }
+
+    # Vim normal mode
     {
-      context = "Editor && vim_mode == insert";
-      bindings = {};
-    }
-    {
+      context = "vim_mode == normal";
       bindings = {
-        "ctrl-j" = null;
+        # Navigation
+        "space e" = "pane::RevealInProjectPanel";  # Reveal current file in project panel
+
+        # Tab navigation
+        "shift-h" = "pane::ActivatePreviousItem";  # Previous tab
+        "shift-l" = "pane::ActivateNextItem";  # Next tab
+        "space b o" = "pane::CloseOtherItems";  # Close all other tabs
+
+        # Git
+        "space g s" = "git_panel::ToggleFocus";  # Toggle Git panel focus
+        "] h" = "editor::GoToHunk";  # Next git hunk
+        "[ h" = "editor::GoToPreviousHunk";  # Previous git hunk
       };
     }
+
+    # Vim insert mode
     {
-      context = "Terminal";
+      context = "vim_mode == insert";
       bindings = {
-        "ctrl-j" = null;
+        # Paste
+        "ctrl-v" = "editor::Paste";
+      };
+    }
+
+    # Global context
+    {
+      bindings = {
+        "ctrl-j" = null;  # Disable ctrl-j globally
       };
     }
   ];
