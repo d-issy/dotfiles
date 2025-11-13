@@ -31,6 +31,7 @@
     ./navi.nix
     ./neovim.nix
     ./nushell.nix
+    ./opencode.nix
     ./starship.nix
     ./tmux.nix
     ./wezterm.nix
