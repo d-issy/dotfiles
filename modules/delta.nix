@@ -3,7 +3,7 @@
 {
   config = {
     home.packages = [ pkgs.delta ];
-    programs.git.extraConfig = {
+    programs.git.settings = {
       interactive.diffFilter = "delta --color-only";
       diff = {
         colorMoved = "default";
@@ -18,10 +18,11 @@
     };
 
     programs.lazygit.settings = {
-      git.paging = {
-        colorAlways = true;
-        pager = "delta --paging=never";
-      };
+      git.pagers = [
+        {
+          pager = "delta --paging=never";
+        }
+      ];
     };
   };
 }
