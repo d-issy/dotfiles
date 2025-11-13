@@ -1,9 +1,11 @@
 { config, pkgs, ... }:
 
 let
-  user = "d-issy";
-  email = "12374694+d-issy@users.noreply.github.com";
-  config = {
+  settings = {
+    user = {
+      name = "d-issy";
+      email = "12374694+d-issy@users.noreply.github.com";
+    };
     color = {
       ui = "auto";
       diff = true;
@@ -201,9 +203,7 @@ in
 {
   programs.git = {
     enable = true;
-    userName = user;
-    userEmail = email;
-    extraConfig = config;
+    settings = settings;
     ignores = ignores;
   };
 }
