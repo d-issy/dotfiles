@@ -18,5 +18,5 @@ claude --resume --model <model>
 # Run one-off query and exit :: ccp
 claude -p "<query>"
 
-$ model: echo -e "sonnet\nopus"
+$ model: echo -e "opus\nsonnet"
 $ query: echo -e "explain this code\nreview my changes\nhelp with debugging"
