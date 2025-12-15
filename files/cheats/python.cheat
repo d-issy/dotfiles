@@ -9,31 +9,34 @@ python <python_file>
 python -m <python_module>
 
 
-# POETRY
+# UV
 
-# poetry add package
-poetry add <package>
+# Initialize new project
+uv init <project_name>
 
-# poetry add dev package
-poetry add --group dev <package>
+# Add package
+uv add <package>
 
-# poetry lock
-poetry lock
+# Add dev package
+uv add --dev <package>
 
-# Run python script with poetry
-poetry run python <python_file>
+# Remove package
+uv remove <package>
 
-# Run python module with poetry
-poetry run python -m <python_module>
+# Sync dependencies
+uv sync
 
+# Lock dependencies
+uv lock
 
-# PIPENV
+# Run python script with uv
+uv run python <python_file>
 
-# Run python script with pipenv
-pipenv run python <python_file>
+# Run python module with uv
+uv run python -m <python_module>
 
-# Run python module with pipenv
-pipenv run python -m <python_module>
+# Run command in virtual environment
+uv run <command>
 
 
 # ARGS
