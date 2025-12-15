@@ -5,6 +5,7 @@ return {
   lazy = false,
   opts = {
     bigfile = { enabled = true },
+    gh = { enabled = true },
     gitbrowse = { enabled = true },
     indent = {
       enabled = true,

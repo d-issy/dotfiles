@@ -157,6 +157,12 @@ local hl = {
 
   -- Snacks
   SnacksPickerBorder = { fg = palette.base, bg = palette.base },
+  SnacksDiffAdd = { fg = palette.green },
+  SnacksDiffDelete = { fg = palette.red },
+  SnacksDiffContext = { fg = palette.overlay0 },
+  SnacksDiffAddLineNr = { fg = palette.green },
+  SnacksDiffDeleteLineNr = { fg = palette.red },
+  SnacksDiffContextLineNr = { fg = palette.overlay0 },
 
   -----------
   -- other --
