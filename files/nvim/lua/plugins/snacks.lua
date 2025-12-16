@@ -5,6 +5,7 @@ return {
   lazy = false,
   opts = {
     bigfile = { enabled = true },
+    gh = { enabled = true },
     gitbrowse = { enabled = true },
     indent = {
       enabled = true,
@@ -45,6 +46,7 @@ return {
         lsp_symbols = { layout = { preset = "bottom_pane" } },
         lsp_workspace_symbols = { layout = { preset = "bottom_pane" } },
         git_status = { layout = { preset = "bottom_pane" }, sort = { fields = { "sort" } } },
+        gh_actions = { layout = { preset = "bottom_pane" } },
       },
     },
     quickfile = { enabled = true },
@@ -83,6 +85,7 @@ return {
     { "<leader>fu", "<cmd>lua require('snacks').picker.undo()<cr>", desc = "Undo" },
     { "<leader>fs", "<cmd>lua require('snacks').picker.spelling()<cr>", desc = "Spell" },
     { "<leader>z", "<cmd>lua require('snacks').zen.zoom()<cr>", desc = "Zoom" },
+    { "<leader>ga", "<cmd>lua require('snacks').picker.gh_actions()<cr>", desc = "GitHub Actions" },
     { "<leader>gs", "<cmd>lua require('snacks').picker.git_status()<cr>", desc = "Git Status" },
     { "gd", "<cmd>lua require('snacks').picker.lsp_definitions()<cr>", desc = "LSP Definitions" },
     { "gG", "<cmd>lua require('snacks').picker.lsp_declarations()<cr>", desc = "LSP Declarations" },
