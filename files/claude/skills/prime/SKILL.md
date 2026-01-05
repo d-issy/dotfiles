@@ -1,6 +1,7 @@
 ---
 name: prime
 description: Prime the conversation by understanding the project context. Use this when user says "prime" or starting work on an unfamiliar project or codebase.
+model: claude-haiku-4-5
 allowed-tools: Read, Glob, Grep, Bash(git ls-files:*)
 ---
 
