@@ -42,7 +42,8 @@ Rules:
 - Use Conventional Commits format: type(scope): description
 - Types: feat, fix, update, remove, docs, ci, test, chore, refactor
 - Scope is optional, derive from file paths if clear
-- Description should be concise (under 50 chars)
+- Title: concise (under 50 chars)
+- Body: optional, only if needed. Use short bullet points (2-4 items max)
 
 IMPORTANT: Respond with ONLY the commit message itself. No explanation, no reasoning, no code blocks.
 
