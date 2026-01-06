@@ -36,6 +36,10 @@ in
 
         nuConfig = nuConfig;
 
+        extraEnv = ''
+          $env.PATH = ($env.PATH | prepend ($env.HOME | path join ".local" "bin"))
+        '';
+
         extraConfig = ''
           $env.config = ($env.config? | ${builtins.toJSON cfg.nuConfig})
         '';
