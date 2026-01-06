@@ -42,8 +42,10 @@ Rules:
 - Use Conventional Commits format: type(scope): description
 - Types: feat, fix, update, remove, docs, ci, test, chore, refactor
 - Scope is optional, derive from file paths if clear
-- Description should be concise (under 50 chars)
-- Output ONLY the commit message, nothing else
+- Title: concise (under 50 chars)
+- Body: optional, only if needed. Use short bullet points (2-4 items max)
+
+IMPORTANT: Respond with ONLY the commit message itself. No explanation, no reasoning, no code blocks.
 
 Staged changes:'
 
@@ -53,8 +55,8 @@ Rules:
 - Use kebab-case (lowercase with hyphens)
 - Keep it short and descriptive (2-4 words)
 - No prefix like feature/ or fix/
-- Output ONLY the branch name as plain text
-- NO backticks, NO quotes, NO markdown formatting
+
+IMPORTANT: Respond with ONLY the branch name itself. No explanation, no reasoning, no formatting.
 
 Staged changes:'
 
@@ -87,6 +89,10 @@ main() {
     exit 1
   fi
 
+  local current_branch
+  current_branch=$(git branch --show-current)
+  echo -e "${BLUE}Branch:${RESET} ${current_branch}"
+
   local staged_files
   staged_files=$(git diff --staged --name-status)
 
@@ -107,12 +113,10 @@ main() {
   echo ""
 
   local staged_diff
-  staged_diff=$(git difft --staged)
+  staged_diff=$(git diff --staged)
 
-  local current_branch
-  current_branch=$(git branch --show-current)
   if [[ "$current_branch" == "main" || "$current_branch" == "master" ]]; then
-    echo -e "${YELLOW}Currently on $current_branch branch${RESET}"
+    echo -e "${YELLOW}Warning: Cannot commit directly to $current_branch${RESET}"
     echo -e "${BLUE}Generating branch name...${RESET}"
 
     local branch_name
