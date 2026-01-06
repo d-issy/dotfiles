@@ -1,0 +1,184 @@
+#!/bin/bash
+set -euo pipefail
+
+VERSION="1.0.0"
+MODEL="haiku"
+
+show_help() {
+  cat << EOF
+git-auto-commit - AI-powered commit message generator using Claude
+
+Usage: git auto-commit [options]
+
+Options:
+  -h, --help     Show this help message
+  -v, --version  Show version
+
+Requirements:
+  - claude CLI must be installed and authenticated
+  - Changes must be staged (git add)
+  - On main/master, will suggest creating a new branch
+
+Example:
+  git add .
+  git auto-commit
+EOF
+}
+
+show_version() {
+  echo "git-auto-commit $VERSION"
+}
+
+# Colors
+RED=$'\033[0;31m'
+GREEN=$'\033[0;32m'
+YELLOW=$'\033[0;33m'
+BLUE=$'\033[0;34m'
+RESET=$'\033[0m'
+
+COMMIT_PROMPT='Generate a git commit message for the following staged changes.
+
+Rules:
+- Use Conventional Commits format: type(scope): description
+- Types: feat, fix, update, remove, docs, ci, test, chore, refactor
+- Scope is optional, derive from file paths if clear
+- Description should be concise (under 50 chars)
+- Output ONLY the commit message, nothing else
+
+Staged changes:'
+
+BRANCH_PROMPT='Generate a git branch name for the following staged changes.
+
+Rules:
+- Use kebab-case (lowercase with hyphens)
+- Keep it short and descriptive (2-4 words)
+- No prefix like feature/ or fix/
+- Output ONLY the branch name as plain text
+- NO backticks, NO quotes, NO markdown formatting
+
+Staged changes:'
+
+main() {
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      -h|--help)
+        show_help
+        exit 0
+        ;;
+      -v|--version)
+        show_version
+        exit 0
+        ;;
+      *)
+        echo -e "${RED}Unknown option: $1${RESET}"
+        show_help
+        exit 1
+        ;;
+    esac
+  done
+
+  if ! git rev-parse --is-inside-work-tree &>/dev/null; then
+    echo -e "${RED}Error: Not in a git repository${RESET}"
+    exit 1
+  fi
+
+  if ! command -v claude &>/dev/null; then
+    echo -e "${RED}Error: claude CLI not found${RESET}"
+    exit 1
+  fi
+
+  local staged_files
+  staged_files=$(git diff --staged --name-status)
+
+  if [[ -z "$staged_files" ]]; then
+    echo -e "${YELLOW}No staged files to commit${RESET}"
+    exit 0
+  fi
+
+  echo -e "${BLUE}Staged files:${RESET}"
+  while IFS=$'\t' read -r status filepath; do
+    case "$status" in
+      A) echo -e "  ${GREEN}${status}${RESET} ${filepath}" ;;
+      D) echo -e "  ${RED}${status}${RESET} ${filepath}" ;;
+      M) echo -e "  ${YELLOW}${status}${RESET} ${filepath}" ;;
+      *) echo -e "  ${status} ${filepath}" ;;
+    esac
+  done <<< "$staged_files"
+  echo ""
+
+  local staged_diff
+  staged_diff=$(git difft --staged)
+
+  local current_branch
+  current_branch=$(git branch --show-current)
+  if [[ "$current_branch" == "main" || "$current_branch" == "master" ]]; then
+    echo -e "${YELLOW}Currently on $current_branch branch${RESET}"
+    echo -e "${BLUE}Generating branch name...${RESET}"
+
+    local branch_name
+    branch_name=$(echo "$staged_diff" | claude -p "$BRANCH_PROMPT" --model "$MODEL" --output-format text | tr -d '`"'\''')
+
+    echo -e "${BLUE}Suggested branch:${RESET}"
+    echo -e "  ${GREEN}${branch_name}${RESET}"
+    echo ""
+
+    read -rp "Create and switch to this branch? [Y/n/e(dit)] " response
+    response=${response:-Y}
+
+    case "$response" in
+      [Yy]*)
+        git switch -c "$branch_name"
+        echo -e "${GREEN}Switched to $branch_name${RESET}"
+        ;;
+      [Ee]*)
+        read -rp "Enter branch name: " new_branch
+        if [[ -n "$new_branch" ]]; then
+          git switch -c "$new_branch"
+          echo -e "${GREEN}Switched to $new_branch${RESET}"
+        else
+          echo -e "${YELLOW}Cancelled${RESET}"
+          exit 1
+        fi
+        ;;
+      *)
+        echo -e "${YELLOW}Cancelled${RESET}"
+        exit 1
+        ;;
+    esac
+    echo ""
+  fi
+
+  echo -e "${BLUE}Generating commit message...${RESET}"
+  local commit_message
+  commit_message=$(echo "$staged_diff" | claude -p "$COMMIT_PROMPT" --model "$MODEL" --output-format text)
+
+  echo -e "${BLUE}Generated commit message:${RESET}"
+  echo -e "  ${GREEN}${commit_message}${RESET}"
+  echo ""
+
+  read -rp "Proceed with this commit? [Y/n/e(dit)] " response
+  response=${response:-Y}
+
+  case "$response" in
+    [Yy]*)
+      git commit -m "$commit_message"
+      echo -e "${GREEN}Committed successfully!${RESET}"
+      ;;
+    [Ee]*)
+      read -rp "Enter new commit message: " new_message
+      if [[ -n "$new_message" ]]; then
+        git commit -m "$new_message"
+        echo -e "${GREEN}Committed successfully!${RESET}"
+      else
+        echo -e "${YELLOW}Commit cancelled (empty message)${RESET}"
+        exit 1
+      fi
+      ;;
+    *)
+      echo -e "${YELLOW}Commit cancelled${RESET}"
+      exit 1
+      ;;
+  esac
+}
+
+main "$@"
