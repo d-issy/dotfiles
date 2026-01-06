@@ -17,7 +17,6 @@
     ./bottom.nix
     ./delta.nix
     ./difftastic.nix
-    ./eza.nix
     ./fzf.nix
     ./gcloud.nix
     ./gh.nix
