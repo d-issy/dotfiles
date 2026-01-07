@@ -44,7 +44,15 @@ if [[ "$TOTAL_INPUT_TOKENS" != "0" || "$TOTAL_OUTPUT_TOKENS" != "0" ]]; then
 fi
 
 if [[ "$REMAINING" != "0.0" && "$REMAINING" != "100.0" ]]; then
-  OUTPUT+=" ${CYAN}${REMAINING}%${RESET}"
+  # Color based on remaining context percentage
+  if awk -v r="$REMAINING" 'BEGIN { exit !(r >= 50) }'; then
+    REMAINING_COLOR="$GREEN"
+  elif awk -v r="$REMAINING" 'BEGIN { exit !(r >= 20) }'; then
+    REMAINING_COLOR="$YELLOW"
+  else
+    REMAINING_COLOR="$RED"
+  fi
+  OUTPUT+=" ${REMAINING_COLOR}${REMAINING}%${RESET}"
 fi
 
 if [[ "$LINES_ADDED" != "0" || "$LINES_REMOVED" != "0" ]]; then
