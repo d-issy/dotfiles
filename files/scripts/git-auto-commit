@@ -45,7 +45,7 @@ Rules:
 - Title: concise (under 50 chars)
 - Body: optional, only if needed. Use short bullet points (2-4 items max)
 
-IMPORTANT: Respond with ONLY the commit message itself. No explanation, no reasoning, no code blocks.
+IMPORTANT: Respond with ONLY the commit message itself. No explanation, no reasoning, no code blocks, no signatures (like "Generated with Claude" or "Co-Authored-By").
 
 Staged changes:'
 
