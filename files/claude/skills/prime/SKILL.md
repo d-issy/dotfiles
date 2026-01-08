@@ -11,6 +11,11 @@ allowed-tools: Read, Glob, Grep, Bash(git ls-files:*)
 
 Execute the `Workflow` and `Report` sections to prime your understanding of the project.
 
+## Instructions
+
+- Execute ONLY the commands and operations specified in Workflow
+- Do NOT use any commands or tools not explicitly listed
+
 ## Workflow
 
 1. Run `git ls-files` to get the project file list and understand the structure
