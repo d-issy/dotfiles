@@ -157,7 +157,7 @@ main() {
   commit_message=$(echo "$staged_diff" | claude -p "$COMMIT_PROMPT" --model "$MODEL" --output-format text)
 
   echo -e "${BLUE}Generated commit message:${RESET}"
-  echo -e "  ${GREEN}${commit_message}${RESET}"
+  echo -e "${GREEN}${commit_message}${RESET}"
   echo ""
 
   read -rp "Proceed with this commit? [Y/n/e(dit)] " response
