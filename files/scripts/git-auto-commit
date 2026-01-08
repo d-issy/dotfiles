@@ -120,7 +120,7 @@ main() {
     echo -e "${BLUE}Generating branch name...${RESET}"
 
     local branch_name
-    branch_name=$(echo "$staged_diff" | claude -p "$BRANCH_PROMPT" --model "$MODEL" --output-format text | tr -d '`"'\''')
+    branch_name=$(echo "$staged_diff" | claude --print --no-session-persistence "$BRANCH_PROMPT" --model "$MODEL" --output-format text | tr -d '`"'\''')
 
     echo -e "${BLUE}Suggested branch:${RESET}"
     echo -e "  ${GREEN}${branch_name}${RESET}"
@@ -154,7 +154,7 @@ main() {
 
   echo -e "${BLUE}Generating commit message...${RESET}"
   local commit_message
-  commit_message=$(echo "$staged_diff" | claude -p "$COMMIT_PROMPT" --model "$MODEL" --output-format text)
+  commit_message=$(echo "$staged_diff" | claude --print --no-session-persistence "$COMMIT_PROMPT" --model "$MODEL" --output-format text)
 
   echo -e "${BLUE}Generated commit message:${RESET}"
   echo -e "${GREEN}${commit_message}${RESET}"
