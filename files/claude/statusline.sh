@@ -36,8 +36,17 @@ OUTPUT_K=$(format_k "$TOTAL_OUTPUT_TOKENS")
 LINES_ADDED=$(echo "$input" | jq -r '.cost.total_lines_added // 0')
 LINES_REMOVED=$(echo "$input" | jq -r '.cost.total_lines_removed // 0')
 
+# Git branch
+GIT_BRANCH=""
+if git rev-parse --git-dir > /dev/null 2>&1; then
+  BRANCH=$(git branch --show-current 2>/dev/null)
+  if [[ -n "$BRANCH" ]]; then
+    GIT_BRANCH="${DIM}:${RESET}${CYAN}${BRANCH}${RESET}"
+  fi
+fi
+
 # Build output
-OUTPUT="${DIM}[${RESET}${MODEL}${DIM}]${RESET} $CWD_SHORT"
+OUTPUT="${DIM}[${RESET}${MODEL}${DIM}]${RESET} $CWD_SHORT${GIT_BRANCH}"
 
 if [[ "$TOTAL_INPUT_TOKENS" != "0" || "$TOTAL_OUTPUT_TOKENS" != "0" ]]; then
   OUTPUT+=" ${DIM}|${RESET} ${DIM}↑${RESET}${GREEN}${INPUT_K}${RESET} ${DIM}↓${RESET}${YELLOW}${OUTPUT_K}${RESET}"
