@@ -60,6 +60,51 @@ IMPORTANT: Respond with ONLY the branch name itself. No explanation, no reasonin
 
 Staged changes:'
 
+# Edit text with default editor
+# Returns empty string if user cancels (content unchanged or empty)
+edit_with_editor() {
+  local initial_text="$1"
+  local tmpfile
+  tmpfile=$(mktemp)
+  echo "$initial_text" > "$tmpfile"
+
+  local editor="${EDITOR:-vim}"
+  $editor "$tmpfile" </dev/tty >/dev/tty
+
+  local result
+  result=$(cat "$tmpfile")
+  rm -f "$tmpfile"
+
+  # If content unchanged, treat as cancel
+  if [[ "$result" == "$initial_text" ]]; then
+    echo ""
+    return
+  fi
+
+  echo "$result"
+}
+
+# Detect the main branch for this repository
+detect_main_branch() {
+  # Try to get from remote HEAD (most reliable)
+  local remote_head
+  if remote_head=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null); then
+    echo "${remote_head##refs/remotes/origin/}"
+    return
+  fi
+
+  # Fallback: check common branch names
+  for branch in main master; do
+    if git show-ref --verify --quiet "refs/heads/$branch"; then
+      echo "$branch"
+      return
+    fi
+  done
+
+  # Last resort: return "main" as default
+  echo "main"
+}
+
 main() {
   while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -89,9 +134,12 @@ main() {
     exit 1
   fi
 
+  local main_branch
+  main_branch=$(detect_main_branch)
+
   local current_branch
   current_branch=$(git branch --show-current)
-  echo -e "${BLUE}Branch:${RESET} ${current_branch}"
+  echo -e "${BLUE}Branch:${RESET} ${current_branch} (${main_branch})"
 
   local staged_files
   staged_files=$(git diff --staged --name-status)
@@ -115,7 +163,7 @@ main() {
   local staged_diff
   staged_diff=$(git diff --staged)
 
-  if [[ "$current_branch" == "main" || "$current_branch" == "master" ]]; then
+  if [[ "$current_branch" == "$main_branch" ]]; then
     echo -e "${YELLOW}Warning: Cannot commit directly to $current_branch${RESET}"
     echo -e "${BLUE}Generating branch name...${RESET}"
 
@@ -126,7 +174,7 @@ main() {
     echo -e "  ${GREEN}${branch_name}${RESET}"
     echo ""
 
-    read -rp "Create and switch to this branch? [Y/n/e(dit)] " response
+    read -rp "Create and switch to this branch? [Y/n/e(dit)] " response </dev/tty
     response=${response:-Y}
 
     case "$response" in
@@ -135,7 +183,9 @@ main() {
         echo -e "${GREEN}Switched to $branch_name${RESET}"
         ;;
       [Ee]*)
-        read -rp "Enter branch name: " new_branch
+        local new_branch
+        new_branch=$(edit_with_editor "$branch_name")
+        new_branch=$(echo "$new_branch" | tr -d '\n')
         if [[ -n "$new_branch" ]]; then
           git switch -c "$new_branch"
           echo -e "${GREEN}Switched to $new_branch${RESET}"
@@ -160,7 +210,7 @@ main() {
   echo -e "${GREEN}${commit_message}${RESET}"
   echo ""
 
-  read -rp "Proceed with this commit? [Y/n/e(dit)] " response
+  read -rp "Proceed with this commit? [Y/n/e(dit)] " response </dev/tty
   response=${response:-Y}
 
   case "$response" in
@@ -169,12 +219,13 @@ main() {
       echo -e "${GREEN}Committed successfully!${RESET}"
       ;;
     [Ee]*)
-      read -rp "Enter new commit message: " new_message
+      local new_message
+      new_message=$(edit_with_editor "$commit_message")
       if [[ -n "$new_message" ]]; then
         git commit -m "$new_message"
         echo -e "${GREEN}Committed successfully!${RESET}"
       else
-        echo -e "${YELLOW}Commit cancelled (empty message)${RESET}"
+        echo -e "${YELLOW}Commit cancelled${RESET}"
         exit 1
       fi
       ;;
