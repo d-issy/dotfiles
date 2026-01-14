@@ -60,6 +60,18 @@ IMPORTANT: Respond with ONLY the branch name itself. No explanation, no reasonin
 
 Staged changes:'
 
+# Generate commit message using Claude
+generate_commit_message() {
+  local staged_diff="$1"
+  echo "$staged_diff" | claude --print --no-session-persistence "$COMMIT_PROMPT" --model "$MODEL" --output-format text
+}
+
+# Generate branch name using Claude
+generate_branch_name() {
+  local staged_diff="$1"
+  echo "$staged_diff" | claude --print --no-session-persistence "$BRANCH_PROMPT" --model "$MODEL" --output-format text | tr -d '`"'\'''
+}
+
 # Edit text with default editor
 # Returns empty string if user cancels (content unchanged or empty)
 edit_with_editor() {
@@ -168,72 +180,80 @@ main() {
     echo -e "${BLUE}Generating branch name...${RESET}"
 
     local branch_name
-    branch_name=$(echo "$staged_diff" | claude --print --no-session-persistence "$BRANCH_PROMPT" --model "$MODEL" --output-format text | tr -d '`"'\''')
+    branch_name=$(generate_branch_name "$staged_diff")
 
-    echo -e "${BLUE}Suggested branch:${RESET}"
-    echo -e "  ${GREEN}${branch_name}${RESET}"
-    echo ""
+    while true; do
+      echo -e "${BLUE}Suggested branch:${RESET}"
+      echo -e "  ${GREEN}${branch_name}${RESET}"
+      echo ""
 
-    read -rp "Create and switch to this branch? [Y/n/e(dit)] " response </dev/tty
-    response=${response:-Y}
+      read -rp "Create and switch to this branch? [Y/n/e(dit)/r(egenerate)] " response </dev/tty
+      response=${response:-Y}
 
-    case "$response" in
-      [Yy]*)
-        git switch -c "$branch_name"
-        echo -e "${GREEN}Switched to $branch_name${RESET}"
-        ;;
-      [Ee]*)
-        local new_branch
-        new_branch=$(edit_with_editor "$branch_name")
-        new_branch=$(echo "$new_branch" | tr -d '\n')
-        if [[ -n "$new_branch" ]]; then
-          git switch -c "$new_branch"
-          echo -e "${GREEN}Switched to $new_branch${RESET}"
-        else
+      case "$response" in
+        [Yy]*)
+          git switch -c "$branch_name"
+          echo -e "${GREEN}Switched to $branch_name${RESET}"
+          break
+          ;;
+        [Rr]*)
+          echo -e "${BLUE}Regenerating branch name...${RESET}"
+          branch_name=$(generate_branch_name "$staged_diff")
+          ;;
+        [Ee]*)
+          local new_branch
+          new_branch=$(edit_with_editor "$branch_name")
+          new_branch=$(echo "$new_branch" | tr -d '\n')
+          if [[ -n "$new_branch" ]]; then
+            branch_name="$new_branch"
+            # Continue loop to confirm edited branch name
+          fi
+          ;;
+        *)
           echo -e "${YELLOW}Cancelled${RESET}"
           exit 1
-        fi
-        ;;
-      *)
-        echo -e "${YELLOW}Cancelled${RESET}"
-        exit 1
-        ;;
-    esac
+          ;;
+      esac
+    done
     echo ""
   fi
 
   echo -e "${BLUE}Generating commit message...${RESET}"
   local commit_message
-  commit_message=$(echo "$staged_diff" | claude --print --no-session-persistence "$COMMIT_PROMPT" --model "$MODEL" --output-format text)
+  commit_message=$(generate_commit_message "$staged_diff")
 
-  echo -e "${BLUE}Generated commit message:${RESET}"
-  echo -e "${GREEN}${commit_message}${RESET}"
-  echo ""
+  while true; do
+    echo -e "${BLUE}Generated commit message:${RESET}"
+    echo -e "${GREEN}${commit_message}${RESET}"
+    echo ""
 
-  read -rp "Proceed with this commit? [Y/n/e(dit)] " response </dev/tty
-  response=${response:-Y}
+    read -rp "Proceed with this commit? [Y/n/e(dit)/r(egenerate)] " response </dev/tty
+    response=${response:-Y}
 
-  case "$response" in
-    [Yy]*)
-      git commit -m "$commit_message"
-      echo -e "${GREEN}Committed successfully!${RESET}"
-      ;;
-    [Ee]*)
-      local new_message
-      new_message=$(edit_with_editor "$commit_message")
-      if [[ -n "$new_message" ]]; then
-        git commit -m "$new_message"
+    case "$response" in
+      [Yy]*)
+        git commit -m "$commit_message"
         echo -e "${GREEN}Committed successfully!${RESET}"
-      else
+        break
+        ;;
+      [Rr]*)
+        echo -e "${BLUE}Regenerating commit message...${RESET}"
+        commit_message=$(generate_commit_message "$staged_diff")
+        ;;
+      [Ee]*)
+        local new_message
+        new_message=$(edit_with_editor "$commit_message")
+        if [[ -n "$new_message" ]]; then
+          commit_message="$new_message"
+          # Continue loop to confirm edited message
+        fi
+        ;;
+      *)
         echo -e "${YELLOW}Commit cancelled${RESET}"
         exit 1
-      fi
-      ;;
-    *)
-      echo -e "${YELLOW}Commit cancelled${RESET}"
-      exit 1
-      ;;
-  esac
+        ;;
+    esac
+  done
 }
 
 main "$@"
