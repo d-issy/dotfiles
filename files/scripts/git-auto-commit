@@ -65,16 +65,22 @@ Staged changes:'
 run_codex_from_stdin() {
   local tmpfile
   tmpfile=$(mktemp)
+  local tmperr
+  tmperr=$(mktemp)
 
   local cmd=(codex --ask-for-approval never --sandbox read-only)
   cmd+=(--model "$MODEL")
   cmd+=(-c "model_reasoning_effort=\"${REASONING_EFFORT}\"")
   cmd+=(exec - --color never --output-last-message "$tmpfile")
 
-  "${cmd[@]}" >/dev/null
+  if ! "${cmd[@]}" >/dev/null 2>"$tmperr"; then
+    cat "$tmperr" >&2 || true
+    rm -f "$tmperr" "$tmpfile"
+    return 1
+  fi
 
   cat "$tmpfile"
-  rm -f "$tmpfile"
+  rm -f "$tmperr" "$tmpfile"
 }
 
 # Generate commit message using Codex
