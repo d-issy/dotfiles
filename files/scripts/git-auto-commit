@@ -2,11 +2,12 @@
 set -euo pipefail
 
 VERSION="1.0.0"
-MODEL="haiku"
+MODEL="gpt-5.2"
+REASONING_EFFORT="low"
 
 show_help() {
   cat << EOF
-git-auto-commit - AI-powered commit message generator using Claude
+git-auto-commit - AI-powered commit message generator using Codex CLI
 
 Usage: git auto-commit [options]
 
@@ -15,7 +16,7 @@ Options:
   -v, --version  Show version
 
 Requirements:
-  - claude CLI must be installed and authenticated
+  - codex CLI must be installed and authenticated
   - Changes must be staged (git add)
   - On main/master, will suggest creating a new branch
 
@@ -45,7 +46,7 @@ Rules:
 - Title: concise (under 50 chars)
 - Body: optional, only if needed. Use short bullet points (2-4 items max)
 
-IMPORTANT: Respond with ONLY the commit message itself. No explanation, no reasoning, no code blocks, no signatures (like "Generated with Claude" or "Co-Authored-By").
+IMPORTANT: Respond with ONLY the commit message itself. No explanation, no reasoning, no code blocks, no signatures (like "Generated with Codex" or "Co-Authored-By").
 
 Staged changes:'
 
@@ -60,16 +61,38 @@ IMPORTANT: Respond with ONLY the branch name itself. No explanation, no reasonin
 
 Staged changes:'
 
-# Generate commit message using Claude
-generate_commit_message() {
-  local staged_diff="$1"
-  echo "$staged_diff" | claude --print --no-session-persistence "$COMMIT_PROMPT" --model "$MODEL" --output-format text
+# Run Codex non-interactively (reads prompt from stdin)
+run_codex_from_stdin() {
+  local tmpfile
+  tmpfile=$(mktemp)
+
+  local cmd=(codex --ask-for-approval never --sandbox read-only)
+  cmd+=(--model "$MODEL")
+  cmd+=(-c "model_reasoning_effort=\"${REASONING_EFFORT}\"")
+  cmd+=(exec - --color never --output-last-message "$tmpfile")
+
+  "${cmd[@]}" >/dev/null
+
+  cat "$tmpfile"
+  rm -f "$tmpfile"
 }
 
-# Generate branch name using Claude
+# Generate commit message using Codex
+generate_commit_message() {
+  local staged_diff="$1"
+  {
+    printf '%s\n\n' "$COMMIT_PROMPT"
+    printf '%s\n' "$staged_diff"
+  } | run_codex_from_stdin
+}
+
+# Generate branch name using Codex
 generate_branch_name() {
   local staged_diff="$1"
-  echo "$staged_diff" | claude --print --no-session-persistence "$BRANCH_PROMPT" --model "$MODEL" --output-format text | tr -d '`"'\'''
+  {
+    printf '%s\n\n' "$BRANCH_PROMPT"
+    printf '%s\n' "$staged_diff"
+  } | run_codex_from_stdin | tr -d '`"'\'''
 }
 
 # Edit text with default editor
@@ -141,8 +164,8 @@ main() {
     exit 1
   fi
 
-  if ! command -v claude &>/dev/null; then
-    echo -e "${RED}Error: claude CLI not found${RESET}"
+  if ! command -v codex &>/dev/null; then
+    echo -e "${RED}Error: codex CLI not found${RESET}"
     exit 1
   fi
 
