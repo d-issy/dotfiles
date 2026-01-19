@@ -3,6 +3,7 @@
 {
   programs.zsh = {
     enable = true;
+    dotDir = config.home.homeDirectory;
 
     history = {
       size = 10000;
