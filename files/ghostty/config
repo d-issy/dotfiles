@@ -2,11 +2,10 @@
 theme = "Catppuccin Macchiato"
 font-size = 14
 
-font-family = ""
 font-family = "0xProto"
 font-family = "UDEV Gothic 35"
 font-family = "Hack Nerd Font Mono"
-font-family = "YuGothic"
+font-family = "Hiragino Kaku Gothic ProN"
 
 font-feature = -dlig
 font-feature = calt
