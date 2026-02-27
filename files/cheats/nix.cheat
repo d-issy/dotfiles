@@ -1,0 +1,21 @@
+% nix apply
+
+# apply nix home-manager configuration
+nix run . -- switch --flake .#<config>
+
+$ config: case "$(uname -s)-$(uname -m)" in Linux-*) echo linux;; Darwin-arm64) echo macos;; Darwin-x86_64) echo macos_intel;; esac
+
+% nix flake
+
+# update all flake inputs
+nix flake update
+
+% nix generations
+
+# list home-manager generations
+nix run . -- generations
+
+% nix gc
+
+# expire old generations and garbage collect
+nix run . -- expire-generations "-90 days"; nix store gc
