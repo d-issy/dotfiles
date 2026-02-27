@@ -17,7 +17,7 @@ with lib;
           lua = "5";
           node = "22";
           python = "3";
-          ruby = "3.4";
+          ruby = "4";
           rust = "1";
           terraform = "1";
         };
