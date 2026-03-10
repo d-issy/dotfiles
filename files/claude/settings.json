@@ -5,24 +5,9 @@
     "command": "~/.claude/statusline.sh",
     "padding": 0
   },
-  "hooks": {
-    "SessionStart": [],
-    "UserPromptSubmit": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "echo '<user-prompt-submit-hook>Before starting a task, check if any available skills can be applied</user-prompt-submit-hook>'"
-          }
-        ]
-      }
-    ]
-  },
+  "hooks": {},
   "permissions": {
     "allow": [
-      "Skill(prime)",
-      "Skill(interview)",
-      "Skill(manage-skill)",
       "WebSearch",
       "WebFetch(domain:developer.apple.com)",
       "WebFetch(domain:docs.claude.com)",
