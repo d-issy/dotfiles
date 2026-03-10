@@ -11,6 +11,8 @@ let
 in
 {
   config = {
+    home.shellAliases.cld = "claude";
+
     home.file.".claude" = {
       source = claudeFilesFiltered;
       recursive = true;
