@@ -18,7 +18,7 @@ Options:
 Requirements:
   - codex CLI must be installed and authenticated
   - Changes must be staged (git add)
-  - On main/master, will suggest creating a new branch
+  - On main/master, will suggest creating a new branch (use ! to commit directly)
 
 Example:
   git add .
@@ -205,7 +205,7 @@ main() {
   staged_diff=$(git diff --staged)
 
   if [[ "$current_branch" == "$main_branch" ]]; then
-    echo -e "${YELLOW}Warning: Cannot commit directly to $current_branch${RESET}"
+    echo -e "${YELLOW}Warning: You are on $current_branch${RESET}"
     echo -e "${BLUE}Generating branch name...${RESET}"
 
     local branch_name
@@ -216,13 +216,17 @@ main() {
       echo -e "  ${GREEN}${branch_name}${RESET}"
       echo ""
 
-      read -rp "Create and switch to this branch? [Y/n/e(dit)/r(egenerate)] " response </dev/tty
+      read -rp "Create and switch to this branch? [Y/n/e(dit)/r(egenerate)/!(direct)] " response </dev/tty
       response=${response:-Y}
 
       case "$response" in
         [Yy]*)
           git switch -c "$branch_name"
           echo -e "${GREEN}Switched to $branch_name${RESET}"
+          break
+          ;;
+        '!')
+          echo -e "${YELLOW}Committing directly to $current_branch${RESET}"
           break
           ;;
         [Rr]*)
