@@ -4,7 +4,9 @@ Nix Flakes + Home Manager dotfiles for Linux/macOS.
 
 ## Rules
 
-- Do not read or access files under `~/` directly; always work through this repository
+- Do not read, write, or access files under `~/` directly; always work through this repository
+- Do not commit; create a branch with `git switch -c` and let the user handle commits
+- Only `git add` files that were changed as part of the current task
 - Do not apply (switch) unless explicitly asked. When applying:
   - `git add` changed files under `files/` and `modules/` then `nix run . -- switch --flake .#<platform>`
   - linux: `.#linux`, macOS Silicon: `.#macos`, macOS Intel: `.#macos_intel`
