@@ -3,7 +3,7 @@
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixpkgs-unstable";
-    nixpkgs-mise.url = "github:nixos/nixpkgs/13868c071cc73a5e9f610c47d7bb08e5da64fdd5"; # mise 2026.1.2
+    nixpkgs-mise.url = "github:nixos/nixpkgs/9fb474db1fbb8abd43847d799ae5d69ca6421128"; # mise 2026.1.2
     home-manager = {
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
