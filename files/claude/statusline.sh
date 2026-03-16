@@ -14,6 +14,15 @@ format_k() {
   awk -v n="$1" 'BEGIN { printf "%.1fK", n/1000 }'
 }
 
+format_tokens() {
+  awk -v n="$1" 'BEGIN {
+    if (n == 1000000) { printf "1M" }
+    else if (n >= 1000000) { printf "%.1fM", n/1000000 }
+    else if (n >= 1000) { printf "%.0fK", n/1000 }
+    else { printf "%d", n }
+  }'
+}
+
 MODEL=$(echo "$input" | jq -r '.model.display_name // "Unknown"')
 CWD=$(echo "$input" | jq -r '.workspace.current_dir // "."')
 CWD_SHORT="${CWD##*/}"
@@ -52,16 +61,18 @@ if [[ "$TOTAL_INPUT_TOKENS" != "0" || "$TOTAL_OUTPUT_TOKENS" != "0" ]]; then
   OUTPUT+=" ${DIM}|${RESET} ${DIM}↑${RESET}${GREEN}${INPUT_K}${RESET} ${DIM}↓${RESET}${YELLOW}${OUTPUT_K}${RESET}"
 fi
 
-if [[ "$REMAINING" != "0.0" && "$REMAINING" != "100.0" ]]; then
+if [[ "$TOTAL_USED" != "0" ]]; then
+  USED_FMT=$(format_tokens "$TOTAL_USED")
+  SIZE_FMT=$(format_tokens "$CONTEXT_SIZE")
   # Color based on remaining context percentage
   if awk -v r="$REMAINING" 'BEGIN { exit !(r >= 50) }'; then
-    REMAINING_COLOR="$GREEN"
+    CTX_COLOR="$GREEN"
   elif awk -v r="$REMAINING" 'BEGIN { exit !(r >= 20) }'; then
-    REMAINING_COLOR="$YELLOW"
+    CTX_COLOR="$YELLOW"
   else
-    REMAINING_COLOR="$RED"
+    CTX_COLOR="$RED"
   fi
-  OUTPUT+=" ${REMAINING_COLOR}${REMAINING}%${RESET}"
+  OUTPUT+=" ${CTX_COLOR}${USED_FMT}/${SIZE_FMT} (${REMAINING}%)${RESET}"
 fi
 
 if [[ "$LINES_ADDED" != "0" || "$LINES_REMOVED" != "0" ]]; then
