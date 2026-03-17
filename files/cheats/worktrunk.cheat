@@ -1,0 +1,36 @@
+% worktrunk, wt
+
+# Create new worktree and branch :: wtc
+wt switch --create <branch_name>
+
+# Create new worktree from specific base branch
+wt switch --create <branch_name> --base <base_branch>
+
+# Switch to worktree :: wts
+wt switch
+
+# Switch to worktree by name
+wt switch <branch>
+
+# Switch to default branch
+wt switch ^
+
+# Switch to previous worktree
+wt switch -
+
+# List all worktrees :: wtl
+wt list
+
+# Remove current worktree :: wtr
+wt remove
+
+# Merge current branch into default branch :: wtm
+wt merge
+
+# Create worktree and launch command
+wt switch --create <branch_name> -x <command>
+
+# Switch to GitHub PR worktree :: wtpr
+wt switch pr:<pr_number>
+
+$ branch: wt list --format '{{ branch }}' 2>/dev/null
