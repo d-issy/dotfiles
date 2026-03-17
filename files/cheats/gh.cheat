@@ -46,8 +46,8 @@ gh pr list --author '@me'
 gh auth login
 
 $ subcommand: echo 'auth browse codespace gitst issue org pr project release repo' | tr ' ' '\n'
-$ base_branch: git branch | grep -v '*' | tr -d ' '
-$ branch: git branch | tr -d ' *'
+$ base_branch: git branch --format='%(refname:short)'
+$ branch: git branch --format='%(refname:short)'
 $ pull_number: gh pr list --- --column 1 --delimiter '\t'
 $ pull_numbers: gh pr list  --- --column 1 --delimiter '\t' --multi
 
