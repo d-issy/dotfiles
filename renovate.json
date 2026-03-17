@@ -18,7 +18,7 @@
       "automergeType": "pr"
     },
     {
-      "matchPackageNames": [
+      "matchDepNames": [
         "nixpkgs-mise"
       ],
       "enabled": false
