@@ -35,6 +35,7 @@
     ./starship.nix
     ./tmux.nix
     ./wezterm.nix
+    ./worktrunk.nix
     ./zed.nix
     ./zsh.nix
   ];
