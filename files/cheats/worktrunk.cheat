@@ -1,12 +1,12 @@
 % worktrunk, wt
 
-# Create new worktree and branch :: wtc
+# Create new worktree and branch :: wc
 wt switch --create <branch_name>
 
 # Create new worktree from specific base branch
 wt switch --create <branch_name> --base <base_branch>
 
-# Switch to worktree :: wts
+# Switch to worktree :: ws
 wt switch
 
 # Switch to worktree by name
@@ -18,19 +18,22 @@ wt switch ^
 # Switch to previous worktree
 wt switch -
 
-# List all worktrees :: wtl
+# List all worktrees :: wl
 wt list
 
-# Remove current worktree :: wtr
+# Remove current worktree :: wr
 wt remove
 
-# Merge current branch into default branch :: wtm
+# Merge current branch into default branch :: wm
 wt merge
 
-# Create worktree and launch command
+# Switch to worktree and launch command :: wx
+wt switch -x <command> <branch>
+
+# Create worktree and launch command :: wcx
 wt switch --create <branch_name> -x <command>
 
-# Switch to GitHub PR worktree :: wtpr
+# Switch to GitHub PR worktree :: wpr
 wt switch pr:<pr_number>
 
-$ branch: wt list --format '{{ branch }}' 2>/dev/null
+$ branch: git branch --format='%(refname:short)'
