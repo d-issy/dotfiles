@@ -2,7 +2,7 @@
 set -euo pipefail
 
 VERSION="1.0.0"
-MODEL="gpt-5.2"
+MODEL="gpt-5.4"
 REASONING_EFFORT="low"
 
 show_help() {
@@ -14,15 +14,17 @@ Usage: git auto-commit [options]
 Options:
   -h, --help     Show this help message
   -v, --version  Show version
+  -d, --direct   Skip branch protection and commit directly to main/master
 
 Requirements:
   - codex CLI must be installed and authenticated
   - Changes must be staged (git add)
-  - On main/master, will suggest creating a new branch (use ! to commit directly)
+  - On main/master, will ask before committing (use -d to skip)
 
 Example:
   git add .
   git auto-commit
+  git auto-commit -d   # commit directly to main/master
 EOF
 }
 
@@ -63,10 +65,10 @@ Staged changes:'
 
 # Run Codex non-interactively (reads prompt from stdin)
 run_codex_from_stdin() {
-  local tmpfile
+  local tmpfile tmperr
   tmpfile=$(mktemp)
-  local tmperr
   tmperr=$(mktemp)
+  trap 'rm -f "$tmpfile" "$tmperr"' RETURN
 
   local cmd=(codex --ask-for-approval never --sandbox read-only)
   cmd+=(--model "$MODEL")
@@ -75,12 +77,10 @@ run_codex_from_stdin() {
 
   if ! "${cmd[@]}" >/dev/null 2>"$tmperr"; then
     cat "$tmperr" >&2 || true
-    rm -f "$tmperr" "$tmpfile"
     return 1
   fi
 
   cat "$tmpfile"
-  rm -f "$tmperr" "$tmpfile"
 }
 
 # Generate commit message using Codex
@@ -92,12 +92,11 @@ generate_commit_message() {
   } | run_codex_from_stdin
 }
 
-# Generate branch name using Codex
+# Generate branch name using Codex (uses --stat for efficiency)
 generate_branch_name() {
-  local staged_diff="$1"
   {
     printf '%s\n\n' "$BRANCH_PROMPT"
-    printf '%s\n' "$staged_diff"
+    git diff --staged --stat
   } | run_codex_from_stdin | tr -d '`"'\'''
 }
 
@@ -107,6 +106,7 @@ edit_with_editor() {
   local initial_text="$1"
   local tmpfile
   tmpfile=$(mktemp)
+  trap 'rm -f "$tmpfile"' RETURN
   echo "$initial_text" > "$tmpfile"
 
   local editor="${EDITOR:-vim}"
@@ -114,7 +114,6 @@ edit_with_editor() {
 
   local result
   result=$(cat "$tmpfile")
-  rm -f "$tmpfile"
 
   # If content unchanged, treat as cancel
   if [[ "$result" == "$initial_text" ]]; then
@@ -147,6 +146,8 @@ detect_main_branch() {
 }
 
 main() {
+  local direct=false
+
   while [[ $# -gt 0 ]]; do
     case "$1" in
       -h|--help)
@@ -156,6 +157,10 @@ main() {
       -v|--version)
         show_version
         exit 0
+        ;;
+      -d|--direct)
+        direct=true
+        shift
         ;;
       *)
         echo -e "${RED}Unknown option: $1${RESET}"
@@ -201,55 +206,59 @@ main() {
   done <<< "$staged_files"
   echo ""
 
+  if [[ "$current_branch" == "$main_branch" ]] && [[ "$direct" == false ]]; then
+    echo -e "${YELLOW}Warning: You are on $current_branch${RESET}"
+    read -rp "Create a new branch? [Y/n] " response </dev/tty
+    response=${response:-Y}
+
+    case "$response" in
+      [Nn]*)
+        echo -e "${YELLOW}Committing directly to $current_branch${RESET}"
+        ;;
+      *)
+        echo -e "${BLUE}Generating branch name...${RESET}"
+        local branch_name
+        branch_name=$(generate_branch_name)
+
+        while true; do
+          echo -e "${BLUE}Suggested branch:${RESET}"
+          echo -e "  ${GREEN}${branch_name}${RESET}"
+          echo ""
+
+          read -rp "Create and switch to this branch? [Y/n/e(dit)/r(egenerate)] " response </dev/tty
+          response=${response:-Y}
+
+          case "$response" in
+            [Yy]*)
+              git switch -c "$branch_name"
+              echo -e "${GREEN}Switched to $branch_name${RESET}"
+              break
+              ;;
+            [Rr]*)
+              echo -e "${BLUE}Regenerating branch name...${RESET}"
+              branch_name=$(generate_branch_name)
+              ;;
+            [Ee]*)
+              local new_branch
+              new_branch=$(edit_with_editor "$branch_name")
+              new_branch=$(echo "$new_branch" | tr -d '\n')
+              if [[ -n "$new_branch" ]]; then
+                branch_name="$new_branch"
+              fi
+              ;;
+            *)
+              echo -e "${YELLOW}Cancelled${RESET}"
+              exit 1
+              ;;
+          esac
+        done
+        echo ""
+        ;;
+    esac
+  fi
+
   local staged_diff
   staged_diff=$(git diff --staged)
-
-  if [[ "$current_branch" == "$main_branch" ]]; then
-    echo -e "${YELLOW}Warning: You are on $current_branch${RESET}"
-    echo -e "${BLUE}Generating branch name...${RESET}"
-
-    local branch_name
-    branch_name=$(generate_branch_name "$staged_diff")
-
-    while true; do
-      echo -e "${BLUE}Suggested branch:${RESET}"
-      echo -e "  ${GREEN}${branch_name}${RESET}"
-      echo ""
-
-      read -rp "Create and switch to this branch? [Y/n/e(dit)/r(egenerate)/!(direct)] " response </dev/tty
-      response=${response:-Y}
-
-      case "$response" in
-        [Yy]*)
-          git switch -c "$branch_name"
-          echo -e "${GREEN}Switched to $branch_name${RESET}"
-          break
-          ;;
-        '!')
-          echo -e "${YELLOW}Committing directly to $current_branch${RESET}"
-          break
-          ;;
-        [Rr]*)
-          echo -e "${BLUE}Regenerating branch name...${RESET}"
-          branch_name=$(generate_branch_name "$staged_diff")
-          ;;
-        [Ee]*)
-          local new_branch
-          new_branch=$(edit_with_editor "$branch_name")
-          new_branch=$(echo "$new_branch" | tr -d '\n')
-          if [[ -n "$new_branch" ]]; then
-            branch_name="$new_branch"
-            # Continue loop to confirm edited branch name
-          fi
-          ;;
-        *)
-          echo -e "${YELLOW}Cancelled${RESET}"
-          exit 1
-          ;;
-      esac
-    done
-    echo ""
-  fi
 
   echo -e "${BLUE}Generating commit message...${RESET}"
   local commit_message
