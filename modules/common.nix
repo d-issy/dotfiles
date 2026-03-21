@@ -32,6 +32,7 @@
     ./nushell.nix
     ./opencode.nix
     ./scripts.nix
+    ./skills.nix
     ./starship.nix
     ./tmux.nix
     ./wezterm.nix
