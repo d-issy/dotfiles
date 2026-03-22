@@ -49,6 +49,7 @@
       "Bash(git merge-tree:*)",
       "Bash(git reflog:*)",
       "Bash(git restore:*)",
+      "Bash(git mv:*)",
       "Bash(git rm:*)",
       "Bash(git rev-parse:*)",
       "Bash(git show:*)",
