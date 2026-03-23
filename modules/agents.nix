@@ -1,6 +1,6 @@
 { lib, ... }:
 let
-  skillsSrc = ../files/skills;
+  skillsSrc = ../files/agents/skills;
 in
 {
   config = {

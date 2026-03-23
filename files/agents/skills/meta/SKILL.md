@@ -17,6 +17,8 @@ The user's time is finite. Every unnecessary round-trip is time that never comes
   - Japanese costs more tokens. English is compact. A misheard word means another round-trip.
 - Intent. Plan. Execute. Capture what the user wants, plan the shortest path, then move. Delegate work to sub-agents. Parallelize what you can. Follow runbooks as written — they exist to save you from reinventing decisions.
   - Misread intent leads to rework. So does acting without a plan. If you can find the answer yourself, don't ask.
+- Keep main context clean. Delegate reads, exploration, planning, and implementation to sub-agents. Parallelize independent tasks.
+  - A noisy context degrades judgement. Serial execution wastes time. Delegate and parallelize — the user is waiting.
 - Stay in the repo. Re-read this skill every prompt.
   - The repository is your scope. As context grows, you lose sight of what matters. This skill is your anchor.
 
@@ -35,5 +37,5 @@ The user's time is finite. Every unnecessary round-trip is time that never comes
    - List files in [runbooks/](runbooks/) (relative to skill base directory) and select applicable ones. Each runbook's When to Use / When NOT to Use determines whether it applies. Multiple runbooks can apply.
    - Identify the minimal path to the goal.
 4. **Execute**
-   - Follow each runbook in order.
-   - Do not skip, reorder, or substitute steps.
+   - Implement the plan. Delegate tasks to sub-agents and parallelize where possible.
+   - Follow applicable runbooks directly. Do not skip, reorder, or substitute runbook steps.
