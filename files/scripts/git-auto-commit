@@ -86,17 +86,25 @@ run_codex_from_stdin() {
 # Generate commit message using Codex
 generate_commit_message() {
   local staged_diff="$1"
+  local instruction="${2:-}"
   {
     printf '%s\n\n' "$COMMIT_PROMPT"
     printf '%s\n' "$staged_diff"
+    if [[ -n "$instruction" ]]; then
+      printf '\nAdditional instruction: %s\n' "$instruction"
+    fi
   } | run_codex_from_stdin
 }
 
 # Generate branch name using Codex (uses --stat for efficiency)
 generate_branch_name() {
+  local instruction="${1:-}"
   {
     printf '%s\n\n' "$BRANCH_PROMPT"
     git diff --staged --stat
+    if [[ -n "$instruction" ]]; then
+      printf '\nAdditional instruction: %s\n' "$instruction"
+    fi
   } | run_codex_from_stdin | tr -d '`"'\'''
 }
 
@@ -235,8 +243,9 @@ main() {
               break
               ;;
             [Rr]*)
+              read -rp "Instruction (Enter to skip): " instruction </dev/tty
               echo -e "${BLUE}Regenerating branch name...${RESET}"
-              branch_name=$(generate_branch_name)
+              branch_name=$(generate_branch_name "$instruction")
               ;;
             [Ee]*)
               local new_branch
@@ -279,8 +288,9 @@ main() {
         break
         ;;
       [Rr]*)
+        read -rp "Instruction (Enter to skip): " instruction </dev/tty
         echo -e "${BLUE}Regenerating commit message...${RESET}"
-        commit_message=$(generate_commit_message "$staged_diff")
+        commit_message=$(generate_commit_message "$staged_diff" "$instruction")
         ;;
       [Ee]*)
         local new_message
