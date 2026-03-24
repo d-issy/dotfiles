@@ -5,7 +5,7 @@ Harness-specific behavioral adjustments for Claude Code.
 ## Built-in Tools
 
 - Use `Read`. MUST NOT use `Bash(cat)`. (`head`, `tail` are allowed as pipe filters.)
-- Use `Glob`. MUST NOT use `Bash(find)`. Use `Bash(ls)` only when Glob cannot follow symlinks.
+- Use `Glob`. MUST NOT use `Bash(find)`.
 - Use `Grep`. MUST NOT use `Bash(grep)`. (`rg` is allowed.)
 - Use `Edit`. MUST NOT use `Bash(sed)`, `Bash(awk)`.
 - Use `Write`. MUST NOT use `Bash(echo >)`, `Bash(cat <<EOF)`.
