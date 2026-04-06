@@ -25,13 +25,25 @@ Do NOT assume the execution environment is the user's host platform. Ask the use
 ### 2. Execute
 
 Do not use `echo`, temporary files, or redirects.
+Use heredoc so the content is readable in permission prompts. Do not use `printf '%b'` with escape sequences — `\n` and `\r` make the preview unreadable.
 
 macOS / Linux:
 
 ```sh
-printf '%b' "line1\nline2" | pbcopy                      # macOS
-printf '%b' "line1\nline2" | xclip -selection clipboard  # Linux X11
-printf '%b' "line1\nline2" | wl-copy                     # Linux Wayland
+pbcopy <<'CLIPBOARD_END'                      # macOS
+line1
+line2
+CLIPBOARD_END
+
+xclip -selection clipboard <<'CLIPBOARD_END'  # Linux X11
+line1
+line2
+CLIPBOARD_END
+
+wl-copy <<'CLIPBOARD_END'                     # Linux Wayland
+line1
+line2
+CLIPBOARD_END
 ```
 
 Windows / WSL — use heredoc to pass content as-is:

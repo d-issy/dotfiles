@@ -45,7 +45,8 @@ Based on the diff and the template (if any), compose the pull request body.
 - If a template was found, follow its structure. The remaining rules still apply unless the template contradicts them.
 - If no template, include a summary and background at minimum.
 - Write for reviewers. Do not describe fine-grained diffs that are obvious from the code.
-- Keep it concise.
+- Keep each line short and scannable. Use bullet points, not dense paragraphs.
+- Focus on **what** changed and **why**. The diff already shows **how**.
 - Do not add `Co-authored-by` or similar trailers.
 
 ### 4. Copy to Clipboard
