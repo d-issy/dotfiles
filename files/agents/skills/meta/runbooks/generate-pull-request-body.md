@@ -1,4 +1,4 @@
-# Create Pull Request Body
+# Generate Pull Request Body
 
 Generate a pull request body from the diff against the base branch and copy it to the clipboard.
 
@@ -16,6 +16,7 @@ Generate a pull request body from the diff against the base branch and copy it t
 ## Tips
 
 - **Clipboard is the default destination.** Unless the user says otherwise, copy the result to the clipboard using the [copy-to-clipboard](copy-to-clipboard.md) runbook.
+- **Treat PR overview as reusable PR text.** In this repository, requests like "PR overview" or "summary" mean the user wants copy-ready text, not a chat-only explanation.
 - **Match the repository's language.** If existing PRs, README, or commit messages are in English, write in English. If in Japanese, write in Japanese.
 
 ## Workflow
@@ -45,7 +46,8 @@ Based on the diff and the template (if any), compose the pull request body.
 - If a template was found, follow its structure. The remaining rules still apply unless the template contradicts them.
 - If no template, include a summary and background at minimum.
 - Write for reviewers. Do not describe fine-grained diffs that are obvious from the code.
-- Keep it concise.
+- Keep each line short and scannable. Use bullet points, not dense paragraphs.
+- Focus on **what** changed and **why**. The diff already shows **how**.
 - Do not add `Co-authored-by` or similar trailers.
 
 ### 4. Copy to Clipboard

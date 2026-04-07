@@ -5,7 +5,18 @@
     "command": "~/.claude/statusline.sh",
     "padding": 0
   },
-  "hooks": {},
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo 'MANDATORY: Load matching skills first. Run meta at session start, then read the harness and applicable runbooks before replying or using tools.'"
+          }
+        ]
+      }
+    ]
+  },
   "permissions": {
     "allow": [
       "WebSearch",

@@ -60,7 +60,7 @@ Runbook source files live in the dotfiles repository. If you are not in it, ask 
 
 ### 2. Check Existing Runbooks
 
-List files in the repository's `files/skills/meta/runbooks/` and read any that might overlap with the topic. If an existing runbook covers adjacent ground, extend it instead of creating a new file.
+List files in the repository's `files/agents/skills/meta/runbooks/` and read any that might overlap with the topic. If an existing runbook covers adjacent ground, extend it instead of creating a new file.
 
 ### 3. Write or Revise
 
@@ -77,6 +77,9 @@ In both cases:
 - Every step should be actionable. Replace "consider doing X" with "do X when Y".
 - Don't teach general programming or tool basics. Focus on non-obvious guidance.
 - Be specific in When to Use / When NOT to Use — vague conditions lead to false matches.
+- Respect repository-specific conventions. If a workflow uses shorthand like "PR overview" to mean "prepare copy-ready text", encode that convention explicitly instead of generalizing from one session.
+- Choose verbs by effect. Use `generate-*` for text or content generation, `create-*` for state-changing actions such as making branches or files, and `copy-*` for clipboard actions.
+- Omit defaults that do not need thought. Mention flags and options only when the user must choose them or when the default would be wrong for this workflow.
 
 ### 4. Review
 
@@ -84,6 +87,6 @@ Walk through the runbook as if you were an agent seeing it for the first time. D
 
 ### 5. Place the File
 
-- Path: `files/skills/meta/runbooks/<name>.md`
-- Naming: lowercase, hyphen-separated. Start with a base-form verb (e.g. `create`, not `creating`) describing the action the user wants to perform. The filename alone should tell an agent why they would read it (e.g. `create-and-improve-runbooks.md`).
+- Path: `files/agents/skills/meta/runbooks/<name>.md`
+- Naming: lowercase, hyphen-separated. Start with a base-form verb describing the action the user wants to perform. Prefer the most specific verb that matches the effect, such as `generate`, `create`, `copy`, `check`, `survey`, `delegate`, or `interpret`.
 - `git add` and remind the user to apply
