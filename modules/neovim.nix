@@ -2,7 +2,10 @@
 
 {
   config = {
-    home.packages = [ pkgs.neovim ];
+    home.packages = [
+      pkgs.neovim
+      pkgs.tree-sitter
+    ];
     home.sessionVariables = { EDITOR = "nvim"; };
     home.shellAliases = { v = "nvim"; };
 
