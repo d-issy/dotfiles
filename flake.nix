@@ -13,7 +13,7 @@
   outputs = { nixpkgs, nixpkgs-mise, home-manager, ... }:
     let
       miseOverlay = final: prev: {
-        mise = (import nixpkgs-mise { system = final.system; }).mise;
+        mise = (import nixpkgs-mise { system = final.stdenv.hostPlatform.system; }).mise;
       };
     in
     {
