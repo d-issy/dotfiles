@@ -11,7 +11,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "echo 'MANDATORY: Before replying or using tools, invoke matching skills. meta MUST run on every session start. Then read the matching harness and inspect applicable runbooks. For repository overview requests, follow survey-repository-structure before summarizing. If a runbook materially guides the workflow, mention it briefly in the first user-facing response.'"
+            "command": "echo 'MANDATORY: Load matching skills first. Run meta at session start, then read the harness and applicable runbooks before replying or using tools.'"
           }
         ]
       }

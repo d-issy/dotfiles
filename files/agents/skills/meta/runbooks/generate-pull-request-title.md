@@ -1,4 +1,4 @@
-# Create Pull Request Title
+# Generate Pull Request Title
 
 Generate a pull request title and copy it to the clipboard.
 
@@ -8,7 +8,7 @@ Generate a pull request title and copy it to the clipboard.
 
 ## When NOT to Use
 
-- User asks for a PR body or description (use [create-pull-request-body](create-pull-request-body.md))
+- User asks for a PR body or description (use [generate-pull-request-body](generate-pull-request-body.md))
 
 ## Tips
 
