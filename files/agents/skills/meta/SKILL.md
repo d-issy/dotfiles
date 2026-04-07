@@ -1,6 +1,6 @@
 ---
 name: meta
-description: Required prerequisite for every interaction. Contains baseline behavioral corrections and conventions that the agent cannot infer on its own. Without it, agent responses will not match the user's personal standards.
+description: Required prerequisite for every interaction. Contains baseline behavioral corrections and conventions that the agent cannot infer on its own. Without it, agent responses will not match the user's personal standards. TRIGGER on the first user message of every session, before starting any task.
 ---
 
 # Meta
