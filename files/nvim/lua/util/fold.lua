@@ -5,8 +5,7 @@ local M = {}
 function M.expr()
   local buf = vim.api.nvim_get_current_buf()
 
-  local ok = pcall(vim.treesitter.get_parser, buf)
-  if ok then
+  if vim.treesitter.get_parser(buf) then
     return vim.treesitter.foldexpr()
   end
   return "0"
