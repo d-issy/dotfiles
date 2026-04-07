@@ -79,6 +79,7 @@ In both cases:
 - Be specific in When to Use / When NOT to Use — vague conditions lead to false matches.
 - Respect repository-specific conventions. If a workflow uses shorthand like "PR overview" to mean "prepare copy-ready text", encode that convention explicitly instead of generalizing from one session.
 - Choose verbs by effect. Use `generate-*` for text or content generation, `create-*` for state-changing actions such as making branches or files, and `copy-*` for clipboard actions.
+- Omit defaults that do not need thought. Mention flags and options only when the user must choose them or when the default would be wrong for this workflow.
 
 ### 4. Review
 
