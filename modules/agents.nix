@@ -8,9 +8,10 @@ in
     home.activation.agentSkills = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
       for dir in "$HOME/.claude/skills" "$HOME/.cursor/skills" "$HOME/.agents/skills"; do
         mkdir -p "$dir"
-        chmod -R u+w "$dir/meta" 2>/dev/null || true
-        rm -rf "$dir/meta"
-        cp -rL "${skillsSrc}/meta" "$dir/meta"
+        chmod -R u+w "$dir/runbook" 2>/dev/null || true
+        rm -rf "$dir/runbook"
+        mkdir -p "$dir/runbook"
+        cp -rL ${skillsSrc}/runbook/* "$dir/runbook/"
       done
     '';
   };

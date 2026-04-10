@@ -5,18 +5,7 @@
     "command": "~/.claude/statusline.sh",
     "padding": 0
   },
-  "hooks": {
-    "SessionStart": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "echo 'MANDATORY: Load matching skills first. Run meta at session start, then read the harness and applicable runbooks before replying or using tools.'"
-          }
-        ]
-      }
-    ]
-  },
+  "hooks": {},
   "permissions": {
     "allow": [
       "WebSearch",
@@ -92,7 +81,6 @@
   "includeGitInstructions": false,
   "autoMemoryEnabled": false,
   "env": {
-    "CLAUDE_CODE_DISABLE_1M_CONTEXT": "1",
     "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
   }
 }
