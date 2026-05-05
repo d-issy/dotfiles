@@ -1,4 +1,4 @@
-{ config, pkgs, ... }:
+_:
 
 let
   settings = {
@@ -204,7 +204,7 @@ in
   programs.git = {
     enable = true;
     signing.format = null;
-    settings = settings;
-    ignores = ignores;
+    inherit settings;
+    inherit ignores;
   };
 }

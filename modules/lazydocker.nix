@@ -1,8 +1,10 @@
-{ config, pkgs, ... }:
+{ pkgs, ... }:
 
 {
   config = {
     home.packages = [ pkgs.lazydocker ];
-    home.shellAliases = { ld = "lazydocker"; };
+    home.shellAliases = {
+      ld = "lazydocker";
+    };
   };
 }

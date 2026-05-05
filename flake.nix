@@ -10,17 +10,23 @@
     };
   };
 
-  outputs = { nixpkgs, nixpkgs-mise, home-manager, ... }:
+  outputs =
+    {
+      nixpkgs,
+      nixpkgs-mise,
+      home-manager,
+      ...
+    }:
     let
-      miseOverlay = final: prev: {
-        mise = (import nixpkgs-mise { system = final.stdenv.hostPlatform.system; }).mise;
+      miseOverlay = final: _prev: {
+        inherit ((import nixpkgs-mise { inherit (final.stdenv.hostPlatform) system; })) mise;
       };
     in
     {
       packages = {
-        x86_64-linux = home-manager.packages.x86_64-linux;
-        x86_64-darwin = home-manager.packages.x86_64-darwin;
-        aarch64-darwin = home-manager.packages.aarch64-darwin;
+        inherit (home-manager.packages) x86_64-linux;
+        inherit (home-manager.packages) x86_64-darwin;
+        inherit (home-manager.packages) aarch64-darwin;
       };
 
       homeConfigurations = {

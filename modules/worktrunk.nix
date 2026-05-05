@@ -1,4 +1,4 @@
-{ config, pkgs, ... }:
+{ pkgs, ... }:
 
 let
   wtNuInit = pkgs.runCommand "wt-nu-init" { } ''

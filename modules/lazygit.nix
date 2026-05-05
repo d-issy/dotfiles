@@ -1,8 +1,10 @@
-{ config, pkgs, ... }:
+_:
 
 {
   config = {
-    home.shellAliases = { lg = "lazygit"; };
+    home.shellAliases = {
+      lg = "lazygit";
+    };
 
     programs.lazygit = {
       enable = true;
@@ -14,9 +16,14 @@
           expandFocusedSidePanel = true;
           commitLogSize = 2;
           showUntrackedFiles = true;
-          authorColors = { "*" = "#b7bdf8"; };
+          authorColors = {
+            "*" = "#b7bdf8";
+          };
           theme = {
-            activeBorderColor = [ "#f5a97f" "bold" ];
+            activeBorderColor = [
+              "#f5a97f"
+              "bold"
+            ];
             inactiveBorderColor = [ "#494d64" ];
             optionsTextColor = [ "#8aadf4" ];
             selectedLineBgColor = [ "#363a4f" ];

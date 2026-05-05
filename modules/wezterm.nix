@@ -1,4 +1,4 @@
-{ config, pkgs, ... }:
+_:
 
 {
   xdg.configFile."wezterm/wezterm.lua".source = ../files/wezterm/wezterm.lua;
