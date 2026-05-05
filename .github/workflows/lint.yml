@@ -19,6 +19,10 @@ jobs:
         with:
           extra_nix_config: |
             experimental-features = nix-command flakes
+      - uses: nix-community/cache-nix-action@v6
+        with:
+          primary-key: nix-nixfmt-${{ runner.os }}-${{ hashFiles('**/flake.lock') }}
+          restore-prefixes-first-match: nix-nixfmt-${{ runner.os }}-
       - run: nix run nixpkgs#nixfmt -- --check $(git ls-files '*.nix')
 
   deadnix:
@@ -30,6 +34,10 @@ jobs:
         with:
           extra_nix_config: |
             experimental-features = nix-command flakes
+      - uses: nix-community/cache-nix-action@v6
+        with:
+          primary-key: nix-deadnix-${{ runner.os }}-${{ hashFiles('**/flake.lock') }}
+          restore-prefixes-first-match: nix-deadnix-${{ runner.os }}-
       - run: nix run nixpkgs#deadnix -- --fail .
 
   statix:
@@ -41,6 +49,10 @@ jobs:
         with:
           extra_nix_config: |
             experimental-features = nix-command flakes
+      - uses: nix-community/cache-nix-action@v6
+        with:
+          primary-key: nix-statix-${{ runner.os }}-${{ hashFiles('**/flake.lock') }}
+          restore-prefixes-first-match: nix-statix-${{ runner.os }}-
       - run: nix run nixpkgs#statix -- check .
 
   stylua:
@@ -52,4 +64,8 @@ jobs:
         with:
           extra_nix_config: |
             experimental-features = nix-command flakes
+      - uses: nix-community/cache-nix-action@v6
+        with:
+          primary-key: nix-stylua-${{ runner.os }}-${{ hashFiles('**/flake.lock') }}
+          restore-prefixes-first-match: nix-stylua-${{ runner.os }}-
       - run: nix run nixpkgs#stylua -- --check files/
