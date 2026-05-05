@@ -1,0 +1,55 @@
+name: Lint
+
+permissions:
+  contents: read
+
+on:
+  - pull_request
+
+env:
+  CLICOLOR: 1
+
+jobs:
+  nixfmt:
+    name: nixfmt
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: cachix/install-nix-action@v30
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+      - run: nix run nixpkgs#nixfmt -- --check $(git ls-files '*.nix')
+
+  deadnix:
+    name: deadnix
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: cachix/install-nix-action@v30
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+      - run: nix run nixpkgs#deadnix -- --fail .
+
+  statix:
+    name: statix
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: cachix/install-nix-action@v30
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+      - run: nix run nixpkgs#statix -- check .
+
+  stylua:
+    name: stylua
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: JohnnyMorganz/stylua-action@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          version: latest
+          args: --check files/
