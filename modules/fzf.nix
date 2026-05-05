@@ -1,5 +1,4 @@
-{ config, pkgs, ... }:
-{
+_: {
   config = {
     programs.fzf = {
       enable = true;

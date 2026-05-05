@@ -1,12 +1,15 @@
-{ config, pkgs, lib, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}:
 let
   utils = import ../utils { inherit config pkgs lib; };
 
-  opencodeFilesFiltered = builtins.filterSource
-    (path: type:
-      !(lib.hasSuffix "opencode.json" (baseNameOf path))
-    )
-    ../files/opencode;
+  opencodeFilesFiltered = builtins.filterSource (
+    path: _type: !(lib.hasSuffix "opencode.json" (baseNameOf path))
+  ) ../files/opencode;
 
   settings = {
     "$schema" = "https://opencode.ai/config.json";

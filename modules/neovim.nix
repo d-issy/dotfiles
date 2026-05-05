@@ -1,13 +1,19 @@
-{ config, pkgs, ... }:
+{ pkgs, ... }:
 
 {
   config = {
-    home.packages = [
-      pkgs.neovim
-      pkgs.tree-sitter
-    ];
-    home.sessionVariables = { EDITOR = "nvim"; };
-    home.shellAliases = { v = "nvim"; };
+    home = {
+      packages = [
+        pkgs.neovim
+        pkgs.tree-sitter
+      ];
+      sessionVariables = {
+        EDITOR = "nvim";
+      };
+      shellAliases = {
+        v = "nvim";
+      };
+    };
 
     xdg.configFile."nvim" = {
       source = ../files/nvim;

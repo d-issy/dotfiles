@@ -1,4 +1,4 @@
-{ config, pkgs, ... }:
+_:
 
 let
   settings = {
@@ -19,17 +19,24 @@ let
       }
       {
         ratio = 3;
-        child = [{ type = "process"; default = true; }];
+        child = [
+          {
+            type = "process";
+            default = true;
+          }
+        ];
       }
     ];
   };
 in
 {
   config = {
-    home.shellAliases = { htop = "btm -b"; };
+    home.shellAliases = {
+      htop = "btm -b";
+    };
     programs.bottom = {
       enable = true;
-      settings = settings;
+      inherit settings;
     };
   };
 }

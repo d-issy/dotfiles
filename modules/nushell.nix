@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 with lib;
 
@@ -26,7 +31,7 @@ in
   config = mkIf enable {
     programs.nushell =
       let
-        home = config.home;
+        inherit (config) home;
         cfg = config.programs.nushell;
       in
       {
@@ -34,7 +39,7 @@ in
         shellAliases = home.shellAliases // alias;
         environmentVariables = home.sessionVariables // environments;
 
-        nuConfig = nuConfig;
+        inherit nuConfig;
 
         extraEnv = ''
           $env.PATH = ($env.PATH | prepend ($env.HOME | path join ".local" "bin"))
@@ -53,7 +58,7 @@ in
     {
       nuConfig = mkOption {
         default = { };
-        type = jsonFormat.type;
+        inherit (jsonFormat) type;
       };
     };
 }

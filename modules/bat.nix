@@ -1,8 +1,10 @@
-{ config, pkgs, ... }:
+_:
 
 {
   config = {
-    home.shellAliases = { cat = "bat"; };
+    home.shellAliases = {
+      cat = "bat";
+    };
 
     programs.bat = {
       enable = true;

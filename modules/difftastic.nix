@@ -1,9 +1,11 @@
-{ config, pkgs, ... }:
+{ pkgs, ... }:
 
 {
   config = {
     home.packages = [ pkgs.difftastic ];
-    home.shellAliases = { gd = "git difft"; };
+    home.shellAliases = {
+      gd = "git difft";
+    };
 
     programs.git.settings = {
       alias = {

@@ -1,4 +1,4 @@
-{ config, lib, pkgs, ... }:
+{ lib, ... }:
 
 let
   settings = {
@@ -70,19 +70,36 @@ let
 
     #language
     package.disabled = true;
-    golang = { format = "([go=$version](yellow) )"; version_format = "$\{major}.$\{minor}"; };
-    nodejs = { format = "([node=$version](yellow) )"; version_format = "$\{major}"; };
-    python = { format = "([py=$version](yellow) )"; version_format = "$\{major}.$\{minor}"; };
-    terraform = { format = "([tf=$version](yellow) )"; version_format = "$\{raw}"; };
+    golang = {
+      format = "([go=$version](yellow) )";
+      version_format = "$\{major}.$\{minor}";
+    };
+    nodejs = {
+      format = "([node=$version](yellow) )";
+      version_format = "$\{major}";
+    };
+    python = {
+      format = "([py=$version](yellow) )";
+      version_format = "$\{major}.$\{minor}";
+    };
+    terraform = {
+      format = "([tf=$version](yellow) )";
+      version_format = "$\{raw}";
+    };
 
     # cloud
-    aws = { format = "(aws:[$profile](yellow) )"; };
-    gcloud = { format = "(gcp:[$active](yellow)(:[$project](yellow)) )"; detect_env_vars = [ "CLOUDSDK_ACTIVE_CONFIG_NAME" ]; };
+    aws = {
+      format = "(aws:[$profile](yellow) )";
+    };
+    gcloud = {
+      format = "(gcp:[$active](yellow)(:[$project](yellow)) )";
+      detect_env_vars = [ "CLOUDSDK_ACTIVE_CONFIG_NAME" ];
+    };
   };
 in
 {
   programs.starship = {
     enable = true;
-    settings = settings;
+    inherit settings;
   };
 }
