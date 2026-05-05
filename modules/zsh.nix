@@ -34,8 +34,6 @@
       G = "| grep --color=auto";
     };
 
-    initContent = builtins.readFile ../files/zsh/rc;
-
     profileExtra = ''
       if [ -f /opt/homebrew/bin/brew ]; then
         eval "$(/opt/homebrew/bin/brew shellenv)"
