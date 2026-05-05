@@ -48,8 +48,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - uses: JohnnyMorganz/stylua-action@v4
+      - uses: cachix/install-nix-action@v30
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          version: latest
-          args: --check files/
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+      - run: nix run nixpkgs#stylua -- --check files/
