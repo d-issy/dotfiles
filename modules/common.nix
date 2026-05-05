@@ -26,11 +26,10 @@
     ./lazydocker.nix
     ./lazygit.nix
     ./misc.nix
-    ./mise.nix
     ./navi.nix
     ./neovim.nix
+    ./node.nix
     ./nushell.nix
-    ./opencode.nix
     ./scripts.nix
     ./agents.nix
     ./starship.nix

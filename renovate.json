@@ -16,12 +16,6 @@
       ],
       "automerge": true,
       "automergeType": "pr"
-    },
-    {
-      "matchDepNames": [
-        "nixpkgs-mise"
-      ],
-      "enabled": false
     }
   ]
 }
