@@ -11,5 +11,18 @@
     };
   };
 
-  home.sessionPath = [ "${config.home.homeDirectory}/.npm-global/bin" ];
+  home = {
+    packages = [
+      pkgs.pnpm
+    ];
+
+    sessionVariables = {
+      PNPM_HOME = "${config.home.homeDirectory}/.local/share/pnpm";
+    };
+
+    sessionPath = [
+      "${config.home.homeDirectory}/.npm-global/bin"
+      "${config.home.homeDirectory}/.local/share/pnpm"
+    ];
+  };
 }
