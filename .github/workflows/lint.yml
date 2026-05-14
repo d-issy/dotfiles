@@ -69,3 +69,18 @@ jobs:
           primary-key: nix-stylua-${{ runner.os }}-${{ hashFiles('**/flake.lock') }}
           restore-prefixes-first-match: nix-stylua-${{ runner.os }}-
       - run: nix run nixpkgs#stylua -- --check files/
+
+  biome:
+    name: biome
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: cachix/install-nix-action@v31
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+      - uses: nix-community/cache-nix-action@v7
+        with:
+          primary-key: nix-biome-${{ runner.os }}-${{ hashFiles('**/flake.lock') }}
+          restore-prefixes-first-match: nix-biome-${{ runner.os }}-
+      - run: nix run nixpkgs#biome -- check .

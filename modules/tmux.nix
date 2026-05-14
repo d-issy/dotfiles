@@ -57,6 +57,8 @@ with lib;
 
         extraConfig = ''
           set -ga terminal-overrides ',xterm-256color:Tc'
+          set -g extended-keys on
+          set -g extended-keys-format csi-u
           set -g default-command "${pkgs.nushell}/bin/nu"
 
           # bind

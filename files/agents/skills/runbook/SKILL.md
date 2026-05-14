@@ -1,6 +1,6 @@
 ---
 name: runbook
-description: Task runbooks and behavioral rules. Use when executing commands or starting a task, e.g. git/PR operations, clipboard copy, sub-agent delegation, repo survey, intent clarification, runbook authoring etc.
+description: Task-specific runbooks for multi-step repository and workflow operations. Use when the user asks for git/PR work, clipboard copy, sub-agent delegation, repository survey, intent clarification, or creating/improving runbooks. Do not use for casual Q&A, short explanations, or simple follow-up questions.
 ---
 
 # Runbook
