@@ -10,10 +10,9 @@ import type {
 } from "@earendil-works/pi-coding-agent";
 import type { Component, TUI } from "@earendil-works/pi-tui";
 import { truncateToWidth, visibleWidth } from "@earendil-works/pi-tui";
+import type { Color } from "./lib/theme.js";
+import { catppuccin, fg } from "./lib/theme.js";
 
-type Color = readonly [red: number, green: number, blue: number];
-type ColorName = "blue" | "green" | "overlay0" | "red" | "yellow";
-type Palette = Readonly<Record<ColorName, Color>>;
 type RequestRender = () => void;
 type FooterFactory = NonNullable<
 	Parameters<ExtensionUIContext["setFooter"]>[0]
@@ -27,18 +26,6 @@ type Totals = {
 };
 
 const HOME = homedir();
-
-const catppuccin: Palette = {
-	blue: [138, 173, 244],
-	green: [166, 218, 149],
-	overlay0: [110, 115, 141],
-	red: [237, 135, 150],
-	yellow: [238, 212, 159],
-};
-
-function fg([red, green, blue]: Color, text: string): string {
-	return `\x1b[38;2;${red};${green};${blue}m${text}\x1b[39m`;
-}
 
 function formatCount(value: number): string {
 	if (!Number.isFinite(value) || value <= 0) return "0";
@@ -143,16 +130,15 @@ function createStatusBarFooter(
 			},
 			invalidate() {},
 			render(width: number): string[] {
+				const separator = fg(catppuccin.overlay0, "·");
 				const left = [
-					renderModel(),
-					fg(catppuccin.overlay0, "·"),
-					renderLocation(),
-				].join(" ");
-				const right = [
-					renderContextUsage(),
-					renderTokenTotals(),
 					renderExtensionStatuses(),
+					renderModel(),
+					renderLocation(),
 				]
+					.filter(Boolean)
+					.join(` ${separator} `);
+				const right = [renderContextUsage(), renderTokenTotals()]
 					.filter(Boolean)
 					.join(" ");
 				const gap = " ".repeat(
