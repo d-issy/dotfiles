@@ -1,3 +1,13 @@
+local function js_ts_formatter(buf)
+  local fname = vim.api.nvim_buf_get_name(buf)
+  local dir = fname ~= "" and vim.fs.dirname(fname) or vim.uv.cwd()
+  local found = vim.fs.find({ "biome.json", "biome.jsonc" }, { upward = true, path = dir })
+  if #found > 0 then
+    return { "biome" }
+  end
+  return { "prettierd", "prettier", stop_after_first = true }
+end
+
 return {
   "stevearc/conform.nvim",
   dependencies = { "mason.nvim" },
@@ -26,10 +36,10 @@ return {
       ["sh"] = { "shfmt" },
       ["proto"] = { "buf" },
 
-      ["javascript"] = { "prettierd", "prettier", stop_after_first = true },
-      ["javascriptreact"] = { "prettierd", "prettier", stop_after_first = true },
-      ["typescript"] = { "prettierd", "prettier", stop_after_first = true },
-      ["typescriptreact"] = { "prettierd", "prettier", stop_after_first = true },
+      ["javascript"] = js_ts_formatter,
+      ["javascriptreact"] = js_ts_formatter,
+      ["typescript"] = js_ts_formatter,
+      ["typescriptreact"] = js_ts_formatter,
       ["markdown"] = { "prettierd", "prettier", stop_after_first = true },
       ["markdown.mdx"] = { "prettierd", "prettier", stop_after_first = true },
 
