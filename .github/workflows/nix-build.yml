@@ -1,0 +1,36 @@
+name: Nix Build
+
+permissions:
+  contents: read
+
+on:
+  - pull_request
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  CLICOLOR: 1
+
+jobs:
+  home-manager-activation-package:
+    name: home-manager activationPackage (${{ matrix.config }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - config: linux
+            os: ubuntu-latest
+            attr: .#homeConfigurations.linux.activationPackage
+          - config: macos
+            os: macos-latest
+            attr: .#homeConfigurations.macos.activationPackage
+    steps:
+      - uses: actions/checkout@v6
+      - uses: cachix/install-nix-action@v31
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+      - run: nix build ${{ matrix.attr }}
