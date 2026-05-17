@@ -23,9 +23,6 @@ jobs:
           - config: macos
             os: macos-latest
             attr: .#homeConfigurations.macos.activationPackage
-          - config: macos_intel
-            os: macos-13
-            attr: .#homeConfigurations.macos_intel.activationPackage
     steps:
       - uses: actions/checkout@v6
       - uses: cachix/install-nix-action@v31
