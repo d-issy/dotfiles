@@ -20,17 +20,7 @@ in
         golang.enable = true;
         python.enable = true;
       };
-      luaConfig.post = ''
-        local neotest_ns = vim.api.nvim_create_namespace("neotest")
-        vim.diagnostic.config({
-          virtual_text = {
-            format = function(diagnostic)
-              local message = diagnostic.message:gsub("\n", " "):gsub("\t", " "):gsub("%s+", " "):gsub("^%s+", "")
-              return message
-            end,
-          },
-        }, neotest_ns)
-      '';
+      luaConfig.post = builtins.readFile ../../../files/nvim/lua/nixvim/plugins/neotest.lua;
     };
 
     keymaps = [

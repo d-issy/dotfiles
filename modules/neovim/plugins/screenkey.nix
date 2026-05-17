@@ -34,11 +34,7 @@ in
         ];
         after = ''
           function()
-            require("screenkey").setup({
-              win_opts = {
-                zindex = 3000,
-              },
-            })
+          ${builtins.readFile ../../../files/nvim/lua/nixvim/plugins/screenkey.lua}
           end
         '';
       }

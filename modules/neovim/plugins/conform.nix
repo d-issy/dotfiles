@@ -14,20 +14,7 @@ let
 
   jsTsFormatter = ''
     function(buf)
-      local fname = vim.api.nvim_buf_get_name(buf)
-      local dir = fname ~= "" and vim.fs.dirname(fname) or vim.uv.cwd()
-
-      local oxfmt = vim.fs.find({ ".oxfmtrc.json", ".oxfmtrc.jsonc" }, { upward = true, path = dir })
-      if #oxfmt > 0 then
-        return { "oxfmt" }
-      end
-
-      local biome = vim.fs.find({ "biome.json", "biome.jsonc" }, { upward = true, path = dir })
-      if #biome > 0 then
-        return { "biome" }
-      end
-
-      return { "prettierd", "prettier", stop_after_first = true }
+    ${builtins.readFile ../../../files/nvim/lua/nixvim/plugins/conform-js-ts-formatter.lua}
     end
   '';
 in
@@ -64,10 +51,7 @@ in
         formatters_by_ft = {
           python.__raw = ''
             function(buf)
-              if require("conform").get_formatter_info("ruff_format", buf).available then
-                return { "ruff_format" }
-              end
-              return { "black", "isort" }
+            ${builtins.readFile ../../../files/nvim/lua/nixvim/plugins/conform-python-formatter.lua}
             end
           '';
 
@@ -103,21 +87,7 @@ in
         };
       };
 
-      luaConfig.post = ''
-        local format = require("util.format")
-        local conform = require("conform")
-
-        vim.opt.formatexpr = "v:lua.require'conform'.formatexpr()"
-
-        vim.api.nvim_create_autocmd("BufWritePre", {
-          pattern = "*",
-          callback = function(args)
-            if format.enabled() then
-              conform.format({ bufnr = args.buf })
-            end
-          end,
-        })
-      '';
+      luaConfig.post = builtins.readFile ../../../files/nvim/lua/nixvim/plugins/conform.lua;
     };
 
     keymaps = [

@@ -19,23 +19,7 @@ in
     plugins = {
       dap = {
         enable = true;
-        luaConfig.post = ''
-          local dap = require("dap")
-          local dapui = require("dapui")
-
-          dap.listeners.before.attach.dapui_config = function()
-            dapui.open()
-          end
-          dap.listeners.before.launch.dapui_config = function()
-            dapui.open()
-          end
-          dap.listeners.before.event_terminated.dapui_config = function()
-            dapui.close()
-          end
-          dap.listeners.before.event_exited.dapui_config = function()
-            dapui.close()
-          end
-        '';
+        luaConfig.post = builtins.readFile ../../../files/nvim/lua/nixvim/plugins/dap.lua;
       };
       dap-ui.enable = true;
       dap-go.enable = true;

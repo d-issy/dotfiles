@@ -51,10 +51,7 @@ in
         ];
         after = ''
           function()
-            require("markit").setup({
-              default_mappings = true,
-              signs = true,
-            })
+          ${builtins.readFile ../../../files/nvim/lua/nixvim/plugins/markit.lua}
           end
         '';
       }
