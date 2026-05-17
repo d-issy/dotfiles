@@ -69,3 +69,29 @@ jobs:
           primary-key: nix-stylua-${{ runner.os }}-${{ hashFiles('**/flake.lock') }}
           restore-prefixes-first-match: nix-stylua-${{ runner.os }}-
       - run: nix run nixpkgs#stylua -- --check files/
+
+  biome:
+    name: biome
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: lts/*
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec biome check .
+
+  tsc:
+    name: tsc
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: lts/*
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec tsc --noEmit

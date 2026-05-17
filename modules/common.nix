@@ -30,6 +30,7 @@
     ./neovim.nix
     ./node.nix
     ./nushell.nix
+    ./pi.nix
     ./scripts.nix
     ./agents.nix
     ./starship.nix

@@ -1,0 +1,17 @@
+{
+  "scripts": {
+    "lint": "biome check . && tsc --noEmit",
+    "lint:fix": "biome check --write ."
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-ai": "*",
+    "@earendil-works/pi-coding-agent": "*",
+    "@earendil-works/pi-tui": "*"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.4.15",
+    "@types/node": "^25.8.0",
+    "typescript": "^6.0.3"
+  },
+  "packageManager": "pnpm@10.33.4"
+}
