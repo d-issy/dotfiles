@@ -1,8 +1,11 @@
+{ config, ... }:
+
 {
   home.stateVersion = "24.11";
 
   home.sessionVariables = {
     NIX_CONFIG = "extra-experimental-features = nix-command flakes";
+    DOTFILES_DIR = "${config.home.homeDirectory}/code/github.com/d-issy/dotfiles";
   };
 
   programs.home-manager.enable = true;
