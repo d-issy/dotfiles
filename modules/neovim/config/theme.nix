@@ -111,7 +111,7 @@ in
 
       BlinkCmpDoc = { fg = palette.base; };
       BlinkCmpDocBorder = { fg = palette.overlay0; };
-      BlinkCmpGhostText = { fg = palette.overlay0; };
+      BlinkCmpGhostText = { fg = palette.overlay2; };
 
       BlinkCmpLabel = { fg = palette.text; bg = palette.none; };
       BlinkCmpLabelDeprecated = { link = "DiagnosticDeprecated"; };
@@ -121,8 +121,11 @@ in
       BlinkCmpKind = { bg = palette.none; };
       BlinkCmpKindCopilot = { fg = "#6cc644"; bg = palette.none; };
 
-      CopilotSuggestion = { fg = palette.overlay0; };
-      CopilotAnnotation = { fg = palette.base; };
+      ComplHint = { fg = palette.overlay2; };
+      ComplHintMore = { fg = palette.sapphire; };
+
+      CopilotSuggestion = { fg = palette.overlay2; };
+      CopilotAnnotation = { fg = palette.overlay1; };
 
       Directory = { fg = palette.sapphire; };
 
