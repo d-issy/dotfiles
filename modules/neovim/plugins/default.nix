@@ -6,6 +6,7 @@
     ./git.nix
     ./oil.nix
     ./todo.nix
+    ./treesitter.nix
   ];
 
   programs.nixvim = {
