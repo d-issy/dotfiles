@@ -23,12 +23,18 @@ let
       rev = "c716195d5b0b21ef03a20a1facc46d33ca9f7c49";
       sha256 = "19gc6c39hc1zf4vmq027lpndgvbgcczybi009ji8c367xla2k3j5";
     };
+    checkInputs = [
+      pickme-nvim
+      pkgs.vimPlugins.plenary-nvim
+    ];
   };
 in
 {
   programs.nixvim = {
-    extraPlugins = optionalPlugins [
+    extraPlugins = [
       pickme-nvim
+      pkgs.vimPlugins.plenary-nvim
+    ] ++ optionalPlugins [
       markit-nvim
     ];
 
@@ -39,11 +45,6 @@ in
           "BufReadPre"
           "BufNewFile"
         ];
-        before = ''
-          function()
-            require("lz.n").trigger_load("pickme.nvim")
-          end
-        '';
         after = ''
           function()
             require("markit").setup({
