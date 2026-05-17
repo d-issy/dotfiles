@@ -11,6 +11,7 @@
       url = "github:nix-community/nixvim";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    flake-utils.url = "github:numtide/flake-utils";
   };
 
   outputs =
@@ -18,9 +19,16 @@
       nixpkgs,
       home-manager,
       nixvim,
+      flake-utils,
       ...
     }:
     let
+      systems = [
+        "x86_64-linux"
+        "x86_64-darwin"
+        "aarch64-darwin"
+      ];
+
       mkPkgs =
         system:
         import nixpkgs {
@@ -32,7 +40,38 @@
             ];
         };
     in
-    {
+    flake-utils.lib.eachSystem systems (
+      system:
+      let
+        pkgs = mkPkgs system;
+        formatterPackages = [
+          pkgs.nixfmt
+          pkgs.oxfmt
+          pkgs.shfmt
+          pkgs.stylua
+          pkgs.taplo
+          pkgs.treefmt
+        ];
+        devShellPackages = formatterPackages ++ [
+          pkgs.nodejs_24
+          pkgs.pnpm
+        ];
+      in
+      {
+        devShells.default = pkgs.mkShell {
+          packages = devShellPackages;
+        };
+
+        formatter = pkgs.writeShellApplication {
+          name = "treefmt";
+          runtimeInputs = formatterPackages;
+          text = ''
+            exec treefmt "$@"
+          '';
+        };
+      }
+    )
+    // {
       packages = {
         inherit (home-manager.packages) x86_64-linux;
         inherit (home-manager.packages) x86_64-darwin;

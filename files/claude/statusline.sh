@@ -11,11 +11,11 @@ CYAN='\033[36m'
 RESET='\033[0m'
 
 format_k() {
-  awk -v n="$1" 'BEGIN { printf "%.1fK", n/1000 }'
+	awk -v n="$1" 'BEGIN { printf "%.1fK", n/1000 }'
 }
 
 format_tokens() {
-  awk -v n="$1" 'BEGIN {
+	awk -v n="$1" 'BEGIN {
     if (n == 1000000) { printf "1M" }
     else if (n >= 1000000) { printf "%.1fM", n/1000000 }
     else if (n >= 1000) { printf "%.0fK", n/1000 }
@@ -47,36 +47,36 @@ LINES_REMOVED=$(echo "$input" | jq -r '.cost.total_lines_removed // 0')
 
 # Git branch
 GIT_BRANCH=""
-if git rev-parse --git-dir > /dev/null 2>&1; then
-  BRANCH=$(git branch --show-current 2>/dev/null)
-  if [[ -n "$BRANCH" ]]; then
-    GIT_BRANCH="${DIM}:${RESET}${CYAN}${BRANCH}${RESET}"
-  fi
+if git rev-parse --git-dir >/dev/null 2>&1; then
+	BRANCH=$(git branch --show-current 2>/dev/null)
+	if [[ -n "$BRANCH" ]]; then
+		GIT_BRANCH="${DIM}:${RESET}${CYAN}${BRANCH}${RESET}"
+	fi
 fi
 
 # Build output
 OUTPUT="${DIM}[${RESET}${MODEL}${DIM}]${RESET} $CWD_SHORT${GIT_BRANCH}"
 
 if [[ "$TOTAL_INPUT_TOKENS" != "0" || "$TOTAL_OUTPUT_TOKENS" != "0" ]]; then
-  OUTPUT+=" ${DIM}|${RESET} ${DIM}↑${RESET}${GREEN}${INPUT_K}${RESET} ${DIM}↓${RESET}${YELLOW}${OUTPUT_K}${RESET}"
+	OUTPUT+=" ${DIM}|${RESET} ${DIM}↑${RESET}${GREEN}${INPUT_K}${RESET} ${DIM}↓${RESET}${YELLOW}${OUTPUT_K}${RESET}"
 fi
 
 if [[ "$TOTAL_USED" != "0" ]]; then
-  USED_FMT=$(format_tokens "$TOTAL_USED")
-  SIZE_FMT=$(format_tokens "$CONTEXT_SIZE")
-  # Color based on remaining context percentage
-  if awk -v r="$REMAINING" 'BEGIN { exit !(r >= 50) }'; then
-    CTX_COLOR="$GREEN"
-  elif awk -v r="$REMAINING" 'BEGIN { exit !(r >= 20) }'; then
-    CTX_COLOR="$YELLOW"
-  else
-    CTX_COLOR="$RED"
-  fi
-  OUTPUT+=" ${CTX_COLOR}${USED_FMT}/${SIZE_FMT} (${REMAINING}%)${RESET}"
+	USED_FMT=$(format_tokens "$TOTAL_USED")
+	SIZE_FMT=$(format_tokens "$CONTEXT_SIZE")
+	# Color based on remaining context percentage
+	if awk -v r="$REMAINING" 'BEGIN { exit !(r >= 50) }'; then
+		CTX_COLOR="$GREEN"
+	elif awk -v r="$REMAINING" 'BEGIN { exit !(r >= 20) }'; then
+		CTX_COLOR="$YELLOW"
+	else
+		CTX_COLOR="$RED"
+	fi
+	OUTPUT+=" ${CTX_COLOR}${USED_FMT}/${SIZE_FMT} (${REMAINING}%)${RESET}"
 fi
 
 if [[ "$LINES_ADDED" != "0" || "$LINES_REMOVED" != "0" ]]; then
-  OUTPUT+=" ${DIM}|${RESET} ${GREEN}+${LINES_ADDED}${RESET} ${RED}-${LINES_REMOVED}${RESET}"
+	OUTPUT+=" ${DIM}|${RESET} ${GREEN}+${LINES_ADDED}${RESET} ${RED}-${LINES_REMOVED}${RESET}"
 fi
 
 echo -e "$OUTPUT"

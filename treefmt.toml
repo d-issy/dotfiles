@@ -1,0 +1,25 @@
+[global]
+excludes = ["*.lock", "node_modules/**"]
+
+[formatter.nix]
+command = "nixfmt"
+includes = ["*.nix"]
+
+[formatter.oxfmt]
+command = "oxfmt"
+options = ["--no-error-on-unmatched-pattern"]
+includes = ["*.js", "*.jsx", "*.ts", "*.tsx", "*.json", "*.jsonc"]
+
+[formatter.sh]
+command = "shfmt"
+options = ["-w"]
+includes = ["*.sh"]
+
+[formatter.stylua]
+command = "stylua"
+includes = ["*.lua"]
+
+[formatter.toml]
+command = "taplo"
+options = ["format"]
+includes = ["*.toml"]
