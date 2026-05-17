@@ -3,6 +3,7 @@
 {
   imports = [
     ./config
+    ./lsp
     ./plugins
   ];
 
@@ -21,11 +22,6 @@
       };
     };
 
-    xdg.configFile."nvim/lua/plugins" = {
-      source = ../../files/nvim/lua/plugins;
-      recursive = true;
-    };
-
     xdg.configFile."nvim/lua/util" = {
       source = ../../files/nvim/lua/util;
       recursive = true;
@@ -36,9 +32,5 @@
       recursive = true;
     };
 
-    xdg.configFile."nvim/lua/lsp" = {
-      source = ../../files/nvim/lua/lsp;
-      recursive = true;
-    };
   };
 }

@@ -32,6 +32,13 @@
       hlsearch = true;
       laststatus = 0;
       pumheight = 10;
+      completeopt = [
+        "menuone"
+        "noselect"
+        "noinsert"
+        "popup"
+        "fuzzy"
+      ];
       scrolloff = 4;
       showcmd = true;
       splitbelow = true;
