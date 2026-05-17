@@ -33,8 +33,4 @@ jobs:
         with:
           extra_nix_config: |
             experimental-features = nix-command flakes
-      - uses: nix-community/cache-nix-action@v7
-        with:
-          primary-key: nix-build-${{ matrix.config }}-${{ runner.os }}-${{ hashFiles('**/flake.lock') }}
-          restore-prefixes-first-match: nix-build-${{ matrix.config }}-${{ runner.os }}-
       - run: nix build ${{ matrix.attr }}
