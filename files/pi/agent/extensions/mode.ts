@@ -18,7 +18,7 @@ function block(reason: string): { block: true; reason: string } {
 	return { block: true, reason };
 }
 
-type ModeName = "yolo" | "edit" | "explore";
+type ModeName = "explore" | "write" | "yolo";
 
 type Mode = {
 	name: ModeName;
@@ -39,31 +39,31 @@ type CustomSessionEntry = {
 
 const MODE_DEFINITIONS: readonly Mode[] = [
 	{
-		name: "yolo",
-		description: "Default mode. Use all available tools normally.",
-		color: "yellow",
-	},
-	{
-		name: "edit",
-		description: "Read and write files, but no bash commands.",
-		color: "green",
-		tools: ["read", "write", "edit", "grep", "find", "ls"],
-		startupFlag: "edit",
-		systemPrompt:
-			"You are in edit mode. You can read and edit files using read, write, edit, grep, find, and ls. Do not run bash commands. Inspect, modify, and create files, but leave shell execution to the user.",
-	},
-	{
 		name: "explore",
-		description: "Read-only exploration mode.",
+		description: "Default read-only exploration mode.",
 		color: "blue",
 		tools: ["read", "grep", "find", "ls"],
 		startupFlag: "explore",
 		systemPrompt:
-			"You are in explore mode. Use only read-only exploration tools: read, grep, find, and ls. Inspect the repository and propose plans, but do not modify files.",
+			"You are in explore mode. Use the currently active tools to inspect the repository, summarize findings, and propose plans. If the task requires changes or command execution, ask the user to switch to write or yolo mode.",
+	},
+	{
+		name: "write",
+		description: "Read and write files, but no command execution.",
+		color: "green",
+		tools: ["read", "write", "edit", "grep", "find", "ls"],
+		startupFlag: "write",
+		systemPrompt:
+			"You are in write mode. Inspect and modify files using the currently active tools. If the task requires command execution (tests, formatting, git, package managers, etc.), tell the user which command to run or ask them to switch to yolo mode.",
+	},
+	{
+		name: "yolo",
+		description: "Use all available tools normally.",
+		color: "yellow",
 	},
 ];
 
-const DEFAULT_MODE: ModeName = "yolo";
+const DEFAULT_MODE: ModeName = "explore";
 const MODE_STATE_TYPE = "mode";
 const MODES = new Map(MODE_DEFINITIONS.map((mode) => [mode.name, mode]));
 const MODE_NAMES = MODE_DEFINITIONS.map((mode) => mode.name);
@@ -193,29 +193,29 @@ export default function modeExtension(pi: ExtensionAPI): void {
 	});
 
 	pi.on("tool_call", async (event) => {
-		if (currentMode === "edit") {
+		if (currentMode === "write") {
 			if (isToolCallEventType("bash", event)) {
-				return block("Running bash commands is disabled in edit mode.");
+				return block("Running bash commands is disabled in write mode.");
 			}
 			if (
 				(isToolCallEventType("write", event) ||
 					isToolCallEventType("edit", event)) &&
 				isSecretPath(event.input.path)
 			) {
-				return block("Writing to secret files is disabled in edit mode.");
+				return block("Writing to secret files is disabled in write mode.");
 			}
 			if (
 				isToolCallEventType("read", event) &&
 				isSecretPath(event.input.path)
 			) {
-				return block("Reading secret files is disabled in edit mode.");
+				return block("Reading secret files is disabled in write mode.");
 			}
 			if (
 				isToolCallEventType("grep", event) &&
 				event.input.path &&
 				isSecretPath(event.input.path)
 			) {
-				return block("Grepping secret files is disabled in edit mode.");
+				return block("Grepping secret files is disabled in write mode.");
 			}
 			return;
 		}
