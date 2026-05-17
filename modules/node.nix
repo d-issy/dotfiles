@@ -22,7 +22,7 @@
 
     sessionPath = [
       "${config.home.homeDirectory}/.npm-global/bin"
-      "${config.home.homeDirectory}/.local/share/pnpm"
+      "${config.home.homeDirectory}/.local/share/pnpm/bin"
     ];
   };
 }
