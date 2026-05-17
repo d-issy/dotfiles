@@ -4,7 +4,6 @@ return {
   event = { "InsertEnter", "CmdlineEnter" },
   dependencies = {
     "giuxtaposition/blink-cmp-copilot",
-    "zbirenbaum/copilot.lua",
   },
   opts = {
     snippets = { preset = "luasnip" },
