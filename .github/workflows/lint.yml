@@ -14,8 +14,8 @@ env:
   CLICOLOR: 1
 
 jobs:
-  nixfmt:
-    name: nixfmt
+  treefmt:
+    name: treefmt
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -25,9 +25,9 @@ jobs:
             experimental-features = nix-command flakes
       - uses: nix-community/cache-nix-action@v7
         with:
-          primary-key: nix-nixfmt-${{ runner.os }}-${{ hashFiles('**/flake.lock') }}
-          restore-prefixes-first-match: nix-nixfmt-${{ runner.os }}-
-      - run: nix run nixpkgs#nixfmt -- --check $(git ls-files '*.nix')
+          primary-key: nix-treefmt-${{ runner.os }}-${{ hashFiles('**/flake.lock') }}
+          restore-prefixes-first-match: nix-treefmt-${{ runner.os }}-
+      - run: nix fmt -- --fail-on-change
 
   deadnix:
     name: deadnix
@@ -59,21 +59,6 @@ jobs:
           restore-prefixes-first-match: nix-statix-${{ runner.os }}-
       - run: nix run nixpkgs#statix -- check .
 
-  stylua:
-    name: stylua
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-      - uses: cachix/install-nix-action@v31
-        with:
-          extra_nix_config: |
-            experimental-features = nix-command flakes
-      - uses: nix-community/cache-nix-action@v7
-        with:
-          primary-key: nix-stylua-${{ runner.os }}-${{ hashFiles('**/flake.lock') }}
-          restore-prefixes-first-match: nix-stylua-${{ runner.os }}-
-      - run: nix run nixpkgs#stylua -- --check files/
-
   oxlint:
     name: oxlint
     runs-on: ubuntu-latest
@@ -86,19 +71,6 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec oxlint
-
-  oxfmt:
-    name: oxfmt
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-      - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v6
-        with:
-          node-version: lts/*
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm exec oxfmt --check
 
   tsc:
     name: tsc

@@ -1,7 +1,5 @@
 [files]
-extend-exclude = [
-  ".git/",
-]
+extend-exclude = [".git/"]
 ignore-hidden = false
 
 [default.extend-words]

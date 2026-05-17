@@ -1,8 +1,7 @@
 {
   "scripts": {
-    "lint": "oxlint && oxfmt --check && tsc --noEmit",
-    "lint:fix": "oxlint --fix",
-    "format": "oxfmt"
+    "lint": "oxlint && tsc --noEmit",
+    "lint:fix": "oxlint --fix"
   },
   "peerDependencies": {
     "@earendil-works/pi-ai": "*",
@@ -11,7 +10,6 @@
   },
   "devDependencies": {
     "@types/node": "^25.8.0",
-    "oxfmt": "^0.50.0",
     "oxlint": "^1.65.0",
     "typescript": "^6.0.3"
   },
