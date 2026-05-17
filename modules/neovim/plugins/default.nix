@@ -2,8 +2,10 @@
 
 {
   imports = [
+    ./comment.nix
     ./git.nix
     ./oil.nix
+    ./todo.nix
   ];
 
   programs.nixvim = {

@@ -1,6 +1,5 @@
 return {
   "folke/snacks.nvim",
-  dependencies = { "todo-comments.nvim" },
   priority = 1000,
   lazy = false,
   opts = {
