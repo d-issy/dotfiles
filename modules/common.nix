@@ -30,7 +30,7 @@
     ./lazygit.nix
     ./misc.nix
     ./navi.nix
-    ./neovim.nix
+    ./neovim
     ./node.nix
     ./nushell.nix
     ./pi.nix

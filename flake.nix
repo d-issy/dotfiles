@@ -7,13 +7,17 @@
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    nixvim = {
+      url = "github:nix-community/nixvim";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
-    {
-      nixpkgs,
-      home-manager,
-      ...
+    { nixpkgs
+    , home-manager
+    , nixvim
+    , ...
     }:
     {
       packages = {
@@ -24,24 +28,27 @@
 
       homeConfigurations = {
         linux = home-manager.lib.homeManagerConfiguration {
-          modules = [ ./home.linux.nix ];
-          pkgs = import nixpkgs {
-            system = "x86_64-linux";
-          };
+          pkgs = import nixpkgs { system = "x86_64-linux"; };
+          modules = [
+            ./home.linux.nix
+            nixvim.homeModules.nixvim
+          ];
         };
 
         macos = home-manager.lib.homeManagerConfiguration {
-          modules = [ ./home.macos.nix ];
-          pkgs = import nixpkgs {
-            system = "aarch64-darwin";
-          };
+          pkgs = import nixpkgs { system = "aarch64-darwin"; };
+          modules = [
+            ./home.macos.nix
+            nixvim.homeModules.nixvim
+          ];
         };
 
         macos_intel = home-manager.lib.homeManagerConfiguration {
-          modules = [ ./home.macos.nix ];
-          pkgs = import nixpkgs {
-            system = "x86_64-darwin";
-          };
+          pkgs = import nixpkgs { system = "x86_64-darwin"; };
+          modules = [
+            ./home.macos.nix
+            nixvim.homeModules.nixvim
+          ];
         };
       };
     };
