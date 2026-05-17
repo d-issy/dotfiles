@@ -1,4 +1,4 @@
-{ ... }:
+_:
 
 let
   raw = __raw: { inherit __raw; };
@@ -56,7 +56,10 @@ in
         '';
       }
       {
-        event = [ "TermOpen" "WinEnter" ];
+        event = [
+          "TermOpen"
+          "WinEnter"
+        ];
         group = "terminal_open";
         pattern = "term://*";
         callback = raw ''

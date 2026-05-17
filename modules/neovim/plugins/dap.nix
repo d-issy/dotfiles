@@ -1,12 +1,18 @@
-{ ... }:
+_:
 
 let
   raw = __raw: { inherit __raw; };
   keymap = mode: key: action: desc: {
     inherit mode key action;
-    options = { inherit desc; silent = true; noremap = true; };
+    options = {
+      inherit desc;
+      silent = true;
+      noremap = true;
+    };
   };
-  nmap = key: action: desc: keymap "n" key action desc;
+  nmap =
+    key: action: desc:
+    keymap "n" key action desc;
 in
 {
   programs.nixvim = {
@@ -38,7 +44,10 @@ in
     keymaps = [
       (keymap [ "n" "v" ] "<leader>d" "" "+debug")
       (nmap "<leader>db" (raw ''function() require("dap").toggle_breakpoint() end'') "Toggle Breakpoint")
-      (nmap "<leader>dB" (raw ''function() require("dap").set_breakpoint(vim.fn.input("Breakpoint condition: ")) end'') "Breakpoint Condition")
+      (nmap "<leader>dB"
+        (raw ''function() require("dap").set_breakpoint(vim.fn.input("Breakpoint condition: ")) end'')
+        "Breakpoint Condition"
+      )
       (nmap "<leader>dc" (raw ''function() require("dap").continue() end'') "Continue")
       (nmap "<leader>dC" (raw ''function() require("dap").run_to_cursor() end'') "Run to Cursor")
       (nmap "<leader>dg" (raw ''function() require("dap").goto_() end'') "Go to Line (No Execute)")

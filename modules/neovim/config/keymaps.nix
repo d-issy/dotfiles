@@ -1,4 +1,4 @@
-{ ... }:
+_:
 
 let
   raw = __raw: { inherit __raw; };
@@ -18,7 +18,10 @@ in
   programs.nixvim.keymaps = [
     # basic
     (keymap "n" "<leader>w" "<cmd>w<cr>" "File Write")
-    (keymap [ "n" "t" ] "<leader>qq" (raw ''function() require("util.quit").all() end'') "Quit and Save All")
+    (keymap [
+      "n"
+      "t"
+    ] "<leader>qq" (raw ''function() require("util.quit").all() end'') "Quit and Save All")
     (keymap "n" "<leader>md" "<cmd>delmarks! | delmarks A-Z0-9<cr>" "Delete All Marks")
     (keymap "n" "<leader>bd" (raw ''function() require("util.buffer").delete() end'') "Buffer Delete")
     (keymap [ "i" "n" ] "<esc>" "<cmd>noh<cr><esc>" "esc")

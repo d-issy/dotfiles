@@ -1,7 +1,10 @@
 { pkgs, ... }:
 
 let
-  optionalPlugins = map (plugin: { inherit plugin; optional = true; });
+  optionalPlugins = map (plugin: {
+    inherit plugin;
+    optional = true;
+  });
 
   pickme-nvim = pkgs.vimUtils.buildVimPlugin {
     pname = "pickme.nvim";
@@ -34,7 +37,8 @@ in
     extraPlugins = [
       pickme-nvim
       pkgs.vimPlugins.plenary-nvim
-    ] ++ optionalPlugins [
+    ]
+    ++ optionalPlugins [
       markit-nvim
     ];
 

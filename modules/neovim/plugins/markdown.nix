@@ -1,13 +1,19 @@
-{ ... }:
+_:
 
 {
   programs.nixvim = {
     plugins = {
       render-markdown = {
         enable = true;
-        lazyLoad.settings.ft = [ "Avante" "markdown" ];
+        lazyLoad.settings.ft = [
+          "Avante"
+          "markdown"
+        ];
         settings = {
-          file_types = [ "Avante" "markdown" ];
+          file_types = [
+            "Avante"
+            "markdown"
+          ];
           heading = {
             sign = false;
             border = true;

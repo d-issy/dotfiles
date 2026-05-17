@@ -42,130 +42,343 @@ in
     '';
 
     highlightOverride = {
-      Normal = { fg = palette.text; bg = palette.base; };
+      Normal = {
+        fg = palette.text;
+        bg = palette.base;
+      };
 
-      CursorLine = { bg = palette.surface0; };
-      NCursorLine = { link = "CursorLine"; };
-      StatusLine = { fg = palette.surface2; bg = palette.surface2; };
-      StatusLineNC = { fg = palette.surface2; bg = palette.surface2; };
+      CursorLine = {
+        bg = palette.surface0;
+      };
+      NCursorLine = {
+        link = "CursorLine";
+      };
+      StatusLine = {
+        fg = palette.surface2;
+        bg = palette.surface2;
+      };
+      StatusLineNC = {
+        fg = palette.surface2;
+        bg = palette.surface2;
+      };
 
-      PMenu = { bg = palette.mantle; };
-      NormalFloat = { bg = palette.mantle; };
-      FloatBorder = { fg = palette.surface0; bg = palette.mantle; };
-      FloatTitle = { bg = palette.mantle; };
-      WinBar = { bg = palette.surface0; };
-      WinBarNC = { link = "WinBar"; };
+      PMenu = {
+        bg = palette.mantle;
+      };
+      NormalFloat = {
+        bg = palette.mantle;
+      };
+      FloatBorder = {
+        fg = palette.surface0;
+        bg = palette.mantle;
+      };
+      FloatTitle = {
+        bg = palette.mantle;
+      };
+      WinBar = {
+        bg = palette.surface0;
+      };
+      WinBarNC = {
+        link = "WinBar";
+      };
 
-      Visual = { bg = palette.surface0; };
-      Comment = { fg = palette.overlay0; };
-      Search = { fg = palette.yellow; };
-      CurSearch = { fg = palette.yellow; underline = true; };
+      Visual = {
+        bg = palette.surface0;
+      };
+      Comment = {
+        fg = palette.overlay0;
+      };
+      Search = {
+        fg = palette.yellow;
+      };
+      CurSearch = {
+        fg = palette.yellow;
+        underline = true;
+      };
 
-      Identifier = { fg = palette.text; };
-      Function = { fg = palette.text; };
-      Constant = { fg = palette.text; };
-      String = { fg = palette.text; };
-      Statement = { fg = palette.text; };
-      Variable = { fg = palette.text; };
-      PreProc = { fg = palette.text; };
-      Type = { fg = palette.text; };
-      Todo = { fg = palette.text; };
+      Identifier = {
+        fg = palette.text;
+      };
+      Function = {
+        fg = palette.text;
+      };
+      Constant = {
+        fg = palette.text;
+      };
+      String = {
+        fg = palette.text;
+      };
+      Statement = {
+        fg = palette.text;
+      };
+      Variable = {
+        fg = palette.text;
+      };
+      PreProc = {
+        fg = palette.text;
+      };
+      Type = {
+        fg = palette.text;
+      };
+      Todo = {
+        fg = palette.text;
+      };
 
-      Special = { fg = palette.overlay2; };
-      Keyword = { fg = palette.overlay2; };
-      Operator = { fg = palette.overlay2; };
+      Special = {
+        fg = palette.overlay2;
+      };
+      Keyword = {
+        fg = palette.overlay2;
+      };
+      Operator = {
+        fg = palette.overlay2;
+      };
 
-      LspInlayHint = { fg = palette.overlay0; };
+      LspInlayHint = {
+        fg = palette.overlay0;
+      };
 
-      "@punctuation" = { link = "Special"; };
-      "@variable" = { link = "Variable"; };
-      "@function.builtin" = { link = "Function"; };
-      "@constant.builtin" = { link = "Constant"; };
-      "@module" = { fg = palette.overlay0; };
-      "@lsp.mod.global" = { fg = palette.overlay0; };
-      "@lsp.mod.defaultLibrary" = { fg = palette.overlay0; };
-      "@lsp.typemod.keyword.documentation" = { fg = palette.text; };
-      "@lsp.type.type" = { fg = palette.overlay0; };
+      "@punctuation" = {
+        link = "Special";
+      };
+      "@variable" = {
+        link = "Variable";
+      };
+      "@function.builtin" = {
+        link = "Function";
+      };
+      "@constant.builtin" = {
+        link = "Constant";
+      };
+      "@module" = {
+        fg = palette.overlay0;
+      };
+      "@lsp.mod.global" = {
+        fg = palette.overlay0;
+      };
+      "@lsp.mod.defaultLibrary" = {
+        fg = palette.overlay0;
+      };
+      "@lsp.typemod.keyword.documentation" = {
+        fg = palette.text;
+      };
+      "@lsp.type.type" = {
+        fg = palette.overlay0;
+      };
 
-      "@variable.parameter.go" = { fg = palette.overlay0; };
-      "@property.go" = { fg = palette.overlay0; };
+      "@variable.parameter.go" = {
+        fg = palette.overlay0;
+      };
+      "@property.go" = {
+        fg = palette.overlay0;
+      };
 
-      "@lsp.type.namespace.python" = { fg = palette.text; };
+      "@lsp.type.namespace.python" = {
+        fg = palette.text;
+      };
 
-      "@type.builtin.sql" = { fg = palette.text; };
+      "@type.builtin.sql" = {
+        fg = palette.text;
+      };
 
-      "@markup.raw.block.markdown" = { bg = palette.mantle; };
+      "@markup.raw.block.markdown" = {
+        bg = palette.mantle;
+      };
 
-      DiagnosticError = { fg = palette.red; };
-      DiagnosticWarn = { fg = palette.yellow; };
-      DiagnosticInfo = { fg = palette.sapphire; };
-      DiagnosticHint = { fg = palette.sapphire; };
+      DiagnosticError = {
+        fg = palette.red;
+      };
+      DiagnosticWarn = {
+        fg = palette.yellow;
+      };
+      DiagnosticInfo = {
+        fg = palette.sapphire;
+      };
+      DiagnosticHint = {
+        fg = palette.sapphire;
+      };
 
-      DiagnosticUnderlineError = { fg = palette.red; underline = true; };
-      DiagnosticUnderlineWarn = { fg = palette.yellow; };
-      DiagnosticUnderlineInfo = { underline = true; };
-      DiagnosticUnderlineHint = { underline = true; };
+      DiagnosticUnderlineError = {
+        fg = palette.red;
+        underline = true;
+      };
+      DiagnosticUnderlineWarn = {
+        fg = palette.yellow;
+      };
+      DiagnosticUnderlineInfo = {
+        underline = true;
+      };
+      DiagnosticUnderlineHint = {
+        underline = true;
+      };
 
-      DiagnosticUnnecessary = { underline = true; };
-      DiagnosticDeprecated = { underline = true; };
+      DiagnosticUnnecessary = {
+        underline = true;
+      };
+      DiagnosticDeprecated = {
+        underline = true;
+      };
 
-      BlinkCmpDoc = { fg = palette.base; };
-      BlinkCmpDocBorder = { fg = palette.overlay0; };
-      BlinkCmpGhostText = { fg = palette.overlay2; };
+      BlinkCmpDoc = {
+        fg = palette.base;
+      };
+      BlinkCmpDocBorder = {
+        fg = palette.overlay0;
+      };
+      BlinkCmpGhostText = {
+        fg = palette.overlay2;
+      };
 
-      BlinkCmpLabel = { fg = palette.text; bg = palette.none; };
-      BlinkCmpLabelDeprecated = { link = "DiagnosticDeprecated"; };
+      BlinkCmpLabel = {
+        fg = palette.text;
+        bg = palette.none;
+      };
+      BlinkCmpLabelDeprecated = {
+        link = "DiagnosticDeprecated";
+      };
 
-      BlinkCmpMenu = { bg = palette.none; };
+      BlinkCmpMenu = {
+        bg = palette.none;
+      };
 
-      BlinkCmpKind = { bg = palette.none; };
-      BlinkCmpKindCopilot = { fg = "#6cc644"; bg = palette.none; };
+      BlinkCmpKind = {
+        bg = palette.none;
+      };
+      BlinkCmpKindCopilot = {
+        fg = "#6cc644";
+        bg = palette.none;
+      };
 
-      ComplHint = { fg = palette.overlay2; };
-      ComplHintMore = { fg = palette.sapphire; };
+      ComplHint = {
+        fg = palette.overlay2;
+      };
+      ComplHintMore = {
+        fg = palette.sapphire;
+      };
 
-      CopilotSuggestion = { fg = palette.overlay2; };
-      CopilotAnnotation = { fg = palette.overlay1; };
+      CopilotSuggestion = {
+        fg = palette.overlay2;
+      };
+      CopilotAnnotation = {
+        fg = palette.overlay1;
+      };
 
-      Directory = { fg = palette.sapphire; };
+      Directory = {
+        fg = palette.sapphire;
+      };
 
-      GitSignsAdd = { fg = palette.green; };
-      GitSignsChange = { fg = palette.peach; };
-      GitSignsDelete = { fg = palette.red; };
+      GitSignsAdd = {
+        fg = palette.green;
+      };
+      GitSignsChange = {
+        fg = palette.peach;
+      };
+      GitSignsDelete = {
+        fg = palette.red;
+      };
 
-      MiniIconsAzure = { fg = palette.sapphire; };
-      MiniIconsBlue = { fg = palette.blue; };
-      MiniIconsCyan = { fg = palette.sapphire; };
-      MiniIconsGreen = { fg = palette.green; };
-      MiniIconsGrey = { fg = palette.overlay0; };
-      MiniIconsOrange = { fg = palette.peach; };
-      MiniIconsPurple = { fg = palette.pink; };
-      MiniIconsRed = { fg = palette.red; };
-      MiniIconsYellow = { fg = palette.yellow; };
+      MiniIconsAzure = {
+        fg = palette.sapphire;
+      };
+      MiniIconsBlue = {
+        fg = palette.blue;
+      };
+      MiniIconsCyan = {
+        fg = palette.sapphire;
+      };
+      MiniIconsGreen = {
+        fg = palette.green;
+      };
+      MiniIconsGrey = {
+        fg = palette.overlay0;
+      };
+      MiniIconsOrange = {
+        fg = palette.peach;
+      };
+      MiniIconsPurple = {
+        fg = palette.pink;
+      };
+      MiniIconsRed = {
+        fg = palette.red;
+      };
+      MiniIconsYellow = {
+        fg = palette.yellow;
+      };
 
-      TreeSitterContext = { bg = palette.surface1; };
+      TreeSitterContext = {
+        bg = palette.surface1;
+      };
 
-      RenderMarkdownCode = { bg = palette.mantle; };
-      RenderMarkdownCodeInline = { bg = palette.mantle; };
-      RenderMarkdownH1Bg = { fg = palette.blue; bg = palette.surface0; };
-      RenderMarkdownH2Bg = { fg = palette.yellow; bg = palette.surface0; };
-      RenderMarkdownH3Bg = { fg = palette.green; bg = palette.surface0; };
-      RenderMarkdownH4Bg = { fg = palette.teal; bg = palette.surface0; };
-      RenderMarkdownH5Bg = { fg = palette.mauve; bg = palette.surface0; };
-      RenderMarkdownH6Bg = { fg = palette.pink; bg = palette.surface0; };
+      RenderMarkdownCode = {
+        bg = palette.mantle;
+      };
+      RenderMarkdownCodeInline = {
+        bg = palette.mantle;
+      };
+      RenderMarkdownH1Bg = {
+        fg = palette.blue;
+        bg = palette.surface0;
+      };
+      RenderMarkdownH2Bg = {
+        fg = palette.yellow;
+        bg = palette.surface0;
+      };
+      RenderMarkdownH3Bg = {
+        fg = palette.green;
+        bg = palette.surface0;
+      };
+      RenderMarkdownH4Bg = {
+        fg = palette.teal;
+        bg = palette.surface0;
+      };
+      RenderMarkdownH5Bg = {
+        fg = palette.mauve;
+        bg = palette.surface0;
+      };
+      RenderMarkdownH6Bg = {
+        fg = palette.pink;
+        bg = palette.surface0;
+      };
 
-      SnacksPickerBorder = { fg = palette.base; bg = palette.base; };
-      SnacksDiffAdd = { fg = palette.green; };
-      SnacksDiffDelete = { fg = palette.red; };
-      SnacksDiffContext = { fg = palette.overlay0; };
-      SnacksDiffAddLineNr = { fg = palette.green; };
-      SnacksDiffDeleteLineNr = { fg = palette.red; };
-      SnacksDiffContextLineNr = { fg = palette.overlay0; };
+      SnacksPickerBorder = {
+        fg = palette.base;
+        bg = palette.base;
+      };
+      SnacksDiffAdd = {
+        fg = palette.green;
+      };
+      SnacksDiffDelete = {
+        fg = palette.red;
+      };
+      SnacksDiffContext = {
+        fg = palette.overlay0;
+      };
+      SnacksDiffAddLineNr = {
+        fg = palette.green;
+      };
+      SnacksDiffDeleteLineNr = {
+        fg = palette.red;
+      };
+      SnacksDiffContextLineNr = {
+        fg = palette.overlay0;
+      };
 
-      DiffAdd = { fg = palette.base; bg = palette.green; };
-      DiffChange = { fg = palette.base; bg = palette.yellow; };
-      DiffDelete = { fg = palette.base; bg = palette.red; };
-      DiffText = { fg = palette.base; bg = palette.peach; };
+      DiffAdd = {
+        fg = palette.base;
+        bg = palette.green;
+      };
+      DiffChange = {
+        fg = palette.base;
+        bg = palette.yellow;
+      };
+      DiffDelete = {
+        fg = palette.base;
+        bg = palette.red;
+      };
+      DiffText = {
+        fg = palette.base;
+        bg = palette.peach;
+      };
     };
   };
 }

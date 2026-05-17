@@ -1,4 +1,4 @@
-{ ... }:
+_:
 
 let
   raw = __raw: { inherit __raw; };
@@ -119,10 +119,28 @@ in
         toggle.enabled = true;
         words.enabled = true;
         styles.input.keys = {
-          i_esc = [ "<esc>" "stopinsert" { mode = "i"; } ];
-          i_cr = [ "<cr>" "confirm" { mode = "i"; } ];
-          i_tab = [ "<tab>" [ "cmp_select_next" "cmp" ] { mode = "i"; } ];
-          cr = [ "<cr>" [ "confirm" ] ];
+          i_esc = [
+            "<esc>"
+            "stopinsert"
+            { mode = "i"; }
+          ];
+          i_cr = [
+            "<cr>"
+            "confirm"
+            { mode = "i"; }
+          ];
+          i_tab = [
+            "<tab>"
+            [
+              "cmp_select_next"
+              "cmp"
+            ]
+            { mode = "i"; }
+          ];
+          cr = [
+            "<cr>"
+            [ "confirm" ]
+          ];
           q = "cancel";
         };
       };
@@ -179,10 +197,13 @@ in
       (keymap "n" "<leader>cD" (snacks "picker.diagnostics()") "Diagnostic (Workspace)")
       (keymap "n" "<leader>cS" (snacks "picker.lsp_workspace_symbols()") "LSP Symbols (Workspace)")
       (keymap "n" "<leader>cR" (snacks "rename.rename_file()") "File Rename")
-      (keymap "n" "<leader>ca" (raw ''function() vim.lsp.buf.code_action() end'') "LSP Code Action")
-      (keymap "n" "<leader>cr" (raw ''function() vim.lsp.buf.rename() end'') "LSP Rename")
+      (keymap "n" "<leader>ca" (raw "function() vim.lsp.buf.code_action() end") "LSP Code Action")
+      (keymap "n" "<leader>cr" (raw "function() vim.lsp.buf.rename() end") "LSP Rename")
       (keymap "n" "<leader>ft" (snacks "picker.todo_comments()") "Todo")
-      (keymap "n" "<leader>fT" (snacks ''picker.todo_comments({ keywords = { "TODO", "FIX", "FIXME" } })'') "Todo/Fix/Fixme")
+      (keymap "n" "<leader>fT"
+        (snacks ''picker.todo_comments({ keywords = { "TODO", "FIX", "FIXME" } })'')
+        "Todo/Fix/Fixme"
+      )
       (keymap [ "n" "v" ] "<leader>gB" (snacks ''gitbrowse.open({ what = "commit" })'') "Open commit")
     ];
   };

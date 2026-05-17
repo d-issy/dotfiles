@@ -1,4 +1,4 @@
-{ ... }:
+_:
 
 let
   raw = __raw: { inherit __raw; };
@@ -71,7 +71,10 @@ in
             end
           '';
 
-          go = [ "goimports" "gofumpt" ];
+          go = [
+            "goimports"
+            "gofumpt"
+          ];
           json = [ "jq" ];
           lua = [ "stylua" ];
           rust = [ "rustfmt" ];
@@ -118,9 +121,16 @@ in
     };
 
     keymaps = [
-      (keymap [ "n" "v" ] "<leader>cf" (raw ''function() require("conform").format({ async = true }) end'') "Format Buffer")
-      (keymap "n" "<leader>uf" (raw ''function() require("util.format").toggle(true) end'') "Toggle Buffer AutoFormat")
-      (keymap "n" "<leader>uF" (raw ''function() require("util.format").toggle() end'') "Toggle Global AutoFormat")
+      (keymap [
+        "n"
+        "v"
+      ] "<leader>cf" (raw ''function() require("conform").format({ async = true }) end'') "Format Buffer")
+      (keymap "n" "<leader>uf" (raw ''function() require("util.format").toggle(true) end'')
+        "Toggle Buffer AutoFormat"
+      )
+      (keymap "n" "<leader>uF" (raw ''function() require("util.format").toggle() end'')
+        "Toggle Global AutoFormat"
+      )
     ];
   };
 }

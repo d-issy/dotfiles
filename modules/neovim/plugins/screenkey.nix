@@ -1,7 +1,10 @@
 { pkgs, ... }:
 
 let
-  optionalPlugins = map (plugin: { inherit plugin; optional = true; });
+  optionalPlugins = map (plugin: {
+    inherit plugin;
+    optional = true;
+  });
 
   screenkey-nvim = pkgs.vimUtils.buildVimPlugin {
     pname = "screenkey.nvim";

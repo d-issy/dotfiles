@@ -1,4 +1,4 @@
-{ ... }:
+_:
 
 let
   raw = __raw: { inherit __raw; };

@@ -1,10 +1,14 @@
-{ ... }:
+_:
 
 let
   raw = __raw: { inherit __raw; };
   keymap = mode: key: action: desc: {
     inherit mode key action;
-    options = { inherit desc; silent = true; noremap = true; };
+    options = {
+      inherit desc;
+      silent = true;
+      noremap = true;
+    };
   };
 in
 {
@@ -56,13 +60,21 @@ in
           {
             __unkeyed-1 = "<leader>j";
             __unkeyed-3.__raw = ''function() require("flash").jump() end'';
-            mode = [ "n" "o" "x" ];
+            mode = [
+              "n"
+              "o"
+              "x"
+            ];
             desc = "Flash";
           }
           {
             __unkeyed-1 = "<leader>J";
             __unkeyed-3.__raw = ''function() require("flash").treesitter() end'';
-            mode = [ "n" "o" "x" ];
+            mode = [
+              "n"
+              "o"
+              "x"
+            ];
             desc = "Flash Treesitter";
           }
         ];
@@ -82,36 +94,120 @@ in
           ];
           spec = [
             {
-              mode = [ "n" "v" ];
+              mode = [
+                "n"
+                "v"
+              ];
               __unkeyed-1 = [
-                { __unkeyed-1 = "g"; group = "goto"; }
-                { __unkeyed-1 = "gs"; group = "surround"; }
-                { __unkeyed-1 = "z"; group = "fold"; }
-                { __unkeyed-1 = "]"; group = "next"; }
-                { __unkeyed-1 = "["; group = "prev"; }
-                { __unkeyed-1 = "<leader><tab>"; group = "terminal"; }
-                { __unkeyed-1 = "<leader>a"; group = "ai"; }
-                { __unkeyed-1 = "<leader>b"; group = "buffer"; }
-                { __unkeyed-1 = "<leader>c"; group = "code"; }
-                { __unkeyed-1 = "<leader>f"; group = "find"; }
-                { __unkeyed-1 = "<leader>g"; group = "git"; }
-                { __unkeyed-1 = "<leader>gh"; group = "hunks"; }
-                { __unkeyed-1 = "<leader>q"; group = "quit/session"; }
-                { __unkeyed-1 = "<leader>t"; group = "test"; }
-                { __unkeyed-1 = "<leader>u"; group = "ui"; }
+                {
+                  __unkeyed-1 = "g";
+                  group = "goto";
+                }
+                {
+                  __unkeyed-1 = "gs";
+                  group = "surround";
+                }
+                {
+                  __unkeyed-1 = "z";
+                  group = "fold";
+                }
+                {
+                  __unkeyed-1 = "]";
+                  group = "next";
+                }
+                {
+                  __unkeyed-1 = "[";
+                  group = "prev";
+                }
+                {
+                  __unkeyed-1 = "<leader><tab>";
+                  group = "terminal";
+                }
+                {
+                  __unkeyed-1 = "<leader>a";
+                  group = "ai";
+                }
+                {
+                  __unkeyed-1 = "<leader>b";
+                  group = "buffer";
+                }
+                {
+                  __unkeyed-1 = "<leader>c";
+                  group = "code";
+                }
+                {
+                  __unkeyed-1 = "<leader>f";
+                  group = "find";
+                }
+                {
+                  __unkeyed-1 = "<leader>g";
+                  group = "git";
+                }
+                {
+                  __unkeyed-1 = "<leader>gh";
+                  group = "hunks";
+                }
+                {
+                  __unkeyed-1 = "<leader>q";
+                  group = "quit/session";
+                }
+                {
+                  __unkeyed-1 = "<leader>t";
+                  group = "test";
+                }
+                {
+                  __unkeyed-1 = "<leader>u";
+                  group = "ui";
+                }
               ];
             }
           ];
           icons.rules = [
-            { pattern = "ai"; icon = "󰭆"; color = "grey"; }
-            { pattern = "blame"; cat = "filetype"; name = "git"; }
-            { pattern = "commit"; cat = "filetype"; name = "git"; }
-            { pattern = "delete"; icon = "󰆴"; color = "red"; }
-            { pattern = "hunk"; cat = "filetype"; name = "git"; }
-            { plugin = "CopilotChat.nvim"; icon = ""; color = "grey"; }
-            { plugin = "gitsigns.nvim"; cat = "filetype"; name = "git"; }
-            { plugin = "grug-far.nvim"; icon = "󰛔 "; color = "blue"; }
-            { plugin = "mini.files"; cat = "filetype"; name = "netrw"; }
+            {
+              pattern = "ai";
+              icon = "󰭆";
+              color = "grey";
+            }
+            {
+              pattern = "blame";
+              cat = "filetype";
+              name = "git";
+            }
+            {
+              pattern = "commit";
+              cat = "filetype";
+              name = "git";
+            }
+            {
+              pattern = "delete";
+              icon = "󰆴";
+              color = "red";
+            }
+            {
+              pattern = "hunk";
+              cat = "filetype";
+              name = "git";
+            }
+            {
+              plugin = "CopilotChat.nvim";
+              icon = "";
+              color = "grey";
+            }
+            {
+              plugin = "gitsigns.nvim";
+              cat = "filetype";
+              name = "git";
+            }
+            {
+              plugin = "grug-far.nvim";
+              icon = "󰛔 ";
+              color = "blue";
+            }
+            {
+              plugin = "mini.files";
+              cat = "filetype";
+              name = "netrw";
+            }
           ];
           win.border = "rounded";
         };
@@ -134,7 +230,9 @@ in
       (keymap "n" "]b" "<cmd>BufferLineCycleNext<cr>" "Next Buffer")
       (keymap "n" "[B" "<cmd>BufferLineMovePrev<cr>" "Move buffer prev")
       (keymap "n" "]B" "<cmd>BufferLineMoveNext<cr>" "Move buffer next")
-      (keymap "n" "<leader>?" (raw ''function() require("which-key").show({ global = false }) end'') "Buffer Keymaps (which-key)")
+      (keymap "n" "<leader>?" (raw ''function() require("which-key").show({ global = false }) end'')
+        "Buffer Keymaps (which-key)"
+      )
     ];
   };
 }

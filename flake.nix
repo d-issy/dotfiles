@@ -14,18 +14,23 @@
   };
 
   outputs =
-    { nixpkgs
-    , home-manager
-    , nixvim
-    , ...
+    {
+      nixpkgs,
+      home-manager,
+      nixvim,
+      ...
     }:
     let
-      mkPkgs = system: import nixpkgs {
-        inherit system;
-        config.allowUnfreePredicate = pkg: builtins.elem (nixpkgs.lib.getName pkg) [
-          "copilot-language-server"
-        ];
-      };
+      mkPkgs =
+        system:
+        import nixpkgs {
+          inherit system;
+          config.allowUnfreePredicate =
+            pkg:
+            builtins.elem (nixpkgs.lib.getName pkg) [
+              "copilot-language-server"
+            ];
+        };
     in
     {
       packages = {

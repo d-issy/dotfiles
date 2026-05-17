@@ -1,4 +1,4 @@
-{ ... }:
+_:
 
 {
   programs.nixvim.lsp.servers.typos_lsp = {
