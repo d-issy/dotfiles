@@ -19,7 +19,7 @@ function M.with(level, msg, title)
   if msg == "" then
     return
   end
-  vim.api.nvim_notify(msg, M.levels[level], { title = title })
+  vim.notify(msg, M.levels[level], { title = title })
 end
 
 --- @param msg string

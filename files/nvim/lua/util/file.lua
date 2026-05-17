@@ -20,7 +20,7 @@ M.disable_futures_for_bigfile = function(buf)
 
   -- disable lsp
   vim.api.nvim_create_autocmd("LspAttach", {
-    buffer = buf,
+    buf = buf,
     callback = function(args)
       vim.schedule(function()
         local client = vim.lsp.get_client_by_id(args.data.client_id)

@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ ... }:
 
 {
   imports = [
@@ -23,11 +23,5 @@
     ./ui.nix
   ];
 
-  programs.nixvim = {
-    plugins.lz-n.enable = true;
-
-    extraPlugins = [
-      pkgs.vimPlugins.lazy-nvim
-    ];
-  };
+  programs.nixvim.plugins.lz-n.enable = true;
 }

@@ -18,7 +18,7 @@ in
         group = "highlight_yank";
         callback = raw ''
           function()
-            vim.highlight.on_yank()
+            vim.hl.on_yank()
           end
         '';
       }
@@ -37,7 +37,7 @@ in
         callback = raw ''
           function(event)
             vim.bo[event.buf].buflisted = false
-            vim.keymap.set("n", "q", "<cmd>close<cr>", { buffer = event.buf, silent = true })
+            vim.keymap.set("n", "q", "<cmd>close<cr>", { buf = event.buf, silent = true })
           end
         '';
       }

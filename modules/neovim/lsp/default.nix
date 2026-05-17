@@ -25,7 +25,7 @@ in
         (lspKeymap "]d" (raw ''function() vim.diagnostic.jump({ count = 1 }) end'') "LSP Next Diagnostic")
         (lspKeymap "K" (raw ''function() vim.lsp.buf.hover({ border = "rounded" }) end'') "LSP Hover")
         (lspKeymap "<leader>cc" (raw ''vim.lsp.codelens.run'') "Run Codelens")
-        (lspKeymap "<leader>cC" (raw ''vim.lsp.codelens.refresh'') "Run Codelens (Refresh)")
+        (lspKeymap "<leader>cC" (raw ''function() vim.lsp.codelens.enable(true) end'') "Run Codelens (Refresh)")
       ];
     };
 
@@ -88,7 +88,7 @@ in
 
             if next(chars) then
               vim.api.nvim_create_autocmd("InsertCharPre", {
-                buffer = args.buf,
+                buf = args.buf,
                 callback = function()
                   local ch = vim.v.char
                   if ch == ")" or ch == "]" or ch == "}" then
@@ -100,7 +100,7 @@ in
               })
 
               vim.api.nvim_create_autocmd("TextChangedI", {
-                buffer = args.buf,
+                buf = args.buf,
                 callback = function()
                   if not sig_win() then return end
                   local params = vim.lsp.util.make_position_params(0, client.offset_encoding)

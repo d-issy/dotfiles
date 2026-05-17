@@ -47,9 +47,6 @@ in
     (keymap "t" "<c-w>k" "<c-\\><c-n><c-w>k" "Up")
     (keymap "t" "<c-w>l" "<c-\\><c-n><c-w>l" "Right")
 
-    # lazynvim
-    (keymap "n" "<leader>l" "<cmd>Lazy<cr>" "Lazy")
-
     # lazygit
     (keymap "n" "<leader>gg" (raw ''function() require("util.lazygit").open() end'') "Lazygit")
     (keymap "n" "<leader>gl" (raw ''function() require("util.lazygit").commit_log() end'') "Commit Log")

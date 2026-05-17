@@ -28,7 +28,7 @@
 
           local map = function(mode, key, action, desc)
             vim.keymap.set(mode, key, action, {
-              buffer = buffer,
+              buf = buffer,
               desc = desc,
               noremap = true,
               silent = true,
