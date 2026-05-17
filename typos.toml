@@ -1,7 +1,6 @@
 [files]
 extend-exclude = [
   ".git/",
-  "files/nvim/lazy-lock.json",
 ]
 ignore-hidden = false
 
