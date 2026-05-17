@@ -8,10 +8,20 @@ end
 local function js_ts_formatter(buf)
   local fname = vim.api.nvim_buf_get_name(buf)
   local dir = fname ~= "" and vim.fs.dirname(fname) or vim.uv.cwd()
-  local found = vim.fs.find({ "biome.json", "biome.jsonc" }, { upward = true, path = dir })
-  if #found > 0 then
+
+  -- oxfmt
+  local oxfmt = vim.fs.find({ ".oxfmtrc.json", ".oxfmtrc.jsonc" }, { upward = true, path = dir })
+  if #oxfmt > 0 then
+    return { "oxfmt" }
+  end
+
+  -- biome
+  local biome = vim.fs.find({ "biome.json", "biome.jsonc" }, { upward = true, path = dir })
+  if #biome > 0 then
     return { "biome" }
   end
+
+  -- prettier
   return { "prettierd", "prettier", stop_after_first = true }
 end
 
@@ -26,6 +36,13 @@ return {
       async = false,
       quiet = false,
       lsp_format = "fallback",
+    },
+    formatters = {
+      oxfmt = {
+        command = "oxfmt",
+        args = { "--stdin-filepath", "$FILENAME" },
+        stdin = true,
+      },
     },
     formatters_by_ft = {
       ["python"] = python_formatter,

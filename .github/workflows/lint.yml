@@ -70,8 +70,8 @@ jobs:
           restore-prefixes-first-match: nix-stylua-${{ runner.os }}-
       - run: nix run nixpkgs#stylua -- --check files/
 
-  biome:
-    name: biome
+  oxlint:
+    name: oxlint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -81,7 +81,20 @@ jobs:
           node-version: lts/*
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm exec biome check .
+      - run: pnpm exec oxlint
+
+  oxfmt:
+    name: oxfmt
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: lts/*
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec oxfmt --check
 
   tsc:
     name: tsc
