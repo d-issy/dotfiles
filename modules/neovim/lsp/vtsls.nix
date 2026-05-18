@@ -34,14 +34,14 @@ in
         typescript = {
           updateImportsOnFileMove.enabled = "always";
           suggest.completeFunctionCalls = true;
-          inlayHints = inlayHints;
           preferences.importModuleSpecifier = "non-relative";
+          inherit inlayHints;
         };
 
         javascript = {
           updateImportsOnFileMove.enabled = "always";
           suggest.completeFunctionCalls = true;
-          inlayHints = inlayHints;
+          inherit inlayHints;
         };
       };
     };

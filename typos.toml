@@ -1,8 +1,9 @@
 [files]
-extend-exclude = [".git/", ".direnv/", ".pnpm-store/", "node_modules/"]
+extend-exclude = [".git/", ".direnv/", ".pnpm-store/", "node_modules/", ".oxlintrc.json"]
 ignore-hidden = false
 
 [default.extend-words]
 iterm = "iterm"
 noice = "noice"
 thm = "thm"
+
