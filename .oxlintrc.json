@@ -1,11 +1,17 @@
 {
   "plugins": [
+    "eslint",
     "typescript",
     "unicorn",
-    "oxc"
+    "oxc",
+    "import",
+    "node",
+    "promise"
   ],
   "categories": {
-    "correctness": "error"
+    "correctness": "error",
+    "suspicious": "error",
+    "perf": "warn"
   },
   "rules": {
     "typescript/no-explicit-any": "error",

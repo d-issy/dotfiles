@@ -87,11 +87,12 @@ export default function rmTool(pi: ExtensionAPI): void {
 			);
 
 			const recursive = params.recursive ?? false;
-			const removed: string[] = [];
-			for (const { absolute, display } of targets) {
-				await remove(absolute, { recursive, force: false });
-				removed.push(display);
-			}
+			const removed = await Promise.all(
+				targets.map(async ({ absolute, display }) => {
+					await remove(absolute, { recursive, force: false });
+					return display;
+				}),
+			);
 
 			return {
 				content: [

@@ -128,26 +128,29 @@ export default function mvTool(pi: ExtensionAPI): void {
 				}
 			}
 
-			for (const { source, destination } of moves) {
-				await assertNoIgnoredDescendants(fsCtx, source, OPERATION);
-				await assertRepoPathAllowed(fsCtx, destination, OPERATION_TO);
-				if (await destinationExists(destination)) {
-					throw new ToolError(
-						"destination_exists",
-						OPERATION_TO,
-						displayRepoPath(ctx.cwd, destination),
-					);
-				}
-			}
+			await Promise.all(
+				moves.map(async ({ source, destination }) => {
+					await assertNoIgnoredDescendants(fsCtx, source, OPERATION);
+					await assertRepoPathAllowed(fsCtx, destination, OPERATION_TO);
+					if (await destinationExists(destination)) {
+						throw new ToolError(
+							"destination_exists",
+							OPERATION_TO,
+							displayRepoPath(ctx.cwd, destination),
+						);
+					}
+				}),
+			);
 
-			const results: { source: string; destination: string }[] = [];
-			for (const { source, destination } of moves) {
-				await rename(source, destination);
-				results.push({
-					source: displayRepoPath(ctx.cwd, source),
-					destination: displayRepoPath(ctx.cwd, destination),
-				});
-			}
+			const results = await Promise.all(
+				moves.map(async ({ source, destination }) => {
+					await rename(source, destination);
+					return {
+						source: displayRepoPath(ctx.cwd, source),
+						destination: displayRepoPath(ctx.cwd, destination),
+					};
+				}),
+			);
 
 			return {
 				content: [

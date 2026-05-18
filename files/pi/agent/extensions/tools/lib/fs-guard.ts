@@ -1,32 +1,29 @@
-import { lstat, readFile, readdir } from "node:fs/promises";
+import { execFile } from "node:child_process";
+import { lstat, readdir } from "node:fs/promises";
 import { dirname, relative, resolve, sep } from "node:path";
+import { promisify } from "node:util";
 import { ToolError, isErrnoCode } from "./errors.js";
 
-type GitignoreRule = {
-	baseDir: string;
-	pattern: string;
-	negated: boolean;
-	directoryOnly: boolean;
-	anchored: boolean;
-};
-
-type RulesCache = Map<string, GitignoreRule[]>;
+type IgnoreCache = Map<string, boolean>;
 
 export type FsGuardContext = {
 	cwd: string;
 	repoRoot: string;
-	rulesCache: RulesCache;
+	isGitRepo: boolean;
+	ignoreCache: IgnoreCache;
 };
 
-const REGEX_CACHE = new Map<string, RegExp>();
+const execFileAsync = promisify(execFile);
 
 export async function createFsGuardContext(
 	cwd: string,
 ): Promise<FsGuardContext> {
+	const repoRoot = await findRepositoryRoot(cwd);
 	return {
 		cwd,
-		repoRoot: await findRepositoryRoot(cwd),
-		rulesCache: new Map(),
+		repoRoot: repoRoot ?? resolve(cwd),
+		isGitRepo: repoRoot !== undefined,
+		ignoreCache: new Map(),
 	};
 }
 
@@ -52,13 +49,7 @@ export async function assertRepoPathAllowed(
 	absolutePath: string,
 	operation: string,
 ): Promise<void> {
-	await assertRepoPathAllowedInRoot(
-		ctx.repoRoot,
-		ctx.cwd,
-		absolutePath,
-		operation,
-		ctx.rulesCache,
-	);
+	await assertRepoPathAllowedInRoot(ctx, absolutePath, operation);
 }
 
 export async function assertNoIgnoredDescendants(
@@ -66,52 +57,36 @@ export async function assertNoIgnoredDescendants(
 	absolutePath: string,
 	operation: string,
 ): Promise<void> {
-	await walkAllowedDescendants(
-		ctx.repoRoot,
-		ctx.cwd,
-		absolutePath,
-		operation,
-		ctx.rulesCache,
-	);
+	await walkAllowedDescendants(ctx, absolutePath, operation);
 }
 
 async function assertRepoPathAllowedInRoot(
-	repoRoot: string,
-	cwd: string,
+	ctx: FsGuardContext,
 	absolutePath: string,
 	operation: string,
-	cache: RulesCache,
 ): Promise<void> {
-	const displayPath = displayRepoPath(cwd, absolutePath);
+	const displayPath = displayRepoPath(ctx.cwd, absolutePath);
 
-	if (!isInside(repoRoot, absolutePath)) {
+	if (!isInside(ctx.repoRoot, absolutePath)) {
 		throw new ToolError("outside_repo", operation, absolutePath);
 	}
 
-	const relPath = toPosix(relative(repoRoot, absolutePath));
+	const relPath = toPosix(relative(ctx.repoRoot, absolutePath));
 	if (relPath === ".git" || relPath.startsWith(".git/")) {
 		throw new ToolError("inside_git", operation, relPath);
 	}
 
-	if (await isIgnoredByGitignore(repoRoot, absolutePath, cache)) {
+	if (await isIgnoredByGitignore(ctx, absolutePath)) {
 		throw new ToolError("ignored", operation, displayPath);
 	}
 }
 
 async function walkAllowedDescendants(
-	repoRoot: string,
-	cwd: string,
+	ctx: FsGuardContext,
 	absolutePath: string,
 	operation: string,
-	cache: RulesCache,
 ): Promise<void> {
-	await assertRepoPathAllowedInRoot(
-		repoRoot,
-		cwd,
-		absolutePath,
-		operation,
-		cache,
-	);
+	await assertRepoPathAllowedInRoot(ctx, absolutePath, operation);
 	let stat;
 	try {
 		stat = await lstat(absolutePath);
@@ -120,7 +95,7 @@ async function walkAllowedDescendants(
 			throw new ToolError(
 				"not_found",
 				operation,
-				displayRepoPath(cwd, absolutePath),
+				displayRepoPath(ctx.cwd, absolutePath),
 			);
 		}
 		throw error;
@@ -130,29 +105,33 @@ async function walkAllowedDescendants(
 	const entries = await readdir(absolutePath);
 	await Promise.all(
 		entries.map((entry) =>
-			walkAllowedDescendants(
-				repoRoot,
-				cwd,
-				resolve(absolutePath, entry),
-				operation,
-				cache,
-			),
+			walkAllowedDescendants(ctx, resolve(absolutePath, entry), operation),
 		),
 	);
 }
 
-async function findRepositoryRoot(cwd: string): Promise<string> {
+async function findRepositoryRoot(cwd: string): Promise<string | undefined> {
+	const candidates: string[] = [];
 	let dir = resolve(cwd);
 	while (true) {
-		try {
-			await lstat(resolve(dir, ".git"));
-			return dir;
-		} catch {
-			const parent = dirname(dir);
-			if (parent === dir) return resolve(cwd);
-			dir = parent;
-		}
+		candidates.push(dir);
+		const parent = dirname(dir);
+		if (parent === dir) break;
+		dir = parent;
 	}
+
+	const results = await Promise.all(
+		candidates.map(async (candidate) => {
+			try {
+				await lstat(resolve(candidate, ".git"));
+				return candidate;
+			} catch {
+				return undefined;
+			}
+		}),
+	);
+
+	return results.find((r) => r !== undefined);
 }
 
 function isInside(root: string, path: string): boolean {
@@ -169,155 +148,35 @@ function toPosix(path: string): string {
 }
 
 async function isIgnoredByGitignore(
-	repoRoot: string,
+	ctx: FsGuardContext,
 	absolutePath: string,
-	cache: RulesCache,
 ): Promise<boolean> {
-	const relPath = toPosix(relative(repoRoot, absolutePath));
+	if (!ctx.isGitRepo) return false;
+
+	const relPath = toPosix(relative(ctx.repoRoot, absolutePath));
 	if (!relPath || isRelativeOutside(relPath)) return false;
 
-	const rules = await collectRulesForPath(repoRoot, absolutePath, cache);
+	const cached = ctx.ignoreCache.get(relPath);
+	if (cached !== undefined) return cached;
+
 	let ignored = false;
-	for (const rule of rules) {
-		if (!matchesRule(repoRoot, relPath, rule)) continue;
-		ignored = !rule.negated;
+	try {
+		await execFileAsync("git", ["check-ignore", "--quiet", "--", relPath], {
+			cwd: ctx.repoRoot,
+		});
+		ignored = true;
+	} catch (error) {
+		if (!isExitCode(error, 1)) throw error;
 	}
+	ctx.ignoreCache.set(relPath, ignored);
 	return ignored;
 }
 
-async function collectRulesForPath(
-	repoRoot: string,
-	absolutePath: string,
-	cache: RulesCache,
-): Promise<GitignoreRule[]> {
-	const relPath = toPosix(relative(repoRoot, absolutePath));
-	const parts = relPath.split("/").filter(Boolean);
-	const dirs = [""];
-	for (let i = 0; i < parts.length - 1; i++) {
-		dirs.push(parts.slice(0, i + 1).join("/"));
-	}
-
-	const rules: GitignoreRule[] = [];
-	for (const dir of dirs) {
-		rules.push(...(await loadGitignoreInDir(repoRoot, dir, cache)));
-	}
-	return rules;
-}
-
-async function loadGitignoreInDir(
-	repoRoot: string,
-	baseDir: string,
-	cache: RulesCache,
-): Promise<GitignoreRule[]> {
-	const cached = cache.get(baseDir);
-	if (cached) return cached;
-	let rules: GitignoreRule[] = [];
-	try {
-		const content = await readFile(
-			resolve(repoRoot, baseDir, ".gitignore"),
-			"utf8",
-		);
-		rules = parseGitignore(content, baseDir);
-	} catch {
-		// Missing .gitignore at this level is normal; treat as no rules.
-	}
-	cache.set(baseDir, rules);
-	return rules;
-}
-
-function parseGitignore(content: string, baseDir: string): GitignoreRule[] {
-	const rules: GitignoreRule[] = [];
-	for (const rawLine of content.split(/\r?\n/)) {
-		let line = rawLine.trim();
-		if (!line || line.startsWith("#")) continue;
-
-		let negated = false;
-		if (line.startsWith("!")) {
-			negated = true;
-			line = line.slice(1);
-		}
-		line = line.replace(/^\\#/, "#").replace(/^\\!/, "!");
-		if (!line) continue;
-
-		const anchored = line.startsWith("/") || line.includes("/");
-		line = line.replace(/^\/+/, "");
-		const directoryOnly = line.endsWith("/");
-		line = line.replace(/\/+$/, "");
-		if (!line) continue;
-
-		rules.push({ baseDir, pattern: line, negated, directoryOnly, anchored });
-	}
-	return rules;
-}
-
-function matchesRule(
-	repoRoot: string,
-	relPath: string,
-	rule: GitignoreRule,
-): boolean {
-	const baseRel = toPosix(relative(repoRoot, resolve(repoRoot, rule.baseDir)));
-	if (baseRel && relPath !== baseRel && !relPath.startsWith(`${baseRel}/`)) {
-		return false;
-	}
-
-	const relFromBase = baseRel ? relPath.slice(baseRel.length + 1) : relPath;
-	if (!relFromBase) return false;
-
-	if (rule.anchored) {
-		return matchesPattern(relFromBase, rule.pattern, rule.directoryOnly);
-	}
-
-	return relFromBase
-		.split("/")
-		.some((_, index, parts) =>
-			matchesPattern(
-				parts.slice(index).join("/"),
-				rule.pattern,
-				rule.directoryOnly,
-			),
-		);
-}
-
-function matchesPattern(
-	path: string,
-	pattern: string,
-	directoryOnly: boolean,
-): boolean {
-	if (directoryOnly && (path === pattern || path.startsWith(`${pattern}/`))) {
-		return true;
-	}
-	const regex = globToRegExp(pattern);
+function isExitCode(error: unknown, code: number): boolean {
 	return (
-		regex.test(path) ||
-		(!pattern.includes("/") && regex.test(path.split("/")[0]))
+		typeof error === "object" &&
+		error !== null &&
+		"code" in error &&
+		(error as { code?: unknown }).code === code
 	);
-}
-
-function globToRegExp(pattern: string): RegExp {
-	const cached = REGEX_CACHE.get(pattern);
-	if (cached) return cached;
-
-	let source = "^";
-	for (let i = 0; i < pattern.length; i++) {
-		const char = pattern[i];
-		const next = pattern[i + 1];
-		if (char === "*" && next === "*") {
-			source += ".*";
-			i++;
-		} else if (char === "*") {
-			source += "[^/]*";
-		} else if (char === "?") {
-			source += "[^/]";
-		} else {
-			source += escapeRegExp(char);
-		}
-	}
-	source += "(?:/.*)?$";
-	const regex = new RegExp(source);
-	REGEX_CACHE.set(pattern, regex);
-	return regex;
-}
-
-function escapeRegExp(value: string): string {
-	return value.replace(/[|\\{}()[\]^$+*?.]/g, "\\$&");
 }
