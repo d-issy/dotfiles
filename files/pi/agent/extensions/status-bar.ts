@@ -153,10 +153,10 @@ function createStatusBarFooter(
 
 export default function statusBar(pi: ExtensionAPI): void {
 	let requestRender: RequestRender | undefined;
-	const setRequestRender = (next: RequestRender | undefined) => {
+	const setRequestRender = (next: RequestRender | undefined): void => {
 		requestRender = next;
 	};
-	const triggerRender = () => requestRender?.();
+	const triggerRender = (): void => requestRender?.();
 
 	pi.on("thinking_level_select", triggerRender);
 	pi.on("model_select", triggerRender);
