@@ -1,7 +1,7 @@
 import type { ToolCallEvent } from "@earendil-works/pi-coding-agent";
 import { isSecretPath } from "./secrets.js";
 
-export type ModeName = "explore" | "write" | "yolo";
+export type ModeName = "read" | "write" | "yolo";
 
 export type ToolPolicy<TInput = unknown> = {
 	name: string;

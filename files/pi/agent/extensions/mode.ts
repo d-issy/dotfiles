@@ -21,7 +21,6 @@ type Mode = {
 	name: ModeName;
 	description: string;
 	color: ColorName;
-	startupFlag?: string;
 	systemPrompt?: string;
 };
 
@@ -39,18 +38,16 @@ type CustomSessionEntry = {
 
 const MODE_DEFINITIONS: readonly Mode[] = [
 	{
-		name: "explore",
-		description: "Default read-only exploration mode.",
+		name: "read",
+		description: "Default read-only mode.",
 		color: "blue",
-		startupFlag: "explore",
 		systemPrompt:
-			"You are in explore mode. Use the currently active tools to inspect the repository, summarize findings, and propose plans. If the task requires changes or command execution, ask the user to switch to write or yolo mode.",
+			"You are in read mode. Use the currently active tools to inspect the repository, summarize findings, and propose plans. If the task requires changes or command execution, ask the user to switch to write or yolo mode.",
 	},
 	{
 		name: "write",
 		description: "Read and write files, but no command execution.",
 		color: "green",
-		startupFlag: "write",
 		systemPrompt:
 			"You are in write mode. Inspect and modify files using the currently active tools. If the task requires command execution (tests, formatting, git, package managers, etc.), tell the user which command to run or ask them to switch to yolo mode.",
 	},
@@ -61,14 +58,14 @@ const MODE_DEFINITIONS: readonly Mode[] = [
 	},
 ];
 
-const DEFAULT_MODE: ModeName = "explore";
+const DEFAULT_MODE: ModeName = "read";
 const MODE_STATE_TYPE = "mode";
 const MODES = new Map(MODE_DEFINITIONS.map((mode) => [mode.name, mode]));
 const MODE_NAMES = MODE_DEFINITIONS.map((mode) => mode.name);
 
-const READ_MODES: readonly ModeName[] = ["explore", "write", "yolo"];
+const READ_MODES: readonly ModeName[] = ["read", "write", "yolo"];
 const WRITE_MODES: readonly ModeName[] = ["write", "yolo"];
-const NAVIGATE_MODES: readonly ModeName[] = ["explore", "write"];
+const NAVIGATE_MODES: readonly ModeName[] = ["read", "write"];
 
 function registerBuiltInPolicies(): void {
 	policyRegistry.register<BashToolInput>({
@@ -119,6 +116,13 @@ function isModeName(value: string): value is ModeName {
 	return MODES.has(value as ModeName);
 }
 
+function normalizeModeName(value: unknown): ModeName | undefined {
+	if (typeof value !== "string") return undefined;
+	if (value === "explore") return "read";
+	if (isModeName(value)) return value;
+	return undefined;
+}
+
 function getMode(value: ModeName): Mode {
 	const mode = MODES.get(value);
 	if (!mode) throw new Error(`Unknown mode: ${value}`);
@@ -153,9 +157,8 @@ function getConfiguredDefaultMode(
 		const projectMode = (settingsManager.getProjectSettings() as ModeSettings)
 			.mode;
 		if (projectMode !== undefined) {
-			if (typeof projectMode === "string" && isModeName(projectMode)) {
-				return projectMode;
-			}
+			const mode = normalizeModeName(projectMode);
+			if (mode) return mode;
 			onWarning?.(
 				`Invalid pi mode in project settings: ${String(projectMode)}. Use one of: ${MODE_NAMES.join(", ")}.`,
 			);
@@ -165,9 +168,8 @@ function getConfiguredDefaultMode(
 		const globalMode = (settingsManager.getGlobalSettings() as ModeSettings)
 			.mode;
 		if (globalMode !== undefined) {
-			if (typeof globalMode === "string" && isModeName(globalMode)) {
-				return globalMode;
-			}
+			const mode = normalizeModeName(globalMode);
+			if (mode) return mode;
 			onWarning?.(
 				`Invalid pi mode in global settings: ${String(globalMode)}. Use one of: ${MODE_NAMES.join(", ")}.`,
 			);
@@ -184,9 +186,13 @@ function getStartupMode(
 	persistedMode?: ModeName,
 	onWarning?: (message: string) => void,
 ): ModeName {
-	const flagMode = MODE_DEFINITIONS.find(
-		(mode) => mode.startupFlag && pi.getFlag(mode.startupFlag) === true,
-	)?.name;
+	const flagValue = pi.getFlag(MODE_STATE_TYPE);
+	const flagMode = normalizeModeName(flagValue);
+	if (flagValue !== undefined && !flagMode) {
+		onWarning?.(
+			`Invalid --mode value: ${String(flagValue)}. Use one of: ${MODE_NAMES.join(", ")}.`,
+		);
+	}
 	const configuredMode = getConfiguredDefaultMode(cwd, onWarning);
 	return flagMode ?? persistedMode ?? configuredMode ?? DEFAULT_MODE;
 }
@@ -197,7 +203,7 @@ function findPersistedMode(ctx: ExtensionContext): ModeName | undefined {
 	for (let i = entries.length - 1; i >= 0; i--) {
 		const entry = entries[i];
 		if (entry.type === "custom" && entry.customType === MODE_STATE_TYPE) {
-			return entry.data?.mode;
+			return normalizeModeName(entry.data?.mode);
 		}
 	}
 	return undefined;
@@ -208,14 +214,10 @@ export default function modeExtension(pi: ExtensionAPI): void {
 
 	registerBuiltInPolicies();
 
-	for (const mode of MODE_DEFINITIONS) {
-		if (!mode.startupFlag) continue;
-		pi.registerFlag(mode.startupFlag, {
-			description: `Start in ${mode.name} mode`,
-			type: "boolean",
-			default: false,
-		});
-	}
+	pi.registerFlag(MODE_STATE_TYPE, {
+		description: `Start in mode: ${MODE_NAMES.join(" / ")}`,
+		type: "string",
+	});
 
 	function setMode(
 		ctx: ExtensionContext,
