@@ -52,10 +52,20 @@
           pkgs.taplo
           pkgs.treefmt
         ];
-        devShellPackages = formatterPackages ++ [
-          pkgs.nodejs_24
-          pkgs.pnpm
+        linterPackages = [
+          pkgs.oxlint
         ];
+        lspPackages = [
+          pkgs.vtsls
+        ];
+        devShellPackages =
+          formatterPackages
+          ++ linterPackages
+          ++ lspPackages
+          ++ [
+            pkgs.nodejs_24
+            pkgs.pnpm
+          ];
       in
       {
         devShells.default = pkgs.mkShell {
