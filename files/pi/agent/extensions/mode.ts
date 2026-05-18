@@ -237,7 +237,7 @@ export default function modeExtension(pi: ExtensionAPI): void {
 	pi.registerCommand("mode", {
 		description: `Show or switch mode: ${MODE_NAMES.join(" / ")}`,
 		handler: async (args, ctx) => {
-			const requestedMode = args.trim().split(/\s+/)[0];
+			const requestedMode = args.trim().split(/\s+/u)[0];
 			if (!requestedMode) {
 				ctx.ui.notify(
 					`Current mode: ${currentMode}\n\nUsage: /mode <${MODE_NAMES.join("|")}>\n\n${formatModeList()}`,

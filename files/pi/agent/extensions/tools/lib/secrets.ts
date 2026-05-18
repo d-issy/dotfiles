@@ -1,6 +1,6 @@
 const SECRET_PATTERNS: readonly RegExp[] = [
-	/(^|\/)\.env(\..+)?$/,
-	/(^|\/)\.envrc$/,
+	/(^|\/)\.env(\..+)?$/u,
+	/(^|\/)\.envrc$/u,
 ];
 
 export function isSecretPath(path: string): boolean {

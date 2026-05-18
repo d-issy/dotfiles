@@ -23,7 +23,11 @@
         "allowHigherOrderFunctions": true,
         "allowIIFEs": true
       }
-    ]
+    ],
+    "eslint/require-unicode-regexp": "warn",
+    "no-duplicate-imports": ["error", { "allowSeparateTypeImports": true }],
+    "import/no-cycle": "error",
+    "sort-imports": ["warn", { "ignoreDeclarationSort": true }]
   },
   "env": {
     "builtin": true
