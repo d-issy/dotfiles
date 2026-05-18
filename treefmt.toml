@@ -1,5 +1,5 @@
 [global]
-excludes = ["*.lock", "node_modules/**"]
+excludes = ["*.lock", "node_modules/**", ".direnv/**", ".pnpm-store/**"]
 
 [formatter.nix]
 command = "nixfmt"

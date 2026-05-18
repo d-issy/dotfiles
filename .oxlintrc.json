@@ -1,13 +1,34 @@
 {
   "plugins": [
+    "eslint",
     "typescript",
     "unicorn",
-    "oxc"
+    "oxc",
+    "import",
+    "node",
+    "promise"
   ],
   "categories": {
-    "correctness": "error"
+    "correctness": "error",
+    "suspicious": "error",
+    "perf": "warn"
   },
-  "rules": {},
+  "rules": {
+    "typescript/no-explicit-any": "error",
+    "typescript/explicit-function-return-type": [
+      "error",
+      {
+        "allowExpressions": true,
+        "allowTypedFunctionExpressions": true,
+        "allowHigherOrderFunctions": true,
+        "allowIIFEs": true
+      }
+    ],
+    "eslint/require-unicode-regexp": "warn",
+    "no-duplicate-imports": ["error", { "allowSeparateTypeImports": true }],
+    "import/no-cycle": "error",
+    "sort-imports": ["warn", { "ignoreDeclarationSort": true }]
+  },
   "env": {
     "builtin": true
   }

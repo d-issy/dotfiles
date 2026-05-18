@@ -14,6 +14,7 @@ in
     ./gopls.nix
     ./lua-ls.nix
     ./typos-lsp.nix
+    ./vtsls.nix
   ];
 
   programs.nixvim = {
