@@ -32,6 +32,12 @@
       "matchManagers": [
         "npm"
       ],
+      "minimumReleaseAge": "1 day"
+    },
+    {
+      "matchManagers": [
+        "npm"
+      ],
       "matchFileNames": [
         "pnpm-lock.yaml"
       ],
