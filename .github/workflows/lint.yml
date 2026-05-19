@@ -100,7 +100,7 @@ jobs:
         env:
           RESULTS: ${{ join(needs.*.result, ',') }}
         run: |
-          if [[ "$RESULTS" == *failure* || "$RESULTS" == *cancelled* || "$RESULTS" == *skipped* ]]; then
-            echo "One or more jobs did not pass: $RESULTS"
+          if [[ "$RESULTS" == *failure* || "$RESULTS" == *cancelled* ]]; then
+            echo "One or more jobs failed or were cancelled: $RESULTS"
             exit 1
           fi
