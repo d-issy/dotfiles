@@ -84,3 +84,23 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec tsc --noEmit
+
+  all-lint-passed:
+    name: All Lint Passed
+    runs-on: ubuntu-latest
+    needs:
+      - treefmt
+      - deadnix
+      - statix
+      - oxlint
+      - tsc
+    if: ${{ always() }}
+    steps:
+      - name: Verify all lint jobs passed
+        env:
+          RESULTS: ${{ join(needs.*.result, ',') }}
+        run: |
+          if [[ "$RESULTS" == *failure* || "$RESULTS" == *cancelled* || "$RESULTS" == *skipped* ]]; then
+            echo "One or more jobs did not pass: $RESULTS"
+            exit 1
+          fi

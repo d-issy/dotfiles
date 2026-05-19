@@ -34,3 +34,19 @@ jobs:
           extra_nix_config: |
             experimental-features = nix-command flakes
       - run: nix build ${{ matrix.attr }}
+
+  all-nix-build-passed:
+    name: All Nix Build Passed
+    runs-on: ubuntu-latest
+    needs:
+      - home-manager-activation-package
+    if: ${{ always() }}
+    steps:
+      - name: Verify all Nix build jobs passed
+        env:
+          RESULTS: ${{ join(needs.*.result, ',') }}
+        run: |
+          if [[ "$RESULTS" == *failure* || "$RESULTS" == *cancelled* || "$RESULTS" == *skipped* ]]; then
+            echo "One or more jobs did not pass: $RESULTS"
+            exit 1
+          fi
