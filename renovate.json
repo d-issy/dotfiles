@@ -3,6 +3,8 @@
   "extends": [
     "config:recommended"
   ],
+  "automerge": true,
+  "automergeType": "pr",
   "lockFileMaintenance": {
     "enabled": true
   },
@@ -12,10 +14,32 @@
   "packageRules": [
     {
       "matchManagers": [
-        "github-actions"
+        "nix"
       ],
-      "automerge": true,
-      "automergeType": "pr"
+      "automerge": false
+    },
+    {
+      "matchManagers": [
+        "nix"
+      ],
+      "matchUpdateTypes": [
+        "lockFileMaintenance"
+      ],
+      "groupName": "nix lock file maintenance",
+      "groupSlug": "nix-lock-file-maintenance"
+    },
+    {
+      "matchManagers": [
+        "npm"
+      ],
+      "matchFileNames": [
+        "pnpm-lock.yaml"
+      ],
+      "matchUpdateTypes": [
+        "lockFileMaintenance"
+      ],
+      "groupName": "pnpm lock file maintenance",
+      "groupSlug": "pnpm-lock-file-maintenance"
     }
   ]
 }
