@@ -22,6 +22,7 @@ jobs:
       fmt: ${{ steps.filter.outputs.fmt }}
       nix: ${{ steps.filter.outputs.nix }}
       node: ${{ steps.filter.outputs.node }}
+      actions: ${{ steps.filter.outputs.actions }}
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4
@@ -48,6 +49,9 @@ jobs:
               - 'tsconfig.json'
               - '.oxlintrc.json'
               - '**/*.ts'
+            actions:
+              - '.github/workflows/**'
+              - '.github/actions/**'
 
   treefmt:
     name: treefmt
@@ -135,6 +139,44 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec tsc --noEmit
 
+  actionlint:
+    name: actionlint
+    runs-on: ubuntu-latest
+    needs:
+      - changes
+    if: ${{ needs.changes.outputs.actions == 'true' }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: cachix/install-nix-action@8aa03977d8d733052d78f4e008a241fd1dbf36b3 # v31
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+      - uses: nix-community/cache-nix-action@7df957e333c1e5da7721f60227dbba6d06080569 # v7
+        with:
+          primary-key: nix-actionlint-${{ runner.os }}-${{ hashFiles('**/flake.lock') }}
+          restore-prefixes-first-match: nix-actionlint-${{ runner.os }}-
+      - run: nix run nixpkgs#actionlint
+
+  zizmor:
+    name: zizmor
+    runs-on: ubuntu-latest
+    needs:
+      - changes
+    if: ${{ needs.changes.outputs.actions == 'true' }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: cachix/install-nix-action@8aa03977d8d733052d78f4e008a241fd1dbf36b3 # v31
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+      - uses: nix-community/cache-nix-action@7df957e333c1e5da7721f60227dbba6d06080569 # v7
+        with:
+          primary-key: nix-zizmor-${{ runner.os }}-${{ hashFiles('**/flake.lock') }}
+          restore-prefixes-first-match: nix-zizmor-${{ runner.os }}-
+      - env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: nix run nixpkgs#zizmor -- .
+
   all-lint-passed:
     name: All Lint Passed
     runs-on: ubuntu-latest
@@ -144,6 +186,8 @@ jobs:
       - statix
       - oxlint
       - tsc
+      - actionlint
+      - zizmor
     if: ${{ always() }}
     steps:
       - name: Verify all lint jobs passed
