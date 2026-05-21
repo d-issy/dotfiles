@@ -13,6 +13,7 @@ in
     ./copilot.nix
     ./gopls.nix
     ./lua-ls.nix
+    ./nil-ls.nix
     ./typos-lsp.nix
     ./vtsls.nix
   ];
