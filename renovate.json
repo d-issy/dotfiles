@@ -41,6 +41,12 @@
     },
     {
       "matchManagers": [
+        "github-actions"
+      ],
+      "minimumReleaseAge": "3 days"
+    },
+    {
+      "matchManagers": [
         "npm"
       ],
       "matchFileNames": [
