@@ -6,6 +6,7 @@
   ],
   "automerge": true,
   "automergeType": "pr",
+  "rebaseWhen": "behind-base-branch",
   "osvVulnerabilityAlerts": true,
   "vulnerabilityAlerts": {
     "labels": ["security"]
@@ -43,7 +44,9 @@
       "matchManagers": [
         "github-actions"
       ],
-      "minimumReleaseAge": "3 days"
+      "minimumReleaseAge": "3 days",
+      "groupName": "github-actions",
+      "groupSlug": "github-actions"
     },
     {
       "matchManagers": [
