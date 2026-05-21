@@ -8,8 +8,7 @@
   "automergeType": "pr",
   "osvVulnerabilityAlerts": true,
   "vulnerabilityAlerts": {
-    "labels": ["security"],
-    "automerge": false
+    "labels": ["security"]
   },
   "lockFileMaintenance": {
     "enabled": true
