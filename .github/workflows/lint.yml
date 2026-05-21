@@ -69,7 +69,7 @@ jobs:
         with:
           extra_nix_config: |
             experimental-features = nix-command flakes
-      - uses: nix-community/cache-nix-action@7df957e333c1e5da7721f60227dbba6d06080569 # v7
+      - uses: nix-community/cache-nix-action@7df957e333c1e5da7721f60227dbba6d06080569 # v7.0.2
         with:
           primary-key: nix-treefmt-${{ runner.os }}-${{ hashFiles('**/flake.lock') }}
           restore-prefixes-first-match: nix-treefmt-${{ runner.os }}-
@@ -89,7 +89,7 @@ jobs:
         with:
           extra_nix_config: |
             experimental-features = nix-command flakes
-      - uses: nix-community/cache-nix-action@7df957e333c1e5da7721f60227dbba6d06080569 # v7
+      - uses: nix-community/cache-nix-action@7df957e333c1e5da7721f60227dbba6d06080569 # v7.0.2
         with:
           primary-key: nix-deadnix-${{ runner.os }}-${{ hashFiles('**/flake.lock') }}
           restore-prefixes-first-match: nix-deadnix-${{ runner.os }}-
@@ -109,7 +109,7 @@ jobs:
         with:
           extra_nix_config: |
             experimental-features = nix-command flakes
-      - uses: nix-community/cache-nix-action@7df957e333c1e5da7721f60227dbba6d06080569 # v7
+      - uses: nix-community/cache-nix-action@7df957e333c1e5da7721f60227dbba6d06080569 # v7.0.2
         with:
           primary-key: nix-statix-${{ runner.os }}-${{ hashFiles('**/flake.lock') }}
           restore-prefixes-first-match: nix-statix-${{ runner.os }}-
@@ -165,7 +165,7 @@ jobs:
         with:
           extra_nix_config: |
             experimental-features = nix-command flakes
-      - uses: nix-community/cache-nix-action@7df957e333c1e5da7721f60227dbba6d06080569 # v7
+      - uses: nix-community/cache-nix-action@7df957e333c1e5da7721f60227dbba6d06080569 # v7.0.2
         with:
           primary-key: nix-actionlint-${{ runner.os }}-${{ hashFiles('**/flake.lock') }}
           restore-prefixes-first-match: nix-actionlint-${{ runner.os }}-
@@ -185,7 +185,7 @@ jobs:
         with:
           extra_nix_config: |
             experimental-features = nix-command flakes
-      - uses: nix-community/cache-nix-action@7df957e333c1e5da7721f60227dbba6d06080569 # v7
+      - uses: nix-community/cache-nix-action@7df957e333c1e5da7721f60227dbba6d06080569 # v7.0.2
         with:
           primary-key: nix-zizmor-${{ runner.os }}-${{ hashFiles('**/flake.lock') }}
           restore-prefixes-first-match: nix-zizmor-${{ runner.os }}-
