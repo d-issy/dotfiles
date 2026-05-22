@@ -1,5 +1,35 @@
-{ dotfiles, ... }:
+_:
 
 {
-  xdg.configFile."ghostty/config".source = dotfiles.files + "/ghostty/config";
+  xdg.configFile."ghostty/config".text = ''
+    # UI
+    theme = "Catppuccin Macchiato"
+    font-size = 14
+
+    font-family = "0xProto"
+    font-family = "UDEV Gothic 35"
+    font-family = "Hack Nerd Font Mono"
+    font-family = "Hiragino Kaku Gothic ProN"
+
+    font-feature = -dlig
+    font-feature = calt
+    font-feature = clig
+    font-feature = liga
+
+    window-padding-x = 4
+    window-padding-y = 0
+    window-padding-balance = true
+
+    mouse-hide-while-typing = true
+    resize-overlay = never
+    link-url = true
+
+    # macOS specific
+    macos-option-as-alt = left
+    macos-titlebar-style = tabs
+
+    # keybind
+    keybind = "ctrl+j=ignore"
+    keybind = "shift+enter=text:\x1b\r"
+  '';
 }
