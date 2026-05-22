@@ -4,6 +4,7 @@ _:
   programs.ghostty = {
     enable = true;
     package = null; # not use in nixpkgs, install manually
+    systemd.enable = false; # required when package is null
     settings = {
       # UI
       theme = "Catppuccin Macchiato";
