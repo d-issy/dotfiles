@@ -23,11 +23,17 @@
       ...
     }:
     let
-      systems = [
+      supportedSystems = [
         "x86_64-linux"
         "x86_64-darwin"
         "aarch64-darwin"
       ];
+
+      homeConfigurationNames = {
+        x86_64-linux = "linux";
+        x86_64-darwin = "macos_intel";
+        aarch64-darwin = "macos";
+      };
 
       mkPkgs =
         system:
@@ -39,12 +45,9 @@
               "copilot-language-server"
             ];
         };
-    in
-    flake-utils.lib.eachSystem systems (
-      system:
-      let
-        pkgs = mkPkgs system;
-        formatterPackages = [
+
+      mkToolPackages = pkgs: rec {
+        formatter = [
           pkgs.nixfmt
           pkgs.oxfmt
           pkgs.shfmt
@@ -52,29 +55,85 @@
           pkgs.taplo
           pkgs.treefmt
         ];
-        linterPackages = [
+
+        linter = [
           pkgs.oxlint
         ];
-        lspPackages = [
+
+        lsp = [
           pkgs.vtsls
         ];
-        devShellPackages =
-          formatterPackages
-          ++ linterPackages
-          ++ lspPackages
+
+        devShell =
+          formatter
+          ++ linter
+          ++ lsp
           ++ [
             pkgs.nodejs_24
             pkgs.pnpm
           ];
+      };
+
+      mkSwitchApp =
+        system: pkgs:
+        let
+          homeConfigurationName = homeConfigurationNames.${system};
+        in
+        pkgs.writeShellApplication {
+          name = "dotfiles-switch";
+          runtimeInputs = [ home-manager.packages.${system}.default ];
+          text = ''
+            exec home-manager switch --flake ".#${homeConfigurationName}" "$@"
+          '';
+        };
+
+      mkHomeManagerConfiguration =
+        system: homeModule:
+        let
+          pkgs = mkPkgs system;
+          extendedLib = pkgs.lib.extend (
+            final: prev:
+            let
+              dotfilesLib = import ./lib {
+                inherit pkgs;
+                lib = final;
+              };
+            in
+            {
+              hm = home-manager.lib.hm;
+              helpers = (prev.helpers or { }) // dotfilesLib.helpers;
+            }
+          );
+        in
+        home-manager.lib.homeManagerConfiguration {
+          inherit pkgs;
+          lib = extendedLib;
+          modules = [
+            homeModule
+            nixvim.homeModules.nixvim
+          ];
+        };
+    in
+    flake-utils.lib.eachSystem supportedSystems (
+      system:
+      let
+        pkgs = mkPkgs system;
+        toolPackages = mkToolPackages pkgs;
+        switchApp = mkSwitchApp system pkgs;
       in
       {
+        apps.switch = {
+          type = "app";
+          program = "${switchApp}/bin/dotfiles-switch";
+        };
+
         devShells.default = pkgs.mkShell {
-          packages = devShellPackages;
+          packages = toolPackages.devShell;
         };
 
         formatter = pkgs.writeShellApplication {
           name = "treefmt";
-          runtimeInputs = formatterPackages;
+          runtimeInputs = toolPackages.formatter;
           text = ''
             exec treefmt "$@"
           '';
@@ -89,29 +148,9 @@
       };
 
       homeConfigurations = {
-        linux = home-manager.lib.homeManagerConfiguration {
-          pkgs = mkPkgs "x86_64-linux";
-          modules = [
-            ./home.linux.nix
-            nixvim.homeModules.nixvim
-          ];
-        };
-
-        macos = home-manager.lib.homeManagerConfiguration {
-          pkgs = mkPkgs "aarch64-darwin";
-          modules = [
-            ./home.macos.nix
-            nixvim.homeModules.nixvim
-          ];
-        };
-
-        macos_intel = home-manager.lib.homeManagerConfiguration {
-          pkgs = mkPkgs "x86_64-darwin";
-          modules = [
-            ./home.macos.nix
-            nixvim.homeModules.nixvim
-          ];
-        };
+        linux = mkHomeManagerConfiguration "x86_64-linux" ./modules/home/linux.nix;
+        macos = mkHomeManagerConfiguration "aarch64-darwin" ./modules/home/macos.nix;
+        macos_intel = mkHomeManagerConfiguration "x86_64-darwin" ./modules/home/macos.nix;
       };
     };
 }
