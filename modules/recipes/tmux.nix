@@ -2,7 +2,6 @@
 
 with lib;
 {
-  options = { };
   config = {
     programs = {
       tmux = {

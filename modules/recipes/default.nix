@@ -10,6 +10,9 @@ _:
   programs.home-manager.enable = true;
   xdg.enable = true;
 
+  dot.xdg.configFile."wezterm/wezterm.lua".source = true;
+  dot.home.file.".pi/agent".source = "pi/agent";
+
   imports = [
     ./agents.nix
     ./atuin.nix
@@ -34,11 +37,9 @@ _:
     ./neovim
     ./node.nix
     ./nushell.nix
-    ./pi.nix
     ./scripts.nix
     ./starship.nix
     ./tmux.nix
-    ./wezterm.nix
     ./worktrunk.nix
     ./zed.nix
     ./zsh.nix
