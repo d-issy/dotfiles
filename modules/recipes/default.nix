@@ -23,8 +23,8 @@ _:
     ./fzf.nix
     ./gcloud.nix
     ./gh.nix
-    ./ghq.nix
     ./ghostty.nix
+    ./ghq.nix
     ./git.nix
     ./hammerspoon.nix
     ./lazydocker.nix
