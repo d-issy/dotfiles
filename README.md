@@ -24,3 +24,19 @@ export NIX_CONFIG="extra-experimental-features = nix-command flakes"
 ```sh
 nix run .#switch
 ```
+
+## Generations
+
+`.#generations` lists Home Manager generations.
+
+```sh
+nix run .#generations
+```
+
+## GC
+
+`.#gc` expires Home Manager generations older than 7 days and runs `nix store gc`.
+
+```sh
+nix run .#gc
+```

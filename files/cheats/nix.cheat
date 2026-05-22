@@ -17,7 +17,7 @@ nix flake show
 % nix generations
 
 # list home-manager generations
-nix run . -- generations
+nix run .#generations
 
 % nix gc
 
