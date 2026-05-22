@@ -97,7 +97,7 @@ in
     };
 
     home.file."cheats" = {
-      source = (dotfiles.files + "/cheats");
+      source = dotfiles.files + "/cheats";
       recursive = true;
     };
   };

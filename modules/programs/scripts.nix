@@ -1,7 +1,7 @@
 { config, dotfiles, ... }:
 {
   home.file.".local/bin" = {
-    source = (dotfiles.files + "/scripts");
+    source = dotfiles.files + "/scripts";
     recursive = true;
   };
 

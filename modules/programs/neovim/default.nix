@@ -23,12 +23,12 @@
     };
 
     xdg.configFile."nvim/lua/util" = {
-      source = (dotfiles.files + "/nvim/lua/util");
+      source = dotfiles.files + "/nvim/lua/util";
       recursive = true;
     };
 
     xdg.configFile."nvim/lua/snippets" = {
-      source = (dotfiles.files + "/nvim/lua/snippets");
+      source = dotfiles.files + "/nvim/lua/snippets";
       recursive = true;
     };
 
