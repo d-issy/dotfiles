@@ -10,8 +10,8 @@ import {
 	SettingsManager,
 	type WriteToolInput,
 } from "@earendil-works/pi-coding-agent";
-import { type ColorName, catppuccin, fg } from "./lib/theme.js";
-import { type ModeName, policyRegistry } from "./tools/lib/policy.js";
+import { type ColorName, catppuccin, fg } from "./lib/theme";
+import { type ModeName, policyRegistry } from "./tools/lib/policy";
 
 function block(reason: string): { block: true; reason: string } {
 	return { block: true, reason };

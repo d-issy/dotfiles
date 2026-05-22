@@ -1,4 +1,4 @@
-import { ToolError } from "./errors.js";
+import { ToolError } from "./errors";
 
 export function normalizeStringOrArray(value: unknown): string[] {
 	if (typeof value === "string") return [value];
