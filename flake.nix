@@ -85,7 +85,7 @@
           homeConfigurationName = homeConfigurationNames.${system};
         in
         pkgs.writeShellApplication {
-          name = "dotfiles-switch";
+          name = "dot-switch";
           runtimeInputs = [ home-manager.packages.${system}.default ];
           text = ''
             exec home-manager switch --flake ".#${homeConfigurationName}" "$@"
@@ -95,7 +95,7 @@
       mkGcApp =
         system: pkgs:
         pkgs.writeShellApplication {
-          name = "dotfiles-gc";
+          name = "dot-gc";
           runtimeInputs = [ home-manager.packages.${system}.default ];
           text = ''
             home-manager expire-generations '-7 days'
@@ -188,18 +188,21 @@
       {
         apps.switch = {
           type = "app";
-          program = "${switchApp}/bin/dotfiles-switch";
+          program = "${switchApp}/bin/dot-switch";
         };
 
         apps.gc = {
           type = "app";
-          program = "${gcApp}/bin/dotfiles-gc";
+          program = "${gcApp}/bin/dot-gc";
         };
 
         checks = mkLintChecks pkgs;
 
         devShells.default = pkgs.mkShell {
-          packages = toolPackages.devShell;
+          packages = toolPackages.devShell ++ [
+            switchApp
+            gcApp
+          ];
         };
 
         formatter = pkgs.writeShellApplication {
