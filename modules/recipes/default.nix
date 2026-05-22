@@ -1,17 +1,57 @@
-_:
+{ config, pkgs, ... }:
 
 {
-  home.stateVersion = "24.11";
+  xdg.enable = true;
+  home = {
+    stateVersion = "24.11";
 
-  home.sessionVariables = {
-    NIX_CONFIG = "extra-experimental-features = nix-command flakes";
+    sessionVariables = {
+      NIX_CONFIG = "extra-experimental-features = nix-command flakes";
+    };
+
+    sessionPath = [
+      "${config.home.homeDirectory}/.local/bin"
+    ];
+
+    shellAliases = {
+      ".." = "cd..";
+      dc = "docker compose";
+    };
+
+    packages = [
+      pkgs.curl
+      pkgs.duckdb
+      pkgs.glow
+      pkgs.gnumake
+      pkgs.google-cloud-sdk
+      pkgs.grpcurl
+      pkgs.jq
+      pkgs.jqp
+      pkgs.ripgrep
+      pkgs.typos
+      pkgs.visidata
+      pkgs.wget
+    ];
   };
 
-  programs.home-manager.enable = true;
-  xdg.enable = true;
+  dot = {
+    xdg.configFile."wezterm/wezterm.lua".source = true;
+    home.file = {
+      ".pi/agent".source = "pi/agent";
+      ".local/bin".source = "scripts";
+    };
+  };
 
-  dot.xdg.configFile."wezterm/wezterm.lua".source = true;
-  dot.home.file.".pi/agent".source = "pi/agent";
+  programs = {
+    home-manager.enable = true;
+    zoxide.enable = true;
+    direnv = {
+      enable = true;
+      nix-direnv.enable = true;
+      enableZshIntegration = true;
+      enableNushellIntegration = true;
+    };
+  };
 
   imports = [
     ./agents.nix
@@ -24,7 +64,6 @@ _:
     ./delta.nix
     ./difftastic.nix
     ./fzf.nix
-    ./gcloud.nix
     ./gh.nix
     ./ghostty.nix
     ./ghq.nix
@@ -32,12 +71,10 @@ _:
     ./hammerspoon.nix
     ./lazydocker.nix
     ./lazygit.nix
-    ./misc.nix
     ./navi.nix
     ./neovim
     ./node.nix
     ./nushell.nix
-    ./scripts.nix
     ./starship.nix
     ./tmux.nix
     ./worktrunk.nix

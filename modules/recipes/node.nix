@@ -1,6 +1,17 @@
 { config, pkgs, ... }:
 
 {
+  home = {
+    packages = [ pkgs.pnpm ];
+    sessionVariables = {
+      PNPM_HOME = "${config.home.homeDirectory}/.local/share/pnpm";
+    };
+    sessionPath = [
+      "${config.home.homeDirectory}/.npm-global/bin"
+      "${config.home.homeDirectory}/.local/share/pnpm/bin"
+    ];
+  };
+
   programs.npm = {
     enable = true;
     package = pkgs.nodejs_24;
@@ -9,20 +20,5 @@
       fund = false;
       audit = false;
     };
-  };
-
-  home = {
-    packages = [
-      pkgs.pnpm
-    ];
-
-    sessionVariables = {
-      PNPM_HOME = "${config.home.homeDirectory}/.local/share/pnpm";
-    };
-
-    sessionPath = [
-      "${config.home.homeDirectory}/.npm-global/bin"
-      "${config.home.homeDirectory}/.local/share/pnpm/bin"
-    ];
   };
 }
