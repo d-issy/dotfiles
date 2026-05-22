@@ -1,4 +1,4 @@
-_:
+{ dotfiles, ... }:
 
 let
   raw = __raw: { inherit __raw; };
@@ -20,7 +20,7 @@ in
         golang.enable = true;
         python.enable = true;
       };
-      luaConfig.post = builtins.readFile ../../../../files/nvim/lua/nixvim/plugins/neotest.lua;
+      luaConfig.post = builtins.readFile (dotfiles.files + "/nvim/lua/nixvim/plugins/neotest.lua");
     };
 
     keymaps = [

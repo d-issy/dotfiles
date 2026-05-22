@@ -1,4 +1,4 @@
-_:
+{ dotfiles, ... }:
 
 let
   raw = __raw: { inherit __raw; };
@@ -20,7 +20,7 @@ in
   programs.nixvim = {
     plugins.dial.enable = true;
 
-    extraConfigLua = builtins.readFile ../../../../files/nvim/lua/nixvim/plugins/dial.lua;
+    extraConfigLua = builtins.readFile (dotfiles.files + "/nvim/lua/nixvim/plugins/dial.lua");
 
     keymaps = [
       (keymap "<C-a>" (raw "function() return _G.dotfiles_dial(true) end") "Increment")

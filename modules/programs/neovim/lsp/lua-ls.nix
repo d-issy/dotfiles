@@ -1,4 +1,4 @@
-_:
+{ dotfiles, ... }:
 
 let
   raw = __raw: { inherit __raw; };
@@ -16,7 +16,7 @@ in
         arrayIndex = "Disable";
       };
       workspace.library = raw (
-        builtins.readFile ../../../../files/nvim/lua/nixvim/lsp/lua-ls-workspace-library.lua
+        builtins.readFile (dotfiles.files + "/nvim/lua/nixvim/lsp/lua-ls-workspace-library.lua")
       );
     };
   };

@@ -108,6 +108,12 @@
         home-manager.lib.homeManagerConfiguration {
           inherit pkgs;
           lib = extendedLib;
+          extraSpecialArgs = {
+            dotfiles = {
+              root = ./.;
+              files = ./files;
+            };
+          };
           modules = [
             homeModule
             nixvim.homeModules.nixvim

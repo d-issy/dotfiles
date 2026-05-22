@@ -1,5 +1,5 @@
-_:
+{ dotfiles, ... }:
 
 {
-  xdg.configFile."ghostty/config".source = ../../files/ghostty/config;
+  xdg.configFile."ghostty/config".source = (dotfiles.files + "/ghostty/config");
 }

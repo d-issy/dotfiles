@@ -1,4 +1,4 @@
-_:
+{ dotfiles, ... }:
 
 let
   raw = __raw: { inherit __raw; };
@@ -19,7 +19,7 @@ in
     plugins = {
       dap = {
         enable = true;
-        luaConfig.post = builtins.readFile ../../../../files/nvim/lua/nixvim/plugins/dap.lua;
+        luaConfig.post = builtins.readFile (dotfiles.files + "/nvim/lua/nixvim/plugins/dap.lua");
       };
       dap-ui.enable = true;
       dap-go.enable = true;
