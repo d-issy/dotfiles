@@ -16,6 +16,7 @@
 
   outputs =
     {
+      self,
       nixpkgs,
       home-manager,
       nixvim,
@@ -57,7 +58,11 @@
         ];
 
         linter = [
+          pkgs.actionlint
+          pkgs.deadnix
           pkgs.oxlint
+          pkgs.statix
+          pkgs.zizmor
         ];
 
         lsp = [
@@ -86,6 +91,47 @@
             exec home-manager switch --flake ".#${homeConfigurationName}" "$@"
           '';
         };
+
+      mkLintChecks = pkgs: {
+        treefmt =
+          pkgs.runCommand "treefmt-check"
+            { nativeBuildInputs = [ self.formatter.${pkgs.stdenv.hostPlatform.system} ]; }
+            ''
+              cd ${./.}
+              treefmt --ci
+              touch "$out"
+            '';
+
+        deadnix = pkgs.runCommand "deadnix-check" { nativeBuildInputs = [ pkgs.deadnix ]; } ''
+          cd ${./.}
+          deadnix --fail .
+          touch "$out"
+        '';
+
+        statix = pkgs.runCommand "statix-check" { nativeBuildInputs = [ pkgs.statix ]; } ''
+          cd ${./.}
+          statix check .
+          touch "$out"
+        '';
+
+        oxlint = pkgs.runCommand "oxlint-check" { nativeBuildInputs = [ pkgs.oxlint ]; } ''
+          cd ${./.}
+          oxlint
+          touch "$out"
+        '';
+
+        actionlint = pkgs.runCommand "actionlint-check" { nativeBuildInputs = [ pkgs.actionlint ]; } ''
+          cd ${./.}
+          actionlint .github/workflows/*.yml
+          touch "$out"
+        '';
+
+        zizmor = pkgs.runCommand "zizmor-check" { nativeBuildInputs = [ pkgs.zizmor ]; } ''
+          cd ${./.}
+          zizmor .
+          touch "$out"
+        '';
+      };
 
       mkHomeManagerConfiguration =
         system: homeModule:
@@ -132,6 +178,8 @@
           type = "app";
           program = "${switchApp}/bin/dotfiles-switch";
         };
+
+        checks = mkLintChecks pkgs;
 
         devShells.default = pkgs.mkShell {
           packages = toolPackages.devShell;
