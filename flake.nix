@@ -16,6 +16,7 @@
 
   outputs =
     {
+      self,
       nixpkgs,
       home-manager,
       nixvim,
@@ -23,11 +24,17 @@
       ...
     }:
     let
-      systems = [
+      supportedSystems = [
         "x86_64-linux"
         "x86_64-darwin"
         "aarch64-darwin"
       ];
+
+      homeConfigurationNames = {
+        x86_64-linux = "linux";
+        x86_64-darwin = "macos_intel";
+        aarch64-darwin = "macos";
+      };
 
       mkPkgs =
         system:
@@ -39,12 +46,9 @@
               "copilot-language-server"
             ];
         };
-    in
-    flake-utils.lib.eachSystem systems (
-      system:
-      let
-        pkgs = mkPkgs system;
-        formatterPackages = [
+
+      mkToolPackages = pkgs: rec {
+        formatter = [
           pkgs.nixfmt
           pkgs.oxfmt
           pkgs.shfmt
@@ -52,29 +56,175 @@
           pkgs.taplo
           pkgs.treefmt
         ];
-        linterPackages = [
+
+        linter = [
+          pkgs.actionlint
+          pkgs.deadnix
           pkgs.oxlint
+          pkgs.statix
+          pkgs.zizmor
         ];
-        lspPackages = [
+
+        lsp = [
           pkgs.vtsls
         ];
-        devShellPackages =
-          formatterPackages
-          ++ linterPackages
-          ++ lspPackages
+
+        devShell =
+          formatter
+          ++ linter
+          ++ lsp
           ++ [
             pkgs.nodejs_24
             pkgs.pnpm
           ];
+      };
+
+      mkSwitchApp =
+        system: pkgs:
+        let
+          homeConfigurationName = homeConfigurationNames.${system};
+        in
+        pkgs.writeShellApplication {
+          name = "dot-switch";
+          runtimeInputs = [ home-manager.packages.${system}.default ];
+          text = ''
+            exec home-manager switch --flake ".#${homeConfigurationName}" "$@"
+          '';
+        };
+
+      mkGcApp =
+        system: pkgs:
+        pkgs.writeShellApplication {
+          name = "dot-gc";
+          runtimeInputs = [ home-manager.packages.${system}.default ];
+          text = ''
+            home-manager expire-generations '-7 days'
+            nix store gc
+          '';
+        };
+
+      mkGenerationsApp =
+        system: pkgs:
+        pkgs.writeShellApplication {
+          name = "dot-generations";
+          runtimeInputs = [ home-manager.packages.${system}.default ];
+          text = ''
+            exec home-manager generations "$@"
+          '';
+        };
+
+      mkLintChecks = pkgs: {
+        treefmt =
+          pkgs.runCommand "treefmt-check"
+            { nativeBuildInputs = [ self.formatter.${pkgs.stdenv.hostPlatform.system} ]; }
+            ''
+              cd ${./.}
+              treefmt --ci
+              touch "$out"
+            '';
+
+        deadnix = pkgs.runCommand "deadnix-check" { nativeBuildInputs = [ pkgs.deadnix ]; } ''
+          cd ${./.}
+          deadnix --fail .
+          touch "$out"
+        '';
+
+        statix = pkgs.runCommand "statix-check" { nativeBuildInputs = [ pkgs.statix ]; } ''
+          cd ${./.}
+          statix check .
+          touch "$out"
+        '';
+
+        oxlint = pkgs.runCommand "oxlint-check" { nativeBuildInputs = [ pkgs.oxlint ]; } ''
+          cd ${./.}
+          oxlint
+          touch "$out"
+        '';
+
+        actionlint = pkgs.runCommand "actionlint-check" { nativeBuildInputs = [ pkgs.actionlint ]; } ''
+          cd ${./.}
+          actionlint .github/workflows/*.yml
+          touch "$out"
+        '';
+
+        zizmor = pkgs.runCommand "zizmor-check" { nativeBuildInputs = [ pkgs.zizmor ]; } ''
+          cd ${./.}
+          zizmor .
+          touch "$out"
+        '';
+      };
+
+      mkHomeManagerConfiguration =
+        system: homeModule:
+        let
+          pkgs = mkPkgs system;
+          extendedLib = pkgs.lib.extend (
+            _: _: {
+              hm = home-manager.lib.hm;
+            }
+          );
+          files = ./files;
+        in
+        home-manager.lib.homeManagerConfiguration {
+          inherit pkgs;
+          lib = extendedLib;
+          extraSpecialArgs = {
+            dot = {
+              root = ./.;
+              inherit files;
+            }
+            // (import ./modules/dot/builtins {
+              inherit pkgs files;
+              lib = extendedLib;
+            });
+          };
+          modules = [
+            homeModule
+            nixvim.homeModules.nixvim
+            ./modules/dot
+          ];
+        };
+    in
+    flake-utils.lib.eachSystem supportedSystems (
+      system:
+      let
+        pkgs = mkPkgs system;
+        toolPackages = mkToolPackages pkgs;
+        switchApp = mkSwitchApp system pkgs;
+        gcApp = mkGcApp system pkgs;
+        generationsApp = mkGenerationsApp system pkgs;
       in
       {
+        apps = {
+          switch = {
+            type = "app";
+            program = "${switchApp}/bin/dot-switch";
+          };
+
+          gc = {
+            type = "app";
+            program = "${gcApp}/bin/dot-gc";
+          };
+
+          generations = {
+            type = "app";
+            program = "${generationsApp}/bin/dot-generations";
+          };
+        };
+
+        checks = mkLintChecks pkgs;
+
         devShells.default = pkgs.mkShell {
-          packages = devShellPackages;
+          packages = toolPackages.devShell ++ [
+            switchApp
+            gcApp
+            generationsApp
+          ];
         };
 
         formatter = pkgs.writeShellApplication {
           name = "treefmt";
-          runtimeInputs = formatterPackages;
+          runtimeInputs = toolPackages.formatter;
           text = ''
             exec treefmt "$@"
           '';
@@ -89,29 +239,9 @@
       };
 
       homeConfigurations = {
-        linux = home-manager.lib.homeManagerConfiguration {
-          pkgs = mkPkgs "x86_64-linux";
-          modules = [
-            ./home.linux.nix
-            nixvim.homeModules.nixvim
-          ];
-        };
-
-        macos = home-manager.lib.homeManagerConfiguration {
-          pkgs = mkPkgs "aarch64-darwin";
-          modules = [
-            ./home.macos.nix
-            nixvim.homeModules.nixvim
-          ];
-        };
-
-        macos_intel = home-manager.lib.homeManagerConfiguration {
-          pkgs = mkPkgs "x86_64-darwin";
-          modules = [
-            ./home.macos.nix
-            nixvim.homeModules.nixvim
-          ];
-        };
+        linux = mkHomeManagerConfiguration "x86_64-linux" ./modules/home/linux.nix;
+        macos = mkHomeManagerConfiguration "aarch64-darwin" ./modules/home/macos.nix;
+        macos_intel = mkHomeManagerConfiguration "x86_64-darwin" ./modules/home/macos.nix;
       };
     };
 }

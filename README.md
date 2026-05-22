@@ -1,30 +1,42 @@
 # dotfiles
 
-d-issy's dotfiles
+d-issy's Nix Flakes + Home Manager dotfiles for Linux and macOS.
 
-## Require
+## Requirements
 
-- os
-  - macOS (aarch64/x86_64)
-  - WSL2 on Windows / Linux
-- nix
+- macOS Apple Silicon (`aarch64-darwin`)
+- macOS Intel (`x86_64-darwin`)
+- WSL2 / Linux (`x86_64-linux`)
+- Nix with `nix-command` and `flakes` enabled
 
-## init
+## Init
 
 ```sh
 git clone https://github.com/d-issy/dotfiles.git ~/code/github.com/d-issy/dotfiles
+cd ~/code/github.com/d-issy/dotfiles
 export NIX_CONFIG="extra-experimental-features = nix-command flakes"
 ```
 
-## apply
+## Switch
+
+`.#switch` automatically selects the matching Home Manager configuration for the current system.
 
 ```sh
-# for linux
-nix run . -- switch --flake .#linux
+nix run .#switch
+```
 
-# for macOS Silicon
-nix run . -- switch --flake .#macos
+## Generations
 
-# for macOS Intel
-nix run . -- switch --flake .#macos_intel
+`.#generations` lists Home Manager generations.
+
+```sh
+nix run .#generations
+```
+
+## GC
+
+`.#gc` expires Home Manager generations older than 7 days and runs `nix store gc`.
+
+```sh
+nix run .#gc
 ```
