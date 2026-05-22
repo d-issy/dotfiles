@@ -103,6 +103,16 @@
           '';
         };
 
+      mkGenerationsApp =
+        system: pkgs:
+        pkgs.writeShellApplication {
+          name = "dot-generations";
+          runtimeInputs = [ home-manager.packages.${system}.default ];
+          text = ''
+            exec home-manager generations "$@"
+          '';
+        };
+
       mkLintChecks = pkgs: {
         treefmt =
           pkgs.runCommand "treefmt-check"
@@ -184,6 +194,7 @@
         toolPackages = mkToolPackages pkgs;
         switchApp = mkSwitchApp system pkgs;
         gcApp = mkGcApp system pkgs;
+        generationsApp = mkGenerationsApp system pkgs;
       in
       {
         apps.switch = {
@@ -196,12 +207,18 @@
           program = "${gcApp}/bin/dot-gc";
         };
 
+        apps.generations = {
+          type = "app";
+          program = "${generationsApp}/bin/dot-generations";
+        };
+
         checks = mkLintChecks pkgs;
 
         devShells.default = pkgs.mkShell {
           packages = toolPackages.devShell ++ [
             switchApp
             gcApp
+            generationsApp
           ];
         };
 
