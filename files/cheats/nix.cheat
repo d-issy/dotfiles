@@ -1,6 +1,6 @@
-% nix apply
+% nix switch
 
-# apply home-manager configuration for this machine
+# switch home-manager configuration for this machine
 nix run .#switch
 
 % nix flake

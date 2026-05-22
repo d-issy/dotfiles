@@ -6,7 +6,7 @@ Nix Flakes + Home Manager dotfiles for Linux/macOS.
 
 - Do not read, write, or access files under `~/` directly; always work through this repository, except when the user explicitly asks to test sandbox behavior
 - Only `git add` files that were changed as part of the current task
-- Do not apply (switch) unless explicitly asked. When applying:
+- Do not switch unless explicitly asked. When switching:
   - `git add` changed files under `files/`, `modules/`, and `flake.nix` as needed, then `nix run .#switch`
   - `.#switch` selects linux: `.#linux`, macOS Silicon: `.#macos`, macOS Intel: `.#macos_intel`
 

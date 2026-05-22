@@ -17,7 +17,7 @@ cd ~/code/github.com/d-issy/dotfiles
 export NIX_CONFIG="extra-experimental-features = nix-command flakes"
 ```
 
-## Apply
+## Switch
 
 `.#switch` automatically selects the matching Home Manager configuration for the current system.
 
