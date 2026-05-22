@@ -24,6 +24,7 @@ format_tokens() {
 }
 
 MODEL=$(echo "$input" | jq -r '.model.display_name // "Unknown"')
+EFFORT=$(echo "$input" | jq -r '.effort.level // empty')
 CWD=$(echo "$input" | jq -r '.workspace.current_dir // "."')
 CWD_SHORT="${CWD##*/}"
 
@@ -55,7 +56,11 @@ if git rev-parse --git-dir >/dev/null 2>&1; then
 fi
 
 # Build output
-OUTPUT="${DIM}[${RESET}${MODEL}${DIM}]${RESET} $CWD_SHORT${GIT_BRANCH}"
+MODEL_DISPLAY="${MODEL}"
+if [[ -n "$EFFORT" ]]; then
+	MODEL_DISPLAY+="${DIM}:${RESET}${EFFORT}"
+fi
+OUTPUT="${MODEL_DISPLAY} ${DIM}|${RESET} $CWD_SHORT${GIT_BRANCH}"
 
 if [[ "$TOTAL_INPUT_TOKENS" != "0" || "$TOTAL_OUTPUT_TOKENS" != "0" ]]; then
 	OUTPUT+=" ${DIM}|${RESET} ${DIM}↑${RESET}${GREEN}${INPUT_K}${RESET} ${DIM}↓${RESET}${YELLOW}${OUTPUT_K}${RESET}"
