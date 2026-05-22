@@ -22,4 +22,4 @@ nix run . -- generations
 % nix gc
 
 # expire old generations and garbage collect
-nix run . -- expire-generations "-90 days"; nix store gc
+nix run .#gc

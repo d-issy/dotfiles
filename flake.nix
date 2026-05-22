@@ -92,6 +92,17 @@
           '';
         };
 
+      mkGcApp =
+        system: pkgs:
+        pkgs.writeShellApplication {
+          name = "dotfiles-gc";
+          runtimeInputs = [ home-manager.packages.${system}.default ];
+          text = ''
+            home-manager expire-generations '-7 days'
+            nix store gc
+          '';
+        };
+
       mkLintChecks = pkgs: {
         treefmt =
           pkgs.runCommand "treefmt-check"
@@ -172,11 +183,17 @@
         pkgs = mkPkgs system;
         toolPackages = mkToolPackages pkgs;
         switchApp = mkSwitchApp system pkgs;
+        gcApp = mkGcApp system pkgs;
       in
       {
         apps.switch = {
           type = "app";
           program = "${switchApp}/bin/dotfiles-switch";
+        };
+
+        apps.gc = {
+          type = "app";
+          program = "${gcApp}/bin/dotfiles-gc";
         };
 
         checks = mkLintChecks pkgs;
