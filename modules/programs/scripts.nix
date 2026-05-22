@@ -1,9 +1,6 @@
-{ config, dot, ... }:
+{ config, ... }:
 {
-  home.file.".local/bin" = {
-    source = dot.files + "/scripts";
-    recursive = true;
-  };
+  dot.home.file.".local/bin".source = "scripts";
 
   home.sessionPath = [
     "${config.home.homeDirectory}/.local/bin"

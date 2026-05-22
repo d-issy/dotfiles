@@ -8,7 +8,7 @@
         nixGrammars = false;
         lazyLoad.settings.event = [ "BufReadPost" ];
 
-        luaConfig.post = builtins.readFile (dot.files + "/nvim/lua/nixvim/plugins/treesitter.lua");
+        luaConfig.post = dot.readFile "nvim/lua/nixvim/plugins/treesitter.lua";
       };
 
       treesitter-context = {

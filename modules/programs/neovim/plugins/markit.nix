@@ -51,7 +51,7 @@ in
         ];
         after = ''
           function()
-          ${builtins.readFile (dot.files + "/nvim/lua/nixvim/plugins/markit.lua")}
+          ${dot.readFile "nvim/lua/nixvim/plugins/markit.lua"}
           end
         '';
       }

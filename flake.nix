@@ -159,18 +159,11 @@
         let
           pkgs = mkPkgs system;
           extendedLib = pkgs.lib.extend (
-            final: prev:
-            let
-              dotfilesLib = import ./lib {
-                inherit pkgs;
-                lib = final;
-              };
-            in
-            {
+            _: _: {
               hm = home-manager.lib.hm;
-              helpers = (prev.helpers or { }) // dotfilesLib.helpers;
             }
           );
+          files = ./files;
         in
         home-manager.lib.homeManagerConfiguration {
           inherit pkgs;
@@ -178,12 +171,17 @@
           extraSpecialArgs = {
             dot = {
               root = ./.;
-              files = ./files;
-            };
+              inherit files;
+            }
+            // (import ./modules/dot/builtins {
+              inherit pkgs files;
+              lib = extendedLib;
+            });
           };
           modules = [
             homeModule
             nixvim.homeModules.nixvim
+            ./modules/dot
           ];
         };
     in

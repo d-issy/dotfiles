@@ -18,7 +18,7 @@
 
       on_attach = ''
         function(buffer)
-        ${builtins.readFile (dot.files + "/nvim/lua/nixvim/plugins/gitsigns-on-attach.lua")}
+        ${dot.readFile "nvim/lua/nixvim/plugins/gitsigns-on-attach.lua"}
         end
       '';
     };

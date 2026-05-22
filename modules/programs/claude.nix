@@ -20,7 +20,7 @@ in
         recursive = true;
       };
 
-      activation.claudeSettings = lib.helpers.json.mergeJson {
+      activation.claudeSettings = dot.mergeJson {
         targetDir = "${config.home.homeDirectory}/.claude";
         settingsFile = "settings.json";
         overrides = settings;

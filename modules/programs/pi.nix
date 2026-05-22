@@ -1,10 +1,5 @@
-{ dot, ... }:
+_:
 
 {
-  config = {
-    home.file.".pi/agent" = {
-      source = dot.files + "/pi/agent";
-      recursive = true;
-    };
-  };
+  dot.home.file.".pi/agent".source = "pi/agent";
 }

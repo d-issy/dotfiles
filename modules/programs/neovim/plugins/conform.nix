@@ -14,7 +14,7 @@ let
 
   jsTsFormatter = ''
     function(buf)
-    ${builtins.readFile (dot.files + "/nvim/lua/nixvim/plugins/conform-js-ts-formatter.lua")}
+    ${dot.readFile "nvim/lua/nixvim/plugins/conform-js-ts-formatter.lua"}
     end
   '';
 in
@@ -51,7 +51,7 @@ in
         formatters_by_ft = {
           python.__raw = ''
             function(buf)
-            ${builtins.readFile (dot.files + "/nvim/lua/nixvim/plugins/conform-python-formatter.lua")}
+            ${dot.readFile "nvim/lua/nixvim/plugins/conform-python-formatter.lua"}
             end
           '';
 
@@ -87,7 +87,7 @@ in
         };
       };
 
-      luaConfig.post = builtins.readFile (dot.files + "/nvim/lua/nixvim/plugins/conform.lua");
+      luaConfig.post = dot.readFile "nvim/lua/nixvim/plugins/conform.lua";
     };
 
     keymaps = [

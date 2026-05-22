@@ -19,7 +19,7 @@ in
     plugins = {
       dap = {
         enable = true;
-        luaConfig.post = builtins.readFile (dot.files + "/nvim/lua/nixvim/plugins/dap.lua");
+        luaConfig.post = dot.readFile "nvim/lua/nixvim/plugins/dap.lua";
       };
       dap-ui.enable = true;
       dap-go.enable = true;

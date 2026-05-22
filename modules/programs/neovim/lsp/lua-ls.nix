@@ -15,9 +15,7 @@ in
         enable = true;
         arrayIndex = "Disable";
       };
-      workspace.library = raw (
-        builtins.readFile (dot.files + "/nvim/lua/nixvim/lsp/lua-ls-workspace-library.lua")
-      );
+      workspace.library = raw (dot.readFile "nvim/lua/nixvim/lsp/lua-ls-workspace-library.lua");
     };
   };
 }

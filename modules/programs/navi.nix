@@ -1,7 +1,6 @@
 {
   pkgs,
   lib,
-  dot,
   ...
 }:
 
@@ -96,9 +95,6 @@ in
       source = yamlFormat.generate "navi-config" settings;
     };
 
-    home.file."cheats" = {
-      source = dot.files + "/cheats";
-      recursive = true;
-    };
+    dot.home.file."cheats".source = true;
   };
 }

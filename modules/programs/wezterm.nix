@@ -1,5 +1,5 @@
-{ dot, ... }:
+_:
 
 {
-  xdg.configFile."wezterm/wezterm.lua".source = dot.files + "/wezterm/wezterm.lua";
+  dot.xdg.configFile."wezterm/wezterm.lua".source = true;
 }

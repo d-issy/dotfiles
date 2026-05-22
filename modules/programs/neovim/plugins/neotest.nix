@@ -20,7 +20,7 @@ in
         golang.enable = true;
         python.enable = true;
       };
-      luaConfig.post = builtins.readFile (dot.files + "/nvim/lua/nixvim/plugins/neotest.lua");
+      luaConfig.post = dot.readFile "nvim/lua/nixvim/plugins/neotest.lua";
     };
 
     keymaps = [

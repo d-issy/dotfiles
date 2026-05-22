@@ -145,7 +145,7 @@ in
         };
       };
 
-      luaConfig.post = builtins.readFile (dot.files + "/nvim/lua/nixvim/plugins/snacks.lua");
+      luaConfig.post = dot.readFile "nvim/lua/nixvim/plugins/snacks.lua";
     };
 
     keymaps = [

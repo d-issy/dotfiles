@@ -1,6 +1,6 @@
 {
   config,
-  lib,
+  dot,
   ...
 }:
 
@@ -74,14 +74,14 @@ in
   config = {
     home.activation = {
       # WSL/Linux: Merge settings to ~/.config/zed
-      zedSettings = lib.helpers.json.mergeJson {
+      zedSettings = dot.mergeJson {
         targetDir = "${config.home.homeDirectory}/.config/zed";
         settingsFile = "settings.json";
         overrides = settings;
       };
 
       # WSL/Linux: Replace keymap (array format cannot be merged)
-      zedKeymap = lib.helpers.json.mergeJson {
+      zedKeymap = dot.mergeJson {
         targetDir = "${config.home.homeDirectory}/.config/zed";
         settingsFile = "keymap.json";
         overrides = keymap;
@@ -89,7 +89,7 @@ in
       };
 
       # Windows: Merge settings if directory exists (WSL only)
-      zedSettingsWindows = lib.helpers.json.mergeJson {
+      zedSettingsWindows = dot.mergeJson {
         targetDir = windowsZedDir;
         settingsFile = "settings.json";
         overrides = settings;
@@ -97,7 +97,7 @@ in
       };
 
       # Windows: Replace keymap if directory exists (WSL only)
-      zedKeymapWindows = lib.helpers.json.mergeJson {
+      zedKeymapWindows = dot.mergeJson {
         targetDir = windowsZedDir;
         settingsFile = "keymap.json";
         overrides = keymap;

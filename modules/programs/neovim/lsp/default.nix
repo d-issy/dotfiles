@@ -33,6 +33,6 @@ in
       ];
     };
 
-    extraConfigLua = builtins.readFile (dot.files + "/nvim/lua/nixvim/lsp/default.lua");
+    extraConfigLua = dot.readFile "nvim/lua/nixvim/lsp/default.lua";
   };
 }
