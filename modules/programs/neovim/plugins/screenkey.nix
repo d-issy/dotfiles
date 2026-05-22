@@ -1,4 +1,4 @@
-{ pkgs, dotfiles, ... }:
+{ pkgs, dot, ... }:
 
 let
   optionalPlugins = map (plugin: {
@@ -34,7 +34,7 @@ in
         ];
         after = ''
           function()
-          ${builtins.readFile (dotfiles.files + "/nvim/lua/nixvim/plugins/screenkey.lua")}
+          ${builtins.readFile (dot.files + "/nvim/lua/nixvim/plugins/screenkey.lua")}
           end
         '';
       }

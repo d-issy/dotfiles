@@ -1,14 +1,14 @@
 {
   config,
   lib,
-  dotfiles,
+  dot,
   ...
 }:
 let
-  settings = lib.importJSON (dotfiles.files + "/claude/settings.json");
+  settings = lib.importJSON (dot.files + "/claude/settings.json");
   claudeFilesFiltered = builtins.filterSource (
     path: _type: !(lib.hasSuffix "settings.json" (baseNameOf path))
-  ) (dotfiles.files + "/claude");
+  ) (dot.files + "/claude");
 in
 {
   config = {

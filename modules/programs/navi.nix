@@ -1,7 +1,7 @@
 {
   pkgs,
   lib,
-  dotfiles,
+  dot,
   ...
 }:
 
@@ -97,7 +97,7 @@ in
     };
 
     home.file."cheats" = {
-      source = dotfiles.files + "/cheats";
+      source = dot.files + "/cheats";
       recursive = true;
     };
   };

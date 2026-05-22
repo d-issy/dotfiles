@@ -1,4 +1,4 @@
-{ dotfiles, ... }:
+{ dot, ... }:
 
 let
   raw = __raw: { inherit __raw; };
@@ -33,6 +33,6 @@ in
       ];
     };
 
-    extraConfigLua = builtins.readFile (dotfiles.files + "/nvim/lua/nixvim/lsp/default.lua");
+    extraConfigLua = builtins.readFile (dot.files + "/nvim/lua/nixvim/lsp/default.lua");
   };
 }

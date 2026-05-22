@@ -1,6 +1,6 @@
-{ lib, dotfiles, ... }:
+{ lib, dot, ... }:
 let
-  skillsSrc = dotfiles.files + "/agents/skills";
+  skillsSrc = dot.files + "/agents/skills";
 in
 {
   config = {

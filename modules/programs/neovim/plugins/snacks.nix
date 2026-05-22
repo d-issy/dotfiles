@@ -1,4 +1,4 @@
-{ dotfiles, ... }:
+{ dot, ... }:
 
 let
   raw = __raw: { inherit __raw; };
@@ -145,7 +145,7 @@ in
         };
       };
 
-      luaConfig.post = builtins.readFile (dotfiles.files + "/nvim/lua/nixvim/plugins/snacks.lua");
+      luaConfig.post = builtins.readFile (dot.files + "/nvim/lua/nixvim/plugins/snacks.lua");
     };
 
     keymaps = [

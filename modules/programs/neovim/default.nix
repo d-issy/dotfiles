@@ -1,4 +1,4 @@
-{ pkgs, dotfiles, ... }:
+{ pkgs, dot, ... }:
 
 {
   imports = [
@@ -23,12 +23,12 @@
     };
 
     xdg.configFile."nvim/lua/util" = {
-      source = dotfiles.files + "/nvim/lua/util";
+      source = dot.files + "/nvim/lua/util";
       recursive = true;
     };
 
     xdg.configFile."nvim/lua/snippets" = {
-      source = dotfiles.files + "/nvim/lua/snippets";
+      source = dot.files + "/nvim/lua/snippets";
       recursive = true;
     };
 

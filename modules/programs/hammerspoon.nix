@@ -1,14 +1,14 @@
 {
   pkgs,
   lib,
-  dotfiles,
+  dot,
   ...
 }:
 
 {
   config = lib.mkIf pkgs.stdenv.isDarwin {
     home.file.".hammerspoon" = {
-      source = dotfiles.files + "/hammerspoon";
+      source = dot.files + "/hammerspoon";
       recursive = true;
     };
   };

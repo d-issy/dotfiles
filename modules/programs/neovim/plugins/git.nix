@@ -1,4 +1,4 @@
-{ dotfiles, ... }:
+{ dot, ... }:
 
 {
   programs.nixvim.plugins.gitsigns = {
@@ -18,7 +18,7 @@
 
       on_attach = ''
         function(buffer)
-        ${builtins.readFile (dotfiles.files + "/nvim/lua/nixvim/plugins/gitsigns-on-attach.lua")}
+        ${builtins.readFile (dot.files + "/nvim/lua/nixvim/plugins/gitsigns-on-attach.lua")}
         end
       '';
     };

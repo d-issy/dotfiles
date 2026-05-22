@@ -176,7 +176,7 @@
           inherit pkgs;
           lib = extendedLib;
           extraSpecialArgs = {
-            dotfiles = {
+            dot = {
               root = ./.;
               files = ./files;
             };
@@ -197,19 +197,21 @@
         generationsApp = mkGenerationsApp system pkgs;
       in
       {
-        apps.switch = {
-          type = "app";
-          program = "${switchApp}/bin/dot-switch";
-        };
+        apps = {
+          switch = {
+            type = "app";
+            program = "${switchApp}/bin/dot-switch";
+          };
 
-        apps.gc = {
-          type = "app";
-          program = "${gcApp}/bin/dot-gc";
-        };
+          gc = {
+            type = "app";
+            program = "${gcApp}/bin/dot-gc";
+          };
 
-        apps.generations = {
-          type = "app";
-          program = "${generationsApp}/bin/dot-generations";
+          generations = {
+            type = "app";
+            program = "${generationsApp}/bin/dot-generations";
+          };
         };
 
         checks = mkLintChecks pkgs;

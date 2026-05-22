@@ -1,4 +1,4 @@
-{ dotfiles, ... }:
+{ dot, ... }:
 
 let
   raw = __raw: { inherit __raw; };
@@ -14,7 +14,7 @@ let
 
   jsTsFormatter = ''
     function(buf)
-    ${builtins.readFile (dotfiles.files + "/nvim/lua/nixvim/plugins/conform-js-ts-formatter.lua")}
+    ${builtins.readFile (dot.files + "/nvim/lua/nixvim/plugins/conform-js-ts-formatter.lua")}
     end
   '';
 in
@@ -51,7 +51,7 @@ in
         formatters_by_ft = {
           python.__raw = ''
             function(buf)
-            ${builtins.readFile (dotfiles.files + "/nvim/lua/nixvim/plugins/conform-python-formatter.lua")}
+            ${builtins.readFile (dot.files + "/nvim/lua/nixvim/plugins/conform-python-formatter.lua")}
             end
           '';
 
@@ -87,7 +87,7 @@ in
         };
       };
 
-      luaConfig.post = builtins.readFile (dotfiles.files + "/nvim/lua/nixvim/plugins/conform.lua");
+      luaConfig.post = builtins.readFile (dot.files + "/nvim/lua/nixvim/plugins/conform.lua");
     };
 
     keymaps = [
