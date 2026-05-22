@@ -1,35 +1,46 @@
 _:
 
 {
-  xdg.configFile."ghostty/config".text = ''
-    # UI
-    theme = "Catppuccin Macchiato"
-    font-size = 14
+  programs.ghostty = {
+    enable = true;
+    package = null; # not use in nixpkgs, install manually
+    settings = {
+      # UI
+      theme = "Catppuccin Macchiato";
+      "font-size" = 14;
 
-    font-family = "0xProto"
-    font-family = "UDEV Gothic 35"
-    font-family = "Hack Nerd Font Mono"
-    font-family = "Hiragino Kaku Gothic ProN"
+      "font-family" = [
+        "0xProto"
+        "UDEV Gothic 35"
+        "Hack Nerd Font Mono"
+        "Hiragino Kaku Gothic ProN"
+      ];
 
-    font-feature = -dlig
-    font-feature = calt
-    font-feature = clig
-    font-feature = liga
+      "font-feature" = [
+        "-dlig"
+        "calt"
+        "clig"
+        "liga"
+      ];
 
-    window-padding-x = 4
-    window-padding-y = 0
-    window-padding-balance = true
+      "window-padding-x" = 0;
+      "window-padding-y" = 0;
+      "window-padding-balance" = false;
 
-    mouse-hide-while-typing = true
-    resize-overlay = never
-    link-url = true
+      "mouse-hide-while-typing" = true;
+      "resize-overlay" = "never";
+      "link-url" = true;
 
-    # macOS specific
-    macos-option-as-alt = left
-    macos-titlebar-style = tabs
+      # macOS specific
+      "macos-option-as-alt" = "left";
+      "macos-titlebar-style" = "tabs";
 
-    # keybind
-    keybind = "ctrl+j=ignore"
-    keybind = "shift+enter=text:\x1b\r"
-  '';
+      # keybind
+      keybind = [
+        "ctrl+j=ignore"
+        "shift+enter=text:\\x1b\\r"
+        "ctrl+shift+r=reload_config"
+      ];
+    };
+  };
 }
