@@ -3,17 +3,17 @@ import { access, lstat, rename } from "node:fs/promises";
 import { basename, resolve } from "node:path";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { type Static, Type } from "typebox";
-import { checkAbort, normalizeStringOrArray } from "./lib/args.js";
-import { ToolError, isErrnoCode } from "./lib/errors.js";
+import { checkAbort, normalizeStringOrArray } from "./lib/args";
+import { ToolError, isErrnoCode } from "./lib/errors";
 import {
 	assertNoIgnoredDescendants,
 	assertRepoPathAllowed,
 	createFsGuardContext,
 	displayRepoPath,
 	resolveRepoPath,
-} from "./lib/fs-guard.js";
-import { policyRegistry } from "./lib/policy.js";
-import { renderToolHeader } from "./lib/render.js";
+} from "./lib/fs-guard";
+import { policyRegistry } from "./lib/policy";
+import { renderToolHeader } from "./lib/render";
 
 const OPERATION = "Moving";
 const OPERATION_TO = "Moving to";

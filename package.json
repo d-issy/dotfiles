@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "lint": "tsc --noEmit"
+    "lint": "tsgo --noEmit"
   },
   "peerDependencies": {
     "@earendil-works/pi-ai": "*",
@@ -10,7 +10,7 @@
   },
   "devDependencies": {
     "@types/node": "^25.9.1",
-    "typescript": "^6.0.3"
+    "@typescript/native-preview": "7.0.0-dev.20260522.1"
   },
   "packageManager": "pnpm@11.2.1"
 }

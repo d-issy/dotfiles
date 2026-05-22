@@ -1,5 +1,5 @@
 import type { ToolCallEvent } from "@earendil-works/pi-coding-agent";
-import { isSecretPath } from "./secrets.js";
+import { isSecretPath } from "./secrets";
 
 export type ModeName = "read" | "write" | "yolo";
 

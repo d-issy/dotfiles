@@ -2,7 +2,7 @@ import { execFile } from "node:child_process";
 import { lstat, readdir } from "node:fs/promises";
 import { dirname, relative, resolve, sep } from "node:path";
 import { promisify } from "node:util";
-import { ToolError, isErrnoCode } from "./errors.js";
+import { ToolError, isErrnoCode } from "./errors";
 
 type IgnoreCache = Map<string, boolean>;
 

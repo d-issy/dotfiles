@@ -1,16 +1,16 @@
 import { rm as remove } from "node:fs/promises";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { type Static, Type } from "typebox";
-import { checkAbort, normalizeStringOrArray } from "./lib/args.js";
-import { ToolError } from "./lib/errors.js";
+import { checkAbort, normalizeStringOrArray } from "./lib/args";
+import { ToolError } from "./lib/errors";
 import {
 	assertNoIgnoredDescendants,
 	createFsGuardContext,
 	displayRepoPath,
 	resolveRepoPath,
-} from "./lib/fs-guard.js";
-import { policyRegistry } from "./lib/policy.js";
-import { renderToolHeader } from "./lib/render.js";
+} from "./lib/fs-guard";
+import { policyRegistry } from "./lib/policy";
+import { renderToolHeader } from "./lib/render";
 
 const OPERATION = "Removing";
 

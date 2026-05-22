@@ -27,6 +27,7 @@
     "eslint/require-unicode-regexp": "warn",
     "no-duplicate-imports": ["error", { "allowSeparateTypeImports": true }],
     "import/no-cycle": "error",
+    "import/extensions": ["error", "never"],
     "sort-imports": ["warn", { "ignoreDeclarationSort": true }]
   },
   "env": {
