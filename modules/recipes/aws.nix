@@ -2,11 +2,11 @@
 
 {
   config = {
-    home.packages = [
-      pkgs.awscli2
-      pkgs.aws-vault
-      pkgs.saml2aws
-      pkgs.ssm-session-manager-plugin
+    home.packages = with pkgs; [
+      awscli2
+      aws-vault
+      saml2aws
+      ssm-session-manager-plugin
     ];
 
     # TODO: move to navi

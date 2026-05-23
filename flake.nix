@@ -48,21 +48,21 @@
         };
 
       mkToolPackages = pkgs: rec {
-        formatter = [
-          pkgs.nixfmt
-          pkgs.oxfmt
-          pkgs.shfmt
-          pkgs.stylua
-          pkgs.taplo
-          pkgs.treefmt
+        formatter = with pkgs; [
+          nixfmt
+          oxfmt
+          shfmt
+          stylua
+          taplo
+          treefmt
         ];
 
-        linter = [
-          pkgs.actionlint
-          pkgs.deadnix
-          pkgs.oxlint
-          pkgs.statix
-          pkgs.zizmor
+        linter = with pkgs; [
+          actionlint
+          deadnix
+          oxlint
+          statix
+          zizmor
         ];
 
         lsp = [
@@ -73,10 +73,10 @@
           formatter
           ++ linter
           ++ lsp
-          ++ [
-            pkgs.nodejs_24
-            pkgs.pnpm
-          ];
+          ++ (with pkgs; [
+            nodejs
+            pnpm
+          ]);
       };
 
       mkSwitchApp =
