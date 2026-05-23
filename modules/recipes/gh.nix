@@ -10,11 +10,11 @@
         grep = "f greps";
       };
     };
-    extensions = [
-      pkgs.gh-dash
-      pkgs.gh-f
-      pkgs.gh-notify
-      pkgs.gh-poi
+    extensions = with pkgs; [
+      gh-dash
+      gh-f
+      gh-notify
+      gh-poi
     ];
   };
 }

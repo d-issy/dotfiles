@@ -18,19 +18,16 @@
       dc = "docker compose";
     };
 
-    packages = [
-      pkgs.curl
-      pkgs.duckdb
-      pkgs.glow
-      pkgs.gnumake
-      pkgs.google-cloud-sdk
-      pkgs.grpcurl
-      pkgs.jq
-      pkgs.jqp
-      pkgs.ripgrep
-      pkgs.typos
-      pkgs.visidata
-      pkgs.wget
+    packages = with pkgs; [
+      curl
+      fd
+      glow
+      gnumake
+      google-cloud-sdk
+      grpcurl
+      jq
+      ripgrep
+      wget
     ];
   };
 
