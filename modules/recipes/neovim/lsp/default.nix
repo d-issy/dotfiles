@@ -10,10 +10,12 @@ let
 in
 {
   imports = [
+    ./basedpyright.nix
     ./copilot.nix
     ./gopls.nix
     ./lua-ls.nix
     ./nixd.nix
+    ./ruff.nix
     ./typos-lsp.nix
     ./vtsls.nix
   ];
