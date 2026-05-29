@@ -14,6 +14,7 @@ in
   config = {
     home = {
       shellAliases.cld = "claude";
+      shellAliases.clda = "claude --permission-mode auto";
 
       file.".claude" = {
         source = claudeFilesFiltered;
