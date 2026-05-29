@@ -199,16 +199,19 @@
           switch = {
             type = "app";
             program = "${switchApp}/bin/dot-switch";
+            meta.description = "Switch to the Home Manager configuration for this host";
           };
 
           gc = {
             type = "app";
             program = "${gcApp}/bin/dot-gc";
+            meta.description = "Expire old generations and garbage-collect the Nix store";
           };
 
           generations = {
             type = "app";
             program = "${generationsApp}/bin/dot-generations";
+            meta.description = "List Home Manager generations";
           };
         };
 
