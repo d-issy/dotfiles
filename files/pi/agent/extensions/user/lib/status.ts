@@ -10,10 +10,10 @@ import type {
 } from "@earendil-works/pi-coding-agent";
 import type { Component, TUI } from "@earendil-works/pi-tui";
 import { truncateToWidth, visibleWidth } from "@earendil-works/pi-tui";
-import type { Color } from "./lib/theme";
-import { catppuccin, fg } from "./lib/theme";
+import type { Color } from "./theme";
+import { catppuccin, fg } from "./theme";
 
-type RequestRender = () => void;
+export type RequestRender = () => void;
 type FooterFactory = NonNullable<
 	Parameters<ExtensionUIContext["setFooter"]>[0]
 >;
@@ -70,7 +70,7 @@ function getAssistantTotals(entries: readonly SessionEntry[]): Totals {
 	return totals;
 }
 
-function createStatusBarFooter(
+export function createStatusBarFooter(
 	pi: ExtensionAPI,
 	ctx: ExtensionContext,
 	setRequestRender: (requestRender: RequestRender | undefined) => void,
@@ -149,20 +149,4 @@ function createStatusBarFooter(
 			},
 		};
 	};
-}
-
-export default function statusBar(pi: ExtensionAPI): void {
-	let requestRender: RequestRender | undefined;
-	const setRequestRender = (next: RequestRender | undefined): void => {
-		requestRender = next;
-	};
-	const triggerRender = (): void => requestRender?.();
-
-	pi.on("thinking_level_select", triggerRender);
-	pi.on("model_select", triggerRender);
-
-	pi.on("session_start", (_event, ctx) => {
-		if (!ctx.hasUI) return;
-		ctx.ui.setFooter(createStatusBarFooter(pi, ctx, setRequestRender));
-	});
 }
