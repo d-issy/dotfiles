@@ -20,7 +20,7 @@ export class ToolError extends Error {
 	}
 }
 
-export function formatToolError(
+function formatToolError(
 	code: ToolErrorCode,
 	operation: string,
 	context: string,
@@ -47,15 +47,10 @@ export function formatToolError(
 	}
 }
 
-export function isToolError(
+export function isErrnoCode(
 	error: unknown,
-	code?: ToolErrorCode,
-): error is ToolError {
-	if (!(error instanceof ToolError)) return false;
-	return code === undefined || error.code === code;
-}
-
-export function isErrnoCode(error: unknown, code: string): boolean {
+	code: string | number,
+): boolean {
 	return (
 		typeof error === "object" &&
 		error !== null &&

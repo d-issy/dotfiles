@@ -127,11 +127,11 @@ async function assertDestinationIsDirectory(
 	}
 }
 
-export function renderRm(args: RmToolInput, theme: Theme): Component {
-	const renderArgs = args as Partial<RmToolInput> | undefined;
-	const paths = normalizeStringOrArray(renderArgs?.path);
+export function renderRm(args: unknown, theme: Theme): Component {
+	const input = (args ?? {}) as Record<string, unknown>;
+	const paths = normalizeStringOrArray(input.path);
 	return renderToolHeader("rm", paths, theme, {
-		suffix: renderArgs?.recursive ? "(recursive)" : undefined,
+		suffix: input.recursive === true ? "(recursive)" : undefined,
 	});
 }
 
@@ -180,13 +180,11 @@ export async function executeRemove(
 	};
 }
 
-export function renderMv(args: MvToolInput, theme: Theme): Component {
-	const renderArgs = args as Partial<MvToolInput> | undefined;
-	const sources = normalizeStringOrArray(renderArgs?.source);
+export function renderMv(args: unknown, theme: Theme): Component {
+	const input = (args ?? {}) as Record<string, unknown>;
+	const sources = normalizeStringOrArray(input.source);
 	const destination =
-		typeof renderArgs?.destination === "string"
-			? renderArgs.destination
-			: undefined;
+		typeof input.destination === "string" ? input.destination : undefined;
 	return renderToolHeader("mv", sources, theme, { destination });
 }
 

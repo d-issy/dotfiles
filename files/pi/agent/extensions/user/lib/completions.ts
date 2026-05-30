@@ -1,6 +1,6 @@
 import type { AutocompleteItem } from "@earendil-works/pi-tui";
 
-export function prefixCompletions(
+export function filterCompletionsByPrefix(
 	items: readonly AutocompleteItem[],
 	prefix: string,
 ): AutocompleteItem[] | null {

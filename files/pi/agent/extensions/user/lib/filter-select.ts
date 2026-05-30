@@ -28,6 +28,8 @@ const DEFAULT_FOOTER =
 const DEFAULT_MAX_VISIBLE = 10;
 const DESCRIPTION_COLUMN_START = 30;
 const MIN_DESCRIPTION_WIDTH = 10;
+const DESCRIPTION_MIN_TOTAL_WIDTH =
+	DESCRIPTION_COLUMN_START + MIN_DESCRIPTION_WIDTH;
 
 function decodePrintableInput(data: string): string | undefined {
 	return (
@@ -134,7 +136,8 @@ export async function showFilterSelect(
 			const left = `${prefix}${styledLabel}${currentMark}`;
 			const description = normalizeDescription(item);
 
-			if (!description || width <= 40) return truncateToWidth(left, width, "");
+			if (!description || width <= DESCRIPTION_MIN_TOTAL_WIDTH)
+				return truncateToWidth(left, width, "");
 
 			const gap = " ".repeat(
 				Math.max(1, DESCRIPTION_COLUMN_START - visibleWidth(left)),

@@ -166,17 +166,8 @@ async function isIgnoredByGitignore(
 		});
 		ignored = true;
 	} catch (error) {
-		if (!isExitCode(error, 1)) throw error;
+		if (!isErrnoCode(error, 1)) throw error;
 	}
 	ctx.ignoreCache.set(relPath, ignored);
 	return ignored;
-}
-
-function isExitCode(error: unknown, code: number): boolean {
-	return (
-		typeof error === "object" &&
-		error !== null &&
-		"code" in error &&
-		(error as { code?: unknown }).code === code
-	);
 }

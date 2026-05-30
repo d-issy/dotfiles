@@ -30,10 +30,10 @@ export async function showModeSelector(
 	return result && isModeName(result) ? result : undefined;
 }
 
-export function setStatus(ctx: ExtensionContext, mode: Mode): void {
+export function applyModeStatus(ctx: ExtensionContext, mode: Mode): void {
 	ctx.ui.setStatus(MODE_STATE_TYPE, fg(catppuccin[mode.color], mode.name));
 }
 
-export function setTools(pi: ExtensionAPI, modeName: ModeName): void {
+export function activateModeTools(pi: ExtensionAPI, modeName: ModeName): void {
 	pi.setActiveTools(policyRegistry.getActiveToolsForMode(modeName));
 }

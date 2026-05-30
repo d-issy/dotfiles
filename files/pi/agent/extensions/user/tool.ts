@@ -11,7 +11,7 @@ import {
 	renderRm,
 	rmSchema,
 } from "./lib/file";
-import { policyRegistry, secretActionReason } from "./lib/policy";
+import { policyRegistry, makeSecretActionReason } from "./lib/policy";
 
 /**
  * A single agent tool exposed to pi: its permission policy plus the pi tool
@@ -35,7 +35,7 @@ const mvTool = {
 				...normalizeStringOrArray(input.source),
 				input.destination,
 			],
-			secretBlockReason: secretActionReason("Moving"),
+			secretBlockReason: makeSecretActionReason("Moving"),
 		});
 
 		pi.registerTool({
@@ -64,7 +64,7 @@ const rmTool = {
 			name: "rm",
 			allowedModes: ["write", "yolo"],
 			extractSecretPaths: (input) => normalizeStringOrArray(input.path),
-			secretBlockReason: secretActionReason("Removing"),
+			secretBlockReason: makeSecretActionReason("Removing"),
 		});
 
 		pi.registerTool({

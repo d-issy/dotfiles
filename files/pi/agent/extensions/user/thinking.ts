@@ -1,6 +1,6 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import type { KeyId } from "@earendil-works/pi-tui";
-import { prefixCompletions } from "./lib/completions";
+import { filterCompletionsByPrefix } from "./lib/completions";
 import type { Feature } from "./lib/feature";
 import {
 	isThinkingLevel,
@@ -33,7 +33,7 @@ function register(pi: ExtensionAPI): void {
 	pi.registerCommand("effort", {
 		description: "Select thinking effort",
 		getArgumentCompletions: (prefix) =>
-			prefixCompletions(
+			filterCompletionsByPrefix(
 				thinkingLevels.map((level) => ({ value: level, label: level })),
 				prefix,
 			),

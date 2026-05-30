@@ -7,7 +7,7 @@ import {
 	type ReadToolInput,
 	type WriteToolInput,
 } from "@earendil-works/pi-coding-agent";
-import { type ModeName, policyRegistry, secretActionReason } from "../policy";
+import { type ModeName, policyRegistry, makeSecretActionReason } from "../policy";
 
 const READ_MODES: readonly ModeName[] = ["read", "write", "yolo"];
 const WRITE_MODES: readonly ModeName[] = ["write", "yolo"];
@@ -24,25 +24,25 @@ export function registerBuiltInPolicies(): void {
 		name: "read",
 		allowedModes: READ_MODES,
 		extractSecretPaths: (input) => [input.path],
-		secretBlockReason: secretActionReason("Reading"),
+		secretBlockReason: makeSecretActionReason("Reading"),
 	});
 	policyRegistry.register<WriteToolInput>({
 		name: "write",
 		allowedModes: WRITE_MODES,
 		extractSecretPaths: (input) => [input.path],
-		secretBlockReason: secretActionReason("Writing to"),
+		secretBlockReason: makeSecretActionReason("Writing to"),
 	});
 	policyRegistry.register<EditToolInput>({
 		name: "edit",
 		allowedModes: WRITE_MODES,
 		extractSecretPaths: (input) => [input.path],
-		secretBlockReason: secretActionReason("Writing to"),
+		secretBlockReason: makeSecretActionReason("Writing to"),
 	});
 	policyRegistry.register<GrepToolInput>({
 		name: "grep",
 		allowedModes: NAVIGATE_MODES,
 		extractSecretPaths: (input) => (input.path ? [input.path] : []),
-		secretBlockReason: secretActionReason("Grepping"),
+		secretBlockReason: makeSecretActionReason("Grepping"),
 	});
 	policyRegistry.register<FindToolInput>({
 		name: "find",

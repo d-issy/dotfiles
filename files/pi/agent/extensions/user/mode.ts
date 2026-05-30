@@ -2,7 +2,7 @@ import type {
 	ExtensionAPI,
 	ExtensionContext,
 } from "@earendil-works/pi-coding-agent";
-import { prefixCompletions } from "./lib/completions";
+import { filterCompletionsByPrefix } from "./lib/completions";
 import type { Feature } from "./lib/feature";
 import {
 	DEFAULT_MODE,
@@ -16,8 +16,8 @@ import {
 	getStartupMode,
 	isModeName,
 	registerBuiltInPolicies,
-	setStatus,
-	setTools,
+	applyModeStatus,
+	activateModeTools,
 	showModeSelector,
 } from "./lib/mode";
 import { policyRegistry } from "./lib/policy";
@@ -48,14 +48,14 @@ function register(pi: ExtensionAPI): void {
 			pi.appendEntry(MODE_STATE_TYPE, { mode: modeName });
 		}
 		currentMode = modeName;
-		setTools(pi, modeName);
-		setStatus(ctx, getMode(modeName));
+		activateModeTools(pi, modeName);
+		applyModeStatus(ctx, getMode(modeName));
 	}
 
 	pi.registerCommand("permission-mode", {
 		description: `Show or switch permission mode: ${MODE_NAMES.join(" / ")}`,
 		getArgumentCompletions: (prefix) =>
-			prefixCompletions(
+			filterCompletionsByPrefix(
 				MODE_DEFINITIONS.map((mode) => ({
 					value: mode.name,
 					label: mode.name,
