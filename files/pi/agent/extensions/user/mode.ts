@@ -10,19 +10,21 @@ import {
 	MODE_NAMES,
 	MODE_STATE_TYPE,
 	type ModeName,
+	activateModeTools,
+	applyModeStatus,
 	findPersistedMode,
 	getMode,
 	getNextMode,
 	getStartupMode,
 	isModeName,
 	registerBuiltInPolicies,
-	applyModeStatus,
-	activateModeTools,
 	showModeSelector,
 } from "./lib/mode";
 import { policyRegistry } from "./lib/policy";
 
-function block(reason: string): { block: true; reason: string } {
+type BlockedToolCall = { block: true; reason: string };
+
+function block(reason: string): BlockedToolCall {
 	return { block: true, reason };
 }
 

@@ -7,7 +7,11 @@ import {
 	type ReadToolInput,
 	type WriteToolInput,
 } from "@earendil-works/pi-coding-agent";
-import { type ModeName, policyRegistry, makeSecretActionReason } from "../policy";
+import {
+	type ModeName,
+	makeSecretActionReason,
+	policyRegistry,
+} from "../policy";
 
 const READ_MODES: readonly ModeName[] = ["read", "write", "yolo"];
 const WRITE_MODES: readonly ModeName[] = ["write", "yolo"];

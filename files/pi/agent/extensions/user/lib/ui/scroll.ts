@@ -3,6 +3,13 @@
  * Pure and list-shape-agnostic: it only deals in indices and counts, so any
  * scrollable widget can reuse it.
  */
+import { clamp } from "../math";
+
+/** Half-open `[start, end)` slice of a list that is currently on screen. */
+export type VisibleRange = {
+	readonly start: number;
+	readonly end: number;
+};
 
 /**
  * Given the selected index, total item count, and viewport height, return the
@@ -13,10 +20,11 @@ export function getVisibleRange(
 	selectedIndex: number,
 	itemCount: number,
 	maxVisible: number,
-): { start: number; end: number } {
-	const start = Math.max(
+): VisibleRange {
+	const start = clamp(
+		selectedIndex - Math.floor(maxVisible / 2),
 		0,
-		Math.min(selectedIndex - Math.floor(maxVisible / 2), itemCount - maxVisible),
+		itemCount - maxVisible,
 	);
 	return { start, end: Math.min(start + maxVisible, itemCount) };
 }

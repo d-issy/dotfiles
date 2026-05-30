@@ -47,10 +47,7 @@ function formatToolError(
 	}
 }
 
-export function isErrnoCode(
-	error: unknown,
-	code: string | number,
-): boolean {
+export function isErrnoCode(error: unknown, code: string | number): boolean {
 	return (
 		typeof error === "object" &&
 		error !== null &&

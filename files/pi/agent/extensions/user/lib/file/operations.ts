@@ -1,5 +1,5 @@
 import { constants } from "node:fs";
-import { access, lstat, rename, rm as remove } from "node:fs/promises";
+import { access, lstat, rm as remove, rename } from "node:fs/promises";
 import { basename, resolve } from "node:path";
 import type { AgentToolResult, Theme } from "@earendil-works/pi-coding-agent";
 import { type Component, Text } from "@earendil-works/pi-tui";
@@ -204,7 +204,11 @@ export async function executeMove(
 		params.destination,
 		MV_OPERATION_TO,
 	);
-	await assertRepoPathAllowed(guardContext, destinationAbsolute, MV_OPERATION_TO);
+	await assertRepoPathAllowed(
+		guardContext,
+		destinationAbsolute,
+		MV_OPERATION_TO,
+	);
 
 	const moves: { source: string; destination: string }[] = [];
 

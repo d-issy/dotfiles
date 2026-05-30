@@ -11,7 +11,7 @@ import {
 	renderRm,
 	rmSchema,
 } from "./lib/file";
-import { policyRegistry, makeSecretActionReason } from "./lib/policy";
+import { makeSecretActionReason, policyRegistry } from "./lib/policy";
 
 /**
  * A single agent tool exposed to pi: its permission policy plus the pi tool
