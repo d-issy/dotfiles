@@ -106,12 +106,12 @@ async function destinationExists(path: string): Promise<boolean> {
 
 async function assertDestinationIsDirectory(
 	cwd: string,
-	destinationAbs: string,
+	destinationAbsolute: string,
 ): Promise<void> {
-	const display = displayRepoPath(cwd, destinationAbs);
+	const display = displayRepoPath(cwd, destinationAbsolute);
 	let stat;
 	try {
-		stat = await lstat(destinationAbs);
+		stat = await lstat(destinationAbsolute);
 	} catch (error) {
 		if (isErrnoCode(error, "ENOENT")) {
 			throw new ToolError(
@@ -151,10 +151,10 @@ export async function executeRemove(
 		return { absolute, display: displayRepoPath(cwd, absolute) };
 	});
 
-	const fsCtx = await createFsGuardContext(cwd);
+	const guardContext = await createFsGuardContext(cwd);
 	await Promise.all(
 		targets.map(({ absolute }) =>
-			assertNoIgnoredDescendants(fsCtx, absolute, RM_OPERATION),
+			assertNoIgnoredDescendants(guardContext, absolute, RM_OPERATION),
 		),
 	);
 
@@ -200,32 +200,32 @@ export async function executeMove(
 	if (sources.length === 0) {
 		throw new ToolError("missing_input", MV_OPERATION, "source");
 	}
-	const fsCtx = await createFsGuardContext(cwd);
-	const destinationAbs = resolveRepoPath(
+	const guardContext = await createFsGuardContext(cwd);
+	const destinationAbsolute = resolveRepoPath(
 		cwd,
 		params.destination,
 		MV_OPERATION_TO,
 	);
-	await assertRepoPathAllowed(fsCtx, destinationAbs, MV_OPERATION_TO);
+	await assertRepoPathAllowed(guardContext, destinationAbsolute, MV_OPERATION_TO);
 
 	const moves: { source: string; destination: string }[] = [];
 
 	if (sources.length === 1) {
-		const sourceAbs = resolveRepoPath(cwd, sources[0], MV_OPERATION);
-		moves.push({ source: sourceAbs, destination: destinationAbs });
+		const sourceAbsolute = resolveRepoPath(cwd, sources[0], MV_OPERATION);
+		moves.push({ source: sourceAbsolute, destination: destinationAbsolute });
 	} else {
-		await assertDestinationIsDirectory(cwd, destinationAbs);
+		await assertDestinationIsDirectory(cwd, destinationAbsolute);
 		for (const s of sources) {
-			const sourceAbs = resolveRepoPath(cwd, s, MV_OPERATION);
-			const target = resolve(destinationAbs, basename(sourceAbs));
-			moves.push({ source: sourceAbs, destination: target });
+			const sourceAbsolute = resolveRepoPath(cwd, s, MV_OPERATION);
+			const target = resolve(destinationAbsolute, basename(sourceAbsolute));
+			moves.push({ source: sourceAbsolute, destination: target });
 		}
 	}
 
 	await Promise.all(
 		moves.map(async ({ source, destination }) => {
-			await assertNoIgnoredDescendants(fsCtx, source, MV_OPERATION);
-			await assertRepoPathAllowed(fsCtx, destination, MV_OPERATION_TO);
+			await assertNoIgnoredDescendants(guardContext, source, MV_OPERATION);
+			await assertRepoPathAllowed(guardContext, destination, MV_OPERATION_TO);
 			if (await destinationExists(destination)) {
 				throw new ToolError(
 					"destination_exists",
