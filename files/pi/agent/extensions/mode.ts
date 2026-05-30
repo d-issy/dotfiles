@@ -10,6 +10,8 @@ import {
 	SettingsManager,
 	type WriteToolInput,
 } from "@earendil-works/pi-coding-agent";
+import type { AutocompleteItem } from "@earendil-works/pi-tui";
+import { showFilterSelect } from "./lib/filter-select";
 import { type ColorName, catppuccin, fg } from "./lib/theme";
 import { type ModeName, policyRegistry } from "./tools/lib/policy";
 
@@ -134,10 +136,21 @@ function getNextMode(currentMode: ModeName): ModeName {
 	return MODE_NAMES[(currentIndex + 1) % MODE_NAMES.length];
 }
 
-function formatModeList(): string {
-	return MODE_DEFINITIONS.map(
-		(mode) => `${mode.name.padEnd(8)} ${mode.description}`,
-	).join("\n");
+async function showModeSelector(
+	ctx: ExtensionContext,
+	currentMode: ModeName,
+): Promise<ModeName | undefined> {
+	const result = await showFilterSelect(ctx, {
+		title: "Select Mode",
+		items: MODE_DEFINITIONS.map((mode) => ({
+			value: mode.name,
+			label: mode.name,
+			description: mode.description,
+		})),
+		currentValue: currentMode,
+	});
+
+	return result && isModeName(result) ? result : undefined;
 }
 
 function setStatus(ctx: ExtensionContext, mode: Mode): void {
@@ -236,13 +249,22 @@ export default function modeExtension(pi: ExtensionAPI): void {
 
 	pi.registerCommand("mode", {
 		description: `Show or switch mode: ${MODE_NAMES.join(" / ")}`,
+		getArgumentCompletions: (prefix: string): AutocompleteItem[] | null => {
+			const items = MODE_DEFINITIONS.map((mode) => ({
+				value: mode.name,
+				label: mode.name,
+				description: mode.description,
+			}));
+			const filtered = items.filter((item) => item.value.startsWith(prefix));
+			return filtered.length > 0 ? filtered : null;
+		},
 		handler: async (args, ctx) => {
 			const requestedMode = args.trim().split(/\s+/u)[0];
 			if (!requestedMode) {
-				ctx.ui.notify(
-					`Current mode: ${currentMode}\n\nUsage: /mode <${MODE_NAMES.join("|")}>\n\n${formatModeList()}`,
-					"info",
-				);
+				const selectedMode = await showModeSelector(ctx, currentMode);
+				if (!selectedMode) return;
+				setMode(ctx, selectedMode, { persist: true });
+				ctx.ui.notify(`Mode switched to ${selectedMode}.`, "info");
 				return;
 			}
 
