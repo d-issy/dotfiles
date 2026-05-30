@@ -247,8 +247,8 @@ export default function modeExtension(pi: ExtensionAPI): void {
 		setStatus(ctx, mode);
 	}
 
-	pi.registerCommand("mode", {
-		description: `Show or switch mode: ${MODE_NAMES.join(" / ")}`,
+	pi.registerCommand("permission-mode", {
+		description: `Show or switch permission mode: ${MODE_NAMES.join(" / ")}`,
 		getArgumentCompletions: (prefix: string): AutocompleteItem[] | null => {
 			const items = MODE_DEFINITIONS.map((mode) => ({
 				value: mode.name,
@@ -264,7 +264,7 @@ export default function modeExtension(pi: ExtensionAPI): void {
 				const selectedMode = await showModeSelector(ctx, currentMode);
 				if (!selectedMode) return;
 				setMode(ctx, selectedMode, { persist: true });
-				ctx.ui.notify(`Mode switched to ${selectedMode}.`, "info");
+				ctx.ui.notify(`Permission mode switched to ${selectedMode}.`, "info");
 				return;
 			}
 
@@ -277,16 +277,16 @@ export default function modeExtension(pi: ExtensionAPI): void {
 			}
 
 			setMode(ctx, requestedMode, { persist: true });
-			ctx.ui.notify(`Mode switched to ${requestedMode}.`, "info");
+			ctx.ui.notify(`Permission mode switched to ${requestedMode}.`, "info");
 		},
 	});
 
 	pi.registerShortcut("shift+tab", {
-		description: `Cycle mode: ${MODE_NAMES.join(" / ")}`,
+		description: `Cycle permission mode: ${MODE_NAMES.join(" / ")}`,
 		handler: async (ctx) => {
 			const nextMode = getNextMode(currentMode);
 			setMode(ctx, nextMode, { persist: true });
-			ctx.ui.notify(`Mode switched to ${nextMode}.`, "info");
+			ctx.ui.notify(`Permission mode switched to ${nextMode}.`, "info");
 		},
 	});
 
