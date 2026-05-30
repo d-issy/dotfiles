@@ -44,7 +44,7 @@ _:
             return = "q";
           };
           files = {
-            commitChanges = "";
+            commitChanges = "C";
             commitChangesWithEditor = "c";
           };
         };
