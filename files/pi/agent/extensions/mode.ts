@@ -29,7 +29,7 @@ type Mode = {
 type ModeStateEntry = { mode?: ModeName };
 
 type ModeSettings = {
-	mode?: unknown;
+	permissionMode?: unknown;
 };
 
 type CustomSessionEntry = {
@@ -67,7 +67,7 @@ const MODE_NAMES = MODE_DEFINITIONS.map((mode) => mode.name);
 
 const READ_MODES: readonly ModeName[] = ["read", "write", "yolo"];
 const WRITE_MODES: readonly ModeName[] = ["write", "yolo"];
-const NAVIGATE_MODES: readonly ModeName[] = ["read", "write"];
+const NAVIGATE_MODES: readonly ModeName[] = ["read", "write", "yolo"];
 
 function registerBuiltInPolicies(): void {
 	policyRegistry.register<BashToolInput>({
@@ -168,23 +168,23 @@ function getConfiguredDefaultMode(
 	try {
 		const settingsManager = SettingsManager.create(cwd);
 		const projectMode = (settingsManager.getProjectSettings() as ModeSettings)
-			.mode;
+			.permissionMode;
 		if (projectMode !== undefined) {
 			const mode = normalizeModeName(projectMode);
 			if (mode) return mode;
 			onWarning?.(
-				`Invalid pi mode in project settings: ${String(projectMode)}. Use one of: ${MODE_NAMES.join(", ")}.`,
+				`Invalid pi permissionMode in project settings: ${String(projectMode)}. Use one of: ${MODE_NAMES.join(", ")}.`,
 			);
 			return undefined;
 		}
 
 		const globalMode = (settingsManager.getGlobalSettings() as ModeSettings)
-			.mode;
+			.permissionMode;
 		if (globalMode !== undefined) {
 			const mode = normalizeModeName(globalMode);
 			if (mode) return mode;
 			onWarning?.(
-				`Invalid pi mode in global settings: ${String(globalMode)}. Use one of: ${MODE_NAMES.join(", ")}.`,
+				`Invalid pi permissionMode in global settings: ${String(globalMode)}. Use one of: ${MODE_NAMES.join(", ")}.`,
 			);
 		}
 	} catch {
@@ -199,11 +199,11 @@ function getStartupMode(
 	persistedMode?: ModeName,
 	onWarning?: (message: string) => void,
 ): ModeName {
-	const flagValue = pi.getFlag(MODE_STATE_TYPE);
+	const flagValue = pi.getFlag("permission-mode");
 	const flagMode = normalizeModeName(flagValue);
 	if (flagValue !== undefined && !flagMode) {
 		onWarning?.(
-			`Invalid --mode value: ${String(flagValue)}. Use one of: ${MODE_NAMES.join(", ")}.`,
+			`Invalid --permission-mode value: ${String(flagValue)}. Use one of: ${MODE_NAMES.join(", ")}.`,
 		);
 	}
 	const configuredMode = getConfiguredDefaultMode(cwd, onWarning);
@@ -227,8 +227,8 @@ export default function modeExtension(pi: ExtensionAPI): void {
 
 	registerBuiltInPolicies();
 
-	pi.registerFlag(MODE_STATE_TYPE, {
-		description: `Start in mode: ${MODE_NAMES.join(" / ")}`,
+	pi.registerFlag("permission-mode", {
+		description: `Start in permission mode: ${MODE_NAMES.join(" / ")}`,
 		type: "string",
 	});
 
@@ -247,8 +247,8 @@ export default function modeExtension(pi: ExtensionAPI): void {
 		setStatus(ctx, mode);
 	}
 
-	pi.registerCommand("mode", {
-		description: `Show or switch mode: ${MODE_NAMES.join(" / ")}`,
+	pi.registerCommand("permission-mode", {
+		description: `Show or switch permission mode: ${MODE_NAMES.join(" / ")}`,
 		getArgumentCompletions: (prefix: string): AutocompleteItem[] | null => {
 			const items = MODE_DEFINITIONS.map((mode) => ({
 				value: mode.name,
@@ -264,7 +264,7 @@ export default function modeExtension(pi: ExtensionAPI): void {
 				const selectedMode = await showModeSelector(ctx, currentMode);
 				if (!selectedMode) return;
 				setMode(ctx, selectedMode, { persist: true });
-				ctx.ui.notify(`Mode switched to ${selectedMode}.`, "info");
+				ctx.ui.notify(`Permission mode switched to ${selectedMode}.`, "info");
 				return;
 			}
 
@@ -277,16 +277,16 @@ export default function modeExtension(pi: ExtensionAPI): void {
 			}
 
 			setMode(ctx, requestedMode, { persist: true });
-			ctx.ui.notify(`Mode switched to ${requestedMode}.`, "info");
+			ctx.ui.notify(`Permission mode switched to ${requestedMode}.`, "info");
 		},
 	});
 
 	pi.registerShortcut("shift+tab", {
-		description: `Cycle mode: ${MODE_NAMES.join(" / ")}`,
+		description: `Cycle permission mode: ${MODE_NAMES.join(" / ")}`,
 		handler: async (ctx) => {
 			const nextMode = getNextMode(currentMode);
 			setMode(ctx, nextMode, { persist: true });
-			ctx.ui.notify(`Mode switched to ${nextMode}.`, "info");
+			ctx.ui.notify(`Permission mode switched to ${nextMode}.`, "info");
 		},
 	});
 
