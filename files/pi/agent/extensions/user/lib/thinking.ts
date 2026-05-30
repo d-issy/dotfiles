@@ -3,7 +3,7 @@ import type {
 	ExtensionAPI,
 	ExtensionContext,
 } from "@earendil-works/pi-coding-agent";
-import { showFilterSelect } from "./filter-select";
+import { showFilterSelect } from "./ui";
 
 export const thinkingLevels: readonly ModelThinkingLevel[] = [
 	"off",

@@ -2,7 +2,7 @@ import type {
 	ExtensionAPI,
 	ExtensionContext,
 } from "@earendil-works/pi-coding-agent";
-import { showFilterSelect } from "../filter-select";
+import { showFilterSelect } from "../ui";
 import { policyRegistry } from "../policy";
 import { colors, fg } from "../theme";
 import {

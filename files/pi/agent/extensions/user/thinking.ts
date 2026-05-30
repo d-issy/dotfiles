@@ -1,6 +1,6 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import type { KeyId } from "@earendil-works/pi-tui";
-import { filterCompletionsByPrefix } from "./lib/completions";
+import { filterCompletionsByPrefix } from "./lib/ui";
 import type { Feature } from "./lib/feature";
 import {
 	isThinkingLevel,

@@ -1,9 +1,17 @@
+/**
+ * Reusable fuzzy-filter selection overlay built on `ctx.ui.custom`.
+ *
+ * This is generic, feature-agnostic terminal UI — it knows nothing about modes,
+ * thinking effort, or any specific domain. Features feed it a list of
+ * {@link FilterSelectItem}s and get back the chosen value. Shared by the `mode`
+ * and `thinking` features today; that is why it lives under `lib/ui/` rather
+ * than next to a single caller.
+ */
 import {
 	DynamicBorder,
 	type ExtensionContext,
 } from "@earendil-works/pi-coding-agent";
 import {
-	decodeKittyPrintable,
 	fuzzyFilter,
 	getKeybindings,
 	matchesKey,
@@ -11,6 +19,8 @@ import {
 	truncateToWidth,
 	visibleWidth,
 } from "@earendil-works/pi-tui";
+import { decodePrintableInput } from "./input";
+import { getVisibleRange } from "./scroll";
 
 export type FilterSelectItem = SelectItem;
 
@@ -31,13 +41,6 @@ const MIN_DESCRIPTION_WIDTH = 10;
 const DESCRIPTION_MIN_TOTAL_WIDTH =
 	DESCRIPTION_COLUMN_START + MIN_DESCRIPTION_WIDTH;
 
-function decodePrintableInput(data: string): string | undefined {
-	return (
-		decodeKittyPrintable(data) ??
-		(data.length === 1 && data >= " " && data <= "~" ? data : undefined)
-	);
-}
-
 function getSearchText(item: FilterSelectItem): string {
 	return `${item.label} ${item.value} ${item.description ?? ""}`;
 }
@@ -55,21 +58,6 @@ function findCurrentIndex(
 		0,
 		items.findIndex((item) => item.value === currentValue),
 	);
-}
-
-function getVisibleRange(
-	selectedIndex: number,
-	itemCount: number,
-	maxVisible: number,
-): { start: number; end: number } {
-	const start = Math.max(
-		0,
-		Math.min(
-			selectedIndex - Math.floor(maxVisible / 2),
-			itemCount - maxVisible,
-		),
-	);
-	return { start, end: Math.min(start + maxVisible, itemCount) };
 }
 
 function getFilteredItems(

@@ -2,7 +2,7 @@ import type {
 	ExtensionAPI,
 	ExtensionContext,
 } from "@earendil-works/pi-coding-agent";
-import { filterCompletionsByPrefix } from "./lib/completions";
+import { filterCompletionsByPrefix } from "./lib/ui";
 import type { Feature } from "./lib/feature";
 import {
 	DEFAULT_MODE,
