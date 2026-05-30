@@ -1,0 +1,26 @@
+{
+  "tools": {
+    "lint": {
+      "description": "Run the project lint checks.",
+      "modes": ["read", "write"],
+      "parallel": true,
+      "commands": [
+        {
+          "name": "typescript",
+          "command": ["pnpm", "lint"]
+        },
+        {
+          "name": "nix",
+          "command": ["nix", "flake", "check"]
+        }
+      ],
+      "timeoutSeconds": 120
+    },
+    "format": {
+      "description": "Format the project files.",
+      "modes": ["write"],
+      "command": ["nix", "fmt"],
+      "timeoutSeconds": 120
+    }
+  }
+}

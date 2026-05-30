@@ -44,14 +44,14 @@ const MODE_DEFINITIONS: readonly Mode[] = [
 		description: "Default read-only mode.",
 		color: "blue",
 		systemPrompt:
-			"You are in read mode. Use the currently active tools to inspect the repository, summarize findings, and propose plans. If the task requires changes or command execution, ask the user to switch to write or yolo mode.",
+			"You are in read mode. Use the currently active tools to inspect the repository, summarize findings, run explicitly allowed read-only checks, and propose plans. If the task requires file changes, ask the user to switch to write or yolo mode.",
 	},
 	{
 		name: "write",
-		description: "Read and write files, but no command execution.",
+		description: "Read and write files.",
 		color: "green",
 		systemPrompt:
-			"You are in write mode. Inspect and modify files using the currently active tools. If the task requires command execution (tests, formatting, git, package managers, etc.), tell the user which command to run or ask them to switch to yolo mode.",
+			"You are in write mode. Inspect and modify files using the currently active tools. You may run explicitly allowed project tools when they are active.",
 	},
 	{
 		name: "yolo",
@@ -225,6 +225,7 @@ function findPersistedMode(ctx: ExtensionContext): ModeName | undefined {
 export default function modeExtension(pi: ExtensionAPI): void {
 	let currentMode: ModeName = DEFAULT_MODE;
 
+	policyRegistry.clearListeners();
 	registerBuiltInPolicies();
 
 	pi.registerFlag("permission-mode", {
@@ -232,11 +233,14 @@ export default function modeExtension(pi: ExtensionAPI): void {
 		type: "string",
 	});
 
+	let currentContext: ExtensionContext | undefined;
+
 	function setMode(
 		ctx: ExtensionContext,
 		modeName: ModeName,
 		options: { persist: boolean; force?: boolean },
 	): void {
+		currentContext = ctx;
 		if (modeName === currentMode && !options.force) return;
 		const mode = getMode(modeName);
 		if (modeName !== currentMode) {
@@ -246,6 +250,11 @@ export default function modeExtension(pi: ExtensionAPI): void {
 		setTools(pi, modeName);
 		setStatus(ctx, mode);
 	}
+
+	policyRegistry.onChange(() => {
+		setTools(pi, currentMode);
+		if (currentContext) setStatus(currentContext, getMode(currentMode));
+	});
 
 	pi.registerCommand("permission-mode", {
 		description: `Show or switch permission mode: ${MODE_NAMES.join(" / ")}`,
@@ -307,6 +316,7 @@ export default function modeExtension(pi: ExtensionAPI): void {
 			),
 			{ persist: false, force: true },
 		);
+		policyRegistry.setNotificationsEnabled(true);
 	});
 
 	pi.on("tool_call", async (event) => {

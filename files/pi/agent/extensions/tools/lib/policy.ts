@@ -13,6 +13,9 @@ export type ToolPolicy<TInput = unknown> = {
 
 export type PolicyRegistry = {
 	register<TInput>(policy: ToolPolicy<TInput>): void;
+	clearListeners(): void;
+	setNotificationsEnabled(enabled: boolean): void;
+	onChange(listener: () => void): () => void;
 	getActiveToolsForMode(modeName: ModeName): string[];
 	checkToolAllowed(
 		modeName: ModeName,
@@ -26,10 +29,41 @@ export type PolicyRegistry = {
 
 function createPolicyRegistry(): PolicyRegistry {
 	const policies = new Map<string, ToolPolicy>();
+	const listeners = new Set<() => void>();
+	let notificationsEnabled = false;
+	let pendingChange = false;
+
+	function notifyChange(): void {
+		for (const listener of Array.from(listeners)) {
+			try {
+				listener();
+			} catch {
+				listeners.delete(listener);
+			}
+		}
+	}
 
 	return {
 		register(policy) {
 			policies.set(policy.name, policy as ToolPolicy);
+			if (!notificationsEnabled) {
+				pendingChange = true;
+				return;
+			}
+			notifyChange();
+		},
+		clearListeners() {
+			listeners.clear();
+		},
+		setNotificationsEnabled(enabled) {
+			notificationsEnabled = enabled;
+			if (!enabled || !pendingChange) return;
+			pendingChange = false;
+			notifyChange();
+		},
+		onChange(listener) {
+			listeners.add(listener);
+			return () => listeners.delete(listener);
 		},
 		getActiveToolsForMode(modeName) {
 			const tools: string[] = [];
@@ -61,4 +95,18 @@ function createPolicyRegistry(): PolicyRegistry {
 	};
 }
 
-export const policyRegistry: PolicyRegistry = createPolicyRegistry();
+const POLICY_REGISTRY_KEY = Symbol.for("pi.dotfiles.policyRegistry");
+
+type GlobalWithPolicyRegistry = typeof globalThis & {
+	[POLICY_REGISTRY_KEY]?: PolicyRegistry;
+};
+
+const globalWithPolicyRegistry = globalThis as GlobalWithPolicyRegistry;
+
+export const policyRegistry: PolicyRegistry = (globalWithPolicyRegistry[
+	POLICY_REGISTRY_KEY
+] ??= createPolicyRegistry());
+
+// Extension files can be evaluated while pi's action runtime is not ready.
+// Keep change notifications paused until mode.ts enables them from session_start.
+policyRegistry.setNotificationsEnabled(false);
