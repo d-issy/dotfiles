@@ -11,7 +11,7 @@ import type {
 import type { Component, TUI } from "@earendil-works/pi-tui";
 import { truncateToWidth, visibleWidth } from "@earendil-works/pi-tui";
 import type { Color } from "./theme";
-import { catppuccin, fg } from "./theme";
+import { colors, fg } from "./theme";
 
 export type RequestRender = () => void;
 type FooterFactory = NonNullable<
@@ -47,9 +47,9 @@ function formatCwd(cwd: string): string {
 }
 
 function pickRemainingColor(remaining: number): Color {
-	if (remaining >= 50) return catppuccin.green;
-	if (remaining >= 20) return catppuccin.yellow;
-	return catppuccin.red;
+	if (remaining >= 50) return colors.positive;
+	if (remaining >= 20) return colors.caution;
+	return colors.alert;
 }
 
 function getAssistantTotals(entries: readonly SessionEntry[]): Totals {
@@ -82,7 +82,7 @@ export function createStatusBarFooter(
 	): FooterComponent => {
 		setRequestRender(() => tui.requestRender());
 
-		const cwdSegment = fg(catppuccin.green, formatCwd(ctx.cwd));
+		const cwdSegment = fg(colors.positive, formatCwd(ctx.cwd));
 
 		const unsubscribeBranchChange = footerData.onBranchChange(() =>
 			tui.requestRender(),
@@ -90,13 +90,13 @@ export function createStatusBarFooter(
 
 		function renderModel(): string {
 			const model = ctx.model?.id ?? "no-model";
-			return fg(catppuccin.yellow, `${model} ${pi.getThinkingLevel()}`);
+			return fg(colors.caution, `${model} ${pi.getThinkingLevel()}`);
 		}
 
 		function renderLocation(): string {
 			const branch = footerData.getGitBranch();
 			if (!branch) return cwdSegment;
-			return `${cwdSegment}${fg(catppuccin.overlay0, ":")}${fg(catppuccin.blue, branch)}`;
+			return `${cwdSegment}${fg(colors.muted, ":")}${fg(colors.accent, branch)}`;
 		}
 
 		function renderContextUsage(): string {
@@ -111,9 +111,9 @@ export function createStatusBarFooter(
 
 		function renderTokenTotals(): string {
 			const totals = getAssistantTotals(ctx.sessionManager.getBranch());
-			const input = fg(catppuccin.green, `↑${formatCount(totals.input)}`);
-			const output = fg(catppuccin.yellow, `↓${formatCount(totals.output)}`);
-			const cost = fg(catppuccin.overlay0, `$${totals.cost.toFixed(3)}`);
+			const input = fg(colors.positive, `↑${formatCount(totals.input)}`);
+			const output = fg(colors.caution, `↓${formatCount(totals.output)}`);
+			const cost = fg(colors.muted, `$${totals.cost.toFixed(3)}`);
 			return `${input} ${output} ${cost}`;
 		}
 
@@ -130,7 +130,7 @@ export function createStatusBarFooter(
 			},
 			invalidate() {},
 			render(width: number): string[] {
-				const separator = fg(catppuccin.overlay0, "·");
+				const separator = fg(colors.muted, "·");
 				const left = [
 					renderExtensionStatuses(),
 					renderModel(),

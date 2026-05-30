@@ -1,12 +1,12 @@
 import type { ModeName } from "../policy";
-import type { ColorName } from "../theme";
+import type { ColorRole } from "../theme";
 
 export type { ModeName } from "../policy";
 
 export type Mode = {
 	name: ModeName;
 	description: string;
-	color: ColorName;
+	color: ColorRole;
 	systemPrompt?: string;
 };
 
@@ -14,21 +14,21 @@ export const MODE_DEFINITIONS: readonly Mode[] = [
 	{
 		name: "read",
 		description: "Default read-only mode.",
-		color: "blue",
+		color: "accent",
 		systemPrompt:
 			"You are in read mode. Use the currently active tools to inspect the repository, summarize findings, and propose plans. If the task requires changes or command execution, ask the user to switch to write or yolo mode.",
 	},
 	{
 		name: "write",
 		description: "Read and write files, but no command execution.",
-		color: "green",
+		color: "positive",
 		systemPrompt:
 			"You are in write mode. Inspect and modify files using the currently active tools. If the task requires command execution (tests, formatting, git, package managers, etc.), tell the user which command to run or ask them to switch to yolo mode.",
 	},
 	{
 		name: "yolo",
 		description: "Read, write, edit, and run shell commands.",
-		color: "red",
+		color: "alert",
 	},
 ];
 

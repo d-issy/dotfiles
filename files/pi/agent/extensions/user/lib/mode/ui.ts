@@ -4,7 +4,7 @@ import type {
 } from "@earendil-works/pi-coding-agent";
 import { showFilterSelect } from "../filter-select";
 import { policyRegistry } from "../policy";
-import { catppuccin, fg } from "../theme";
+import { colors, fg } from "../theme";
 import {
 	MODE_DEFINITIONS,
 	MODE_STATE_TYPE,
@@ -31,7 +31,7 @@ export async function showModeSelector(
 }
 
 export function applyModeStatus(ctx: ExtensionContext, mode: Mode): void {
-	ctx.ui.setStatus(MODE_STATE_TYPE, fg(catppuccin[mode.color], mode.name));
+	ctx.ui.setStatus(MODE_STATE_TYPE, fg(colors[mode.color], mode.name));
 }
 
 export function activateModeTools(pi: ExtensionAPI, modeName: ModeName): void {
