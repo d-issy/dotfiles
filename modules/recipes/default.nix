@@ -3,7 +3,7 @@
 {
   xdg.enable = true;
   home = {
-    stateVersion = "26.11";
+    stateVersion = "26.05";
 
     sessionVariables = {
       NIX_CONFIG = "extra-experimental-features = nix-command flakes";
