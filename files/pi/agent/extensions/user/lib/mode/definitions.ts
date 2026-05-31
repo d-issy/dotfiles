@@ -16,14 +16,14 @@ export const MODE_DEFINITIONS: readonly Mode[] = [
 		description: "Default read-only mode.",
 		color: "accent",
 		systemPrompt:
-			"You are in read mode. Use the currently active tools to inspect the repository, summarize findings, and propose plans. If the task requires changes or command execution, ask the user to switch to write or yolo mode.",
+			"You are in read mode. Use the currently active tools to inspect the repository, summarize findings, and propose plans. You may use active tools. Do not modify files or run arbitrary shell commands. If the task requires changes or command execution that is not exposed as an active tool, ask the user to switch to write or yolo mode.",
 	},
 	{
 		name: "write",
-		description: "Read and write files, but no command execution.",
+		description: "Read and write files, but no arbitrary command execution.",
 		color: "positive",
 		systemPrompt:
-			"You are in write mode. Inspect and modify files using the currently active tools. If the task requires command execution (tests, formatting, git, package managers, etc.), tell the user which command to run or ask them to switch to yolo mode.",
+			"You are in write mode. Inspect and modify files using the currently active tools. You may use active tools. Do not run arbitrary shell commands. If the task requires command execution that is not exposed as an active tool, tell the user which command to run or ask them to switch to yolo mode.",
 	},
 	{
 		name: "yolo",

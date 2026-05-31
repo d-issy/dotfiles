@@ -1,0 +1,44 @@
+{
+  "tools": {
+    "lint": {
+      "description": "Run all lint and type checks for the project (no files are modified).",
+      "allowedModes": ["read", "write"],
+      "promptSnippet": "Run lint and type checks for the project",
+      "promptGuidelines": [
+        "Use lint after editing files to verify; it runs the same checks as CI and modifies nothing."
+      ],
+      "commands": [
+        {
+          "label": "tsgo",
+          "command": "pnpm lint"
+        },
+        {
+          "label": "oxlint",
+          "command": "oxlint"
+        },
+        {
+          "label": "deadnix",
+          "command": "deadnix --fail ."
+        },
+        {
+          "label": "statix",
+          "command": "statix check ."
+        }
+      ]
+    },
+    "format_code": {
+      "description": "Format the project in place with treefmt.",
+      "allowedModes": ["write"],
+      "promptSnippet": "Format the project in place",
+      "promptGuidelines": [
+        "Use format_code to auto-fix formatting, then run lint to verify."
+      ],
+      "commands": [
+        {
+          "label": "treefmt",
+          "command": "treefmt"
+        }
+      ]
+    }
+  }
+}
