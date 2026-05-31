@@ -59,7 +59,6 @@ export async function showEffortSelector(
 		items: thinkingLevels.map((level) => ({
 			value: level,
 			label: level,
-			description: `Set thinking level to ${level}`,
 		})),
 		currentValue: current,
 	});
