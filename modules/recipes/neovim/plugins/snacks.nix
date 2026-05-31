@@ -119,28 +119,28 @@ in
         toggle.enabled = true;
         words.enabled = true;
         styles.input.keys = {
-          i_esc = [
-            "<esc>"
-            "stopinsert"
-            { mode = "i"; }
-          ];
-          i_cr = [
-            "<cr>"
-            "confirm"
-            { mode = "i"; }
-          ];
-          i_tab = [
-            "<tab>"
-            [
+          i_esc = {
+            "__unkeyed-1" = "<esc>";
+            "__unkeyed-2" = "stopinsert";
+            mode = "i";
+          };
+          i_cr = {
+            "__unkeyed-1" = "<cr>";
+            "__unkeyed-2" = "confirm";
+            mode = "i";
+          };
+          i_tab = {
+            "__unkeyed-1" = "<tab>";
+            "__unkeyed-2" = [
               "cmp_select_next"
               "cmp"
-            ]
-            { mode = "i"; }
-          ];
-          cr = [
-            "<cr>"
-            [ "confirm" ]
-          ];
+            ];
+            mode = "i";
+          };
+          cr = {
+            "__unkeyed-1" = "<cr>";
+            "__unkeyed-2" = [ "confirm" ];
+          };
           q = "cancel";
         };
       };
