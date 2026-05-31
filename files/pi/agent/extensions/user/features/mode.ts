@@ -68,6 +68,15 @@ const switchMode =
 		ctx.ui.notify(`Permission mode switched to ${requestedMode}.`, "info");
 	};
 
+const selectMode =
+	(mode: ModeController) =>
+	async (ctx: ExtensionContext): Promise<void> => {
+		const selectedMode = await showModeSelector(ctx, mode.current);
+		if (!selectedMode) return;
+		mode.setMode(ctx, selectedMode, { persist: true });
+		ctx.ui.notify(`Permission mode switched to ${selectedMode}.`, "info");
+	};
+
 const cycleMode =
 	(mode: ModeController) =>
 	async (ctx: ExtensionContext): Promise<void> => {
@@ -124,10 +133,14 @@ function register(pi: ExtensionAPI): void {
 		description: `Start in permission mode: ${MODE_NAMES.join(" / ")}`,
 		type: "string",
 	});
-	pi.registerCommand("permission-mode", {
+	pi.registerCommand("mode", {
 		description: `Show or switch permission mode: ${MODE_NAMES.join(" / ")}`,
 		getArgumentCompletions: completeMode,
 		handler: switchMode(mode),
+	});
+	pi.registerShortcut("ctrl+m", {
+		description: `Select permission mode: ${MODE_NAMES.join(" / ")}`,
+		handler: selectMode(mode),
 	});
 	pi.registerShortcut("shift+tab", {
 		description: `Cycle permission mode: ${MODE_NAMES.join(" / ")}`,

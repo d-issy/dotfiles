@@ -1,5 +1,7 @@
 {
   "app.thinking.cycle": [],
+  "tui.select.up": ["up", "ctrl+p"],
+  "tui.select.down": ["down", "ctrl+n"],
   "app.tree.foldOrUp": ["ctrl+left", "alt+left", "alt+b"],
   "app.tree.unfoldOrDown": ["ctrl+right", "alt+right", "alt+f"]
 }
