@@ -1,4 +1,9 @@
 export {
+	type ModeController,
+	type SetModeOptions,
+	createModeController,
+} from "./controller";
+export {
 	DEFAULT_MODE,
 	MODE_DEFINITIONS,
 	MODE_NAMES,

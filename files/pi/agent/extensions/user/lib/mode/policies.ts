@@ -15,7 +15,8 @@ import {
 
 const READ_MODES: readonly ModeName[] = ["read", "write", "yolo"];
 const WRITE_MODES: readonly ModeName[] = ["write", "yolo"];
-const NAVIGATE_MODES: readonly ModeName[] = ["read", "write", "yolo"];
+// Not yolo: bash covers grep/find/ls there, so exposing them only dilutes context.
+const NAVIGATE_MODES: readonly ModeName[] = ["read", "write"];
 
 export function registerBuiltInPolicies(): void {
 	policyRegistry.register<BashToolInput>({

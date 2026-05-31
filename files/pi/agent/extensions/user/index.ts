@@ -1,9 +1,9 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import type { Feature } from "./lib/feature";
-import modeFeature from "./mode";
-import statusFeature from "./status";
-import thinkingFeature from "./thinking";
-import fileToolsFeature from "./tool";
+import type { Feature } from "./feature";
+import modeFeature from "./features/mode";
+import statusFeature from "./features/status";
+import thinkingFeature from "./features/thinking";
+import fileToolsFeature from "./features/tool";
 
 const features: readonly Feature[] = [
 	modeFeature,
