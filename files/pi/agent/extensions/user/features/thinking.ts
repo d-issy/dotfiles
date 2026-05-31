@@ -37,6 +37,12 @@ const selectLevel =
 		ctx.ui.notify(`Thinking level: ${level}`, "info");
 	};
 
+const selectEffortShortcut =
+	(pi: ExtensionAPI) =>
+	async (ctx: ExtensionContext): Promise<void> => {
+		await showEffortSelector(pi, ctx);
+	};
+
 const selectEffort =
 	(pi: ExtensionAPI) =>
 	async (args: string, ctx: ExtensionCommandContext): Promise<void> => {
@@ -64,6 +70,10 @@ function register(pi: ExtensionAPI): void {
 			handler: selectLevel(pi, direction),
 		});
 	}
+	pi.registerShortcut("ctrl+'", {
+		description: "Select thinking effort",
+		handler: selectEffortShortcut(pi),
+	});
 	pi.registerCommand("effort", {
 		description: "Select thinking effort",
 		getArgumentCompletions: completeLevel,

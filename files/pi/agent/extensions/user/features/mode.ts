@@ -138,7 +138,7 @@ function register(pi: ExtensionAPI): void {
 		getArgumentCompletions: completeMode,
 		handler: switchMode(mode),
 	});
-	pi.registerShortcut("ctrl+m", {
+	pi.registerShortcut("ctrl+;", {
 		description: `Select permission mode: ${MODE_NAMES.join(" / ")}`,
 		handler: selectMode(mode),
 	});
