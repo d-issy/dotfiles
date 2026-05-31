@@ -44,15 +44,29 @@ function completeMode(prefix: string): AutocompleteItem[] | null {
 	);
 }
 
+function applyMode(
+	mode: ModeController,
+	ctx: ExtensionContext,
+	target: Parameters<ModeController["setMode"]>[1],
+): void {
+	mode.setMode(ctx, target, { persist: true });
+	ctx.ui.notify(`Permission mode switched to ${target}.`, "info");
+}
+
+const promptMode =
+	(mode: ModeController) =>
+	async (ctx: ExtensionContext): Promise<void> => {
+		const selectedMode = await showModeSelector(ctx, mode.current);
+		if (!selectedMode) return;
+		applyMode(mode, ctx, selectedMode);
+	};
+
 const switchMode =
 	(mode: ModeController) =>
 	async (args: string, ctx: ExtensionCommandContext): Promise<void> => {
 		const requestedMode = args.trim().split(/\s+/u)[0];
 		if (!requestedMode) {
-			const selectedMode = await showModeSelector(ctx, mode.current);
-			if (!selectedMode) return;
-			mode.setMode(ctx, selectedMode, { persist: true });
-			ctx.ui.notify(`Permission mode switched to ${selectedMode}.`, "info");
+			await promptMode(mode)(ctx);
 			return;
 		}
 
@@ -64,25 +78,13 @@ const switchMode =
 			return;
 		}
 
-		mode.setMode(ctx, requestedMode, { persist: true });
-		ctx.ui.notify(`Permission mode switched to ${requestedMode}.`, "info");
-	};
-
-const selectMode =
-	(mode: ModeController) =>
-	async (ctx: ExtensionContext): Promise<void> => {
-		const selectedMode = await showModeSelector(ctx, mode.current);
-		if (!selectedMode) return;
-		mode.setMode(ctx, selectedMode, { persist: true });
-		ctx.ui.notify(`Permission mode switched to ${selectedMode}.`, "info");
+		applyMode(mode, ctx, requestedMode);
 	};
 
 const cycleMode =
 	(mode: ModeController) =>
 	async (ctx: ExtensionContext): Promise<void> => {
-		const nextMode = getNextMode(mode.current);
-		mode.setMode(ctx, nextMode, { persist: true });
-		ctx.ui.notify(`Permission mode switched to ${nextMode}.`, "info");
+		applyMode(mode, ctx, getNextMode(mode.current));
 	};
 
 const injectSystemPrompt =
@@ -140,7 +142,7 @@ function register(pi: ExtensionAPI): void {
 	});
 	pi.registerShortcut("ctrl+;", {
 		description: `Select permission mode: ${MODE_NAMES.join(" / ")}`,
-		handler: selectMode(mode),
+		handler: promptMode(mode),
 	});
 	pi.registerShortcut("shift+tab", {
 		description: `Cycle permission mode: ${MODE_NAMES.join(" / ")}`,

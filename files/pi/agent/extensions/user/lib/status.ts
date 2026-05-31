@@ -15,6 +15,21 @@ import { colors, fg } from "./theme";
 
 export type RequestRender = () => void;
 
+export const FOOTER_NOTICE_EVENT = "user:footer-notice";
+export const FOOTER_NOTICE_DEFAULT_MS = 1000;
+
+export type FooterNoticeEvent = {
+	message?: string;
+	durationMs?: number;
+};
+
+export type FooterNoticeState = {
+	current(): string | undefined;
+	show(message: string, durationMs: number): void;
+	clear(): void;
+	dispose(): void;
+};
+
 /**
  * Holds the footer's latest render callback so pi events can re-render it.
  * The footer registers itself via `set`; event handlers call `trigger`.
@@ -32,6 +47,45 @@ export function createRenderTrigger(): RenderTrigger {
 		},
 		set(next) {
 			request = next;
+		},
+	};
+}
+
+export function createFooterNoticeState(
+	render: RenderTrigger,
+): FooterNoticeState {
+	let message: string | undefined;
+	let timer: ReturnType<typeof setTimeout> | undefined;
+
+	function clearTimer(): void {
+		if (!timer) return;
+		clearTimeout(timer);
+		timer = undefined;
+	}
+
+	return {
+		current() {
+			return message;
+		},
+		show(nextMessage, durationMs) {
+			clearTimer();
+			message = nextMessage;
+			render.trigger();
+			timer = setTimeout(() => {
+				message = undefined;
+				timer = undefined;
+				render.trigger();
+			}, durationMs);
+		},
+		clear() {
+			clearTimer();
+			if (!message) return;
+			message = undefined;
+			render.trigger();
+		},
+		dispose() {
+			clearTimer();
+			message = undefined;
 		},
 	};
 }
@@ -95,6 +149,7 @@ export function createStatusBarFooter(
 	pi: ExtensionAPI,
 	ctx: ExtensionContext,
 	setRequestRender: (requestRender: RequestRender | undefined) => void,
+	notice?: FooterNoticeState,
 ): FooterFactory {
 	return (
 		tui: TUI,
@@ -151,6 +206,11 @@ export function createStatusBarFooter(
 			},
 			invalidate() {},
 			render(width: number): string[] {
+				const noticeMessage = notice?.current();
+				if (noticeMessage) {
+					return [truncateToWidth(fg(colors.muted, noticeMessage), width, "")];
+				}
+
 				const separator = fg(colors.muted, "·");
 				const left = [
 					renderExtensionStatuses(),
