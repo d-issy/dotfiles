@@ -1,7 +1,12 @@
 export {
+	MODE_REMINDER_TYPE,
 	type ModeController,
 	type SetModeOptions,
+	buildModeReminderPayload,
 	createModeController,
+	formatAllowedTools,
+	getModeReminder,
+	isModeReminderMessage,
 } from "./controller";
 export {
 	DEFAULT_MODE,

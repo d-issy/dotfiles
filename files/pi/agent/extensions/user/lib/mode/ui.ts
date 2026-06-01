@@ -34,6 +34,11 @@ export function applyModeStatus(ctx: ExtensionContext, mode: Mode): void {
 	ctx.ui.setStatus(MODE_STATE_TYPE, fg(colors[mode.color], mode.name));
 }
 
-export function activateModeTools(pi: ExtensionAPI, modeName: ModeName): void {
-	pi.setActiveTools(policyRegistry.getActiveToolsForMode(modeName));
+export function activateModeTools(pi: ExtensionAPI, _modeName: ModeName): void {
+	// Tool schemas are captured for the duration of an agent run. Keep every
+	// policy-managed tool callable at the provider layer so mode changes made
+	// while the agent is working can take effect on the next LLM call in that
+	// same run. The policy guard remains the source of truth for whether a tool
+	// is actually allowed in the current mode.
+	pi.setActiveTools(policyRegistry.getKnownToolNames());
 }

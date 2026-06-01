@@ -29,6 +29,8 @@ export const MODE_DEFINITIONS: readonly Mode[] = [
 		name: "yolo",
 		description: "Read, write, edit, and run shell commands.",
 		color: "alert",
+		systemPrompt:
+			"You are in yolo mode. Use the currently active tools to inspect and modify files and run shell commands. You may use active tools, including arbitrary shell command execution when available. If a requested action matches an active tool, call that tool rather than saying it is unavailable. However, avoid exposing secrets or credentials in the conversation context. If a command may print secrets, prefer a safer command or mask sensitive output. If an action is in a gray area for safety, privacy, or destructive impact, ask the user for confirmation before proceeding.",
 	},
 ];
 

@@ -1,6 +1,7 @@
 import type {
 	BeforeAgentStartEvent,
 	BeforeAgentStartEventResult,
+	ContextEvent,
 	ExtensionAPI,
 	ExtensionCommandContext,
 	ExtensionContext,
@@ -17,13 +18,16 @@ import {
 	MODE_NAMES,
 	MODE_STATE_TYPE,
 	type ModeController,
+	buildModeReminderPayload,
 	createModeController,
 	findPersistedMode,
 	findPersistedModeInSessionFile,
+	formatAllowedTools,
 	getMode,
 	getNextMode,
 	getStartupMode,
 	isModeName,
+	isModeReminderMessage,
 	registerBuiltInPolicies,
 	showModeSelector,
 } from "../lib/mode";
@@ -31,7 +35,10 @@ import { policyRegistry } from "../lib/policy";
 import { filterCompletionsByPrefix } from "../lib/ui";
 
 type BlockedToolCall = { block: true; reason: string };
+type ContextResult = { messages?: ContextEvent["messages"] };
 type SessionBeforeSwitchResult = { cancel?: boolean };
+
+let modeSteerReminderActive = false;
 
 function block(reason: string): BlockedToolCall {
 	return { block: true, reason };
@@ -53,7 +60,9 @@ function applyMode(
 	ctx: ExtensionContext,
 	target: Parameters<ModeController["setMode"]>[1],
 ): void {
+	const shouldSteerReminder = mode.current !== target && !ctx.isIdle();
 	mode.setMode(ctx, target, { persist: true });
+	if (shouldSteerReminder) modeSteerReminderActive = true;
 }
 
 const openModeSelector =
@@ -113,8 +122,10 @@ const injectSystemPrompt =
 		const prompt = getMode(mode.current).systemPrompt;
 		if (!prompt) return;
 
+		const allowedTools = policyRegistry.getAllowedToolsForMode(mode.current);
+		const tools = formatAllowedTools(allowedTools);
 		return {
-			systemPrompt: `${event.systemPrompt}\n\n[${mode.current.toUpperCase()} MODE]\n${prompt}`,
+			systemPrompt: `${event.systemPrompt}\n\n[${mode.current.toUpperCase()} MODE]\nAllowed tools in this mode: ${tools}\n${prompt}\n\nTool schemas may include tools that are blocked in the current mode; do not call tools that are not listed in "Allowed tools in this mode". If the user asks for a listed tool, call that tool rather than saying it is unavailable.`,
 		};
 	};
 
@@ -134,6 +145,7 @@ const restoreMode =
 		mode: ModeController,
 	): ExtensionHandler<SessionStartEvent> =>
 	async (event, ctx) => {
+		modeSteerReminderActive = false;
 		const inheritedMode =
 			event.reason === "new"
 				? findPersistedModeInSessionFile(event.previousSessionFile)
@@ -149,6 +161,36 @@ const restoreMode =
 			),
 			{ persist: false, force: true },
 		);
+	};
+
+const injectTransientModeReminder =
+	(mode: ModeController): ExtensionHandler<ContextEvent, ContextResult> =>
+	async (event) => {
+		// Steady state (no pending steer): only strip stale reminders if any
+		// exist, so the common per-turn path skips rebuilding the message array.
+		if (!modeSteerReminderActive) {
+			if (!event.messages.some(isModeReminderMessage)) return undefined;
+			return {
+				messages: event.messages.filter(
+					(message) => !isModeReminderMessage(message),
+				),
+			};
+		}
+
+		const messages = event.messages.filter(
+			(message) => !isModeReminderMessage(message),
+		);
+		const allowedTools = policyRegistry.getAllowedToolsForMode(mode.current);
+		return {
+			messages: [
+				...messages,
+				{
+					role: "custom",
+					...buildModeReminderPayload(mode.current, allowedTools),
+					timestamp: Date.now(),
+				},
+			],
+		};
 	};
 
 const guardToolCall =
@@ -182,6 +224,10 @@ function register(pi: ExtensionAPI): void {
 		handler: cycleMode(mode),
 	});
 	pi.on("before_agent_start", injectSystemPrompt(mode));
+	pi.on("context", injectTransientModeReminder(mode));
+	pi.on("agent_end", async () => {
+		modeSteerReminderActive = false;
+	});
 	pi.on("session_before_switch", persistModeBeforeNew(pi, mode));
 	pi.on("session_start", restoreMode(pi, mode));
 	pi.on("tool_call", guardToolCall(mode));

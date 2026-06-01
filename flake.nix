@@ -137,7 +137,7 @@
 
         oxlint = pkgs.runCommand "oxlint-check" { nativeBuildInputs = [ pkgs.oxlint ]; } ''
           cd ${./.}
-          oxlint
+          oxlint --deny-warnings
           touch "$out"
         '';
 
