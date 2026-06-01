@@ -18,6 +18,7 @@ import {
 	createModeController,
 	findPersistedMode,
 	getMode,
+	getNextMode,
 	getStartupMode,
 	isModeName,
 	registerBuiltInPolicies,
@@ -77,6 +78,12 @@ const switchMode =
 		}
 
 		applyMode(mode, ctx, requestedMode);
+	};
+
+const cycleMode =
+	(mode: ModeController) =>
+	async (ctx: ExtensionContext): Promise<void> => {
+		applyMode(mode, ctx, getNextMode(mode.current));
 	};
 
 type ModeSelectorAction = (ctx: ExtensionContext) => Promise<void>;
@@ -148,6 +155,10 @@ function register(pi: ExtensionAPI): void {
 		handler: switchMode(mode),
 	});
 	modeSelectorAction = openModeSelector(mode);
+	pi.registerShortcut("shift+tab", {
+		description: `Cycle permission mode: ${MODE_NAMES.join(" / ")}`,
+		handler: cycleMode(mode),
+	});
 	pi.on("before_agent_start", injectSystemPrompt(mode));
 	pi.on("session_start", restoreMode(pi, mode));
 	pi.on("tool_call", guardToolCall(mode));
