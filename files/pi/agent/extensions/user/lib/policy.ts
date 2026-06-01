@@ -19,7 +19,8 @@ export type ToolPolicy<TInput = unknown> = {
 
 export type PolicyRegistry = {
 	register<TInput>(policy: ToolPolicy<TInput>): void;
-	getActiveToolsForMode(modeName: ModeName): string[];
+	getAllowedToolsForMode(modeName: ModeName): string[];
+	getKnownToolNames(): string[];
 	checkToolAllowed(
 		modeName: ModeName,
 		event: ToolCallEvent,
@@ -37,12 +38,15 @@ function createPolicyRegistry(): PolicyRegistry {
 		register(policy) {
 			policies.set(policy.name, policy as ToolPolicy);
 		},
-		getActiveToolsForMode(modeName) {
+		getAllowedToolsForMode(modeName) {
 			const tools: string[] = [];
 			for (const policy of policies.values()) {
 				if (policy.allowedModes.includes(modeName)) tools.push(policy.name);
 			}
 			return tools;
+		},
+		getKnownToolNames() {
+			return [...policies.keys()];
 		},
 		checkToolAllowed(modeName, event) {
 			const policy = policies.get(event.toolName);

@@ -14,7 +14,7 @@
         },
         {
           "label": "oxlint",
-          "command": "oxlint"
+          "command": "oxlint --deny-warnings"
         },
         {
           "label": "deadnix",

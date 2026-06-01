@@ -8,18 +8,18 @@ import { isAbsolute, join, relative, resolve } from "node:path";
 import { tmpdir } from "node:os";
 import { StringDecoder } from "node:string_decoder";
 import {
-	DEFAULT_MAX_BYTES,
-	DEFAULT_MAX_LINES,
-	SettingsManager,
-	createLocalBashOperations,
-	formatSize,
 	type AgentToolResult,
 	type AgentToolUpdateCallback,
+	DEFAULT_MAX_BYTES,
+	DEFAULT_MAX_LINES,
 	type ExtensionAPI,
 	type ExtensionContext,
+	SettingsManager,
 	type Theme,
 	type ToolDefinition,
 	type ToolResultEvent,
+	createLocalBashOperations,
+	formatSize,
 } from "@earendil-works/pi-coding-agent";
 import { type Component, Text } from "@earendil-works/pi-tui";
 import { Type } from "typebox";
@@ -744,6 +744,7 @@ export function registerProjectTools(
 	}
 
 	const existingToolNames = new Set(pi.getAllTools().map((tool) => tool.name));
+	const newlyRegistered: string[] = [];
 	for (const [name, rawConfig] of Object.entries(projectSettings.tools)) {
 		try {
 			if (existingToolNames.has(name) || registeredNames.has(name)) {
@@ -757,12 +758,19 @@ export function registerProjectTools(
 			pi.registerTool(createProjectToolDefinition(resolved));
 			policyRegistry.register({ name, allowedModes: resolved.allowedModes });
 			registeredNames.add(name);
+			newlyRegistered.push(name);
 		} catch (error) {
 			notifyWarning(
 				ctx,
 				`Project tool '${name}' ignored: ${error instanceof Error ? error.message : String(error)}`,
 			);
 		}
+	}
+
+	if (newlyRegistered.length > 0) {
+		pi.setActiveTools([
+			...new Set([...pi.getActiveTools(), ...newlyRegistered]),
+		]);
 	}
 }
 
