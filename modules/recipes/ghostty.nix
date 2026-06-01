@@ -24,7 +24,7 @@ _:
         "liga"
       ];
 
-      "window-padding-x" = 0;
+      "window-padding-x" = 4;
       "window-padding-y" = 0;
       "window-padding-balance" = false;
 
