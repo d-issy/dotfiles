@@ -2,6 +2,8 @@ import {
 	DynamicBorder,
 	type ExtensionAPI,
 	type ExtensionContext,
+	ModelSelectorComponent,
+	SettingsManager,
 	type Theme,
 } from "@earendil-works/pi-coding-agent";
 import {
@@ -14,7 +16,7 @@ import { showEffortSelector } from "../lib/thinking";
 import { decodePrintableInput } from "../lib/ui";
 import { showModeQuickAction } from "./mode";
 
-type QuickActionId = "mode" | "effort";
+type QuickActionId = "mode" | "effort" | "model";
 
 type QuickAction = {
 	id: QuickActionId;
@@ -35,6 +37,12 @@ const QUICK_ACTIONS: readonly QuickAction[] = [
 		key: "e",
 		label: "Effort",
 		description: "Select thinking effort",
+	},
+	{
+		id: "model",
+		key: "l",
+		label: "Model",
+		description: "Select model",
 	},
 ];
 
@@ -80,9 +88,7 @@ function renderQuickActions(
 		truncateToWidth(theme.fg("accent", theme.bold("Quick Actions")), width, ""),
 		...QUICK_ACTIONS.map((action) => renderAction(theme, action, width)),
 		truncateToWidth(
-			notice
-				? theme.fg("warning", notice)
-				: theme.fg("dim", "m mode • e effort • q/esc close"),
+			notice ? theme.fg("warning", notice) : theme.fg("dim", "q/esc close"),
 			width,
 			"",
 		),
@@ -156,6 +162,47 @@ async function showQuickActions(
 	);
 }
 
+async function showModelSelector(
+	pi: ExtensionAPI,
+	ctx: ExtensionContext,
+): Promise<void> {
+	const settingsManager = SettingsManager.create(ctx.cwd);
+	const previousModel = ctx.model;
+
+	await ctx.ui.custom<void>(
+		(tui, _theme, _keybindings, done) =>
+			new ModelSelectorComponent(
+				tui,
+				ctx.model,
+				settingsManager,
+				ctx.modelRegistry,
+				[],
+				async (model) => {
+					const selected = await pi.setModel(model);
+					if (!selected) {
+						if (previousModel) {
+							settingsManager.setDefaultModelAndProvider(
+								previousModel.provider,
+								previousModel.id,
+							);
+						}
+						ctx.ui.notify(
+							`No API key for ${model.provider}/${model.id}`,
+							"warning",
+						);
+						done(undefined);
+						return;
+					}
+
+					await settingsManager.flush();
+					ctx.ui.notify(`Model: ${model.id}`, "info");
+					done(undefined);
+				},
+				() => done(undefined),
+			),
+	);
+}
+
 const openQuickActions =
 	(pi: ExtensionAPI) =>
 	async (ctx: ExtensionContext): Promise<void> => {
@@ -166,6 +213,9 @@ const openQuickActions =
 				break;
 			case "effort":
 				await showEffortSelector(pi, ctx);
+				break;
+			case "model":
+				await showModelSelector(pi, ctx);
 				break;
 		}
 	};
