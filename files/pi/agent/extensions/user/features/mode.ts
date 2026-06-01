@@ -5,6 +5,7 @@ import type {
 	ExtensionCommandContext,
 	ExtensionContext,
 	ExtensionHandler,
+	SessionBeforeSwitchEvent,
 	SessionStartEvent,
 	ToolCallEvent,
 	ToolCallEventResult,
@@ -14,9 +15,11 @@ import type { Feature } from "../feature";
 import {
 	MODE_DEFINITIONS,
 	MODE_NAMES,
+	MODE_STATE_TYPE,
 	type ModeController,
 	createModeController,
 	findPersistedMode,
+	findPersistedModeInSessionFile,
 	getMode,
 	getNextMode,
 	getStartupMode,
@@ -28,6 +31,7 @@ import { policyRegistry } from "../lib/policy";
 import { filterCompletionsByPrefix } from "../lib/ui";
 
 type BlockedToolCall = { block: true; reason: string };
+type SessionBeforeSwitchResult = { cancel?: boolean };
 
 function block(reason: string): BlockedToolCall {
 	return { block: true, reason };
@@ -114,16 +118,34 @@ const injectSystemPrompt =
 		};
 	};
 
+const persistModeBeforeNew =
+	(
+		pi: ExtensionAPI,
+		mode: ModeController,
+	): ExtensionHandler<SessionBeforeSwitchEvent, SessionBeforeSwitchResult> =>
+	async (event) => {
+		if (event.reason !== "new") return;
+		pi.appendEntry(MODE_STATE_TYPE, { mode: mode.current });
+	};
+
 const restoreMode =
 	(
 		pi: ExtensionAPI,
 		mode: ModeController,
 	): ExtensionHandler<SessionStartEvent> =>
-	async (_event, ctx) => {
+	async (event, ctx) => {
+		const inheritedMode =
+			event.reason === "new"
+				? findPersistedModeInSessionFile(event.previousSessionFile)
+				: undefined;
 		mode.setMode(
 			ctx,
-			getStartupMode(pi, ctx.cwd, findPersistedMode(ctx), (message) =>
-				ctx.ui.notify(message, "warning"),
+			getStartupMode(
+				pi,
+				ctx.cwd,
+				findPersistedMode(ctx),
+				(message) => ctx.ui.notify(message, "warning"),
+				inheritedMode,
 			),
 			{ persist: false, force: true },
 		);
@@ -160,6 +182,7 @@ function register(pi: ExtensionAPI): void {
 		handler: cycleMode(mode),
 	});
 	pi.on("before_agent_start", injectSystemPrompt(mode));
+	pi.on("session_before_switch", persistModeBeforeNew(pi, mode));
 	pi.on("session_start", restoreMode(pi, mode));
 	pi.on("tool_call", guardToolCall(mode));
 }
