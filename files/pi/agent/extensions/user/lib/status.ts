@@ -101,6 +101,7 @@ type Totals = {
 };
 
 const HOME = homedir();
+const CODE = `${HOME}${sep}code`;
 
 function formatCount(value: number): string {
 	if (!Number.isFinite(value) || value <= 0) return "0";
@@ -116,6 +117,7 @@ function formatPercent(value: number): string {
 }
 
 function formatCwd(cwd: string): string {
+	if (cwd.startsWith(CODE + sep)) return cwd.slice(CODE.length + 1);
 	if (cwd === HOME) return "~";
 	if (cwd.startsWith(HOME + sep)) return `~${cwd.slice(HOME.length)}`;
 	return cwd;
@@ -158,7 +160,10 @@ export function createStatusBarFooter(
 	): FooterComponent => {
 		setRequestRender(() => tui.requestRender());
 
-		const cwdSegment = fg(colors.positive, formatCwd(ctx.cwd));
+		const cwdSegment =
+			ctx.cwd === HOME
+				? `${fg(colors.muted, "in ")}${fg(colors.positive, "HOME")}`
+				: fg(colors.positive, formatCwd(ctx.cwd));
 
 		const unsubscribeBranchChange = footerData.onBranchChange(() =>
 			tui.requestRender(),
