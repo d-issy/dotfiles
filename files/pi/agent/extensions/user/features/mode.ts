@@ -50,7 +50,6 @@ function applyMode(
 	target: Parameters<ModeController["setMode"]>[1],
 ): void {
 	mode.setMode(ctx, target, { persist: true });
-	ctx.ui.notify(`Permission mode switched to ${target}.`, "info");
 }
 
 const promptMode =
