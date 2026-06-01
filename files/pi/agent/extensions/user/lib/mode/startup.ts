@@ -3,6 +3,7 @@ import {
 	type ExtensionAPI,
 	type ExtensionContext,
 	SettingsManager,
+	parseSessionEntries,
 } from "@earendil-works/pi-coding-agent";
 import {
 	DEFAULT_MODE,
@@ -100,10 +101,9 @@ export function findPersistedModeInSessionFile(
 	if (!sessionFile) return undefined;
 
 	try {
-		const entries = readFileSync(sessionFile, "utf8")
-			.split(/\r?\n/u)
-			.filter(Boolean)
-			.map((line) => JSON.parse(line) as CustomSessionEntry);
+		const entries = parseSessionEntries(
+			readFileSync(sessionFile, "utf8"),
+		) as readonly CustomSessionEntry[];
 		return findPersistedModeInEntries(entries);
 	} catch {
 		return undefined;
