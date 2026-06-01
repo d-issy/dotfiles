@@ -1,27 +1,16 @@
 import type {
 	ExtensionAPI,
 	ExtensionCommandContext,
-	ExtensionContext,
 } from "@earendil-works/pi-coding-agent";
-import type { AutocompleteItem, KeyId } from "@earendil-works/pi-tui";
+import type { AutocompleteItem } from "@earendil-works/pi-tui";
 import type { Feature } from "../feature";
 import {
 	isThinkingLevel,
-	selectThinkingLevel,
 	setThinkingLevel,
 	showEffortSelector,
 	thinkingLevels,
 } from "../lib/thinking";
 import { filterCompletionsByPrefix } from "../lib/ui";
-
-const shortcuts: readonly {
-	key: KeyId;
-	label: string;
-	direction: -1 | 1;
-}[] = [
-	{ key: "shift+ctrl+h", label: "previous", direction: -1 },
-	{ key: "shift+ctrl+l", label: "next", direction: 1 },
-];
 
 function completeLevel(prefix: string): AutocompleteItem[] | null {
 	return filterCompletionsByPrefix(
@@ -29,13 +18,6 @@ function completeLevel(prefix: string): AutocompleteItem[] | null {
 		prefix,
 	);
 }
-
-const selectLevel =
-	(pi: ExtensionAPI, direction: -1 | 1) =>
-	(ctx: ExtensionContext): void => {
-		const level = selectThinkingLevel(pi, direction);
-		ctx.ui.notify(`Thinking level: ${level}`, "info");
-	};
 
 const selectEffort =
 	(pi: ExtensionAPI) =>
@@ -58,16 +40,6 @@ const selectEffort =
 	};
 
 function register(pi: ExtensionAPI): void {
-	for (const { key, label, direction } of shortcuts) {
-		pi.registerShortcut(key, {
-			description: `Select ${label} thinking level`,
-			handler: selectLevel(pi, direction),
-		});
-	}
-	pi.registerShortcut("ctrl+'", {
-		description: "Select thinking effort",
-		handler: (ctx) => showEffortSelector(pi, ctx),
-	});
 	pi.registerCommand("effort", {
 		description: "Select thinking effort",
 		getArgumentCompletions: completeLevel,

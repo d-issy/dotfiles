@@ -52,7 +52,7 @@ function applyMode(
 	mode.setMode(ctx, target, { persist: true });
 }
 
-const promptMode =
+const openModeSelector =
 	(mode: ModeController) =>
 	async (ctx: ExtensionContext): Promise<void> => {
 		const selectedMode = await showModeSelector(ctx, mode.current);
@@ -65,7 +65,7 @@ const switchMode =
 	async (args: string, ctx: ExtensionCommandContext): Promise<void> => {
 		const requestedMode = args.trim().split(/\s+/u)[0];
 		if (!requestedMode) {
-			await promptMode(mode)(ctx);
+			await openModeSelector(mode)(ctx);
 			return;
 		}
 
@@ -85,6 +85,21 @@ const cycleMode =
 	async (ctx: ExtensionContext): Promise<void> => {
 		applyMode(mode, ctx, getNextMode(mode.current));
 	};
+
+type ModeSelectorAction = (ctx: ExtensionContext) => Promise<void>;
+
+let modeSelectorAction: ModeSelectorAction | undefined;
+
+export async function showModeQuickAction(
+	ctx: ExtensionContext,
+): Promise<void> {
+	if (!modeSelectorAction) {
+		ctx.ui.notify("Mode selector is unavailable.", "error");
+		return;
+	}
+
+	await modeSelectorAction(ctx);
+}
 
 const injectSystemPrompt =
 	(
@@ -139,10 +154,7 @@ function register(pi: ExtensionAPI): void {
 		getArgumentCompletions: completeMode,
 		handler: switchMode(mode),
 	});
-	pi.registerShortcut("ctrl+;", {
-		description: `Select permission mode: ${MODE_NAMES.join(" / ")}`,
-		handler: promptMode(mode),
-	});
+	modeSelectorAction = openModeSelector(mode);
 	pi.registerShortcut("shift+tab", {
 		description: `Cycle permission mode: ${MODE_NAMES.join(" / ")}`,
 		handler: cycleMode(mode),
