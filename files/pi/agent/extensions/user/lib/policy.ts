@@ -3,6 +3,12 @@ import { isSecretPath } from "./secrets";
 
 export type ModeName = "read" | "write" | "yolo";
 
+export function makeSecretActionReason(
+	verb: string,
+): (modeName: ModeName) => string {
+	return (modeName) => `${verb} secret files is disabled in ${modeName} mode.`;
+}
+
 export type ToolPolicy<TInput = unknown> = {
 	name: string;
 	allowedModes: readonly ModeName[];

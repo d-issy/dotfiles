@@ -10,10 +10,85 @@ import type {
 } from "@earendil-works/pi-coding-agent";
 import type { Component, TUI } from "@earendil-works/pi-tui";
 import { truncateToWidth, visibleWidth } from "@earendil-works/pi-tui";
-import type { Color } from "./lib/theme";
-import { catppuccin, fg } from "./lib/theme";
+import type { Color } from "./theme";
+import { colors, fg } from "./theme";
 
-type RequestRender = () => void;
+export type RequestRender = () => void;
+
+export const FOOTER_NOTICE_EVENT = "user:footer-notice";
+export const FOOTER_NOTICE_DEFAULT_MS = 1000;
+
+export type FooterNoticeEvent = {
+	message?: string;
+	durationMs?: number;
+};
+
+export type FooterNoticeState = {
+	current(): string | undefined;
+	show(message: string, durationMs: number): void;
+	clear(): void;
+	dispose(): void;
+};
+
+/**
+ * Holds the footer's latest render callback so pi events can re-render it.
+ * The footer registers itself via `set`; event handlers call `trigger`.
+ */
+export type RenderTrigger = {
+	trigger(): void;
+	set(next: RequestRender | undefined): void;
+};
+
+export function createRenderTrigger(): RenderTrigger {
+	let request: RequestRender | undefined;
+	return {
+		trigger() {
+			request?.();
+		},
+		set(next) {
+			request = next;
+		},
+	};
+}
+
+export function createFooterNoticeState(
+	render: RenderTrigger,
+): FooterNoticeState {
+	let message: string | undefined;
+	let timer: ReturnType<typeof setTimeout> | undefined;
+
+	function clearTimer(): void {
+		if (!timer) return;
+		clearTimeout(timer);
+		timer = undefined;
+	}
+
+	return {
+		current() {
+			return message;
+		},
+		show(nextMessage, durationMs) {
+			clearTimer();
+			message = nextMessage;
+			render.trigger();
+			timer = setTimeout(() => {
+				message = undefined;
+				timer = undefined;
+				render.trigger();
+			}, durationMs);
+		},
+		clear() {
+			clearTimer();
+			if (!message) return;
+			message = undefined;
+			render.trigger();
+		},
+		dispose() {
+			clearTimer();
+			message = undefined;
+		},
+	};
+}
 type FooterFactory = NonNullable<
 	Parameters<ExtensionUIContext["setFooter"]>[0]
 >;
@@ -47,9 +122,9 @@ function formatCwd(cwd: string): string {
 }
 
 function pickRemainingColor(remaining: number): Color {
-	if (remaining >= 50) return catppuccin.green;
-	if (remaining >= 20) return catppuccin.yellow;
-	return catppuccin.red;
+	if (remaining >= 50) return colors.positive;
+	if (remaining >= 20) return colors.caution;
+	return colors.alert;
 }
 
 function getAssistantTotals(entries: readonly SessionEntry[]): Totals {
@@ -70,10 +145,11 @@ function getAssistantTotals(entries: readonly SessionEntry[]): Totals {
 	return totals;
 }
 
-function createStatusBarFooter(
+export function createStatusBarFooter(
 	pi: ExtensionAPI,
 	ctx: ExtensionContext,
 	setRequestRender: (requestRender: RequestRender | undefined) => void,
+	notice?: FooterNoticeState,
 ): FooterFactory {
 	return (
 		tui: TUI,
@@ -82,7 +158,7 @@ function createStatusBarFooter(
 	): FooterComponent => {
 		setRequestRender(() => tui.requestRender());
 
-		const cwdSegment = fg(catppuccin.green, formatCwd(ctx.cwd));
+		const cwdSegment = fg(colors.positive, formatCwd(ctx.cwd));
 
 		const unsubscribeBranchChange = footerData.onBranchChange(() =>
 			tui.requestRender(),
@@ -90,13 +166,13 @@ function createStatusBarFooter(
 
 		function renderModel(): string {
 			const model = ctx.model?.id ?? "no-model";
-			return fg(catppuccin.yellow, `${model} ${pi.getThinkingLevel()}`);
+			return fg(colors.caution, `${model} ${pi.getThinkingLevel()}`);
 		}
 
 		function renderLocation(): string {
 			const branch = footerData.getGitBranch();
 			if (!branch) return cwdSegment;
-			return `${cwdSegment}${fg(catppuccin.overlay0, ":")}${fg(catppuccin.blue, branch)}`;
+			return `${cwdSegment}${fg(colors.muted, ":")}${fg(colors.accent, branch)}`;
 		}
 
 		function renderContextUsage(): string {
@@ -111,9 +187,9 @@ function createStatusBarFooter(
 
 		function renderTokenTotals(): string {
 			const totals = getAssistantTotals(ctx.sessionManager.getBranch());
-			const input = fg(catppuccin.green, `↑${formatCount(totals.input)}`);
-			const output = fg(catppuccin.yellow, `↓${formatCount(totals.output)}`);
-			const cost = fg(catppuccin.overlay0, `$${totals.cost.toFixed(3)}`);
+			const input = fg(colors.positive, `↑${formatCount(totals.input)}`);
+			const output = fg(colors.caution, `↓${formatCount(totals.output)}`);
+			const cost = fg(colors.muted, `$${totals.cost.toFixed(3)}`);
 			return `${input} ${output} ${cost}`;
 		}
 
@@ -130,7 +206,12 @@ function createStatusBarFooter(
 			},
 			invalidate() {},
 			render(width: number): string[] {
-				const separator = fg(catppuccin.overlay0, "·");
+				const noticeMessage = notice?.current();
+				if (noticeMessage) {
+					return [truncateToWidth(fg(colors.muted, noticeMessage), width, "")];
+				}
+
+				const separator = fg(colors.muted, "·");
 				const left = [
 					renderExtensionStatuses(),
 					renderModel(),
@@ -149,20 +230,4 @@ function createStatusBarFooter(
 			},
 		};
 	};
-}
-
-export default function statusBar(pi: ExtensionAPI): void {
-	let requestRender: RequestRender | undefined;
-	const setRequestRender = (next: RequestRender | undefined): void => {
-		requestRender = next;
-	};
-	const triggerRender = (): void => requestRender?.();
-
-	pi.on("thinking_level_select", triggerRender);
-	pi.on("model_select", triggerRender);
-
-	pi.on("session_start", (_event, ctx) => {
-		if (!ctx.hasUI) return;
-		ctx.ui.setFooter(createStatusBarFooter(pi, ctx, setRequestRender));
-	});
 }
