@@ -2,7 +2,6 @@ import { existsSync } from "node:fs";
 import { createRequire } from "node:module";
 import { dirname, join, parse, resolve } from "node:path";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import type { createJiti as createJitiType } from "jiti";
 import deployedUser from "./main";
 
 const DEBUG_FLAG = "--debug";
@@ -16,6 +15,13 @@ const DEBUG_MAIN_RELATIVE_PATH = join(
 );
 
 type UserExtensionFactory = (pi: ExtensionAPI) => void | Promise<void>;
+type JitiLoader = {
+	import<T>(path: string, options: { default: true }): Promise<T>;
+};
+type CreateJiti = (
+	url: string,
+	options: { fsCache: boolean; moduleCache: boolean },
+) => JitiLoader;
 
 function hasDebugFlag(
 	argv: readonly string[] = process.argv.slice(2),
@@ -50,7 +56,7 @@ async function loadUserExtension(path: string): Promise<UserExtensionFactory> {
 	);
 	const piRequire = createRequire(piModuleUrl);
 	const { createJiti } = piRequire("jiti") as {
-		createJiti: typeof createJitiType;
+		createJiti: CreateJiti;
 	};
 	const jiti = createJiti(import.meta.url, {
 		fsCache: false,
