@@ -16,5 +16,9 @@ export {
 	normalizeModeName,
 } from "./definitions";
 export { registerBuiltInPolicies } from "./policies";
-export { findPersistedMode, getStartupMode } from "./startup";
+export {
+	findPersistedMode,
+	findPersistedModeInSessionFile,
+	getStartupMode,
+} from "./startup";
 export { activateModeTools, applyModeStatus, showModeSelector } from "./ui";

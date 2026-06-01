@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import {
 	type ExtensionAPI,
 	type ExtensionContext,
@@ -60,6 +61,7 @@ export function getStartupMode(
 	cwd: string,
 	persistedMode?: ModeName,
 	onWarning?: (message: string) => void,
+	inheritedMode?: ModeName,
 ): ModeName {
 	const flagValue = pi.getFlag("permission-mode");
 	const flagMode = normalizeModeName(flagValue);
@@ -69,12 +71,14 @@ export function getStartupMode(
 		);
 	}
 	const configuredMode = getConfiguredDefaultMode(cwd, onWarning);
-	return flagMode ?? persistedMode ?? configuredMode ?? DEFAULT_MODE;
+	return (
+		inheritedMode ?? flagMode ?? persistedMode ?? configuredMode ?? DEFAULT_MODE
+	);
 }
 
-export function findPersistedMode(ctx: ExtensionContext): ModeName | undefined {
-	const entries =
-		ctx.sessionManager.getEntries() as readonly CustomSessionEntry[];
+function findPersistedModeInEntries(
+	entries: readonly CustomSessionEntry[],
+): ModeName | undefined {
 	for (let i = entries.length - 1; i >= 0; i--) {
 		const entry = entries[i];
 		if (entry.type === "custom" && entry.customType === MODE_STATE_TYPE) {
@@ -82,4 +86,26 @@ export function findPersistedMode(ctx: ExtensionContext): ModeName | undefined {
 		}
 	}
 	return undefined;
+}
+
+export function findPersistedMode(ctx: ExtensionContext): ModeName | undefined {
+	return findPersistedModeInEntries(
+		ctx.sessionManager.getEntries() as readonly CustomSessionEntry[],
+	);
+}
+
+export function findPersistedModeInSessionFile(
+	sessionFile?: string,
+): ModeName | undefined {
+	if (!sessionFile) return undefined;
+
+	try {
+		const entries = readFileSync(sessionFile, "utf8")
+			.split(/\r?\n/u)
+			.filter(Boolean)
+			.map((line) => JSON.parse(line) as CustomSessionEntry);
+		return findPersistedModeInEntries(entries);
+	} catch {
+		return undefined;
+	}
 }
