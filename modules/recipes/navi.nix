@@ -1,3 +1,5 @@
+{ pkgs, ... }:
+
 {
   config.dot.programs.navi = {
     enable = true;
@@ -21,14 +23,11 @@
         snippet.color = "white";
       };
       finder = {
-        command = "fzf";
+        command = "${pkgs.fzf}/bin/fzf";
         overrides = "--no-exact --tiebreak chunk,begin,length";
         overrides_var = "--no-exact";
       };
-      cheats.paths = [
-        "~/cheats/"
-      ];
-      shell.command = "zsh";
+      shell.command = "${pkgs.zsh}/bin/zsh";
     };
   };
 }

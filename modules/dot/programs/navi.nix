@@ -27,8 +27,8 @@ let
       variables = lib.concatStringsSep "\n" (lib.mapAttrsToList mkVariable section.variables);
       body = lib.concatStringsSep "\n\n" (
         lib.filter (value: value != "") [
-          entries
           variables
+          entries
         ]
       );
     in
@@ -39,12 +39,12 @@ let
 
   mkCheatFile =
     cheatName: cheat:
-    lib.nameValuePair "cheats/${cheatName}.cheat" {
+    lib.nameValuePair "navi/cheats/${cheatName}.cheat" {
       text = mkCheatText cheatName cheat;
     };
 
   shellAliasesFile = lib.optionalAttrs (cfg.enableShellAliases && config.home.shellAliases != { }) {
-    "cheats/aliases.cheat".text = ''
+    "navi/cheats/aliases.cheat".text = ''
       % aliases
 
       ${lib.concatStringsSep "\n\n" (lib.mapAttrsToList mkShellAliasEntry config.home.shellAliases)}
@@ -130,7 +130,7 @@ in
         }
       );
       default = { };
-      description = "Navi cheats to generate under ~/cheats.";
+      description = "Navi cheats to generate under the default navi cheats path.";
       example.git.sections = [
         {
           tags = [ "git" ];
@@ -210,7 +210,7 @@ in
         source = yamlFormat.generate "navi-config" cfg.settings;
       };
 
-      home.file = shellAliasesFile // builtins.listToAttrs (lib.mapAttrsToList mkCheatFile cfg.cheats);
+      xdg.dataFile = shellAliasesFile // builtins.listToAttrs (lib.mapAttrsToList mkCheatFile cfg.cheats);
     }
   );
 }
