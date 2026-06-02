@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ config, pkgs, ... }:
 
 {
   config.dot.programs.navi = {
@@ -23,7 +23,7 @@
         snippet.color = "white";
       };
       finder = {
-        command = "${pkgs.fzf}/bin/fzf";
+        command = config.dot.options.fuzzyFinder.command;
         overrides = "--no-exact --tiebreak chunk,begin,length";
         overrides_var = "--no-exact";
       };
