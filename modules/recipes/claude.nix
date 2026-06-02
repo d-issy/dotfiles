@@ -13,8 +13,12 @@ in
 {
   config = {
     home = {
-      shellAliases.cld = "claude";
-      shellAliases.clda = "claude --permission-mode auto";
+      shellAliases = {
+        cld = "claude";
+        cla = "claude --permission-mode auto";
+        clc = "claude --continue";
+        clr = "claude --resume";
+      };
 
       file.".claude" = {
         source = claudeFilesFiltered;
