@@ -1,7 +1,7 @@
 {
   imports = [
     ./home.nix
-    ./programs/agent-skills.nix
+    ./programs
     ./xdg.nix
   ];
 }
