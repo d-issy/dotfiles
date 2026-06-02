@@ -1,4 +1,4 @@
-{ config, pkgs, ... }:
+{ pkgs, ... }:
 
 {
   config.dot.programs.navi = {
@@ -12,18 +12,18 @@
       style = {
         tag = {
           color = "cyan";
-          with_percentage = 26;
+          width_percentage = 26;
           min_width = 20;
         };
-        comments = {
+        comment = {
           color = "blue";
-          with_percentage = 42;
+          width_percentage = 42;
           min_width = 45;
         };
         snippet.color = "white";
       };
       finder = {
-        command = config.dot.options.fuzzyFinder.command;
+        command = "fzf";
         overrides = "--no-exact --tiebreak chunk,begin,length";
         overrides_var = "--no-exact";
       };
