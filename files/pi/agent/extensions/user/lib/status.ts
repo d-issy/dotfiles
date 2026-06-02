@@ -103,7 +103,7 @@ type Totals = {
 const HOME = homedir();
 const CODE = `${HOME}${sep}code`;
 
-function formatCount(value: number): string {
+export function formatCount(value: number): string {
 	if (!Number.isFinite(value) || value <= 0) return "0";
 	if (value >= 1_000_000)
 		return `${(value / 1_000_000).toFixed(value >= 10_000_000 ? 0 : 1)}M`;
@@ -129,7 +129,7 @@ function pickRemainingColor(remaining: number): Color {
 	return colors.alert;
 }
 
-function getAssistantTotals(entries: readonly SessionEntry[]): Totals {
+export function getAssistantTotals(entries: readonly SessionEntry[]): Totals {
 	const totals: Totals = { input: 0, output: 0, cost: 0 };
 
 	for (const entry of entries) {
@@ -190,14 +190,6 @@ export function createStatusBarFooter(
 			return fg(pickRemainingColor(remaining), text);
 		}
 
-		function renderTokenTotals(): string {
-			const totals = getAssistantTotals(ctx.sessionManager.getBranch());
-			const input = fg(colors.positive, `↑${formatCount(totals.input)}`);
-			const output = fg(colors.caution, `↓${formatCount(totals.output)}`);
-			const cost = fg(colors.muted, `$${totals.cost.toFixed(3)}`);
-			return `${input} ${output} ${cost}`;
-		}
-
 		function renderExtensionStatuses(): string {
 			return [...footerData.getExtensionStatuses().values()]
 				.filter(Boolean)
@@ -224,9 +216,7 @@ export function createStatusBarFooter(
 				]
 					.filter(Boolean)
 					.join(` ${separator} `);
-				const right = [renderContextUsage(), renderTokenTotals()]
-					.filter(Boolean)
-					.join(" ");
+				const right = [renderContextUsage()].filter(Boolean).join(" ");
 				const gap = " ".repeat(
 					Math.max(1, width - visibleWidth(left) - visibleWidth(right)),
 				);
