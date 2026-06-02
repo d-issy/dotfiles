@@ -1,3 +1,22 @@
+{ lib, ... }:
+
+let
+  fzfNoSelect = "--fzf-overrides '--no-select-1'";
+  dockerColumn =
+    command: column:
+    lib.concatStringsSep " " [
+      command
+      "--- --headers 1"
+      "--column ${toString column}"
+      fzfNoSelect
+    ];
+  dockerMultiColumn =
+    command: column:
+    lib.concatStringsSep " " [
+      (dockerColumn command column)
+      "--multi --expand"
+    ];
+in
 {
   config = {
     home.shellAliases = {
@@ -10,10 +29,10 @@
     dot.programs.navi.cheats.docker.sections = [
       {
         variables = {
-          image_id = "docker images --- --headers 1 --column 3 --fzf-overrides '--no-select-1'";
-          image_ids = "docker images --- --headers 1 --column 3 --multi --expand --fzf-overrides '--no-select-1'";
-          container_id = "docker ps --- --headers 1 --column 1 --fzf-overrides '--no-select-1'";
-          container_ids = "docker ps --- --headers 1 --column 1 --multi --expand --fzf-overrides '--no-select-1'";
+          image_id = dockerColumn "docker images" 3;
+          image_ids = dockerMultiColumn "docker images" 3;
+          container_id = dockerColumn "docker ps" 1;
+          container_ids = dockerMultiColumn "docker ps" 1;
         };
         entries = [
           {
