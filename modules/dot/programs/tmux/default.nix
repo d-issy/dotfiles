@@ -21,8 +21,10 @@ let
   mkSetGlobal = mkTmuxSet " -g";
   mkSetWindowGlobal = mkTmuxSet "w -g";
 
-  sourcePlugin = name: plugin: ''
-    source-file ${plugin}/share/tmux-plugins/${name}/${name}.tmux
+  pluginPath = name: plugin: "${plugin}/share/tmux-plugins/${name}";
+
+  runPlugin = name: plugin: ''
+    run-shell ${pluginPath name plugin}/${name}.tmux
   '';
 
   mkTerminalFeature = terminal: features: ''
@@ -50,17 +52,15 @@ let
   );
 
   pluginConfig = lib.concatStringsSep "\n" [
-    (lib.optionalString cfg.plugins.sensible.enable (sourcePlugin "sensible" pkgs.tmuxPlugins.sensible))
-    (lib.optionalString cfg.plugins.resurrect.enable (
-      sourcePlugin "resurrect" pkgs.tmuxPlugins.resurrect
-    ))
+    (lib.optionalString cfg.plugins.sensible.enable (runPlugin "sensible" pkgs.tmuxPlugins.sensible))
+    (lib.optionalString cfg.plugins.resurrect.enable (runPlugin "resurrect" pkgs.tmuxPlugins.resurrect))
     (lib.optionalString cfg.catppuccin.enable ''
       set -g @catppuccin_flavor "${cfg.catppuccin.flavor}" # latte, frappe, macchiato, mocha
       set -g @catppuccin_status_background "none"
       set -g @catppuccin_window_status_style "none"
       set -g @catppuccin_pane_status_enabled "off"
       set -g @catppuccin_pane_border_status "off"
-      ${sourcePlugin "catppuccin" pkgs.tmuxPlugins.catppuccin}
+      source-file ${pluginPath "catppuccin" pkgs.tmuxPlugins.catppuccin}/catppuccin_tmux.conf
     '')
   ];
 
