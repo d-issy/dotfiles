@@ -1,5 +1,5 @@
 import { homedir } from "node:os";
-import { sep } from "node:path";
+import { basename } from "node:path";
 import type { AssistantMessage } from "@earendil-works/pi-ai";
 import type {
 	ExtensionAPI,
@@ -101,9 +101,8 @@ type Totals = {
 };
 
 const HOME = homedir();
-const CODE = `${HOME}${sep}code`;
 
-function formatCount(value: number): string {
+export function formatCount(value: number): string {
 	if (!Number.isFinite(value) || value <= 0) return "0";
 	if (value >= 1_000_000)
 		return `${(value / 1_000_000).toFixed(value >= 10_000_000 ? 0 : 1)}M`;
@@ -117,10 +116,9 @@ function formatPercent(value: number): string {
 }
 
 function formatCwd(cwd: string): string {
-	if (cwd.startsWith(CODE + sep)) return cwd.slice(CODE.length + 1);
 	if (cwd === HOME) return "~";
-	if (cwd.startsWith(HOME + sep)) return `~${cwd.slice(HOME.length)}`;
-	return cwd;
+	const name = basename(cwd);
+	return name || cwd;
 }
 
 function pickRemainingColor(remaining: number): Color {
@@ -129,7 +127,7 @@ function pickRemainingColor(remaining: number): Color {
 	return colors.alert;
 }
 
-function getAssistantTotals(entries: readonly SessionEntry[]): Totals {
+export function getAssistantTotals(entries: readonly SessionEntry[]): Totals {
 	const totals: Totals = { input: 0, output: 0, cost: 0 };
 
 	for (const entry of entries) {
@@ -182,20 +180,21 @@ export function createStatusBarFooter(
 
 		function renderContextUsage(): string {
 			const usage = ctx.getContextUsage();
-			const contextWindow = ctx.model?.contextWindow;
-			if (!usage?.tokens || !contextWindow) return "";
+			if (!usage?.tokens) return "";
 
 			const remaining = Math.max(0, 100 - (usage.percent ?? 0));
-			const text = `${formatCount(usage.tokens)}/${formatCount(contextWindow)} (${formatPercent(remaining)})`;
+			const text = `${formatCount(usage.tokens)} (${formatPercent(remaining)})`;
 			return fg(pickRemainingColor(remaining), text);
 		}
 
-		function renderTokenTotals(): string {
+		function renderMetrics(): string {
 			const totals = getAssistantTotals(ctx.sessionManager.getBranch());
-			const input = fg(colors.positive, `↑${formatCount(totals.input)}`);
-			const output = fg(colors.caution, `↓${formatCount(totals.output)}`);
-			const cost = fg(colors.muted, `$${totals.cost.toFixed(3)}`);
-			return `${input} ${output} ${cost}`;
+			const parts = [
+				`↑${formatCount(totals.input)}`,
+				`↓${formatCount(totals.output)}`,
+			];
+			if (totals.cost > 0) parts.push(`$${totals.cost.toFixed(3)}`);
+			return fg(colors.muted, parts.join(" "));
 		}
 
 		function renderExtensionStatuses(): string {
@@ -224,9 +223,9 @@ export function createStatusBarFooter(
 				]
 					.filter(Boolean)
 					.join(` ${separator} `);
-				const right = [renderContextUsage(), renderTokenTotals()]
+				const right = [renderMetrics(), renderContextUsage()]
 					.filter(Boolean)
-					.join(" ");
+					.join(` ${separator} `);
 				const gap = " ".repeat(
 					Math.max(1, width - visibleWidth(left) - visibleWidth(right)),
 				);

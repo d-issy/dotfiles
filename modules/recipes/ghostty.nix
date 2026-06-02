@@ -39,7 +39,6 @@ _:
       # keybind
       keybind = [
         "ctrl+j=ignore"
-        "shift+enter=text:\\x1b\\r"
         "ctrl+shift+r=reload_config"
       ];
     };

@@ -5,5 +5,6 @@
     ./gcloud.nix
     ./ghq.nix
     ./navi.nix
+    ./tmux
   ];
 }

@@ -59,6 +59,7 @@ function register(pi: ExtensionAPI): void {
 
 	pi.on("thinking_level_select", render.trigger);
 	pi.on("model_select", render.trigger);
+	pi.on("message_end", render.trigger);
 	pi.on("session_start", initFooter(pi, render, notice));
 	pi.on(
 		"session_shutdown",
