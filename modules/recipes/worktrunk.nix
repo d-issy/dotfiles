@@ -21,6 +21,7 @@ in
           "worktrunk"
           "wt"
         ];
+        variables.branch = "${pkgs.git}/bin/git branch --format='%(refname:short)'";
         entries = [
           {
             description = "Create new worktree and branch";
@@ -79,7 +80,6 @@ in
             command = "wt switch pr:<pr_number>";
           }
         ];
-        variables.branch = "git branch --format='%(refname:short)'";
       }
     ];
   };

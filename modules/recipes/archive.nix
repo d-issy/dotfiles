@@ -1,3 +1,5 @@
+{ pkgs, ... }:
+
 {
   config.dot.programs.navi.cheats.archive.sections = [
     {
@@ -5,6 +7,12 @@
         "tar"
         "archive"
       ];
+      variables = {
+        files = "${pkgs.coreutils}/bin/ls";
+        tar_archived_files = "${pkgs.fd}/bin/fd -t f -e gz -e bz2 -e xz";
+        zip_file = "${pkgs.fd}/bin/fd -t f -e zip";
+        compression_level = "${pkgs.coreutils}/bin/seq 0 9";
+      };
       entries = [
         {
           description = "compress to tar.gz";
@@ -27,12 +35,6 @@
           command = "unzip <zip_file>";
         }
       ];
-      variables = {
-        files = "ls";
-        tar_archived_files = "fd -t f -e gz -e bz2 -e xz";
-        zip_file = "fd -t f -e zip";
-        compression_level = "seq 0 9";
-      };
     }
   ];
 }

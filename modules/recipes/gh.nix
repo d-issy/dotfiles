@@ -25,6 +25,13 @@
           "gh"
           "github"
         ];
+        variables = {
+          subcommand = ''${pkgs.coreutils}/bin/echo 'auth browse codespace gitst issue org pr project release repo' | ${pkgs.coreutils}/bin/tr ' ' '\n'';
+          base_branch = "${pkgs.git}/bin/git branch --format='%(refname:short)'";
+          branch = "${pkgs.git}/bin/git branch --format='%(refname:short)'";
+          pull_number = ''${pkgs.gh}/bin/gh pr list --- --column 1 --delimiter '\t'';
+          pull_numbers = ''${pkgs.gh}/bin/gh pr list  --- --column 1 --delimiter '\t' --multi'';
+        };
         entries = [
           {
             description = "Github CLI";
@@ -87,13 +94,6 @@
             command = "gh auth login";
           }
         ];
-        variables = {
-          subcommand = "echo 'auth browse codespace gitst issue org pr project release repo' | tr ' ' '\n'";
-          base_branch = "git branch --format='%(refname:short)'";
-          branch = "git branch --format='%(refname:short)'";
-          pull_number = "gh pr list --- --column 1 --delimiter '\t'";
-          pull_numbers = "gh pr list  --- --column 1 --delimiter '\t' --multi";
-        };
       }
       {
         tags = [ "gh copilot" ];

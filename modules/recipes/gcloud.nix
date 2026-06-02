@@ -6,6 +6,12 @@
 
     dot.programs.navi.cheats.gcloud.sections = [
       {
+        variables = {
+          "configuration-name" =
+            "${pkgs.google-cloud-sdk}/bin/gcloud config configurations list --- --headers 1 --column 1 --fzf-overrides '--no-select-1'";
+          "project-id" =
+            "${pkgs.google-cloud-sdk}/bin/gcloud projects list --- --headers 1 --column 1 --fzf-overrides '--no-select-1'";
+        };
         entries = [
           {
             description = "gcloud Login Auth";
@@ -32,11 +38,6 @@
             command = "gcloud config list";
           }
         ];
-        variables = {
-          "configuration-name" =
-            "gcloud config configurations list --- --headers 1 --column 1 --fzf-overrides '--no-select-1'";
-          "project-id" = "gcloud projects list --- --headers 1 --column 1 --fzf-overrides '--no-select-1'";
-        };
       }
     ];
   };

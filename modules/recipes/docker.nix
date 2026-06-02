@@ -9,6 +9,12 @@
 
     dot.programs.navi.cheats.docker.sections = [
       {
+        variables = {
+          image_id = "docker images --- --headers 1 --column 3 --fzf-overrides '--no-select-1'";
+          image_ids = "docker images --- --headers 1 --column 3 --multi --expand --fzf-overrides '--no-select-1'";
+          container_id = "docker ps --- --headers 1 --column 1 --fzf-overrides '--no-select-1'";
+          container_ids = "docker ps --- --headers 1 --column 1 --multi --expand --fzf-overrides '--no-select-1'";
+        };
         entries = [
           {
             description = "docker processlist";
@@ -51,12 +57,6 @@
             command = "docker stats";
           }
         ];
-        variables = {
-          image_id = "docker images --- --headers 1 --column 3 --fzf-overrides '--no-select-1'";
-          image_ids = "docker images --- --headers 1 --column 3 --multi --expand --fzf-overrides '--no-select-1'";
-          container_id = "docker ps --- --headers 1 --column 1 --fzf-overrides '--no-select-1'";
-          container_ids = "docker ps --- --headers 1 --column 1 --multi --expand --fzf-overrides '--no-select-1'";
-        };
       }
     ];
   };
