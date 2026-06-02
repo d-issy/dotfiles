@@ -27,9 +27,20 @@ Follow the [check-git-branch-diff](check-git-branch-diff.md) runbook to identify
 
 ### 2. Generate Title and Body
 
-Follow [generate-pull-request-title](generate-pull-request-title.md) and [generate-pull-request-body](generate-pull-request-body.md).
+Generate the title and body inline for this PR. Do not copy either value to the clipboard unless the user explicitly asks for a standalone title/body or asks to copy it.
 
 Use the generated text as the source of truth for the PR content. If the user already provided a title or body, reuse it instead of regenerating.
+
+For the title:
+
+- Use one short, descriptive line.
+- Summarize the intent of the change, not the implementation detail.
+
+For the body:
+
+- Check for a PR template and follow it if present.
+- If no template exists, include a concise summary and background.
+- Write for reviewers, focusing on what changed and why.
 
 ### 3. Ensure the Branch Is Published
 

@@ -12,10 +12,11 @@ Generate a pull request body from the diff against the base branch and copy it t
 
 - User wants to create the PR itself (use `gh pr create`)
 - User wants to review someone else's PR
+- Another workflow needs a PR body internally and will pass it directly to a command
 
 ## Tips
 
-- **Clipboard is the default destination.** Unless the user says otherwise, copy the result to the clipboard using the [copy-to-clipboard](copy-to-clipboard.md) runbook.
+- **Clipboard is the default destination for standalone PR body requests.** Unless the user says otherwise, copy the result to the clipboard using the [copy-to-clipboard](copy-to-clipboard.md) runbook.
 - **Treat PR overview as reusable PR text.** In this repository, requests like "PR overview" or "summary" mean the user wants copy-ready text, not a chat-only explanation.
 - **Match the repository's language.** If existing PRs, README, or commit messages are in English, write in English. If in Japanese, write in Japanese.
 - **Avoid redundant validation notes.** Do not add Checks, Tests, or Validation sections unless the user asks or the PR template requires them.

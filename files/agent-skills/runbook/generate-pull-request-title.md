@@ -9,6 +9,7 @@ Generate a pull request title and copy it to the clipboard.
 ## When NOT to Use
 
 - User asks for a PR body or description (use [generate-pull-request-body](generate-pull-request-body.md))
+- Another workflow needs a PR title internally and will use it directly without showing or copying it
 
 ## Tips
 
