@@ -60,7 +60,7 @@ Runbook source files live in the dotfiles repository. If you are not in it, ask 
 
 ### 2. Check Existing Runbooks
 
-List files in the repository's `files/agents/skills/runbook/` and read any that might overlap with the topic. If an existing runbook covers adjacent ground, extend it instead of creating a new file.
+List files in the repository's `files/agent-skills/runbook/` and read any that might overlap with the topic. If an existing runbook covers adjacent ground, extend it instead of creating a new file.
 
 ### 3. Write or Revise
 
@@ -87,6 +87,6 @@ Walk through the runbook as if you were an agent seeing it for the first time. D
 
 ### 5. Place the File
 
-- Path: `files/agents/skills/runbook/<name>.md`
+- Path: `files/agent-skills/runbook/<name>.md`
 - Naming: lowercase, hyphen-separated. Start with a base-form verb describing the action the user wants to perform. Prefer the most specific verb that matches the effect, such as `generate`, `create`, `copy`, `check`, `survey`, `delegate`, or `interpret`.
 - `git add` and remind the user to switch

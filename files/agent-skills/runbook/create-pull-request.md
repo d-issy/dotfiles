@@ -33,11 +33,7 @@ Use the generated text as the source of truth for the PR content. If the user al
 
 ### 3. Ensure the Branch Is Published
 
-Check that the current branch exists on `origin`. If it does not, push it first:
-
-```bash
-git push -u origin HEAD
-```
+Follow the [push-git-branch](push-git-branch.md) runbook if the branch or local commits need to be published.
 
 ### 4. Create the PR
 

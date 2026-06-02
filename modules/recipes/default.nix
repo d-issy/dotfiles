@@ -51,7 +51,7 @@
   };
 
   imports = [
-    ./agents.nix
+    ./agent-skills.nix
     ./atuin.nix
     ./aws.nix
     ./bat.nix
