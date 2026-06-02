@@ -29,8 +29,8 @@
       ];
       variables = {
         files = "ls";
-        tar_archived_files = ''find . -type f | grep -E '.*\.(gz|bz2|xz)$'';
-        zip_file = ''find . -type f | grep -E '.*\.zip$'';
+        tar_archived_files = "fd -t f -e gz -e bz2 -e xz";
+        zip_file = "fd -t f -e zip";
         compression_level = "seq 0 9";
       };
     }

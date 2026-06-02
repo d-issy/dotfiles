@@ -7,7 +7,7 @@
           command = "go run <main-file>";
         }
       ];
-      variables."main-file" = "find . -name main.go";
+      variables."main-file" = "rg -l '^package main$' -g '*.go'";
     }
   ];
 }

@@ -12,8 +12,8 @@
         }
       ];
       variables = {
-        python_file = ''find . -type f -name '*.py' -not -path '*/__pycache__/*' -not -path '*/__init__.py' | sed 's|^\./||' --- --fzf-overrides '--no-select-1'';
-        python_module = ''find . -type f -name '*.py' -not -path '*/__pycache__/*' -not -path '*/__init__.py' -not -path '*test*' | sed -e 's|^\./||' -e 's|\.py$||' -e 's|/|.|g' --- --fzf-overrides '--no-select-1'';
+        python_file = "fd -t f -e py --- --fzf-overrides \"--no-select-1\"";
+        python_module = "fd -t f -e py | sed -e 's|\\.py$||' -e 's|/|.|g' --- --fzf-overrides \"--no-select-1\"";
       };
     }
     {
@@ -57,8 +57,8 @@
         }
       ];
       variables = {
-        python_file = ''find . -type f -name '*.py' -not -path '*/__pycache__/*' -not -path '*/__init__.py' | sed 's|^\./||' --- --fzf-overrides '--no-select-1'';
-        python_module = ''find . -type f -name '*.py' -not -path '*/__pycache__/*' -not -path '*/__init__.py' -not -path '*test*' | sed -e 's|^\./||' -e 's|\.py$||' -e 's|/|.|g' --- --fzf-overrides '--no-select-1'';
+        python_file = "fd -t f -e py --- --fzf-overrides \"--no-select-1\"";
+        python_module = "fd -t f -e py | sed -e 's|\\.py$||' -e 's|/|.|g' --- --fzf-overrides \"--no-select-1\"";
       };
     }
   ];

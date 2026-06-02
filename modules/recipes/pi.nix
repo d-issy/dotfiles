@@ -1,7 +1,6 @@
 {
   config = {
     home.shellAliases = {
-      pid = "pi";
       pic = "pi --continue";
       pir = "pi --resume";
     };
