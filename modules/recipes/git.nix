@@ -203,44 +203,4 @@ _:
     ];
   };
 
-  dot.programs.navi.cheats.git.sections = [
-    {
-      entries = [
-        {
-          description = "Initialize a git repository";
-          command = "git init";
-        }
-        {
-          description = "Git Status";
-          alias = "gs";
-          command = "git status";
-        }
-        {
-          description = "Change Branch";
-          alias = "gsw";
-          command = "git switch <branch>";
-        }
-        {
-          description = "git commit";
-          alias = "gc";
-          command = "git commit";
-        }
-        {
-          description = "git fetch";
-          alias = "gf";
-          command = "git fetch";
-        }
-        {
-          description = "git clean all";
-          alias = "gcl";
-          command = "git clean -fd";
-        }
-        {
-          description = "git maintenance run";
-          command = "git maintenance run";
-        }
-      ];
-      variables.branch = "git branch --format='%(refname:short)'";
-    }
-  ];
 }
