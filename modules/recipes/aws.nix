@@ -1,5 +1,10 @@
-{ pkgs, ... }:
+{ lib, pkgs, ... }:
 
+let
+  aws = "${pkgs.awscli2}/bin/aws";
+  runningInstancesFilter = "'Name=instance-state-name,Values=running'";
+  instanceNameAndIdQuery = "'Reservations[*].Instances[*].[Tags[?Key==`Name`]|[0].Value, InstanceId]'";
+in
 {
   config = {
     home.packages = with pkgs; [
@@ -9,16 +14,25 @@
       ssm-session-manager-plugin
     ];
 
-    # TODO: move to navi
-    programs.zsh.initContent = ''
-      function ssm() {
-        local profile=$(aws configure list-profiles | fzf)
-        if [ -z "$profile" ] ; then; return; fi
-        local target=$(aws --profile $profile ec2 describe-instances --filters 'Name=instance-state-name,Values=running' --query 'Reservations[*].Instances[*].[Tags[?Key==`Name`]|[0].Value, InstanceId]' --output text | fzf | cut -f2)
-        if [ -z "$target" ] ; then; return; fi
-        aws --profile $profile ssm start-session --target $target
+    dot.programs.navi.cheats.aws.sections = [
+      {
+        variables = {
+          profile = "${aws} configure list-profiles";
+          target = lib.concatStringsSep " " [
+            "${aws} --profile <profile> ec2 describe-instances"
+            "--filters ${runningInstancesFilter}"
+            "--query ${instanceNameAndIdQuery}"
+            "--output text"
+            "--- --column 2 --fzf-overrides '--no-select-1'"
+          ];
+        };
+        entries = [
+          {
+            description = "start SSM session";
+            command = "aws --profile <profile> ssm start-session --target <target>";
+          }
+        ];
       }
-    '';
+    ];
   };
-
 }
