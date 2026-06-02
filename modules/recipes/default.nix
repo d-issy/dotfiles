@@ -70,7 +70,7 @@
     ./navi.nix
     ./neovim
     ./nix.nix
-    ./node.nix
+    ./javascript.nix
     ./nushell.nix
     ./pi.nix
     ./python.nix

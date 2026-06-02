@@ -1,38 +1,47 @@
-{ lib, pkgs, ... }:
+{
+  config,
+  lib,
+  ...
+}:
 
 let
-  aws = "${pkgs.awscli2}/bin/aws";
+  aws = lib.getExe config.programs.awscli.package;
   runningInstancesFilter = "'Name=instance-state-name,Values=running'";
   instanceNameAndIdQuery = "'Reservations[*].Instances[*].[Tags[?Key==`Name`]|[0].Value, InstanceId]'";
 in
 {
   config = {
-    home.packages = with pkgs; [
-      awscli2
-      aws-vault
-      saml2aws
-      ssm-session-manager-plugin
-    ];
+    dot.programs.aws = {
+      enable = false;
+      plugins = {
+        awsVault.enable = true;
+        saml2aws.enable = true;
+        ssmSessionManager.enable = true;
+      };
+    };
 
-    dot.programs.navi.cheats.aws.sections = [
-      {
-        variables = {
-          profile = "${aws} configure list-profiles";
-          target = lib.concatStringsSep " " [
-            "${aws} --profile <profile> ec2 describe-instances"
-            "--filters ${runningInstancesFilter}"
-            "--query ${instanceNameAndIdQuery}"
-            "--output text"
-            "--- --column 2 --fzf-overrides '--no-select-1'"
-          ];
-        };
-        entries = [
+    dot.programs.navi.cheats.aws.sections =
+      lib.mkIf
+        (config.dot.programs.aws.enable && config.dot.programs.aws.plugins.ssmSessionManager.enable)
+        [
           {
-            description = "start SSM session";
-            command = "aws --profile <profile> ssm start-session --target <target>";
+            variables = {
+              profile = "${aws} configure list-profiles";
+              target = lib.concatStringsSep " " [
+                "${aws} --profile <profile> ec2 describe-instances"
+                "--filters ${runningInstancesFilter}"
+                "--query ${instanceNameAndIdQuery}"
+                "--output text"
+                "--- --column 2 --fzf-overrides '--no-select-1'"
+              ];
+            };
+            entries = [
+              {
+                description = "start SSM session";
+                command = "aws --profile <profile> ssm start-session --target <target>";
+              }
+            ];
           }
         ];
-      }
-    ];
   };
 }

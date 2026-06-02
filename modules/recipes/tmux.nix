@@ -1,4 +1,9 @@
-{ lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 with lib;
 {
@@ -98,7 +103,7 @@ with lib;
           fi
 
           target=$(
-            tmux list-sessions -F "#S" | fzf \
+            tmux list-sessions -F "#S" | ${config.dot.options.fuzzyFinder.command} \
               --header='Ctrl+C: new | Ctrl-D: delete' \
               --bind='ctrl-c:reload(zoxide query --list)' \
               --bind='ctrl-d:execute(tmux kill-session -t {1})+reload(tmux list-sessions -F "#S")'
@@ -129,7 +134,7 @@ with lib;
           }
 
           mut target = (
-            tmux list-sessions -F "#S" | fzf
+            tmux list-sessions -F "#S" | ${config.dot.options.fuzzyFinder.command}
               --header='Ctrl+C: new | Ctrl-D: delete'
               --bind='ctrl-c:reload(zoxide query --list)'
               --bind='ctrl-d:execute(tmux kill-session -t {1})+reload(tmux list-sessions -F "#S")'

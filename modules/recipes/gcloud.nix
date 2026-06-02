@@ -1,16 +1,23 @@
-{ pkgs, ... }:
+{
+  config,
+  lib,
+  ...
+}:
+
+let
+  gcloud = "${config.dot.programs.gcloud.package}/bin/gcloud";
+in
 
 {
   config = {
-    home.packages = [ pkgs.google-cloud-sdk ];
+    dot.programs.gcloud.enable = true;
 
-    dot.programs.navi.cheats.gcloud.sections = [
+    dot.programs.navi.cheats.gcloud.sections = lib.mkIf config.dot.programs.gcloud.enable [
       {
         variables = {
           "configuration-name" =
-            "${pkgs.google-cloud-sdk}/bin/gcloud config configurations list --- --headers 1 --column 1 --fzf-overrides '--no-select-1'";
-          "project-id" =
-            "${pkgs.google-cloud-sdk}/bin/gcloud projects list --- --headers 1 --column 1 --fzf-overrides '--no-select-1'";
+            "${gcloud} config configurations list --- --headers 1 --column 1 --fzf-overrides '--no-select-1'";
+          "project-id" = "${gcloud} projects list --- --headers 1 --column 1 --fzf-overrides '--no-select-1'";
         };
         entries = [
           {

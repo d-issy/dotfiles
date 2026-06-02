@@ -2,22 +2,12 @@
 
 {
   config = {
-    home.packages = [ pkgs.ghq ];
+    dot.programs.ghq = {
+      enable = true;
+      root = "~/code";
 
-    programs = {
-      git.settings.ghq.root = "~/code";
-
-      zsh.initContent = ''
-        function zr() {
-          cd $(${pkgs.ghq}/bin/ghq list -p  | fzf)
-        }
-      '';
-
-      nushell.extraConfig = ''
-        export def --env zr [] {
-          cd (${pkgs.ghq}/bin/ghq list -p  | fzf)
-        }
-      '';
+      zshIntegration.enable = true;
+      nushellIntegration.enable = true;
     };
 
     dot.programs.navi.cheats.ghq.sections = [
@@ -25,7 +15,7 @@
         variables.git_repo = "${pkgs.coreutils}/bin/echo git@github.com:<username>/<repo>.git";
         entries = [
           {
-            description = "GHQ Clone repository";
+            description = "clone github repository";
             command = "ghq get <git_repo>";
           }
         ];
