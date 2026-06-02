@@ -5,7 +5,7 @@ import modeFeature from "./features/mode";
 import quickActionsFeature from "./features/quick-actions";
 import statusFeature from "./features/status";
 import thinkingFeature from "./features/thinking";
-import tmuxPaneTitleFeature from "./features/tmux-pane-title";
+import tmuxNoticeFeature from "./features/tmux-notice";
 import fileToolsFeature from "./features/tool";
 
 const features: readonly Feature[] = [
@@ -14,7 +14,7 @@ const features: readonly Feature[] = [
 	quickActionsFeature,
 	statusFeature,
 	thinkingFeature,
-	tmuxPaneTitleFeature,
+	tmuxNoticeFeature,
 	fileToolsFeature,
 ];
 

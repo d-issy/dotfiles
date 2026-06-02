@@ -1,5 +1,5 @@
 import { homedir } from "node:os";
-import { sep } from "node:path";
+import { basename } from "node:path";
 import type { AssistantMessage } from "@earendil-works/pi-ai";
 import type {
 	ExtensionAPI,
@@ -101,7 +101,6 @@ type Totals = {
 };
 
 const HOME = homedir();
-const CODE = `${HOME}${sep}code`;
 
 export function formatCount(value: number): string {
 	if (!Number.isFinite(value) || value <= 0) return "0";
@@ -117,10 +116,9 @@ function formatPercent(value: number): string {
 }
 
 function formatCwd(cwd: string): string {
-	if (cwd.startsWith(CODE + sep)) return cwd.slice(CODE.length + 1);
 	if (cwd === HOME) return "~";
-	if (cwd.startsWith(HOME + sep)) return `~${cwd.slice(HOME.length)}`;
-	return cwd;
+	const name = basename(cwd);
+	return name || cwd;
 }
 
 function pickRemainingColor(remaining: number): Color {
@@ -182,12 +180,21 @@ export function createStatusBarFooter(
 
 		function renderContextUsage(): string {
 			const usage = ctx.getContextUsage();
-			const contextWindow = ctx.model?.contextWindow;
-			if (!usage?.tokens || !contextWindow) return "";
+			if (!usage?.tokens) return "";
 
 			const remaining = Math.max(0, 100 - (usage.percent ?? 0));
-			const text = `${formatCount(usage.tokens)}/${formatCount(contextWindow)} (${formatPercent(remaining)})`;
+			const text = `${formatCount(usage.tokens)} (${formatPercent(remaining)})`;
 			return fg(pickRemainingColor(remaining), text);
+		}
+
+		function renderMetrics(): string {
+			const totals = getAssistantTotals(ctx.sessionManager.getBranch());
+			const parts = [
+				`↑${formatCount(totals.input)}`,
+				`↓${formatCount(totals.output)}`,
+			];
+			if (totals.cost > 0) parts.push(`$${totals.cost.toFixed(3)}`);
+			return fg(colors.muted, parts.join(" "));
 		}
 
 		function renderExtensionStatuses(): string {
@@ -216,7 +223,9 @@ export function createStatusBarFooter(
 				]
 					.filter(Boolean)
 					.join(` ${separator} `);
-				const right = [renderContextUsage()].filter(Boolean).join(" ");
+				const right = [renderMetrics(), renderContextUsage()]
+					.filter(Boolean)
+					.join(` ${separator} `);
 				const gap = " ".repeat(
 					Math.max(1, width - visibleWidth(left) - visibleWidth(right)),
 				);
