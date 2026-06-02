@@ -27,9 +27,11 @@ Follow the [check-git-branch-diff](check-git-branch-diff.md) runbook to identify
 
 ### 2. Generate Title and Body
 
-Follow [generate-pull-request-title](generate-pull-request-title.md) and [generate-pull-request-body](generate-pull-request-body.md).
+Follow [generate-pull-request-title](generate-pull-request-title.md) and [generate-pull-request-body](generate-pull-request-body.md) as subroutines.
 
 Use the generated text as the source of truth for the PR content. If the user already provided a title or body, reuse it instead of regenerating.
+
+Because this workflow passes the title and body directly to `gh pr create`, skip the optional clipboard step in those runbooks unless the user also asked to copy the text.
 
 ### 3. Ensure the Branch Is Published
 
