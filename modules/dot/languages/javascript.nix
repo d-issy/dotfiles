@@ -1,7 +1,7 @@
 {
   config,
   lib,
-  pkgs,
+  dot,
   ...
 }:
 
@@ -9,26 +9,18 @@ let
   cfg = config.dot.languages.javascript;
   npmPrefix = "${config.home.homeDirectory}/.npm-global";
   pnpmHome = "${config.home.homeDirectory}/.local/share/pnpm";
-
-  mkPackageManagerOption = name: packageName: {
-    enable = lib.mkEnableOption name;
-    package = lib.mkPackageOption pkgs packageName { };
-  };
 in
 {
   options.dot.languages.javascript = {
     enable = lib.mkEnableOption "JavaScript/TypeScript development";
 
-    node = {
-      enable = lib.mkEnableOption "Node.js";
-      package = lib.mkPackageOption pkgs "nodejs_24" { };
-    };
+    node = dot.mkEnablablePackageOption "Node.js" "nodejs_24";
 
     npm.enable = lib.mkEnableOption "npm";
-    yarn = mkPackageManagerOption "Yarn" "yarn";
-    pnpm = mkPackageManagerOption "pnpm" "pnpm";
-    bun = mkPackageManagerOption "Bun" "bun";
-    deno = mkPackageManagerOption "Deno" "deno";
+    yarn = dot.mkEnablablePackageOption "Yarn" "yarn";
+    pnpm = dot.mkEnablablePackageOption "pnpm" "pnpm";
+    bun = dot.mkEnablablePackageOption "Bun" "bun";
+    deno = dot.mkEnablablePackageOption "Deno" "deno";
   };
 
   config = lib.mkIf cfg.enable {

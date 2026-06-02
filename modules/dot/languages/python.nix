@@ -2,16 +2,12 @@
   config,
   lib,
   pkgs,
+  dot,
   ...
 }:
 
 let
   cfg = config.dot.languages.python;
-
-  mkToolOption = name: packageName: {
-    enable = lib.mkEnableOption name;
-    package = lib.mkPackageOption pkgs packageName { };
-  };
 in
 {
   options.dot.languages.python = {
@@ -21,10 +17,10 @@ in
       nullable = true;
     };
 
-    pipx = mkToolOption "pipx" "pipx";
-    pipenv = mkToolOption "Pipenv" "pipenv";
-    poetry = mkToolOption "Poetry" "poetry";
-    uv = mkToolOption "uv" "uv";
+    pipx = dot.mkEnablablePackageOption "pipx" "pipx";
+    pipenv = dot.mkEnablablePackageOption "Pipenv" "pipenv";
+    poetry = dot.mkEnablablePackageOption "Poetry" "poetry";
+    uv = dot.mkEnablablePackageOption "uv" "uv";
   };
 
   config = lib.mkIf cfg.enable {
