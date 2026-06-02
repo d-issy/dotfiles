@@ -9,21 +9,32 @@
     defaultCommand = "${pkgs.nushell}/bin/nu";
 
     baseIndex = 1;
-    customPaneNavigationAndResize = true;
     historyLimit = 9999999;
     keyMode = "vi";
     mouse = true;
     prefix = "C-q";
-    resizeAmount = 5;
 
     plugins = {
       sensible.enable = true;
       resurrect.enable = true;
+      catppuccin = {
+        enable = true;
+        flavor = "macchiato";
+      };
     };
 
-    catppuccin = {
-      enable = true;
-      flavor = "macchiato";
+    keyBindings = {
+      paneNavigationAndResize.enable = true;
+      paneResize = {
+        amount = 5;
+        repeatable = true;
+      };
+      popups = {
+        sessionSelector.enable = true;
+        navi.enable = true;
+      };
+      split.enable = true;
+      copyModeVi.enable = true;
     };
 
     status = {
@@ -75,24 +86,16 @@
       format = "#T";
     };
 
-    popupBindings = {
-      sessionSelector.enable = true;
-      navi.enable = true;
-    };
-    splitBindings.enable = true;
-    viCopyMode.enable = true;
-
     paneBorder = {
       enable = true;
       indicators = "off";
       lines = "heavy";
-      status = "off";
       activeStyle = "fg=#ffb86c";
       title = {
         enable = true;
+        position = "top";
         format = " #P#{?#{||:#{==:#{pane_title},π},#{==:#{pane_title}, }}, #{pane_title}, #{pane_title}} ";
       };
-      autoHideSinglePane.enable = true;
     };
 
     bell.disable = true;
@@ -106,8 +109,6 @@
       enable = true;
       commandName = "tm";
       defaultSessionName = "main";
-      zshIntegration.enable = true;
-      nushellIntegration.enable = true;
     };
   };
 }
