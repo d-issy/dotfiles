@@ -9,7 +9,7 @@
 
     skills = {
       interview.enable = true;
-      runbook.enable = false;
+      runbook.enable = true;
     };
   };
 }
