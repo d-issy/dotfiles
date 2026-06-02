@@ -1,15 +1,15 @@
 # Generate Pull Request Title
 
-Generate a pull request title and copy it to the clipboard.
+Generate a pull request title.
 
 ## When to Use
 
 - User asks to create, write, or draft a PR title
+- Another runbook needs a PR title
 
 ## When NOT to Use
 
 - User asks for a PR body or description (use [generate-pull-request-body](generate-pull-request-body.md))
-- Another workflow needs a PR title internally and will use it directly without showing or copying it
 
 ## Tips
 
@@ -27,6 +27,8 @@ Skip if the changes are already well understood in the current session.
 - One line. Keep it short and descriptive.
 - Summarize the intent of the change, not the implementation detail.
 
-### 3. Copy to Clipboard
+### 3. Copy to Clipboard (Optional)
 
-Follow the [copy-to-clipboard](copy-to-clipboard.md) runbook to copy the title.
+Follow the [copy-to-clipboard](copy-to-clipboard.md) runbook when the user directly asked for a PR title, such as "give me a PR title" or "draft a PR title".
+
+Skip this step when another runbook needs the title only as an internal value, unless the user also asked to copy it.
