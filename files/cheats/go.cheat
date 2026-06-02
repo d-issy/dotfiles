@@ -1,6 +1,0 @@
-% go
-
-# go run
-go run <main-file>
-
-$ main-file: find . -name main.go

@@ -14,16 +14,13 @@
     ];
 
     shellAliases = {
-      ".." = "cd..";
-      dc = "docker compose";
+      ".." = "cd ..";
     };
 
     packages = with pkgs; [
       curl
       fd
       glow
-      gnumake
-      google-cloud-sdk
       grpcurl
       jq
       ripgrep
@@ -33,10 +30,7 @@
 
   dot = {
     xdg.configFile."wezterm/wezterm.lua".source = true;
-    home.file = {
-      ".pi/agent".source = "pi/agent";
-      ".local/bin".source = "scripts";
-    };
+    home.file.".local/bin".source = "scripts";
   };
 
   programs = {
@@ -52,6 +46,7 @@
 
   imports = [
     ./agent-skills.nix
+    ./archive.nix
     ./atuin.nix
     ./aws.nix
     ./bat.nix
@@ -60,18 +55,25 @@
     ./claude.nix
     ./delta.nix
     ./difftastic.nix
+    ./docker.nix
     ./fzf.nix
+    ./gcloud.nix
     ./gh.nix
     ./ghostty.nix
     ./ghq.nix
     ./git.nix
+    ./go.nix
     ./hammerspoon.nix
     ./lazydocker.nix
     ./lazygit.nix
-    ./navi.nix
+    ./make.nix
+    ./navi
     ./neovim
+    ./nix.nix
     ./node.nix
     ./nushell.nix
+    ./pi.nix
+    ./python.nix
     ./starship.nix
     ./tmux.nix
     ./worktrunk.nix

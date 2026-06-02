@@ -50,5 +50,24 @@ _:
         };
       };
     };
+
+    dot.programs.navi.cheats.lazygit.sections = [
+      {
+        tags = [
+          "lazygit"
+          "lg"
+        ];
+        entries = [
+          {
+            description = "lazygit";
+            command = "lazygit";
+          }
+          {
+            description = "lazygit branch";
+            command = "lazygit branch";
+          }
+        ];
+      }
+    ];
   };
 }
