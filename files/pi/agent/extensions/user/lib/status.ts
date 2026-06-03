@@ -187,14 +187,10 @@ export function createStatusBarFooter(
 			return fg(pickRemainingColor(remaining), text);
 		}
 
-		function renderMetrics(): string {
+		function renderCost(): string {
 			const totals = getAssistantTotals(ctx.sessionManager.getBranch());
-			const parts = [
-				`↑${formatCount(totals.input)}`,
-				`↓${formatCount(totals.output)}`,
-			];
-			if (totals.cost > 0) parts.push(`$${totals.cost.toFixed(3)}`);
-			return fg(colors.muted, parts.join(" "));
+			if (totals.cost <= 0) return "";
+			return fg(colors.muted, `$${totals.cost.toFixed(3)}`);
 		}
 
 		function renderExtensionStatuses(): string {
@@ -223,9 +219,9 @@ export function createStatusBarFooter(
 				]
 					.filter(Boolean)
 					.join(` ${separator} `);
-				const right = [renderMetrics(), renderContextUsage()]
+				const right = [renderCost(), renderContextUsage()]
 					.filter(Boolean)
-					.join(` ${separator} `);
+					.join("  ");
 				const gap = " ".repeat(
 					Math.max(1, width - visibleWidth(left) - visibleWidth(right)),
 				);

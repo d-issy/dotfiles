@@ -6,8 +6,22 @@ import type { Feature } from "../feature";
 
 const WIDGET_KEY = "turn-metrics";
 const TICK_MS = 1000;
+const DEFAULT_INDICATOR_FRAMES = [
+	"⠋",
+	"⠙",
+	"⠹",
+	"⠸",
+	"⠼",
+	"⠴",
+	"⠦",
+	"⠧",
+	"⠇",
+	"⠏",
+] as const;
+const DEFAULT_INDICATOR_INTERVAL_MS = 80;
 
 type WorkPhase = "Thinking" | "Working";
+type PhaseColor = "accent" | "warning";
 
 function formatElapsed(ms: number): string {
 	const totalSeconds = Math.max(0, Math.floor(ms / 1000));
@@ -33,12 +47,24 @@ function formatTokenCount(tokens: number): string {
 	return tokens.toString();
 }
 
-function formatTokenMetrics(
+function formatTokenMetrics(inputTokens: number, outputTokens: number): string {
+	const parts: string[] = [];
+	if (inputTokens > 0) parts.push(`↑ ${formatTokenCount(inputTokens)}`);
+	if (outputTokens > 0) parts.push(`↓ ${formatTokenCount(outputTokens)}`);
+	return parts.join(" ");
+}
+
+function formatTurnMetrics(
+	elapsed: string,
 	inputTokens: number,
 	outputTokens: number,
 	toolCalls: number,
 ): string {
-	return `↑ ${formatTokenCount(inputTokens)} ↓ ${formatTokenCount(outputTokens)} · ${toolCalls} calls`;
+	const parts = [elapsed];
+	const tokenMetrics = formatTokenMetrics(inputTokens, outputTokens);
+	if (tokenMetrics) parts.push(tokenMetrics);
+	if (toolCalls > 0) parts.push(`${toolCalls} tool uses`);
+	return parts.join(" · ");
 }
 
 function formatMetricsLine(
@@ -49,13 +75,18 @@ function formatMetricsLine(
 	outputTokens: number,
 	toolCalls: number,
 ): string {
-	const metrics = formatTokenMetrics(inputTokens, outputTokens, toolCalls);
-	return ctx.ui.theme.fg(
-		"dim",
-		completed
-			? `Worked for ${elapsed} (${metrics})`
-			: `${elapsed} · ${metrics}`,
+	const metrics = formatTurnMetrics(
+		elapsed,
+		inputTokens,
+		outputTokens,
+		toolCalls,
 	);
+	const line = completed ? `Worked for ${metrics}` : metrics;
+	return ctx.ui.theme.fg("dim", line);
+}
+
+function getPhaseColor(phase: WorkPhase): PhaseColor {
+	return phase === "Thinking" ? "warning" : "accent";
 }
 
 function formatWorkingMessage(
@@ -63,7 +94,7 @@ function formatWorkingMessage(
 	phase: WorkPhase,
 	metrics: string,
 ): string {
-	const phaseColor = phase === "Thinking" ? "warning" : "accent";
+	const phaseColor = getPhaseColor(phase);
 	return [
 		ctx.ui.theme.fg(phaseColor, `${phase}...`),
 		" ",
@@ -76,6 +107,7 @@ function formatWorkingMessage(
 function register(pi: ExtensionAPI): void {
 	let startedAt: number | undefined;
 	let phase: WorkPhase = "Working";
+	let workingIndicatorPhase: WorkPhase | undefined;
 	let tickTimer: ReturnType<typeof setInterval> | undefined;
 	let completedInputTokens = 0;
 	let completedOutputTokens = 0;
@@ -138,8 +170,33 @@ function register(pi: ExtensionAPI): void {
 		);
 	}
 
+	function updateWorkingIndicator(ctx: ExtensionContext): void {
+		if (workingIndicatorPhase === phase) return;
+		workingIndicatorPhase = phase;
+
+		if (phase === "Working") {
+			ctx.ui.setWorkingIndicator();
+			return;
+		}
+
+		ctx.ui.setWorkingIndicator({
+			frames: DEFAULT_INDICATOR_FRAMES.map((frame) =>
+				ctx.ui.theme.fg(getPhaseColor(phase), frame),
+			),
+			intervalMs: DEFAULT_INDICATOR_INTERVAL_MS,
+		});
+	}
+
+	function clearWorking(ctx: ExtensionContext): void {
+		if (!ctx.hasUI) return;
+		workingIndicatorPhase = undefined;
+		ctx.ui.setWorkingMessage();
+		ctx.ui.setWorkingIndicator();
+	}
+
 	function updateWorkingMessage(ctx: ExtensionContext): void {
 		if (!ctx.hasUI || startedAt === undefined) return;
+		updateWorkingIndicator(ctx);
 		ctx.ui.setWorkingMessage(
 			formatWorkingMessage(ctx, phase, buildLine(ctx, false)),
 		);
@@ -187,7 +244,7 @@ function register(pi: ExtensionAPI): void {
 		if (event.message.content.some((content) => content.type === "toolCall"))
 			return;
 
-		if (ctx.hasUI) ctx.ui.setWorkingMessage();
+		clearWorking(ctx);
 		setWidgetLine(ctx, buildLine(ctx, true));
 		startedAt = undefined;
 	});
@@ -195,13 +252,13 @@ function register(pi: ExtensionAPI): void {
 	pi.on("agent_end", async (_event, ctx) => {
 		stopTickTimer();
 		startedAt = undefined;
-		if (ctx.hasUI) ctx.ui.setWorkingMessage();
+		clearWorking(ctx);
 	});
 
 	pi.on("session_shutdown", async (_event, ctx) => {
 		stopTickTimer();
 		startedAt = undefined;
-		if (ctx.hasUI) ctx.ui.setWorkingMessage();
+		clearWorking(ctx);
 		clearWidget(ctx);
 	});
 }
