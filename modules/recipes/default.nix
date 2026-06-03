@@ -67,6 +67,7 @@
     ./lazydocker.nix
     ./lazygit.nix
     ./make.nix
+    ./mise.nix
     ./navi.nix
     ./neovim
     ./nix.nix
