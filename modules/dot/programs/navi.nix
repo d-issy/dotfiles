@@ -19,6 +19,9 @@ let
 
   mkVariable = name: command: "$ ${name}: ${command}";
 
+  managedCheatsDir = "navi/dotfiles/cheats";
+  managedCheatsPath = "${config.xdg.dataHome}/${managedCheatsDir}";
+
   mkSection =
     cheatName: section:
     let
@@ -39,12 +42,12 @@ let
 
   mkCheatFile =
     cheatName: cheat:
-    lib.nameValuePair "navi/cheats/${cheatName}.cheat" {
+    lib.nameValuePair "${managedCheatsDir}/${cheatName}.cheat" {
       text = mkCheatText cheatName cheat;
     };
 
   shellAliasesFile = lib.optionalAttrs (cfg.enableShellAliases && config.home.shellAliases != { }) {
-    "navi/cheats/aliases.cheat".text = ''
+    "${managedCheatsDir}/aliases.cheat".text = ''
       % aliases
 
       ${lib.concatStringsSep "\n\n" (lib.mapAttrsToList mkShellAliasEntry config.home.shellAliases)}
@@ -130,7 +133,7 @@ in
         }
       );
       default = { };
-      description = "Navi cheats to generate under the default navi cheats path.";
+      description = "Navi cheats to generate under the dotfiles-managed navi cheats path.";
       example.git.sections = [
         {
           tags = [ "git" ];
@@ -150,9 +153,13 @@ in
     let
       package = if cfg.package == null then pkgs.navi else cfg.package;
       yamlFormat = pkgs.formats.yaml { };
+      settings = lib.recursiveUpdate {
+        cheats.paths = [ managedCheatsPath ];
+      } cfg.settings;
     in
     {
       home.packages = [ package ];
+      home.sessionVariables.NAVI_PATH = managedCheatsPath;
 
       programs.zsh.initContent = lib.mkIf cfg.zshIntegration.enable ''
         eval "$(${package}/bin/navi widget zsh)"
@@ -206,8 +213,8 @@ in
         $env.config.keybindings = ($env.config.keybindings | append $nav_keybinding)
       '';
 
-      xdg.configFile."navi/config.yaml" = lib.mkIf (cfg.settings != { }) {
-        source = yamlFormat.generate "navi-config" cfg.settings;
+      xdg.configFile."navi/config.yaml" = {
+        source = yamlFormat.generate "navi-config" settings;
       };
 
       xdg.dataFile = shellAliasesFile // builtins.listToAttrs (lib.mapAttrsToList mkCheatFile cfg.cheats);
