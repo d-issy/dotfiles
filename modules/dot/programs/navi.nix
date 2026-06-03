@@ -19,8 +19,8 @@ let
 
   mkVariable = name: command: "$ ${name}: ${command}";
 
-  generatedCheatsDir = "navi/dotfiles/cheats";
-  generatedCheatsPath = "${config.xdg.dataHome}/${generatedCheatsDir}";
+  managedCheatsDir = "navi/dotfiles/cheats";
+  managedCheatsPath = "${config.xdg.dataHome}/${managedCheatsDir}";
 
   mkSection =
     cheatName: section:
@@ -42,12 +42,12 @@ let
 
   mkCheatFile =
     cheatName: cheat:
-    lib.nameValuePair "${generatedCheatsDir}/${cheatName}.cheat" {
+    lib.nameValuePair "${managedCheatsDir}/${cheatName}.cheat" {
       text = mkCheatText cheatName cheat;
     };
 
   shellAliasesFile = lib.optionalAttrs (cfg.enableShellAliases && config.home.shellAliases != { }) {
-    "${generatedCheatsDir}/aliases.cheat".text = ''
+    "${managedCheatsDir}/aliases.cheat".text = ''
       % aliases
 
       ${lib.concatStringsSep "\n\n" (lib.mapAttrsToList mkShellAliasEntry config.home.shellAliases)}
@@ -154,12 +154,12 @@ in
       package = if cfg.package == null then pkgs.navi else cfg.package;
       yamlFormat = pkgs.formats.yaml { };
       settings = lib.recursiveUpdate {
-        cheats.paths = [ generatedCheatsPath ];
+        cheats.paths = [ managedCheatsPath ];
       } cfg.settings;
     in
     {
       home.packages = [ package ];
-      home.sessionVariables.NAVI_PATH = generatedCheatsPath;
+      home.sessionVariables.NAVI_PATH = managedCheatsPath;
 
       programs.zsh.initContent = lib.mkIf cfg.zshIntegration.enable ''
         eval "$(${package}/bin/navi widget zsh)"
