@@ -2,7 +2,8 @@
 
 let
   colors = {
-    paneBorder = "#494d64";
+    paneBorder = "#6e738d";
+    activePaneBorder = "#a28a79";
     text = "#cad3f5";
     muted = "#8087a2";
     accent = "#ffb86c";
@@ -111,7 +112,8 @@ in
       indicators = "off";
       lines = "single";
       style = "fg=${colors.paneBorder}";
-      activeStyle = "fg=${colors.paneBorder}";
+      activeStyle = "fg=${colors.activePaneBorder}";
+      activeStyleWhenSinglePane = "fg=${colors.paneBorder}";
       title = {
         enable = true;
         position = "top";
