@@ -10,8 +10,13 @@ const execFileAsync = promisify(execFile);
 
 const DONE_ICONS = ["π", " "] as const;
 const DONE_ICON = DONE_ICONS[0];
-const WINDOW_NOTICE_OPTION = "@window_notice";
+const STATUS_NOTICE_ICON_OPTION = "@status_notice_icon";
+const PANE_NOTICE_ICON_OPTION = "@pane_notice_icon";
+const PANE_NOTICE_TITLE_OPTION = "@pane_notice_title";
+const LEGACY_WINDOW_NOTICE_OPTION = "@window_notice";
+const LEGACY_PI_WAITING_OPTION = "@pi_waiting";
 const DONE_TOGGLE_INTERVAL_MS = 500;
+const STATUS_NOTICE_PULSE_INTERVAL_MS = 900;
 
 // Capture the pane at extension load. Using the active pane at completion time
 // would update whichever pane the user is looking at, not the pane running Pi.
@@ -21,6 +26,7 @@ const isInsideTmux = Boolean(process.env.TMUX);
 let originalTitle: string | undefined;
 let doneTitleIndex = 0;
 let cancelDoneBlink: (() => void) | undefined;
+let cancelStatusNoticePulse: (() => void) | undefined;
 
 // Self-rescheduling async interval with a single re-entrancy guard, returning a
 // canceller for the done-blink timer.
@@ -40,6 +46,11 @@ function startInterval(ms: number, tick: () => Promise<void>): () => void {
 function stopDoneBlink(): void {
 	cancelDoneBlink?.();
 	cancelDoneBlink = undefined;
+}
+
+function stopStatusNoticePulse(): void {
+	cancelStatusNoticePulse?.();
+	cancelStatusNoticePulse = undefined;
 }
 
 async function getTmuxPaneFormat(format: string): Promise<string | undefined> {
@@ -78,25 +89,91 @@ async function setTmuxPaneTitle(title: string): Promise<boolean> {
 	}
 }
 
-async function setTmuxWindowNotice(notice: string | undefined): Promise<void> {
+async function setTmuxOption(
+	scope: "-w" | "-p",
+	option: string,
+	value: string | undefined,
+): Promise<void> {
 	if (!tmuxPane) return;
 
 	try {
 		await execFileAsync("tmux", [
 			"set-option",
-			"-w",
+			scope,
 			"-t",
 			tmuxPane,
-			WINDOW_NOTICE_OPTION,
-			notice ?? "",
+			option,
+			value ?? "",
 		]);
 	} catch {
 		// Ignore: pane title updates are the primary signal.
 	}
 }
 
+function setTmuxWindowOption(
+	option: string,
+	value: string | undefined,
+): Promise<void> {
+	return setTmuxOption("-w", option, value);
+}
+
+function setTmuxPaneOption(
+	option: string,
+	value: string | undefined,
+): Promise<void> {
+	return setTmuxOption("-p", option, value);
+}
+
+function setTmuxPaneNoticeIcon(icon: string | undefined): Promise<void> {
+	return setTmuxPaneOption(PANE_NOTICE_ICON_OPTION, icon);
+}
+
+function setTmuxPaneNoticeTitle(title: string | undefined): Promise<void> {
+	return setTmuxPaneOption(PANE_NOTICE_TITLE_OPTION, title);
+}
+
+async function setTmuxStatusNoticeIcon(
+	icon: string | undefined,
+): Promise<void> {
+	await Promise.all([
+		setTmuxPaneOption(STATUS_NOTICE_ICON_OPTION, icon),
+		// Clear the legacy Pi-specific markers so generic status aggregation
+		// cannot be polluted by an older Pi process/config.
+		setTmuxPaneOption(LEGACY_PI_WAITING_OPTION, undefined),
+		setTmuxWindowOption(LEGACY_WINDOW_NOTICE_OPTION, undefined),
+		setTmuxWindowOption(LEGACY_PI_WAITING_OPTION, undefined),
+	]);
+}
+
+async function refreshTmuxStatus(): Promise<void> {
+	try {
+		await execFileAsync("tmux", ["refresh-client", "-S"]);
+	} catch {
+		// Ignore: tmux will refresh on its regular status interval.
+	}
+}
+
+function startStatusNoticePulse(): void {
+	stopStatusNoticePulse();
+
+	void refreshTmuxStatus();
+	cancelStatusNoticePulse = startInterval(
+		STATUS_NOTICE_PULSE_INTERVAL_MS,
+		refreshTmuxStatus,
+	);
+}
+
+function clearAllTmuxNotices(): Promise<unknown> {
+	return Promise.all([
+		setTmuxStatusNoticeIcon(undefined),
+		setTmuxPaneNoticeIcon(undefined),
+		setTmuxPaneNoticeTitle(undefined),
+	]);
+}
+
 async function restoreOriginalTmuxPaneTitle(): Promise<boolean> {
-	await setTmuxWindowNotice(undefined);
+	stopStatusNoticePulse();
+	await clearAllTmuxNotices();
 	if (originalTitle === undefined) return false;
 	return setTmuxPaneTitle(originalTitle);
 }
@@ -125,6 +202,10 @@ function renderDonePaneTitle(icon: (typeof DONE_ICONS)[number]): string {
 	return `${icon} ${originalTitle}`;
 }
 
+function renderPaneNoticeTitle(): string | undefined {
+	return originalTitle?.replace(/^π\s*/u, "");
+}
+
 function startDoneBlinkUntilActive(): void {
 	stopDoneBlink();
 
@@ -138,10 +219,7 @@ function startDoneBlinkUntilActive(): void {
 
 		doneTitleIndex = (doneTitleIndex + 1) % DONE_ICONS.length;
 		const icon = DONE_ICONS[doneTitleIndex];
-		await Promise.all([
-			setTmuxPaneTitle(renderDonePaneTitle(icon)),
-			setTmuxWindowNotice(icon),
-		]);
+		await setTmuxPaneNoticeIcon(icon);
 	});
 }
 
@@ -156,12 +234,11 @@ function isPiStatusTitle(title: string): boolean {
 function register(pi: ExtensionAPI): void {
 	pi.on("agent_start", async () => {
 		stopDoneBlink();
+		stopStatusNoticePulse();
 
-		// Clearing the stale notice is independent of reading the current title.
-		const [, currentTitle] = await Promise.all([
-			setTmuxWindowNotice(undefined),
-			getTmuxPaneTitle(),
-		]);
+		await clearAllTmuxNotices();
+
+		const currentTitle = await getTmuxPaneTitle();
 		if (currentTitle === undefined) return;
 
 		if (isPiStatusTitle(currentTitle)) {
@@ -178,14 +255,22 @@ function register(pi: ExtensionAPI): void {
 		}
 
 		await Promise.all([
-			setPaneTitle(ctx, renderDonePaneTitle(DONE_ICON)),
-			setTmuxWindowNotice(DONE_ICON),
+			tmuxPane
+				? Promise.resolve()
+				: setPaneTitle(ctx, renderDonePaneTitle(DONE_ICON)),
+			setTmuxStatusNoticeIcon(DONE_ICON),
+			setTmuxPaneNoticeIcon(DONE_ICON),
+			setTmuxPaneNoticeTitle(renderPaneNoticeTitle()),
 		]);
-		if (tmuxPane) startDoneBlinkUntilActive();
+		if (tmuxPane) {
+			startDoneBlinkUntilActive();
+			startStatusNoticePulse();
+		}
 	});
 
 	pi.on("session_shutdown", async () => {
 		stopDoneBlink();
+		stopStatusNoticePulse();
 		await restoreOriginalTmuxPaneTitle();
 	});
 }

@@ -8,9 +8,85 @@
 let
   cfg = config.dot.programs.tmux;
   paneCommand = import ./pane-command.nix { inherit pkgs; };
-  sessionSelector = import ./session-selector.nix { inherit config; };
+  sessionSelector = import ./session-selector.nix { inherit config pkgs; };
 
-  windowNotice = "#{?@window_notice, #{@window_notice},}";
+  statusSessionsCommand = pkgs.writeShellScript "tmux-status-sessions" ''
+    current_session_id=''${1-}
+    frame=$(( $(${pkgs.coreutils}/bin/date +%s%3N) / ${toString cfg.status.sessionList.blinkIntervalMs} ))
+
+    {
+      ${cfg.package}/bin/tmux list-sessions -F '#{session_id}	#{session_name}' \
+        | ${pkgs.gawk}/bin/awk -F '\t' '{ print "S\t" $1 "\t" $2 }'
+      ${cfg.package}/bin/tmux list-panes -a -F '#{session_id}	#{@status_notice_icon}' \
+        | ${pkgs.gawk}/bin/awk -F '\t' '{ print "P\t" $1 "\t" $2 }'
+    } 2>/dev/null \
+      | ${pkgs.gawk}/bin/awk -F '\t' \
+        -v current_session_id="$current_session_id" \
+        -v frame="$frame" \
+        -v active_color="${cfg.status.sessionList.colors.active}" \
+        -v inactive_color="${cfg.status.sessionList.colors.inactive}" \
+        -v notice_bright_color="${cfg.status.sessionList.colors.noticeBright}" \
+        -v notice_dim_color="${cfg.status.sessionList.colors.noticeDim}" '
+        $1 == "S" {
+          session_ids[++session_count] = $2
+          session_names[session_count] = $3
+          next
+        }
+
+        $1 == "P" && $3 != "" {
+          session_id = $2
+          icon = $3
+          if (!icon_seen[session_id SUBSEP icon]++) {
+            icons[session_id, ++icon_counts[session_id]] = icon
+          }
+          next
+        }
+
+        END {
+          for (i = 1; i <= session_count; i++) {
+            session_id = session_ids[i]
+            icon_count = icon_counts[session_id] + 0
+            name_color = (session_id == current_session_id) ? active_color : inactive_color
+
+            printf "#[range=session|%s]", session_id
+            for (j = 1; j <= icon_count; j++) {
+              icon_bright = (icon_count == 1) ? (frame % 2 == 0) : ((j - 1) == frame % icon_count)
+              icon_color = icon_bright ? notice_bright_color : notice_dim_color
+              printf "#[fg=%s]%s ", icon_color, icons[session_id, j]
+            }
+            printf "#[fg=%s]%s  #[norange]", name_color, session_names[i]
+          }
+        }
+      '
+  '';
+
+  statusWindowNoticesCommand = pkgs.writeShellScript "tmux-status-window-notices" ''
+    target_window=''${1-}
+    [ -n "$target_window" ] || exit 0
+
+    frame=$(( $(${pkgs.coreutils}/bin/date +%s%3N) / ${toString cfg.status.windowNotice.blinkIntervalMs} ))
+
+    ${cfg.package}/bin/tmux list-panes -t "$target_window" -F '#{@status_notice_icon}' 2>/dev/null \
+      | ${pkgs.gawk}/bin/awk \
+        -v frame="$frame" '
+          $0 != "" {
+            icon = $0
+            if (!icon_seen[icon]++) icons[++icon_count] = icon
+          }
+
+          END {
+            if (icon_count == 0) exit
+
+            printf " "
+            active = (icon_count == 1) ? frame % 2 : frame % icon_count
+            for (i = 1; i <= icon_count; i++) {
+              if (i > 1) printf " "
+              printf "%s", ((i - 1) == active) ? icons[i] : " "
+            }
+          }
+        '
+  '';
+
   borderToggle = ''if -F "#{==:#{window_panes},1}" "setw pane-border-status off" "setw pane-border-status ${cfg.paneBorder.title.position}"'';
   resizeRepeatFlag = lib.optionalString cfg.keyBindings.paneResize.repeatable "-r ";
 
@@ -42,6 +118,7 @@ let
     ${mkSetWindowGlobal "pane-base-index" (toString cfg.baseIndex)}
     ${mkSetGlobal "history-limit" (toString cfg.historyLimit)}
     ${mkSetGlobal "mouse" (tmuxBoolean cfg.mouse)}
+    ${mkSetGlobal "status-position" cfg.status.position}
     ${mkSetWindowGlobal "mode-keys" cfg.keyMode}
     unbind-key C-b
     ${mkSetGlobal "prefix" cfg.prefix}
@@ -65,33 +142,43 @@ let
     '')
   ];
 
-  statusLeftCommand =
+  statusPaneCommand =
     if cfg.status.paneForegroundCommand.enable then
       "#(${paneCommand.command} #{pane_tty})"
     else
       "#{pane_current_command}";
 
-  windowNoticeText = lib.optionalString cfg.status.windowNotice.enable windowNotice;
+  windowNoticeText = lib.optionalString cfg.status.windowNotice.enable "#(${statusWindowNoticesCommand} #{q:window_id})";
+  statusSessions = lib.optionalString cfg.status.sessionList.enable "#(${statusSessionsCommand} #{q:session_id})";
+  statusNeedsRefresh = cfg.status.sessionList.enable || cfg.status.windowNotice.enable;
+
+  # Single-window sessions hide the index; multi-window sessions show
+  # "#I[: notice #W]". Shared between the normal and current formats below.
+  windowStatusContent = "#{?#{>:#{session_windows},1}, #I#{?#{!=:#{window_name},Window},:${windowNoticeText} #W,${windowNoticeText}} ,}";
 
   catppuccinStatusConfig = lib.optionalString cfg.plugins.catppuccin.enable ''
-    set -g window-status-format " #I${windowNoticeText}#{?#{!=:#{window_name},Window},: #W,} "
+    set -g window-status-format "${windowStatusContent}"
     set -g window-status-style "bg=#{@thm_bg},fg=#{@thm_rosewater}"
     set -g window-status-last-style "bg=#{@thm_bg},fg=#{@thm_peach}"
     set -g window-status-activity-style "bg=#{@thm_red},fg=#{@thm_bg}"
     set -g window-status-bell-style "bg=#{@thm_red},fg=#{@thm_bg},bold"
     set -gF window-status-separator "#[bg=#{@thm_bg},fg=#{@thm_overlay_0}]│"
-    set -g window-status-current-format " #I${windowNoticeText}#{?#{!=:#{window_name},Window},: #W,} "
+    set -g window-status-current-format "${windowStatusContent}"
     set -g window-status-current-style "bg=#{@thm_peach},fg=#{@thm_bg},bold"
 
-    set -g  status-left-length 100
+    set -g  status-left-length 200
     set -g status-left ""
-    set -ga status-left "#{?client_prefix,#{#[bg=#{@thm_red},fg=#{@thm_bg},bold]  #S },#{#[bg=#{@thm_bg},fg=#{@thm_green}]  #S }}"
-    set -ga status-left "#[bg=#{@thm_bg},fg=#{@thm_maroon}]  ${statusLeftCommand} "
+    set -ga status-left "#{?client_prefix,#{#[bg=#{@thm_red},fg=#{@thm_bg},bold]  },#{#[bg=#{@thm_bg},fg=#{@thm_green}]  }}#[bg=#{@thm_bg},fg=#{@thm_overlay_0}]│ "
+    set -ga status-left "${statusSessions}"
 
-    set -g status-right-length 100
+    ${lib.optionalString statusNeedsRefresh "set -g status-interval 1"}
+
+    set -g status-right-length 160
     set -g status-right ""
     set -ga status-right "#[bg=#{@thm_bg},fg=#{@thm_yellow}]#{?window_zoomed_flag,  zoom ,}"
-    set -ga status-right "#[bg=#{@thm_bg},fg=#{@thm_blue}] 󰭦 %Y-%m-%d 󰅐 %H:%M "
+    set -ga status-right "#[bg=#{@thm_bg},fg=#{@thm_maroon}]  ${statusPaneCommand} "
+    set -ga status-right "#[bg=#{@thm_bg},fg=#{@thm_overlay_0}]│ "
+    set -ga status-right "#[bg=#{@thm_bg},fg=#{@thm_blue}]󰭦 %Y-%m-%d %H:%M "
 
     set -g status-justify "absolute-centre"
   '';
@@ -110,6 +197,7 @@ let
   paneBorderConfig = lib.optionalString cfg.paneBorder.enable ''
     ${mkSetGlobal "pane-border-indicators" cfg.paneBorder.indicators}
     ${mkSetGlobal "pane-border-lines" cfg.paneBorder.lines}
+    ${mkSetGlobal "pane-border-style" "'${cfg.paneBorder.style}'"}
     ${mkSetWindowGlobal "pane-border-status" cfg.paneBorder.title.position}
     ${lib.optionalString cfg.paneBorder.title.enable ''
       setw -g pane-border-format '${cfg.paneBorder.title.format}'
@@ -125,7 +213,7 @@ let
         ''
       else
         ''
-          setw pane-border-status ${cfg.paneBorder.title.position}
+          setw -g pane-border-status ${cfg.paneBorder.title.position}
           set-hook -gu after-split-window
           set-hook -gu after-kill-pane
           set-hook -gu pane-exited
@@ -152,6 +240,13 @@ let
       '')
       (lib.optionalString cfg.keyBindings.popups.sessionSelector.enable ''
         bind-key -T prefix s display-popup -E "nu --login -i -c '${cfg.sessionSelector.commandName}'"
+      '')
+      (lib.optionalString cfg.keyBindings.sessionNavigation.enable ''
+        bind-key -T prefix ${cfg.keyBindings.sessionNavigation.nextKey} switch-client -n
+        bind-key -T prefix ${cfg.keyBindings.sessionNavigation.previousKey} switch-client -p
+      '')
+      (lib.optionalString cfg.keyBindings.windowRename.enable ''
+        bind-key -T prefix ${cfg.keyBindings.windowRename.key} command-prompt -I "#W" -p "Window name:" 'if -F "#{==:%1,}" "set-window-option automatic-rename on" "rename-window \"%%%\""'
       '')
       (lib.optionalString cfg.keyBindings.popups.navi.enable ''
         bind-key -T prefix g display-popup -w '95%' -h '95%' -d "#{pane_current_path}" -E "nu --login -i -c 'nv'"
@@ -268,13 +363,79 @@ in
         sessionSelector.enable = lib.mkEnableOption "prefix+s session-selector popup";
         navi.enable = lib.mkEnableOption "prefix+g navi popup";
       };
+      sessionNavigation = {
+        enable = lib.mkEnableOption "session next/previous key bindings";
+        nextKey = lib.mkOption {
+          type = lib.types.str;
+          default = "N";
+          description = "Prefix key for switch-client -n.";
+        };
+        previousKey = lib.mkOption {
+          type = lib.types.str;
+          default = "P";
+          description = "Prefix key for switch-client -p.";
+        };
+      };
+      windowRename = {
+        enable = lib.mkEnableOption "window rename prompt that restores automatic rename on empty input";
+        key = lib.mkOption {
+          type = lib.types.str;
+          default = ",";
+          description = "Prefix key for the window rename prompt.";
+        };
+      };
       split.enable = lib.mkEnableOption "split-window bindings that preserve pane_current_path";
       copyModeVi.enable = lib.mkEnableOption "vi copy-mode bindings";
     };
 
     status = {
+      position = lib.mkOption {
+        type = lib.types.enum [
+          "top"
+          "bottom"
+        ];
+        default = "bottom";
+        description = "tmux status-position value.";
+      };
       paneForegroundCommand.enable = lib.mkEnableOption "argv[0]-based pane command in status-left";
-      windowNotice.enable = lib.mkEnableOption "@window_notice marker in window status";
+      windowNotice = {
+        enable = lib.mkEnableOption "pane-scoped notice icons in window status";
+        blinkIntervalMs = lib.mkOption {
+          type = lib.types.ints.positive;
+          default = 900;
+          description = "Notice icon blink interval in the window list.";
+        };
+      };
+      sessionList = {
+        enable = lib.mkEnableOption "clickable tmux session list with pane notices in status-left";
+        blinkIntervalMs = lib.mkOption {
+          type = lib.types.ints.positive;
+          default = 900;
+          description = "Notice icon blink interval in the status session list.";
+        };
+        colors = {
+          active = lib.mkOption {
+            type = lib.types.str;
+            default = "#cad3f5";
+            description = "Active session name color.";
+          };
+          inactive = lib.mkOption {
+            type = lib.types.str;
+            default = "#8087a2";
+            description = "Inactive session name color.";
+          };
+          noticeBright = lib.mkOption {
+            type = lib.types.str;
+            default = "#cad3f5";
+            description = "Bright notice icon color.";
+          };
+          noticeDim = lib.mkOption {
+            type = lib.types.str;
+            default = "#8087a2";
+            description = "Dim notice icon color.";
+          };
+        };
+      };
     };
 
     terminalFeatures = lib.mkOption {
@@ -321,6 +482,11 @@ in
         default = "single";
         description = "pane-border-lines value.";
       };
+      style = lib.mkOption {
+        type = lib.types.str;
+        default = "default";
+        description = "pane-border-style value.";
+      };
       activeStyle = lib.mkOption {
         type = lib.types.str;
         default = "fg=green";
@@ -365,11 +531,6 @@ in
         type = lib.types.str;
         default = "tm";
         description = "Shell function name for selecting tmux sessions.";
-      };
-      defaultSessionName = lib.mkOption {
-        type = lib.types.str;
-        default = "main";
-        description = "Session created when no tmux sessions exist.";
       };
       zshIntegration.enable = lib.mkOption {
         type = lib.types.bool;
