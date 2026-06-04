@@ -12,6 +12,8 @@ let
   statusCommands = import ./status-commands.nix { inherit config pkgs; };
 
   borderToggle = ''if -F "#{==:#{window_panes},1}" "setw pane-border-status off" "setw pane-border-status ${cfg.paneBorder.title.position}"'';
+  activeBorderToggle = ''if -F "#{==:#{window_panes},1}" "setw pane-active-border-style '${cfg.paneBorder.activeStyleWhenSinglePane}'" "setw pane-active-border-style '${cfg.paneBorder.activeStyle}'"'';
+  activeBorderHookFlag = if cfg.paneBorder.hideWhenSinglePane then "-ag" else "-g";
   paneBorderTitleNotice = "#{?@pane_notice_icon, #{@pane_notice_icon} #{?@pane_notice_title,#{@pane_notice_title},#{pane_title}},#{?@status_notice_icon, #{@status_notice_icon} #{pane_title},#{pane_title}}}";
   paneBorderTitleFormat =
     if cfg.paneBorder.title.format == null then
@@ -151,6 +153,13 @@ let
         ''
     }
     ${mkSetGlobal "pane-active-border-style" "'${cfg.paneBorder.activeStyle}'"}
+    ${lib.optionalString (cfg.paneBorder.activeStyleWhenSinglePane != null) ''
+      ${activeBorderToggle}
+      set-hook ${activeBorderHookFlag} after-split-window '${activeBorderToggle}'
+      set-hook ${activeBorderHookFlag} after-kill-pane '${activeBorderToggle}'
+      set-hook ${activeBorderHookFlag} pane-exited '${activeBorderToggle}'
+      set-hook ${activeBorderHookFlag} after-select-window '${activeBorderToggle}'
+    ''}
   '';
 
   terminalTitleConfig = lib.optionalString cfg.terminalTitle.enable ''
@@ -421,6 +430,11 @@ in
         type = lib.types.str;
         default = "fg=green";
         description = "pane-active-border-style value.";
+      };
+      activeStyleWhenSinglePane = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = null;
+        description = "pane-active-border-style value used for single-pane windows. When null, activeStyle is always used.";
       };
       title = {
         enable = lib.mkEnableOption "pane border title format";
