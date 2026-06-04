@@ -7,9 +7,6 @@ let
     muted = "#8087a2";
     accent = "#ffb86c";
   };
-
-  paneTitleColor = "#{?pane_active,#[fg=${colors.accent}],#[fg=${colors.muted}]}";
-  paneNotice = "#{?@pane_notice_icon, #{@pane_notice_icon} #{?@pane_notice_title,#{@pane_notice_title},#{pane_title}},#{?@status_notice_icon, #{@status_notice_icon} #{pane_title},#{pane_title}}}";
 in
 {
   config.dot.programs.tmux = {
@@ -119,7 +116,8 @@ in
       title = {
         enable = true;
         position = "top";
-        format = "${paneTitleColor} #P ${paneNotice} ";
+        activeStyle = "fg=${colors.accent}";
+        inactiveStyle = "fg=${colors.muted}";
       };
     };
 

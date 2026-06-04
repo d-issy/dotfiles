@@ -88,6 +88,12 @@ let
   '';
 
   borderToggle = ''if -F "#{==:#{window_panes},1}" "setw pane-border-status off" "setw pane-border-status ${cfg.paneBorder.title.position}"'';
+  paneBorderTitleNotice = "#{?@pane_notice_icon, #{@pane_notice_icon} #{?@pane_notice_title,#{@pane_notice_title},#{pane_title}},#{?@status_notice_icon, #{@status_notice_icon} #{pane_title},#{pane_title}}}";
+  paneBorderTitleFormat =
+    if cfg.paneBorder.title.format == null then
+      "#{?pane_active,#[${cfg.paneBorder.title.activeStyle}],#[${cfg.paneBorder.title.inactiveStyle}]} #P ${paneBorderTitleNotice} "
+    else
+      cfg.paneBorder.title.format;
   resizeRepeatFlag = lib.optionalString cfg.keyBindings.paneResize.repeatable "-r ";
 
   tmuxBoolean = value: if value then "on" else "off";
@@ -200,7 +206,7 @@ let
     ${mkSetGlobal "pane-border-style" "'${cfg.paneBorder.style}'"}
     ${mkSetWindowGlobal "pane-border-status" cfg.paneBorder.title.position}
     ${lib.optionalString cfg.paneBorder.title.enable ''
-      setw -g pane-border-format '${cfg.paneBorder.title.format}'
+      setw -g pane-border-format '${paneBorderTitleFormat}'
     ''}
     ${
       if cfg.paneBorder.autoHideSinglePane.enable then
@@ -503,10 +509,20 @@ in
           default = "off";
           description = "Position of the pane border title/status line.";
         };
-        format = lib.mkOption {
+        activeStyle = lib.mkOption {
           type = lib.types.str;
-          default = " #P #{pane_title} ";
-          description = "pane-border-format value.";
+          default = "fg=green";
+          description = "Active pane title style for the generated pane-border-format.";
+        };
+        inactiveStyle = lib.mkOption {
+          type = lib.types.str;
+          default = "default";
+          description = "Inactive pane title style for the generated pane-border-format.";
+        };
+        format = lib.mkOption {
+          type = lib.types.nullOr lib.types.str;
+          default = null;
+          description = "Optional pane-border-format override. Defaults to a generated pane title with pane notice icons.";
         };
       };
       autoHideSinglePane.enable = lib.mkEnableOption "pane border title/status auto-hide for single-pane windows";
