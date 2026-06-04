@@ -133,6 +133,5 @@ in
       enable = true;
       commandName = "tm";
     };
-
   };
 }
