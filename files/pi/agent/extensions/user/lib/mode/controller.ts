@@ -12,55 +12,49 @@ import { activateModeTools, applyModeStatus } from "./ui";
 
 export const MODE_REMINDER_TYPE = "system-reminder";
 
-/** Render an allowed-tool list for prompts, or "none" when empty. */
-export function formatAllowedTools(allowedTools: readonly string[]): string {
-	return allowedTools.length > 0 ? allowedTools.join(", ") : "none";
+let activeModeName: ModeName = DEFAULT_MODE;
+
+export function getCurrentModeName(): ModeName {
+	return activeModeName;
 }
 
-export function getModeReminder(
-	modeName: ModeName,
-	allowedTools: readonly string[],
-): string {
+export function getModeReminder(modeName: ModeName): string {
 	const mode = getMode(modeName);
 	const modeInstruction = mode.systemPrompt;
-	const tools = formatAllowedTools(allowedTools);
 
 	return `<system-reminder>
 Permission mode changed while you were working.
 
 Current mode: ${modeName}
-Allowed tools now: ${tools}
 
 ${modeInstruction}
 
-The tool names above are the complete current allowed tool set. If the user asks for a listed tool, call that tool rather than saying it is unavailable. Tool schemas may include tools that are blocked in the current mode; do not call tools that are not listed above.
-Follow the current mode and current allowed tools. Do not rely on any earlier mode reminder.
+Follow the current mode. Do not rely on any earlier mode reminder.
 </system-reminder>`;
 }
 
 /**
  * The shared shape of a mode-reminder custom message. Construction and
- * detection stay in one place; detection also accepts the previous
- * `details.activeTools` field so stale reminders from older sessions are
- * stripped from context. Callers add their own delivery-specific fields
+ * detection stay in one place; detection also accepts previous
+ * `details.allowedTools`/`details.activeTools` fields so stale reminders from
+ * older sessions are stripped from context. Callers add their own delivery-specific fields
  * (e.g. `role`/`timestamp` for context injection).
  */
 export type ModeReminderPayload = {
 	customType: string;
 	content: string;
 	display: boolean;
-	details: { mode: ModeName; allowedTools: readonly string[] };
+	details: { mode: ModeName };
 };
 
 export function buildModeReminderPayload(
 	modeName: ModeName,
-	allowedTools: readonly string[],
 ): ModeReminderPayload {
 	return {
 		customType: MODE_REMINDER_TYPE,
-		content: getModeReminder(modeName, allowedTools),
+		content: getModeReminder(modeName),
 		display: false,
-		details: { mode: modeName, allowedTools },
+		details: { mode: modeName },
 	};
 }
 
@@ -76,8 +70,7 @@ export function isModeReminderMessage(message: {
 	return (
 		typeof message.details === "object" &&
 		message.details !== null &&
-		"mode" in message.details &&
-		("allowedTools" in message.details || "activeTools" in message.details)
+		"mode" in message.details
 	);
 }
 
@@ -85,11 +78,10 @@ function steerModeReminder(
 	pi: ExtensionAPI,
 	ctx: ExtensionContext,
 	modeName: ModeName,
-	allowedTools: readonly string[],
 ): void {
 	if (ctx.isIdle()) return;
 
-	pi.sendMessage(buildModeReminderPayload(modeName, allowedTools), {
+	pi.sendMessage(buildModeReminderPayload(modeName), {
 		deliverAs: "steer",
 		triggerTurn: true,
 	});
@@ -117,7 +109,7 @@ export type ModeController = {
 };
 
 export function createModeController(pi: ExtensionAPI): ModeController {
-	let currentMode: ModeName = DEFAULT_MODE;
+	let currentMode: ModeName = activeModeName;
 
 	return {
 		get current() {
@@ -131,9 +123,10 @@ export function createModeController(pi: ExtensionAPI): ModeController {
 				pi.appendEntry(MODE_STATE_TYPE, { mode: modeName });
 			}
 			currentMode = modeName;
-			const allowedTools = activateModeTools(pi, modeName);
+			activeModeName = modeName;
+			activateModeTools(pi, modeName);
 			applyModeStatus(ctx, getMode(modeName));
-			if (changed) steerModeReminder(pi, ctx, modeName, allowedTools);
+			if (changed) steerModeReminder(pi, ctx, modeName);
 		},
 	};
 }

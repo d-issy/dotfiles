@@ -22,8 +22,6 @@ import {
 	createModeController,
 	findPersistedMode,
 	findPersistedModeInSessionFile,
-	formatAllowedTools,
-	getAllowedModeTools,
 	getMode,
 	getNextMode,
 	getStartupMode,
@@ -124,10 +122,8 @@ const injectSystemPrompt =
 		const prompt = getMode(mode.current).systemPrompt;
 		if (!prompt) return;
 
-		const allowedTools = getAllowedModeTools(pi, mode.current);
-		const tools = formatAllowedTools(allowedTools);
 		return {
-			systemPrompt: `${event.systemPrompt}\n\n[${mode.current.toUpperCase()} MODE]\nAllowed tools in this mode: ${tools}\n${prompt}\n\nTool schemas may include tools that are blocked in the current mode; do not call tools that are not listed in "Allowed tools in this mode". If the user asks for a listed tool, call that tool rather than saying it is unavailable.`,
+			systemPrompt: `${event.systemPrompt}\n\n[${mode.current.toUpperCase()} MODE]\n${prompt}`,
 		};
 	};
 
@@ -185,13 +181,12 @@ const injectTransientModeReminder =
 		const messages = event.messages.filter(
 			(message) => !isModeReminderMessage(message),
 		);
-		const allowedTools = getAllowedModeTools(pi, mode.current);
 		return {
 			messages: [
 				...messages,
 				{
 					role: "custom",
-					...buildModeReminderPayload(mode.current, allowedTools),
+					...buildModeReminderPayload(mode.current),
 					timestamp: Date.now(),
 				},
 			],

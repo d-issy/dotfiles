@@ -60,18 +60,10 @@ export function activateModeTools(
 	pi: ExtensionAPI,
 	modeName: ModeName,
 ): string[] {
-	// Tool schemas are captured for the duration of an agent run. Keep every
-	// policy-managed tool callable at the provider layer so mode changes made
-	// while the agent is working can take effect on the next LLM call in that
-	// same run. Preserve unmanaged active tools from core/other extensions
-	// instead of clobbering them; the policy guard remains the source of truth
-	// for whether policy-managed tools are actually allowed in the current mode.
-	pi.setActiveTools(
-		unique([
-			...ALWAYS_ALLOWED_TOOL_NAMES,
-			...getUnmanagedActiveTools(pi),
-			...policyRegistry.getKnownToolNames(),
-		]),
-	);
-	return getAllowedModeTools(pi, modeName);
+	// Expose only the tools that are currently allowed. Otherwise providers see
+	// inactive tool schemas, and the agent can unnecessarily reveal that those
+	// tools exist when asked to list tools.
+	const allowedTools = getAllowedModeTools(pi, modeName);
+	pi.setActiveTools(allowedTools);
+	return allowedTools;
 }

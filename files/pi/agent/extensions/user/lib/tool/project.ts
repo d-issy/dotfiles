@@ -22,9 +22,10 @@ import {
 	type ToolResultEvent,
 	createLocalBashOperations,
 	formatSize,
+	keyHint,
 } from "@earendil-works/pi-coding-agent";
 import { type Component, Text } from "@earendil-works/pi-tui";
-import { Type } from "typebox";
+import { type TSchema, Type } from "typebox";
 import { type ModeName, policyRegistry } from "../policy";
 
 const PROJECT_TOOL_SETTINGS_RELATIVE_PATH = ".pi/settings.user.json";
@@ -38,15 +39,34 @@ const RUNNING_TAIL_LINES = 3;
 const EXPANDED_TAIL_LINES = 200;
 const UPDATE_THROTTLE_MS = 100;
 
-const emptyParams = Type.Object({}, { additionalProperties: false });
+const PARAMETER_NAME_RE = /^[A-Za-z_][A-Za-z0-9_-]*$/u;
+const PARAMETER_PLACEHOLDER_RE = /^\{\{([A-Za-z_][A-Za-z0-9_-]*)\}\}$/u;
 
 type ProjectToolSettings = {
 	tools?: unknown;
 };
 
+type ProjectParameterType = "string" | "number" | "boolean";
+type ProjectToolExecutionMode = "sequential" | "parallel";
+
+type ProjectParameterConfig = {
+	readonly type: ProjectParameterType;
+	readonly description?: string;
+	readonly required: boolean;
+};
+
+type ProjectToolInput = Record<string, string | number | boolean | undefined>;
+
+type ProjectToolCommandArgument =
+	| { readonly kind: "literal"; readonly value: string }
+	| { readonly kind: "param"; readonly name: string }
+	| { readonly kind: "flag"; readonly flag: string; readonly when: string }
+	| { readonly kind: "option"; readonly option: string; readonly name: string };
+
 type ProjectToolCommandConfig = {
 	readonly label?: string;
 	readonly command: string;
+	readonly arguments: readonly ProjectToolCommandArgument[];
 	readonly cwd?: string;
 	readonly timeoutSeconds?: number;
 };
@@ -55,6 +75,8 @@ type ProjectToolConfig = {
 	readonly name: string;
 	readonly description: string;
 	readonly allowedModes: readonly ModeName[];
+	readonly parameters: Readonly<Record<string, ProjectParameterConfig>>;
+	readonly executionMode?: ProjectToolExecutionMode;
 	readonly cwd?: string;
 	readonly timeoutSeconds?: number;
 	readonly promptSnippet?: string;
@@ -65,12 +87,14 @@ type ProjectToolConfig = {
 type ResolvedProjectToolCommand = ProjectToolCommandConfig & {
 	readonly index: number;
 	readonly displayLabel: string;
+	readonly displayCommand: string;
 	readonly absoluteCwd: string;
 	readonly displayCwd: string;
 	readonly timeoutSeconds?: number;
 };
 
 type ResolvedProjectTool = Omit<ProjectToolConfig, "commands"> & {
+	readonly parametersSchema: TSchema;
 	readonly commands: readonly ResolvedProjectToolCommand[];
 };
 
@@ -109,6 +133,7 @@ type MutableCommandState = {
 	readonly config: ResolvedProjectToolCommand;
 	readonly output: StreamingOutput;
 	status: ProjectCommandStatus;
+	executedCommand?: string;
 	exitCode?: number | null;
 	error?: string;
 	startedAt?: number;
@@ -121,6 +146,15 @@ function isObject(value: unknown): value is Record<string, unknown> {
 
 function isModeName(value: unknown): value is ModeName {
 	return typeof value === "string" && MODE_NAMES.includes(value as ModeName);
+}
+
+function normalizeExecutionMode(
+	value: unknown,
+	path: string,
+): ProjectToolExecutionMode | undefined {
+	if (value === undefined) return undefined;
+	if (value === "sequential" || value === "parallel") return value;
+	throw new Error(`${path} must be sequential or parallel.`);
 }
 
 function notifyWarning(ctx: ExtensionContext, message: string): void {
@@ -171,15 +205,167 @@ function resolveProjectCwd(
 	return { absolute, display: rel };
 }
 
+function normalizeParameter(
+	name: string,
+	value: unknown,
+	path: string,
+): ProjectParameterConfig {
+	if (!PARAMETER_NAME_RE.test(name)) {
+		throw new Error(
+			`${path} has invalid parameter name '${name}'. Use letters, numbers, '_' and '-'.`,
+		);
+	}
+	if (!isObject(value)) throw new Error(`${path}.${name} must be an object.`);
+	if (
+		value.type !== "string" &&
+		value.type !== "number" &&
+		value.type !== "boolean"
+	) {
+		throw new Error(`${path}.${name}.type must be string, number, or boolean.`);
+	}
+	if (value.required !== undefined && typeof value.required !== "boolean") {
+		throw new Error(`${path}.${name}.required must be a boolean.`);
+	}
+	return {
+		type: value.type,
+		description: normalizeOptionalString(
+			value.description,
+			`${path}.${name}.description`,
+		),
+		required: value.required ?? false,
+	};
+}
+
+function normalizeParameters(
+	value: unknown,
+	path: string,
+): Record<string, ProjectParameterConfig> {
+	if (value === undefined) return {};
+	if (!isObject(value)) throw new Error(`${path} must be an object.`);
+
+	const parameters: Record<string, ProjectParameterConfig> = {};
+	for (const [name, config] of Object.entries(value)) {
+		parameters[name] = normalizeParameter(name, config, path);
+	}
+	return parameters;
+}
+
+function getParameter(
+	parameters: Readonly<Record<string, ProjectParameterConfig>>,
+	name: string,
+	path: string,
+): ProjectParameterConfig {
+	const parameter = parameters[name];
+	if (!parameter)
+		throw new Error(`${path} references unknown parameter '${name}'.`);
+	return parameter;
+}
+
+function parseOptionalParameterPlaceholder(
+	value: string,
+	path: string,
+): string | undefined {
+	const match = PARAMETER_PLACEHOLDER_RE.exec(value);
+	if (match) return match[1];
+	if (value.includes("{{") || value.includes("}}")) {
+		throw new Error(
+			`${path} parameter references must be the whole argument, like "{{name}}".`,
+		);
+	}
+	return undefined;
+}
+
+function parseRequiredParameterPlaceholder(
+	value: string,
+	path: string,
+): string {
+	const name = parseOptionalParameterPlaceholder(value, path);
+	if (!name)
+		throw new Error(`${path} must be a parameter reference like "{{name}}".`);
+	return name;
+}
+
+function normalizeArgument(
+	value: unknown,
+	path: string,
+	parameters: Readonly<Record<string, ProjectParameterConfig>>,
+): ProjectToolCommandArgument {
+	if (typeof value === "string") {
+		const name = parseOptionalParameterPlaceholder(value, path);
+		if (!name) return { kind: "literal", value };
+		getParameter(parameters, name, path);
+		return { kind: "param", name };
+	}
+
+	if (!isObject(value)) {
+		throw new Error(
+			`${path} must be a string, a flag object, or an option object.`,
+		);
+	}
+
+	const hasFlag = "flag" in value;
+	const hasOption = "option" in value;
+	if (hasFlag && hasOption) {
+		throw new Error(`${path} cannot contain both flag and option.`);
+	}
+
+	if (hasFlag) {
+		const flag = normalizeOptionalString(value.flag, `${path}.flag`);
+		if (!flag) throw new Error(`${path}.flag is required.`);
+		const when = normalizeOptionalString(value.when, `${path}.when`);
+		if (!when) throw new Error(`${path}.when is required.`);
+		const parameter = getParameter(parameters, when, `${path}.when`);
+		if (parameter.type !== "boolean") {
+			throw new Error(`${path}.when must reference a boolean parameter.`);
+		}
+		return { kind: "flag", flag, when };
+	}
+
+	if (hasOption) {
+		const option = normalizeOptionalString(value.option, `${path}.option`);
+		if (!option) throw new Error(`${path}.option is required.`);
+		const valueReference = normalizeOptionalString(
+			value.value,
+			`${path}.value`,
+		);
+		if (!valueReference) throw new Error(`${path}.value is required.`);
+		const name = parseRequiredParameterPlaceholder(
+			valueReference,
+			`${path}.value`,
+		);
+		const parameter = getParameter(parameters, name, `${path}.value`);
+		if (parameter.type === "boolean") {
+			throw new Error(
+				`${path}.value must reference a string or number parameter.`,
+			);
+		}
+		return { kind: "option", option, name };
+	}
+
+	throw new Error(`${path} must contain either flag or option.`);
+}
+
 function normalizeCommand(
 	value: unknown,
 	path: string,
+	parameters: Readonly<Record<string, ProjectParameterConfig>>,
 ): ProjectToolCommandConfig {
 	if (!isObject(value)) throw new Error(`${path} must be an object.`);
 	const command = normalizeOptionalString(value.command, `${path}.command`);
 	if (!command) throw new Error(`${path}.command is required.`);
+	if (/\s/u.test(command)) {
+		throw new Error(
+			`${path}.command must be a single executable token. Put subcommands and flags in arguments.`,
+		);
+	}
+	if (value.arguments !== undefined && !Array.isArray(value.arguments)) {
+		throw new Error(`${path}.arguments must be an array.`);
+	}
 	return {
 		command,
+		arguments: (value.arguments ?? []).map((argument, index) =>
+			normalizeArgument(argument, `${path}.arguments[${index}]`, parameters),
+		),
 		label: normalizeOptionalString(value.label, `${path}.label`),
 		cwd: normalizeOptionalString(value.cwd, `${path}.cwd`),
 		timeoutSeconds: normalizeTimeout(
@@ -187,6 +373,42 @@ function normalizeCommand(
 			`${path}.timeoutSeconds`,
 		),
 	};
+}
+
+function createParameterSchema(parameter: ProjectParameterConfig): TSchema {
+	const options = parameter.description
+		? { description: parameter.description }
+		: undefined;
+	if (parameter.type === "string") return Type.String(options);
+	if (parameter.type === "number") return Type.Number(options);
+	return Type.Boolean(options);
+}
+
+function buildParameterSchema(
+	parameters: Readonly<Record<string, ProjectParameterConfig>>,
+): TSchema {
+	const properties: Record<string, TSchema> = {};
+	for (const [name, parameter] of Object.entries(parameters)) {
+		const schema = createParameterSchema(parameter);
+		properties[name] = parameter.required ? schema : Type.Optional(schema);
+	}
+	return Type.Object(properties, { additionalProperties: false });
+}
+
+function formatArgumentForDisplay(
+	argument: ProjectToolCommandArgument,
+): string {
+	if (argument.kind === "literal") return argument.value;
+	if (argument.kind === "param") return `{{${argument.name}}}`;
+	if (argument.kind === "flag") return `${argument.flag} when ${argument.when}`;
+	return `${argument.option} {{${argument.name}}}`;
+}
+
+function formatConfiguredCommand(command: ProjectToolCommandConfig): string {
+	return [
+		command.command,
+		...command.arguments.map(formatArgumentForDisplay),
+	].join(" ");
 }
 
 function normalizeTool(name: string, value: unknown): ProjectToolConfig {
@@ -223,6 +445,11 @@ function normalizeTool(name: string, value: unknown): ProjectToolConfig {
 		);
 	}
 
+	const parameters = normalizeParameters(
+		value.parameters,
+		`${name}.parameters`,
+	);
+
 	const promptGuidelines = value.promptGuidelines;
 	if (promptGuidelines !== undefined) {
 		if (
@@ -241,6 +468,11 @@ function normalizeTool(name: string, value: unknown): ProjectToolConfig {
 		name,
 		description,
 		allowedModes,
+		parameters,
+		executionMode: normalizeExecutionMode(
+			value.executionMode,
+			`${name}.executionMode`,
+		),
 		cwd: normalizeOptionalString(value.cwd, `${name}.cwd`),
 		timeoutSeconds: normalizeTimeout(
 			value.timeoutSeconds,
@@ -252,7 +484,7 @@ function normalizeTool(name: string, value: unknown): ProjectToolConfig {
 		),
 		promptGuidelines,
 		commands: value.commands.map((command, index) =>
-			normalizeCommand(command, `${name}.commands[${index}]`),
+			normalizeCommand(command, `${name}.commands[${index}]`, parameters),
 		),
 	};
 }
@@ -264,6 +496,7 @@ function resolveTool(
 	const toolCwd = resolveProjectCwd(root, config.cwd, `${config.name}.cwd`);
 	return {
 		...config,
+		parametersSchema: buildParameterSchema(config.parameters),
 		commands: config.commands.map((command, index) => {
 			const cwd = resolveProjectCwd(
 				root,
@@ -274,6 +507,7 @@ function resolveTool(
 				...command,
 				index,
 				displayLabel: command.label ?? String(index + 1),
+				displayCommand: formatConfiguredCommand(command),
 				absoluteCwd: cwd.absolute,
 				displayCwd: cwd.display,
 				timeoutSeconds: command.timeoutSeconds ?? config.timeoutSeconds,
@@ -390,13 +624,68 @@ class StreamingOutput {
 	}
 }
 
+function shellQuote(value: string): string {
+	if (value === "") return "''";
+	return `'${value.replace(/'/gu, `'\\''`)}'`;
+}
+
+function hasParameterValue(
+	value: string | number | boolean | undefined,
+): value is string | number | boolean {
+	return value !== undefined;
+}
+
+function stringifyParameterValue(value: string | number | boolean): string {
+	if (typeof value === "number" && !Number.isFinite(value)) {
+		throw new Error("Parameter values must be finite numbers.");
+	}
+	return String(value);
+}
+
+function renderCommandArguments(
+	argumentsConfig: readonly ProjectToolCommandArgument[],
+	params: ProjectToolInput,
+): string[] {
+	const args: string[] = [];
+	for (const argument of argumentsConfig) {
+		if (argument.kind === "literal") {
+			args.push(argument.value);
+			continue;
+		}
+		if (argument.kind === "param") {
+			const value = params[argument.name];
+			if (hasParameterValue(value)) args.push(stringifyParameterValue(value));
+			continue;
+		}
+		if (argument.kind === "flag") {
+			if (params[argument.when] === true) args.push(argument.flag);
+			continue;
+		}
+
+		const value = params[argument.name];
+		if (hasParameterValue(value)) {
+			args.push(argument.option, stringifyParameterValue(value));
+		}
+	}
+	return args;
+}
+
+function buildShellCommand(
+	command: ResolvedProjectToolCommand,
+	params: ProjectToolInput,
+): string {
+	return [command.command, ...renderCommandArguments(command.arguments, params)]
+		.map(shellQuote)
+		.join(" ");
+}
+
 function commandDetailsFromState(
 	state: MutableCommandState,
 ): ProjectCommandDetails {
 	const snapshot = state.output.snapshot();
 	return {
 		label: state.config.displayLabel,
-		command: state.config.command,
+		command: state.executedCommand ?? state.config.displayCommand,
 		cwd: state.config.displayCwd,
 		timeoutSeconds: state.config.timeoutSeconds,
 		status: state.status,
@@ -477,6 +766,7 @@ function formatLlmOutput(details: ProjectToolDetails): string {
 
 async function runCommand(
 	state: MutableCommandState,
+	params: ProjectToolInput,
 	ops: ReturnType<typeof createLocalBashOperations>,
 	commandPrefix: string | undefined,
 	signal: AbortSignal | undefined,
@@ -486,9 +776,10 @@ async function runCommand(
 	state.startedAt = Date.now();
 	onChange();
 
+	state.executedCommand = buildShellCommand(state.config, params);
 	const executedCommand = commandPrefix
-		? `${commandPrefix}\n${state.config.command}`
-		: state.config.command;
+		? `${commandPrefix}\n${state.executedCommand}`
+		: state.executedCommand;
 	try {
 		const result = await ops.exec(executedCommand, state.config.absoluteCwd, {
 			onData: (data) => {
@@ -522,6 +813,7 @@ async function runCommand(
 
 async function executeProjectTool(
 	tool: ResolvedProjectTool,
+	params: ProjectToolInput,
 	ctx: ExtensionContext,
 	signal: AbortSignal | undefined,
 	onUpdate: AgentToolUpdateCallback<ProjectToolDetails> | undefined,
@@ -568,7 +860,7 @@ async function executeProjectTool(
 		scheduleUpdate();
 		await Promise.all(
 			states.map((state) =>
-				runCommand(state, ops, commandPrefix, signal, scheduleUpdate),
+				runCommand(state, params, ops, commandPrefix, signal, scheduleUpdate),
 			),
 		);
 	} finally {
@@ -590,15 +882,91 @@ function isProjectToolDetails(value: unknown): value is ProjectToolDetails {
 	);
 }
 
-function renderCallTitle(tool: ResolvedProjectTool, theme: Theme): Component {
+function formatParameterValueForDisplay(
+	value: string | number | boolean,
+): string {
+	let text: string;
+	if (typeof value === "string") {
+		text = value === "" ? '""' : value.replace(/[\r\n\t]/gu, " ");
+	} else {
+		text = String(value);
+	}
+	return text.length > 80 ? `${text.slice(0, 77)}...` : text;
+}
+
+function formatParameterRecordForDisplay(
+	parameters: Readonly<Record<string, string | number | boolean>>,
+	theme: Theme,
+): string {
+	const parts = Object.entries(parameters).map(
+		([name, value]) =>
+			`${theme.fg("muted", name)} ${theme.fg(
+				"accent",
+				formatParameterValueForDisplay(value),
+			)}`,
+	);
+	if (parts.length === 0) return "";
+	return `${theme.fg("dim", " (")}${parts.join(theme.fg("dim", ", "))}${theme.fg("dim", ")")}`;
+}
+
+function formatParametersForDisplay(
+	tool: ResolvedProjectTool,
+	params: ProjectToolInput,
+	theme: Theme,
+): string {
+	const parameters: Record<string, string | number | boolean> = {};
+	for (const name of Object.keys(tool.parameters)) {
+		const value = params[name];
+		if (hasParameterValue(value)) parameters[name] = value;
+	}
+	return formatParameterRecordForDisplay(parameters, theme);
+}
+
+function renderCallTitle(
+	tool: ResolvedProjectTool,
+	args: ProjectToolInput,
+	theme: Theme,
+): Component {
 	let text = theme.fg("toolTitle", theme.bold(tool.name));
+	text += formatParametersForDisplay(tool, args, theme);
 	if (tool.commands.length > 1) {
 		text += theme.fg("dim", ` · ${tool.commands.length} parallel commands`);
 	}
 	return new Text(text, 0, 0);
 }
 
-function renderRunning(details: ProjectToolDetails, theme: Theme): Component {
+function renderRunningOutput(
+	output: string,
+	expanded: boolean,
+	theme: Theme,
+): string[] {
+	const trimmed = output.trimEnd();
+	if (!trimmed) return [];
+
+	const outputLines = trimmed.split("\n");
+	const maxLines = expanded ? EXPANDED_TAIL_LINES : RUNNING_TAIL_LINES;
+	const skipped = Math.max(0, outputLines.length - maxLines);
+	const visibleLines = skipped > 0 ? outputLines.slice(skipped) : outputLines;
+	const lines: string[] = [];
+
+	if (skipped > 0) {
+		lines.push(
+			theme.fg(
+				"muted",
+				`... (${skipped} earlier lines, ${keyHint("app.tools.expand", "to expand")})`,
+			),
+		);
+	}
+	lines.push(...visibleLines.map((line) => theme.fg("toolOutput", line)));
+	return lines;
+}
+
+function renderRunning(
+	details: ProjectToolDetails,
+	theme: Theme,
+	elapsedMs: number | undefined,
+	expanded: boolean,
+): Component {
 	const lines: string[] = [];
 	const showCommandHeaders = details.commandCount > 1;
 	for (const command of details.commands) {
@@ -610,16 +978,17 @@ function renderRunning(details: ProjectToolDetails, theme: Theme): Component {
 			if (command.status === "failed") header += ` ${theme.fg("error", "✗")}`;
 			lines.push(header);
 		}
-		const output = truncateLines(command.output.trimEnd(), RUNNING_TAIL_LINES);
-		if (output) {
-			lines.push(
-				...output.split("\n").map((line) => theme.fg("toolOutput", line)),
-			);
+		const output = renderRunningOutput(command.output, expanded, theme);
+		if (output.length > 0) {
+			lines.push(...output);
 		} else if (command.status === "running" || command.status === "pending") {
 			lines.push(theme.fg("muted", "(running...)"));
 		} else {
 			lines.push(theme.fg("muted", "(no output)"));
 		}
+	}
+	if (elapsedMs !== undefined) {
+		lines.push("", theme.fg("dim", `Elapsed ${formatDuration(elapsedMs)}`));
 	}
 	return new Text(lines.join("\n"), 0, 0);
 }
@@ -638,9 +1007,8 @@ function renderSummary(details: ProjectToolDetails, theme: Theme): Component {
 	);
 	const success = failed.length === 0;
 	const duration = formatTotalDuration(details);
-	const lines: string[] = [
-		`${theme.fg("toolTitle", theme.bold(details.toolName))} ${success ? theme.fg("success", "✓") : theme.fg("error", "✗")}${duration ? theme.fg("dim", ` · ${duration}`) : ""}`,
-	];
+	const status = `${success ? theme.fg("success", "✓") : theme.fg("error", "✗")}${duration ? theme.fg("dim", ` ${duration}`) : ""}`;
+	const lines: string[] = [];
 	if (details.commandCount > 1) {
 		lines.push(
 			success
@@ -653,16 +1021,16 @@ function renderSummary(details: ProjectToolDetails, theme: Theme): Component {
 						`${failed.length}/${details.commandCount} commands failed`,
 					),
 		);
+		for (const command of failed) {
+			lines.push(theme.fg("dim", `[${command.label}] ${statusLine(command)}`));
+		}
+		lines.push(status);
+		return new Text(lines.join("\n"), 0, 0);
 	}
+
+	lines.push(status);
 	for (const command of failed) {
-		lines.push(
-			theme.fg(
-				"error",
-				details.commandCount > 1
-					? `[${command.label}] ${statusLine(command)}`
-					: statusLine(command),
-			),
-		);
+		lines.push(theme.fg("error", statusLine(command)));
 	}
 	return new Text(lines.join("\n"), 0, 0);
 }
@@ -700,6 +1068,10 @@ function renderResult(
 	result: AgentToolResult<ProjectToolDetails>,
 	options: { expanded: boolean; isPartial: boolean },
 	theme: Theme,
+	context: {
+		state: { startedAt?: number; interval?: ReturnType<typeof setInterval> };
+		invalidate(): void;
+	},
 ): Component {
 	const details = result.details;
 	if (!isProjectToolDetails(details)) {
@@ -707,8 +1079,22 @@ function renderResult(
 			result.content.find((content) => content.type === "text")?.text ?? "";
 		return new Text(text, 0, 0);
 	}
-	if (options.isPartial || details.status === "running")
-		return renderRunning(details, theme);
+	const running = options.isPartial || details.status === "running";
+	if (running) {
+		context.state.startedAt ??= Date.now();
+		context.state.interval ??= setInterval(() => context.invalidate(), 1000);
+		return renderRunning(
+			details,
+			theme,
+			Date.now() - context.state.startedAt,
+			options.expanded,
+		);
+	}
+	if (context.state.interval) {
+		clearInterval(context.state.interval);
+		context.state.interval = undefined;
+	}
+	context.state.startedAt = undefined;
 	return options.expanded
 		? renderExpanded(details, theme)
 		: renderSummary(details, theme);
@@ -716,7 +1102,7 @@ function renderResult(
 
 function createProjectToolDefinition(
 	tool: ResolvedProjectTool,
-): ToolDefinition<typeof emptyParams, ProjectToolDetails> {
+): ToolDefinition<TSchema, ProjectToolDetails> {
 	return {
 		name: tool.name,
 		label: tool.name,
@@ -725,18 +1111,25 @@ function createProjectToolDefinition(
 		promptGuidelines: tool.promptGuidelines
 			? [...tool.promptGuidelines]
 			: undefined,
-		parameters: emptyParams,
-		executionMode: "sequential" as const,
-		renderCall: (_args, theme, context) =>
-			context.isPartial ? renderCallTitle(tool, theme) : new Text("", 0, 0),
+		parameters: tool.parametersSchema,
+		executionMode: tool.executionMode ?? "sequential",
+		renderCall: (args, theme) =>
+			renderCallTitle(tool, args as ProjectToolInput, theme),
 		renderResult,
 		execute: (
 			_toolCallId: string,
-			_params: object,
+			params,
 			signal: AbortSignal | undefined,
 			onUpdate: AgentToolUpdateCallback<ProjectToolDetails> | undefined,
 			ctx: ExtensionContext,
-		) => executeProjectTool(tool, ctx, signal, onUpdate),
+		) =>
+			executeProjectTool(
+				tool,
+				params as ProjectToolInput,
+				ctx,
+				signal,
+				onUpdate,
+			),
 	};
 }
 
@@ -778,7 +1171,6 @@ export function registerProjectTools(
 	}
 
 	const existingToolNames = new Set(pi.getAllTools().map((tool) => tool.name));
-	const newlyRegistered: string[] = [];
 	const summaries: ProjectToolSummary[] = [];
 	for (const [name, rawConfig] of Object.entries(projectSettings.tools)) {
 		try {
@@ -793,7 +1185,6 @@ export function registerProjectTools(
 			pi.registerTool(createProjectToolDefinition(resolved));
 			policyRegistry.register({ name, allowedModes: resolved.allowedModes });
 			registeredNames.add(name);
-			newlyRegistered.push(name);
 			summaries.push({
 				name,
 				allowedModes: resolved.allowedModes,
@@ -807,11 +1198,6 @@ export function registerProjectTools(
 		}
 	}
 
-	if (newlyRegistered.length > 0) {
-		pi.setActiveTools([
-			...new Set([...pi.getActiveTools(), ...newlyRegistered]),
-		]);
-	}
 	return summaries;
 }
 
