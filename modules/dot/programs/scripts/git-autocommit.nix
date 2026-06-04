@@ -1,0 +1,371 @@
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
+
+let
+  cfg = config.dot.programs.scripts.gitAutoCommit;
+
+  piArgs = [
+    "--print"
+  ]
+  ++ lib.optionals (cfg.model != null) [
+    "--model"
+    cfg.model
+  ]
+  ++ lib.optionals (cfg.thinking != null) [
+    "--thinking"
+    cfg.thinking
+  ]
+  ++ [
+    "--no-session"
+    "--no-tools"
+    "--no-extensions"
+    "--no-skills"
+    "--no-prompt-templates"
+    "--no-context-files"
+  ];
+
+  gitAutoCommit = pkgs.writeShellApplication {
+    name = "git-auto-commit";
+    runtimeInputs = [ pkgs.git ];
+    text = ''
+      VERSION="1.0.0"
+
+      show_help() {
+        cat << EOF
+      git-auto-commit - AI-powered commit message generator using Pi CLI
+
+      Usage: git auto-commit [options]
+
+      Options:
+        -h, --help     Show this help message
+        -v, --version  Show version
+        -d, --direct   Skip branch protection and commit directly to main/master
+
+      Requirements:
+        - pi CLI must be installed and authenticated
+        - Changes must be staged (git add)
+        - On main/master, will ask before committing (use -d to skip)
+
+      Example:
+        git add .
+        git auto-commit
+        git auto-commit -d   # commit directly to main/master
+      EOF
+      }
+
+      show_version() {
+        echo "git-auto-commit $VERSION"
+      }
+
+      # Colors
+      RED=$'\033[0;31m'
+      GREEN=$'\033[0;32m'
+      YELLOW=$'\033[0;33m'
+      BLUE=$'\033[0;34m'
+      RESET=$'\033[0m'
+
+      COMMIT_PROMPT='Generate a git commit message for the following staged changes.
+
+      Rules:
+      - Use Conventional Commits format: type(scope): description
+      - Types: feat, fix, update, remove, docs, ci, test, chore, refactor
+      - Scope is optional, derive from file paths if clear
+      - Title: concise (under 50 chars)
+      - Body: optional, only if needed. Use short bullet points (2-4 items max)
+
+      IMPORTANT: Respond with ONLY the commit message itself. No explanation, no reasoning, no code blocks, no signatures (like "Generated with Pi" or "Co-Authored-By").
+
+      Staged changes:'
+
+      BRANCH_PROMPT='Generate a git branch name for the following staged changes.
+
+      Rules:
+      - Use kebab-case (lowercase with hyphens)
+      - Keep it short and descriptive (2-4 words)
+      - No prefix like feature/ or fix/
+
+      IMPORTANT: Respond with ONLY the branch name itself. No explanation, no reasoning, no formatting.
+
+      Staged changes:'
+
+      # Run Pi non-interactively (reads prompt from stdin)
+      run_pi_from_stdin() {
+        local tmpfile tmperr
+        tmpfile=$(mktemp)
+        tmperr=$(mktemp)
+        trap 'rm -f "$tmpfile" "$tmperr"' RETURN
+
+        local cmd=(pi ${lib.escapeShellArgs piArgs})
+
+        if ! "''${cmd[@]}" >"$tmpfile" 2>"$tmperr"; then
+          cat "$tmperr" >&2 || true
+          return 1
+        fi
+
+        cat "$tmpfile"
+      }
+
+      # Generate commit message using Pi
+      generate_commit_message() {
+        local staged_diff="$1"
+        local instruction="''${2:-}"
+        {
+          printf '%s\n\n' "$COMMIT_PROMPT"
+          printf '%s\n' "$staged_diff"
+          if [[ -n "$instruction" ]]; then
+            printf '\nAdditional instruction: %s\n' "$instruction"
+          fi
+        } | run_pi_from_stdin
+      }
+
+      # Generate branch name using Pi (uses --stat for efficiency)
+      generate_branch_name() {
+        local instruction="''${1:-}"
+        {
+          printf '%s\n\n' "$BRANCH_PROMPT"
+          git diff --staged --stat
+          if [[ -n "$instruction" ]]; then
+            printf '\nAdditional instruction: %s\n' "$instruction"
+          fi
+        } | run_pi_from_stdin | tr -d '`"' | tr -d "'"
+      }
+
+      # Edit text with default editor
+      # Returns empty string if user cancels (content unchanged or empty)
+      edit_with_editor() {
+        local initial_text="$1"
+        local tmpfile
+        tmpfile=$(mktemp)
+        trap 'rm -f "$tmpfile"' RETURN
+        printf '%s\n' "$initial_text" > "$tmpfile"
+
+        local editor="''${VISUAL:-''${EDITOR:-vim}}"
+        read -r -a editor_argv <<< "$editor"
+        "''${editor_argv[@]}" "$tmpfile" </dev/tty >/dev/tty
+
+        local result
+        result=$(cat "$tmpfile")
+
+        # If content unchanged, treat as cancel
+        if [[ "$result" == "$initial_text" ]]; then
+          echo ""
+          return
+        fi
+
+        echo "$result"
+      }
+
+      # Detect the main branch for this repository
+      detect_main_branch() {
+        # Try to get from remote HEAD (most reliable)
+        local remote_head
+        if remote_head=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null); then
+          echo "''${remote_head##refs/remotes/origin/}"
+          return
+        fi
+
+        # Fallback: check common branch names
+        for branch in main master; do
+          if git show-ref --verify --quiet "refs/heads/$branch"; then
+            echo "$branch"
+            return
+          fi
+        done
+
+        # Last resort: return "main" as default
+        echo "main"
+      }
+
+      main() {
+        local direct=false
+
+        while [[ $# -gt 0 ]]; do
+          case "$1" in
+            -h|--help)
+              show_help
+              exit 0
+              ;;
+            -v|--version)
+              show_version
+              exit 0
+              ;;
+            -d|--direct)
+              direct=true
+              shift
+              ;;
+            *)
+              echo -e "''${RED}Unknown option: $1''${RESET}"
+              show_help
+              exit 1
+              ;;
+          esac
+        done
+
+        if ! git rev-parse --is-inside-work-tree &>/dev/null; then
+          echo -e "''${RED}Error: Not in a git repository''${RESET}"
+          exit 1
+        fi
+
+        if ! command -v pi &>/dev/null; then
+          echo -e "''${RED}Error: pi CLI not found''${RESET}"
+          exit 1
+        fi
+
+        local main_branch
+        main_branch=$(detect_main_branch)
+
+        local current_branch
+        current_branch=$(git branch --show-current)
+        echo -e "''${BLUE}Branch:''${RESET} ''${current_branch} (''${main_branch})"
+
+        local staged_files
+        staged_files=$(git diff --staged --name-status)
+
+        if [[ -z "$staged_files" ]]; then
+          echo -e "''${YELLOW}No staged files to commit''${RESET}"
+          exit 0
+        fi
+
+        echo -e "''${BLUE}Staged files:''${RESET}"
+        while IFS=$'\t' read -r status filepath; do
+          case "$status" in
+            A) echo -e "  ''${GREEN}''${status}''${RESET} ''${filepath}" ;;
+            D) echo -e "  ''${RED}''${status}''${RESET} ''${filepath}" ;;
+            M) echo -e "  ''${YELLOW}''${status}''${RESET} ''${filepath}" ;;
+            *) echo -e "  ''${status} ''${filepath}" ;;
+          esac
+        done <<< "$staged_files"
+        echo ""
+
+        if [[ "$current_branch" == "$main_branch" ]] && [[ "$direct" == false ]]; then
+          echo -e "''${YELLOW}Warning: You are on $current_branch''${RESET}"
+          read -r -p "Create a new branch? [Y/n] " response </dev/tty
+          response=''${response:-Y}
+
+          case "$response" in
+            [Nn]*)
+              echo -e "''${YELLOW}Committing directly to $current_branch''${RESET}"
+              ;;
+            *)
+              echo -e "''${BLUE}Generating branch name...''${RESET}"
+              local branch_name
+              branch_name=$(generate_branch_name)
+
+              while true; do
+                echo -e "''${BLUE}Suggested branch:''${RESET}"
+                echo -e "  ''${GREEN}''${branch_name}''${RESET}"
+                echo ""
+
+                read -r -p "Create and switch to this branch? [Y/n/e(dit)/r(egenerate)] " response </dev/tty
+                response=''${response:-Y}
+
+                case "$response" in
+                  [Yy]*)
+                    git switch -c "$branch_name"
+                    echo -e "''${GREEN}Switched to $branch_name''${RESET}"
+                    break
+                    ;;
+                  [Rr]*)
+                    read -r -p "Instruction (Enter to skip): " instruction </dev/tty
+                    echo -e "''${BLUE}Regenerating branch name...''${RESET}"
+                    branch_name=$(generate_branch_name "$instruction")
+                    ;;
+                  [Ee]*)
+                    local new_branch
+                    new_branch=$(edit_with_editor "$branch_name")
+                    new_branch=$(echo "$new_branch" | tr -d '\n')
+                    if [[ -n "$new_branch" ]]; then
+                      branch_name="$new_branch"
+                    fi
+                    ;;
+                  *)
+                    echo -e "''${YELLOW}Cancelled''${RESET}"
+                    exit 1
+                    ;;
+                esac
+              done
+              echo ""
+              ;;
+          esac
+        fi
+
+        local staged_diff
+        staged_diff=$(git diff --staged)
+
+        echo -e "''${BLUE}Generating commit message...''${RESET}"
+        local commit_message
+        commit_message=$(generate_commit_message "$staged_diff")
+
+        while true; do
+          echo -e "''${BLUE}Generated commit message:''${RESET}"
+          echo -e "''${GREEN}''${commit_message}''${RESET}"
+          echo ""
+
+          read -r -p "Proceed with this commit? [Y/n/e(dit)/r(egenerate)] " response </dev/tty
+          response=''${response:-Y}
+
+          case "$response" in
+            [Yy]*)
+              git commit -m "$commit_message"
+              echo -e "''${GREEN}Committed successfully!''${RESET}"
+              break
+              ;;
+            [Rr]*)
+              read -r -p "Instruction (Enter to skip): " instruction </dev/tty
+              echo -e "''${BLUE}Regenerating commit message...''${RESET}"
+              commit_message=$(generate_commit_message "$staged_diff" "$instruction")
+              ;;
+            [Ee]*)
+              local new_message
+              new_message=$(edit_with_editor "$commit_message")
+              if [[ -n "$new_message" ]]; then
+                commit_message="$new_message"
+                # Continue loop to confirm edited message
+              fi
+              ;;
+            *)
+              echo -e "''${YELLOW}Commit cancelled''${RESET}"
+              exit 1
+              ;;
+          esac
+        done
+      }
+
+      main "$@"
+    '';
+  };
+in
+{
+  options.dot.programs.scripts.gitAutoCommit = {
+    enable = lib.mkEnableOption "git auto-commit command";
+
+    model = lib.mkOption {
+      type = with lib.types; nullOr str;
+      default = null;
+      description = "Pi model passed to git-auto-commit. When null, no --model option is passed.";
+    };
+
+    thinking = lib.mkOption {
+      type =
+        with lib.types;
+        nullOr (enum [
+          "off"
+          "minimal"
+          "low"
+          "medium"
+          "high"
+          "xhigh"
+        ]);
+      default = null;
+      description = "Pi thinking level passed to git-auto-commit. When null, no --thinking option is passed.";
+    };
+  };
+
+  config = lib.mkIf (config.dot.programs.scripts.enable && cfg.enable) {
+    home.packages = [ gitAutoCommit ];
+  };
+}

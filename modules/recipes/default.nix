@@ -30,7 +30,6 @@
 
   dot = {
     xdg.configFile."wezterm/wezterm.lua".source = true;
-    home.file.".local/bin".source = "scripts";
   };
 
   programs = {
@@ -75,6 +74,7 @@
     ./nushell.nix
     ./pi.nix
     ./python.nix
+    ./scripts.nix
     ./starship.nix
     ./tmux.nix
     ./worktrunk.nix

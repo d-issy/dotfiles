@@ -6,6 +6,7 @@
     ./ghq.nix
     ./mise.nix
     ./navi.nix
+    ./scripts
     ./tmux
   ];
 }
