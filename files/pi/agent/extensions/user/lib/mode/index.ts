@@ -4,7 +4,7 @@ export {
 	type SetModeOptions,
 	buildModeReminderPayload,
 	createModeController,
-	formatAllowedTools,
+	getCurrentModeName,
 	getModeReminder,
 	isModeReminderMessage,
 } from "./controller";

@@ -3,6 +3,7 @@
     "lint": {
       "description": "Run all lint and type checks for the project (no files are modified).",
       "allowedModes": ["read", "write"],
+      "executionMode": "parallel",
       "promptSnippet": "Run lint and type checks for the project",
       "promptGuidelines": [
         "Use lint after editing files to verify; it runs the same checks as CI and modifies nothing."
@@ -10,25 +11,30 @@
       "commands": [
         {
           "label": "tsgo",
-          "command": "pnpm lint"
+          "command": "pnpm",
+          "arguments": ["lint"]
         },
         {
           "label": "oxlint",
-          "command": "oxlint --deny-warnings"
+          "command": "oxlint",
+          "arguments": ["--deny-warnings"]
         },
         {
           "label": "deadnix",
-          "command": "deadnix --fail ."
+          "command": "deadnix",
+          "arguments": ["--fail", "."]
         },
         {
           "label": "statix",
-          "command": "statix check ."
+          "command": "statix",
+          "arguments": ["check", "."]
         }
       ]
     },
     "format": {
       "description": "Format the project in place with treefmt.",
       "allowedModes": ["write"],
+      "executionMode": "sequential",
       "promptSnippet": "Format the project in place",
       "promptGuidelines": [
         "Use format to auto-fix formatting, then run lint to verify."
@@ -43,10 +49,12 @@
     "homemanager_switch": {
       "description": "Run Home Manager switch for the current host via the flake.",
       "allowedModes": ["write"],
+      "executionMode": "sequential",
       "commands": [
         {
           "label": "home-manager switch",
-          "command": "nix run .#switch",
+          "command": "nix",
+          "arguments": ["run", ".#switch"],
           "timeoutSeconds": 600
         }
       ]
