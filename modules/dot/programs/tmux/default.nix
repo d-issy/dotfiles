@@ -209,7 +209,7 @@ let
       setw -g pane-border-format '${paneBorderTitleFormat}'
     ''}
     ${
-      if cfg.paneBorder.autoHideSinglePane.enable then
+      if cfg.paneBorder.hideWhenSinglePane then
         ''
           ${borderToggle}
           set-hook -g after-split-window '${borderToggle}'
@@ -525,7 +525,11 @@ in
           description = "Optional pane-border-format override. Defaults to a generated pane title with pane notice icons.";
         };
       };
-      autoHideSinglePane.enable = lib.mkEnableOption "pane border title/status auto-hide for single-pane windows";
+      hideWhenSinglePane = lib.mkOption {
+        type = lib.types.bool;
+        default = false;
+        description = "Whether to hide pane border title/status for single-pane windows.";
+      };
     };
 
     bell.disable = lib.mkEnableOption "tmux bell and visual-bell disablement";

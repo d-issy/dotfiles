@@ -112,7 +112,6 @@ in
       lines = "single";
       style = "fg=${colors.paneBorder}";
       activeStyle = "fg=${colors.accent}";
-      autoHideSinglePane.enable = true;
       title = {
         enable = true;
         position = "top";
