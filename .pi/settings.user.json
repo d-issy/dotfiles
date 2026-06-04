@@ -26,17 +26,28 @@
         }
       ]
     },
-    "format_code": {
+    "format": {
       "description": "Format the project in place with treefmt.",
       "allowedModes": ["write"],
       "promptSnippet": "Format the project in place",
       "promptGuidelines": [
-        "Use format_code to auto-fix formatting, then run lint to verify."
+        "Use format to auto-fix formatting, then run lint to verify."
       ],
       "commands": [
         {
           "label": "treefmt",
           "command": "treefmt"
+        }
+      ]
+    },
+    "homemanager_switch": {
+      "description": "Run Home Manager switch for the current host via the flake.",
+      "allowedModes": ["write"],
+      "commands": [
+        {
+          "label": "home-manager switch",
+          "command": "nix run .#switch",
+          "timeoutSeconds": 600
         }
       ]
     }

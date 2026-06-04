@@ -21,7 +21,10 @@ let
 
   enabledSkills = lib.filterAttrs (_: skill: skill.enable) cfg.skills;
 
-  skillAgents = skill: if skill.agents == null then cfg.defaultAgents else skill.agents;
+  enabledAgentNames = agents: lib.filter (agentName: agents.${agentName}) agentNames;
+
+  skillAgents =
+    skill: if skill.agents == null then cfg.defaultAgents else enabledAgentNames skill.agents;
 
   mkSkillEntries =
     skillName: skill:
@@ -47,10 +50,22 @@ in
           options = {
             enable = lib.mkEnableOption "this agent skill";
             agents = lib.mkOption {
-              type = lib.types.nullOr (lib.types.listOf (lib.types.enum agentNames));
+              type = lib.types.nullOr (
+                lib.types.submodule {
+                  options = lib.genAttrs agentNames (
+                    _:
+                    lib.mkOption {
+                      type = lib.types.bool;
+                      default = false;
+                    }
+                  );
+                }
+              );
               default = null;
               description = "Agent targets for this skill. When null, defaultAgents is used.";
-              example = [ "pi" ];
+              example = {
+                pi = true;
+              };
             };
           };
         }
@@ -60,7 +75,7 @@ in
       example = {
         "my-skill" = {
           enable = true;
-          agents = [ "pi" ];
+          agents.pi = true;
         };
       };
     };
