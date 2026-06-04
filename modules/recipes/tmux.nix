@@ -111,12 +111,12 @@ in
       indicators = "off";
       lines = "single";
       style = "fg=${colors.paneBorder}";
-      activeStyle = "fg=${colors.accent}";
+      activeStyle = "fg=${colors.paneBorder}";
       title = {
         enable = true;
         position = "top";
         activeStyle = "fg=${colors.accent}";
-        inactiveStyle = "fg=${colors.muted}";
+        inactiveStyle = "fg=${colors.paneBorder}";
       };
     };
 
