@@ -1,5 +1,13 @@
 { pkgs, ... }:
 
+let
+  colors = {
+    paneBorder = "#494d64";
+    text = "#cad3f5";
+    muted = "#8087a2";
+    accent = "#ffb86c";
+  };
+in
 {
   config.dot.programs.tmux = {
     enable = true;
@@ -33,13 +41,25 @@
         sessionSelector.enable = true;
         navi.enable = true;
       };
+      sessionNavigation.enable = true;
+      windowRename.enable = true;
       split.enable = true;
       copyModeVi.enable = true;
     };
 
     status = {
+      position = "top";
       paneForegroundCommand.enable = true;
       windowNotice.enable = true;
+      sessionList = {
+        enable = true;
+        colors = {
+          active = colors.text;
+          inactive = colors.muted;
+          noticeBright = colors.text;
+          noticeDim = colors.muted;
+        };
+      };
     };
 
     terminalFeatures = {
@@ -89,12 +109,14 @@
     paneBorder = {
       enable = true;
       indicators = "off";
-      lines = "heavy";
-      activeStyle = "fg=#ffb86c";
+      lines = "single";
+      style = "fg=${colors.paneBorder}";
+      activeStyle = "fg=${colors.accent}";
       title = {
         enable = true;
         position = "top";
-        format = " #P#{?#{||:#{==:#{pane_title},π},#{==:#{pane_title}, }}, #{pane_title}, #{pane_title}} ";
+        activeStyle = "fg=${colors.accent}";
+        inactiveStyle = "fg=${colors.muted}";
       };
     };
 
@@ -108,7 +130,6 @@
     sessionSelector = {
       enable = true;
       commandName = "tm";
-      defaultSessionName = "main";
     };
   };
 }
