@@ -15,7 +15,7 @@ let
   paneBorderTitleNotice = "#{?@pane_notice_icon, #{@pane_notice_icon} #{?@pane_notice_title,#{@pane_notice_title},#{pane_title}},#{?@status_notice_icon, #{@status_notice_icon} #{pane_title},#{pane_title}}}";
   paneBorderTitleFormat =
     if cfg.paneBorder.title.format == null then
-      "#{?pane_active,#[${cfg.paneBorder.title.activeStyle}],#[${cfg.paneBorder.title.inactiveStyle}]} #P ${paneBorderTitleNotice} "
+      " #{?pane_active,#[${cfg.paneBorder.title.activeStyle}]#P ${paneBorderTitleNotice},#[${cfg.paneBorder.title.inactiveStyle}]#P ${paneBorderTitleNotice}} "
     else
       cfg.paneBorder.title.format;
   resizeRepeatFlag = lib.optionalString cfg.keyBindings.paneResize.repeatable "-r ";
