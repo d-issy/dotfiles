@@ -9,6 +9,10 @@
 
     skills = {
       interview.enable = true;
+      pi-project-tools = {
+        enable = true;
+        agents.pi = true;
+      };
       runbook.enable = true;
     };
   };

@@ -8,7 +8,6 @@ import {
 	type ModeName,
 	getMode,
 } from "./definitions";
-import { policyRegistry } from "../policy";
 import { activateModeTools, applyModeStatus } from "./ui";
 
 export const MODE_REMINDER_TYPE = "system-reminder";
@@ -132,8 +131,7 @@ export function createModeController(pi: ExtensionAPI): ModeController {
 				pi.appendEntry(MODE_STATE_TYPE, { mode: modeName });
 			}
 			currentMode = modeName;
-			const allowedTools = policyRegistry.getAllowedToolsForMode(modeName);
-			activateModeTools(pi, modeName);
+			const allowedTools = activateModeTools(pi, modeName);
 			applyModeStatus(ctx, getMode(modeName));
 			if (changed) steerModeReminder(pi, ctx, modeName, allowedTools);
 		},

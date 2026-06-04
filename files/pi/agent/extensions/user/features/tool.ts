@@ -1,15 +1,41 @@
 import type {
 	ExtensionAPI,
 	SessionStartEvent,
+	Theme,
 } from "@earendil-works/pi-coding-agent";
 import type { Feature } from "../feature";
 import { policyRegistry } from "../lib/policy";
 import {
+	type ProjectToolSummary,
 	markFailedProjectToolResult,
 	registerBuiltInTools,
 	registerProjectTools,
 	toolRegistry,
 } from "../lib/tool";
+
+function formatProjectToolSummary(
+	tools: readonly ProjectToolSummary[],
+	theme: Theme,
+): string {
+	const dim = (text: string): string => theme.fg("dim", text);
+	const sortedTools = tools.reduce<ProjectToolSummary[]>((sorted, tool) => {
+		const insertIndex = sorted.findIndex(
+			(candidate) => tool.name.localeCompare(candidate.name) < 0,
+		);
+		if (insertIndex === -1) {
+			sorted.push(tool);
+		} else {
+			sorted.splice(insertIndex, 0, tool);
+		}
+		return sorted;
+	}, []);
+	const lines = sortedTools.map((tool) => {
+		const commandLabel = `${tool.commandCount} cmd${tool.commandCount === 1 ? "" : "s"}`;
+		const modes = tool.allowedModes.join("/");
+		return dim(`  ${tool.name} (${modes} · ${commandLabel})`);
+	});
+	return [theme.fg("mdHeading", "[Project Tools]"), ...lines].join("\n");
+}
 
 function register(pi: ExtensionAPI): void {
 	registerBuiltInTools();
@@ -21,7 +47,15 @@ function register(pi: ExtensionAPI): void {
 
 	const projectToolNames = new Set<string>();
 	pi.on("session_start", async (_event: SessionStartEvent, ctx) => {
-		registerProjectTools(pi, ctx, projectToolNames);
+		const projectTools = registerProjectTools(pi, ctx, projectToolNames);
+		if (ctx.hasUI && projectTools.length > 0) {
+			setTimeout(() => {
+				ctx.ui.notify(
+					formatProjectToolSummary(projectTools, ctx.ui.theme),
+					"info",
+				);
+			}, 50);
+		}
 	});
 	pi.on("tool_result", async (event) =>
 		markFailedProjectToolResult(projectToolNames, event),

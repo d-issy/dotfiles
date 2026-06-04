@@ -23,6 +23,7 @@ import {
 	findPersistedMode,
 	findPersistedModeInSessionFile,
 	formatAllowedTools,
+	getAllowedModeTools,
 	getMode,
 	getNextMode,
 	getStartupMode,
@@ -116,13 +117,14 @@ export async function showModeQuickAction(
 
 const injectSystemPrompt =
 	(
+		pi: ExtensionAPI,
 		mode: ModeController,
 	): ExtensionHandler<BeforeAgentStartEvent, BeforeAgentStartEventResult> =>
 	async (event) => {
 		const prompt = getMode(mode.current).systemPrompt;
 		if (!prompt) return;
 
-		const allowedTools = policyRegistry.getAllowedToolsForMode(mode.current);
+		const allowedTools = getAllowedModeTools(pi, mode.current);
 		const tools = formatAllowedTools(allowedTools);
 		return {
 			systemPrompt: `${event.systemPrompt}\n\n[${mode.current.toUpperCase()} MODE]\nAllowed tools in this mode: ${tools}\n${prompt}\n\nTool schemas may include tools that are blocked in the current mode; do not call tools that are not listed in "Allowed tools in this mode". If the user asks for a listed tool, call that tool rather than saying it is unavailable.`,
@@ -164,7 +166,10 @@ const restoreMode =
 	};
 
 const injectTransientModeReminder =
-	(mode: ModeController): ExtensionHandler<ContextEvent, ContextResult> =>
+	(
+		pi: ExtensionAPI,
+		mode: ModeController,
+	): ExtensionHandler<ContextEvent, ContextResult> =>
 	async (event) => {
 		// Steady state (no pending steer): only strip stale reminders if any
 		// exist, so the common per-turn path skips rebuilding the message array.
@@ -180,7 +185,7 @@ const injectTransientModeReminder =
 		const messages = event.messages.filter(
 			(message) => !isModeReminderMessage(message),
 		);
-		const allowedTools = policyRegistry.getAllowedToolsForMode(mode.current);
+		const allowedTools = getAllowedModeTools(pi, mode.current);
 		return {
 			messages: [
 				...messages,
@@ -223,8 +228,8 @@ function register(pi: ExtensionAPI): void {
 		description: `Cycle permission mode: ${MODE_NAMES.join(" / ")}`,
 		handler: cycleMode(mode),
 	});
-	pi.on("before_agent_start", injectSystemPrompt(mode));
-	pi.on("context", injectTransientModeReminder(mode));
+	pi.on("before_agent_start", injectSystemPrompt(pi, mode));
+	pi.on("context", injectTransientModeReminder(pi, mode));
 	pi.on("agent_end", async () => {
 		modeSteerReminderActive = false;
 	});

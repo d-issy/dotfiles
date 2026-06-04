@@ -34,12 +34,12 @@ function hasDebugFlag(
 	return false;
 }
 
-function findDebugMain(cwd: string): string | undefined {
+function findDebugPath(cwd: string, relativePath: string): string | undefined {
 	let dir = resolve(cwd);
 	const root = parse(dir).root;
 
 	while (true) {
-		const candidate = join(dir, DEBUG_MAIN_RELATIVE_PATH);
+		const candidate = join(dir, relativePath);
 		if (existsSync(candidate)) return candidate;
 		if (dir === root) return undefined;
 		dir = dirname(dir);
@@ -90,7 +90,7 @@ export default async function userBootstrap(pi: ExtensionAPI): Promise<void> {
 		return;
 	}
 
-	const mainPath = findDebugMain(process.cwd());
+	const mainPath = findDebugPath(process.cwd(), DEBUG_MAIN_RELATIVE_PATH);
 	if (!mainPath) {
 		throw new Error(
 			`Could not find ${DEBUG_MAIN_RELATIVE_PATH} from ${process.cwd()} for ${DEBUG_FLAG} mode.`,

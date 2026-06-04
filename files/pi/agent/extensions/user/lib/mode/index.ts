@@ -26,4 +26,9 @@ export {
 	findPersistedModeInSessionFile,
 	getStartupMode,
 } from "./startup";
-export { activateModeTools, applyModeStatus, showModeSelector } from "./ui";
+export {
+	activateModeTools,
+	applyModeStatus,
+	getAllowedModeTools,
+	showModeSelector,
+} from "./ui";

@@ -25,7 +25,7 @@ import { type Component, Text } from "@earendil-works/pi-tui";
 import { Type } from "typebox";
 import { type ModeName, policyRegistry } from "../policy";
 
-const TOOL_NAME_RE = /^[a-z][a-z0-9_.]*$/u;
+const TOOL_NAME_RE = /^[a-z][a-z0-9_.-]*$/u;
 const MODE_NAMES = [
 	"read",
 	"write",
@@ -69,6 +69,12 @@ type ResolvedProjectToolCommand = ProjectToolCommandConfig & {
 
 type ResolvedProjectTool = Omit<ProjectToolConfig, "commands"> & {
 	readonly commands: readonly ResolvedProjectToolCommand[];
+};
+
+export type ProjectToolSummary = {
+	readonly name: string;
+	readonly allowedModes: readonly ModeName[];
+	readonly commandCount: number;
 };
 
 type ProjectCommandStatus = "pending" | "running" | "succeeded" | "failed";
@@ -183,7 +189,7 @@ function normalizeCommand(
 function normalizeTool(name: string, value: unknown): ProjectToolConfig {
 	if (!TOOL_NAME_RE.test(name)) {
 		throw new Error(
-			`Invalid tool name: ${name}. Use lowercase letters, numbers, '_' and '.'.`,
+			`Invalid tool name: ${name}. Use lowercase letters, numbers, '_', '-' and '.'.`,
 		);
 	}
 	if (!isObject(value)) throw new Error(`${name} must be an object.`);
@@ -591,13 +597,16 @@ function renderCallTitle(tool: ResolvedProjectTool, theme: Theme): Component {
 
 function renderRunning(details: ProjectToolDetails, theme: Theme): Component {
 	const lines: string[] = [];
+	const showCommandHeaders = details.commandCount > 1;
 	for (const command of details.commands) {
 		if (lines.length > 0) lines.push("");
-		let header = theme.fg("toolTitle", theme.bold(`[${command.label}]`));
-		if (command.status === "succeeded")
-			header += ` ${theme.fg("success", "✓")}`;
-		if (command.status === "failed") header += ` ${theme.fg("error", "✗")}`;
-		lines.push(header);
+		if (showCommandHeaders) {
+			let header = theme.fg("toolTitle", theme.bold(`[${command.label}]`));
+			if (command.status === "succeeded")
+				header += ` ${theme.fg("success", "✓")}`;
+			if (command.status === "failed") header += ` ${theme.fg("error", "✗")}`;
+			lines.push(header);
+		}
 		const output = truncateLines(command.output.trimEnd(), RUNNING_TAIL_LINES);
 		if (output) {
 			lines.push(
@@ -643,19 +652,29 @@ function renderSummary(details: ProjectToolDetails, theme: Theme): Component {
 		);
 	}
 	for (const command of failed) {
-		lines.push(theme.fg("error", `[${command.label}] ${statusLine(command)}`));
+		lines.push(
+			theme.fg(
+				"error",
+				details.commandCount > 1
+					? `[${command.label}] ${statusLine(command)}`
+					: statusLine(command),
+			),
+		);
 	}
 	return new Text(lines.join("\n"), 0, 0);
 }
 
 function renderExpanded(details: ProjectToolDetails, theme: Theme): Component {
 	const lines: string[] = [];
+	const showCommandHeaders = details.commandCount > 1;
 	for (const command of details.commands) {
 		if (lines.length > 0) lines.push("");
 		const ok = command.status === "succeeded";
-		lines.push(
-			`${theme.fg("toolTitle", theme.bold(`[${command.label}]`))} ${ok ? theme.fg("success", "✓") : theme.fg("error", "✗")}`,
-		);
+		if (showCommandHeaders) {
+			lines.push(
+				`${theme.fg("toolTitle", theme.bold(`[${command.label}]`))} ${ok ? theme.fg("success", "✓") : theme.fg("error", "✗")}`,
+			);
+		}
 		lines.push(theme.fg("dim", statusLine(command)));
 		const output = truncateLines(command.output.trimEnd(), EXPANDED_TAIL_LINES);
 		lines.push(theme.fg("dim", "output:"));
@@ -722,7 +741,7 @@ export function registerProjectTools(
 	pi: ExtensionAPI,
 	ctx: ExtensionContext,
 	registeredNames: Set<string>,
-): void {
+): readonly ProjectToolSummary[] {
 	registeredNames.clear();
 	let projectSettings: ProjectToolSettings;
 	try {
@@ -734,17 +753,18 @@ export function registerProjectTools(
 			ctx,
 			`Failed to read project tools: ${error instanceof Error ? error.message : String(error)}`,
 		);
-		return;
+		return [];
 	}
 
-	if (projectSettings.tools === undefined) return;
+	if (projectSettings.tools === undefined) return [];
 	if (!isObject(projectSettings.tools)) {
 		notifyWarning(ctx, "Project tools ignored: tools must be an object.");
-		return;
+		return [];
 	}
 
 	const existingToolNames = new Set(pi.getAllTools().map((tool) => tool.name));
 	const newlyRegistered: string[] = [];
+	const summaries: ProjectToolSummary[] = [];
 	for (const [name, rawConfig] of Object.entries(projectSettings.tools)) {
 		try {
 			if (existingToolNames.has(name) || registeredNames.has(name)) {
@@ -759,6 +779,11 @@ export function registerProjectTools(
 			policyRegistry.register({ name, allowedModes: resolved.allowedModes });
 			registeredNames.add(name);
 			newlyRegistered.push(name);
+			summaries.push({
+				name,
+				allowedModes: resolved.allowedModes,
+				commandCount: resolved.commands.length,
+			});
 		} catch (error) {
 			notifyWarning(
 				ctx,
@@ -772,6 +797,7 @@ export function registerProjectTools(
 			...new Set([...pi.getActiveTools(), ...newlyRegistered]),
 		]);
 	}
+	return summaries;
 }
 
 export function markFailedProjectToolResult(

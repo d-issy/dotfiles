@@ -31,17 +31,6 @@ function getConfiguredDefaultMode(
 ): ModeName | undefined {
 	try {
 		const settingsManager = SettingsManager.create(cwd);
-		const projectMode = (settingsManager.getProjectSettings() as ModeSettings)
-			.permissionMode;
-		if (projectMode !== undefined) {
-			const mode = normalizeModeName(projectMode);
-			if (mode) return mode;
-			onWarning?.(
-				`Invalid pi permissionMode in project settings: ${String(projectMode)}. Use one of: ${MODE_NAMES.join(", ")}.`,
-			);
-			return undefined;
-		}
-
 		const globalMode = (settingsManager.getGlobalSettings() as ModeSettings)
 			.permissionMode;
 		if (globalMode !== undefined) {
