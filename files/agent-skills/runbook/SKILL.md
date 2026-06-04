@@ -9,6 +9,8 @@ Guidance for selecting and following task-specific runbooks.
 
 - Use this skill only when a task-specific runbook may apply.
 - List runbook files in this skill directory before planning.
+  - Include symlinked files. Do not rely on filters that exclude symlinks, such as `find ... -type f`.
+  - If the list is unexpectedly empty after loading this file, inspect the directory without type filters before concluding no runbooks exist.
 - Select applicable runbooks by their When to Use / When NOT to Use.
 - Follow selected runbooks directly; do not skip, reorder, or substitute steps.
 - If multiple runbooks apply, use all relevant runbooks in the needed order.
