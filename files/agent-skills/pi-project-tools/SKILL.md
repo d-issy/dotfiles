@@ -1,16 +1,16 @@
 ---
 name: pi-project-tools
-description: Use only when the user explicitly mentions Pi project tools, .pi/settings.json tools, or asks to add/change/remove/review a Pi tool definition.
+description: Use only when the user explicitly mentions Pi project tools, .pi/settings.user.json tools, or asks to add/change/remove/review a Pi tool definition.
 ---
 
 # Project Tools
 
-Pi is the coding agent. A Pi project tool is a tool definition written by a repository in `.pi/settings.json` under `tools`.
+Pi is the coding agent. A Pi project tool is a tool definition written by a repository in `.pi/settings.user.json` under `tools`.
 
 Use this skill only when the user explicitly asks about one of these things:
 
 - Pi project tools
-- `.pi/settings.json` `tools`
+- `.pi/settings.user.json` `tools`
 - adding, editing, renaming, removing, reviewing, or explaining a Pi tool definition
 
 Do not use this skill for general shell commands, ordinary lint/test/format requests, or non-Pi tool configuration.
@@ -29,7 +29,7 @@ Project tools become callable Pi tools for that project only.
 
 ## Settings shape
 
-Add or update `.pi/settings.json`:
+Add or update `.pi/settings.user.json`:
 
 ```json
 {
@@ -64,8 +64,8 @@ Command fields:
 
 ## Naming
 
-- Tool names must match `^[a-z][a-z0-9_.-]*$`.
-- Use concise names like `lint`, `test`, `format`, `check.types`, `homemanager.switch`.
+- Tool names must match `^[a-z][a-z0-9_-]*$`.
+- Use concise names like `lint`, `test`, `format`, `check_types`, `homemanager_switch`.
 - Do not conflict with built-in or extension tools.
 
 ## Examples
@@ -121,9 +121,9 @@ Multiple parallel checks:
 
 ## Workflow
 
-1. Inspect existing `.pi/settings.json` before editing.
+1. Inspect existing `.pi/settings.user.json` before editing.
 2. Preserve unrelated settings and unrelated `tools` entries.
 3. Add, rename, remove, or modify only the requested `tools` entries.
 4. Keep each tool's `description`, `allowedModes`, and `commands` consistent with the command behavior.
-5. Validate that `.pi/settings.json` remains valid JSON.
+5. Validate that `.pi/settings.user.json` remains valid JSON.
 6. Summarize the changed tool names, commands, and allowed modes.

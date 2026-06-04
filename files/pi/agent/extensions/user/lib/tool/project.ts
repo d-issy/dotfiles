@@ -1,6 +1,8 @@
 import {
 	appendFileSync,
+	existsSync,
 	mkdtempSync,
+	readFileSync,
 	realpathSync,
 	writeFileSync,
 } from "node:fs";
@@ -25,7 +27,8 @@ import { type Component, Text } from "@earendil-works/pi-tui";
 import { Type } from "typebox";
 import { type ModeName, policyRegistry } from "../policy";
 
-const TOOL_NAME_RE = /^[a-z][a-z0-9_.-]*$/u;
+const PROJECT_TOOL_SETTINGS_RELATIVE_PATH = ".pi/settings.user.json";
+const TOOL_NAME_RE = /^[a-z][a-z0-9_-]*$/u;
 const MODE_NAMES = [
 	"read",
 	"write",
@@ -189,7 +192,7 @@ function normalizeCommand(
 function normalizeTool(name: string, value: unknown): ProjectToolConfig {
 	if (!TOOL_NAME_RE.test(name)) {
 		throw new Error(
-			`Invalid tool name: ${name}. Use lowercase letters, numbers, '_', '-' and '.'.`,
+			`Invalid tool name: ${name}. Use lowercase letters, numbers, '_' and '-'.`,
 		);
 	}
 	if (!isObject(value)) throw new Error(`${name} must be an object.`);
@@ -737,6 +740,19 @@ function createProjectToolDefinition(
 	};
 }
 
+function loadProjectToolSettings(cwd: string): ProjectToolSettings {
+	const path = join(cwd, PROJECT_TOOL_SETTINGS_RELATIVE_PATH);
+	if (!existsSync(path)) return {};
+
+	const parsed: unknown = JSON.parse(readFileSync(path, "utf-8"));
+	if (!isObject(parsed)) {
+		throw new Error(
+			`${PROJECT_TOOL_SETTINGS_RELATIVE_PATH} must contain a JSON object.`,
+		);
+	}
+	return parsed as ProjectToolSettings;
+}
+
 export function registerProjectTools(
 	pi: ExtensionAPI,
 	ctx: ExtensionContext,
@@ -745,13 +761,12 @@ export function registerProjectTools(
 	registeredNames.clear();
 	let projectSettings: ProjectToolSettings;
 	try {
-		projectSettings = SettingsManager.create(
-			ctx.cwd,
-		).getProjectSettings() as ProjectToolSettings;
+		projectSettings = loadProjectToolSettings(ctx.cwd);
 	} catch (error) {
+		const message = error instanceof Error ? error.message : String(error);
 		notifyWarning(
 			ctx,
-			`Failed to read project tools: ${error instanceof Error ? error.message : String(error)}`,
+			`Failed to read ${PROJECT_TOOL_SETTINGS_RELATIVE_PATH} project tools: ${message}`,
 		);
 		return [];
 	}
