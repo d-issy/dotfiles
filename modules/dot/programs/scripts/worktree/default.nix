@@ -59,13 +59,6 @@ in
       description = "Pi thinking level passed to worktree name generation. When null, no --thinking option is passed.";
     };
 
-    shellIntegration.zsh.enable = lib.mkOption {
-      type = lib.types.bool;
-      default = config.dot.programs.scripts.shellIntegration.zsh.enable;
-      defaultText = lib.literalExpression "config.dot.programs.scripts.shellIntegration.zsh.enable";
-      description = "Whether to install the worktree cd wrapper for zsh.";
-    };
-
     shellIntegration.nushell.enable = lib.mkOption {
       type = lib.types.bool;
       default = config.dot.programs.scripts.shellIntegration.nushell.enable;
@@ -77,7 +70,6 @@ in
   config = lib.mkIf (config.dot.programs.scripts.enable && cfg.enable) {
     home.packages = [ worktree ];
 
-    programs.zsh.initContent = lib.mkIf cfg.shellIntegration.zsh.enable shellIntegration.zsh;
     programs.nushell.extraConfig = lib.mkIf cfg.shellIntegration.nushell.enable shellIntegration.nushell;
   };
 }

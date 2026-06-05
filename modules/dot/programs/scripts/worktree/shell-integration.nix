@@ -1,19 +1,6 @@
 { pkgs, worktreeBin }:
 
 {
-  zsh = ''
-    function worktree() {
-      local cd_file exit_code=0
-      cd_file="$(${pkgs.coreutils}/bin/mktemp)"
-      WORKTREE_CD_FILE="$cd_file" ${worktreeBin} "$@" || exit_code=$?
-      if [[ -s "$cd_file" ]]; then
-        builtin cd -- "$(<"$cd_file")" || exit_code=$?
-      fi
-      ${pkgs.coreutils}/bin/rm -f "$cd_file"
-      return "$exit_code"
-    }
-  '';
-
   nushell = ''
     def --env --wrapped worktree [...args: string] {
       let cd_file = (^${pkgs.coreutils}/bin/mktemp | str trim)
