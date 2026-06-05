@@ -5,14 +5,16 @@
   pkgs,
 }:
 
+let
+  piModelArg = lib.optionalString (cfg.model != null) ''
+    args+=(--model ${lib.escapeShellArg cfg.model})
+  '';
+  piThinkingArg = lib.optionalString (cfg.thinking != null) ''
+    args+=(--thinking ${lib.escapeShellArg cfg.thinking})
+  '';
+  fuzzyFinder = lib.escapeShellArg fuzzyFinderCommand;
+in
 ''
-        WORKTREE_PI_MODEL=${lib.escapeShellArg (if cfg.model == null then "" else cfg.model)}
-        WORKTREE_PI_THINKING=${lib.escapeShellArg (if cfg.thinking == null then "" else cfg.thinking)}
-        WORKTREE_FUZZY_FINDER=${lib.escapeShellArg fuzzyFinderCommand}
-        export WORKTREE_PI_MODEL WORKTREE_PI_THINKING WORKTREE_FUZZY_FINDER
-
-  set -euo pipefail
-
   if [[ -n "''${WORKTREE_CALLER_PWD:-}" ]]; then
   	cd "$WORKTREE_CALLER_PWD"
   fi
@@ -372,12 +374,8 @@
   	trap '${pkgs.coreutils}/bin/rm -f "$tmpfile" "$tmperr"' RETURN
 
   	local args=(--print)
-  	if [[ -n "''${WORKTREE_PI_MODEL:-}" ]]; then
-  		args+=(--model "$WORKTREE_PI_MODEL")
-  	fi
-  	if [[ -n "''${WORKTREE_PI_THINKING:-}" ]]; then
-  		args+=(--thinking "$WORKTREE_PI_THINKING")
-  	fi
+  	${piModelArg}
+  	${piThinkingArg}
   	args+=(--no-session --no-tools --no-extensions --no-skills --no-prompt-templates --no-context-files)
 
   	if ! pi "''${args[@]}" >"$tmpfile" 2>"$tmperr"; then
@@ -671,7 +669,7 @@
   select_worktree() {
   	local query="''${1:-}" selected matches count
   	if [[ -z "$query" ]]; then
-  		selected="$(list_worktrees_tsv | "$WORKTREE_FUZZY_FINDER" --header='Worktrees' --with-nth=1,2)"
+  		selected="$(list_worktrees_tsv | ${fuzzyFinder} --header='Worktrees' --with-nth=1,2)"
   		[[ -n "$selected" ]] || exit 0
   		printf '%s\n' "''${selected#*$'\t'}"
   		return 0
@@ -692,7 +690,7 @@
   	0) die "No worktree matches: $query" ;;
   	1) printf '%s\n' "''${matches#*$'\t'}" ;;
   	*)
-  		selected="$(printf '%s\n' "$matches" | "$WORKTREE_FUZZY_FINDER" --header="Worktrees matching: $query" --with-nth=1,2)"
+  		selected="$(printf '%s\n' "$matches" | ${fuzzyFinder} --header="Worktrees matching: $query" --with-nth=1,2)"
   		[[ -n "$selected" ]] || exit 0
   		printf '%s\n' "''${selected#*$'\t'}"
   		;;
@@ -1017,7 +1015,7 @@
   	local selected
   	selected="$(${pkgs.gh}/bin/gh pr list --limit 100 --json number,title,headRefName \
   		--jq '.[] | "#\(.number)\t\(.title)\t\(.headRefName)"' |
-  		"$WORKTREE_FUZZY_FINDER" --header='Pull requests' --with-nth=1,2,3)"
+  		${fuzzyFinder} --header='Pull requests' --with-nth=1,2,3)"
   	[[ -n "$selected" ]] || exit 0
   	selected="''${selected%%$'\t'*}"
   	printf '%s\n' "''${selected#\#}"
@@ -1118,7 +1116,7 @@
   	local records selected
   	records="$(managed_worktree_records_tsv)"
   	[[ -n "$records" ]] || die "No managed worktrees to delete"
-  	selected="$(printf '%s\n' "$records" | "$WORKTREE_FUZZY_FINDER" --header='Delete worktree' --with-nth=1,2,4)"
+  	selected="$(printf '%s\n' "$records" | ${fuzzyFinder} --header='Delete worktree' --with-nth=1,2,4)"
   	[[ -n "$selected" ]] || exit 0
   	printf '%s\n' "$selected"
   }
@@ -1152,7 +1150,7 @@
   	0) die "No managed worktree exactly matches: $arg" ;;
   	1) printf '%s\n' "$matches" ;;
   	*)
-  		selected="$(printf '%s\n' "$matches" | "$WORKTREE_FUZZY_FINDER" --header="Delete worktree matching: $arg" --with-nth=1,2,4)"
+  		selected="$(printf '%s\n' "$matches" | ${fuzzyFinder} --header="Delete worktree matching: $arg" --with-nth=1,2,4)"
   		[[ -n "$selected" ]] || exit 0
   		printf '%s\n' "$selected"
   		;;
