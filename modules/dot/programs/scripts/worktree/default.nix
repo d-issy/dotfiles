@@ -18,8 +18,6 @@ let
       ;
   };
 
-  shellIntegration = import ./shell-integration.nix { inherit pkgs; };
-
   worktree = pkgs.writeShellApplication {
     name = "worktree";
     runtimeInputs = [
@@ -29,6 +27,11 @@ let
       pkgs.gnused
     ];
     text = worktreeScript;
+  };
+
+  shellIntegration = import ./shell-integration.nix {
+    inherit pkgs;
+    worktreeBin = "${worktree}/bin/worktree";
   };
 in
 {

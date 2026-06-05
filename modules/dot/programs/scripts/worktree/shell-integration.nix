@@ -1,11 +1,11 @@
-{ pkgs }:
+{ pkgs, worktreeBin }:
 
 {
   zsh = ''
     function worktree() {
       local cd_file exit_code=0
       cd_file="$(${pkgs.coreutils}/bin/mktemp)"
-      WORKTREE_CD_FILE="$cd_file" command worktree "$@" || exit_code=$?
+      WORKTREE_CD_FILE="$cd_file" ${worktreeBin} "$@" || exit_code=$?
       if [[ -s "$cd_file" ]]; then
         builtin cd -- "$(<"$cd_file")" || exit_code=$?
       fi
@@ -22,7 +22,7 @@
 
       cd $safe_pwd
       with-env { WORKTREE_CD_FILE: $cd_file, WORKTREE_CALLER_PWD: $caller_pwd } {
-        do -i { ^worktree ...$args }
+        do -i { ^${worktreeBin} ...$args }
       }
       let exit_code = $env.LAST_EXIT_CODE
       if ($cd_file | path exists) {
