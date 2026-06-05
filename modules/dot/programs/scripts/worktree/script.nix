@@ -950,6 +950,12 @@ in
   	fi
   }
 
+  fetch_pr_ref() {
+  	local number="$1" temp_ref="$2"
+  	${pkgs.git}/bin/git fetch --no-prune origin "+refs/pull/$number/head:$temp_ref" \
+  		&& ${pkgs.git}/bin/git show-ref --verify --quiet "$temp_ref"
+  }
+
   open_pr_worktree() {
   	require_git_repo
   	command -v ${pkgs.gh}/bin/gh >/dev/null 2>&1 || die "gh CLI not found"
@@ -980,8 +986,11 @@ in
   			esac
   		fi
   		if [[ "$dirty" == false ]]; then
-  			${pkgs.git}/bin/git fetch origin "+pull/$number/head:$temp_ref"
-  			${pkgs.git}/bin/git -C "$target" reset --hard "$temp_ref"
+  			if fetch_pr_ref "$number" "$temp_ref"; then
+  				${pkgs.git}/bin/git -C "$target" reset --hard "$temp_ref"
+  			else
+  				warn "Could not update PR #$number; switching only."
+  			fi
   		fi
   		set_saved_window_for_branch "$branch" "$window"
   		open_path "$target" "$window"
@@ -992,7 +1001,7 @@ in
   		die "Path already exists: $target"
   	fi
 
-  	${pkgs.git}/bin/git fetch origin "+pull/$number/head:$temp_ref"
+  	fetch_pr_ref "$number" "$temp_ref" || die "Could not fetch PR #$number"
   	if branch_exists "$branch"; then
   		existing_path="$(branch_checked_out_path "$branch")"
   		if [[ -n "$existing_path" ]]; then
