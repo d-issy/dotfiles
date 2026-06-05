@@ -15,10 +15,14 @@
 
   dot.programs.scripts = {
     enable = true;
+
+    shellIntegration.zsh.enable = false;
+
     gitAutoCommit = {
       enable = true;
       thinking = "low";
     };
+
     worktree = {
       enable = true;
       thinking = "low";

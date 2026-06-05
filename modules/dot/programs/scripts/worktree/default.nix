@@ -61,15 +61,15 @@ in
 
     shellIntegration.zsh.enable = lib.mkOption {
       type = lib.types.bool;
-      default = config.programs.zsh.enable;
-      defaultText = lib.literalExpression "config.programs.zsh.enable";
+      default = config.dot.programs.scripts.shellIntegration.zsh.enable;
+      defaultText = lib.literalExpression "config.dot.programs.scripts.shellIntegration.zsh.enable";
       description = "Whether to install the worktree cd wrapper for zsh.";
     };
 
     shellIntegration.nushell.enable = lib.mkOption {
       type = lib.types.bool;
-      default = config.programs.nushell.enable;
-      defaultText = lib.literalExpression "config.programs.nushell.enable";
+      default = config.dot.programs.scripts.shellIntegration.nushell.enable;
+      defaultText = lib.literalExpression "config.dot.programs.scripts.shellIntegration.nushell.enable";
       description = "Whether to install the worktree cd wrapper for nushell.";
     };
   };
