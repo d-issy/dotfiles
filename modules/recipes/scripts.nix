@@ -5,5 +5,9 @@
       enable = true;
       thinking = "low";
     };
+    worktree = {
+      enable = true;
+      thinking = "low";
+    };
   };
 }
