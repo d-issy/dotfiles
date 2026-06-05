@@ -46,6 +46,7 @@ in
     worktree switch [<query>]
     worktree switch --pr [<number>]
     worktree rename [<new-branch>]
+    worktree prune [-f|--force]
     worktree delete [--keep-branch]
     worktree delete [--keep-branch] --current
     worktree delete [--keep-branch] .
@@ -57,6 +58,7 @@ in
     status        Show pending create / PR status for the current worktree.
     switch        Switch to an existing worktree, or open a GitHub PR worktree.
     rename        Rename the current branch, worktree directory, and tmux window.
+    prune         Delete merged local branches and their worktrees.
     delete        Delete a worktree directory and optionally its local branch.
 
   Options:
@@ -146,6 +148,33 @@ in
 
   Without <new-branch>, uses Pi to generate branch/window names from current
   changes and asks for confirmation.
+  EOF
+  }
+
+  show_prune_help() {
+  	${pkgs.coreutils}/bin/cat <<'EOF'
+  Usage:
+    worktree prune
+    worktree prune -f
+    worktree prune --force
+
+  Deletes local branches already merged into the base branch, and removes their
+  worktrees when present.
+
+  Base selection:
+    Uses origin/HEAD, then the current branch upstream, then HEAD. The command
+    does not fetch.
+
+  Safety:
+    - Never deletes remote branches or GitHub PRs.
+    - Never deletes the default branch.
+    - Skips the current worktree.
+    - Skips dirty worktrees unless -f/--force is used.
+    - Shows targets and asks Prune? [y/N] unless -f/--force is used.
+
+  Options:
+    -f, --force  Also delete dirty merged worktrees, without confirmation.
+    -h, --help   Show this help.
   EOF
   }
 
@@ -1267,6 +1296,183 @@ in
   	fi
   }
 
+  print_prune_table() {
+  	${pkgs.gawk}/bin/awk -F '\t' '
+        BEGIN {
+          rows[0] = "Branch\tWorktree\tDirty\tWindow"
+          n = 1
+          widths[1] = 6; widths[2] = 8; widths[3] = 5; widths[4] = 6
+        }
+        {
+          rows[n] = $0
+          for (i = 1; i <= 4; i++) {
+            if (length($i) > widths[i]) widths[i] = length($i)
+          }
+          n++
+        }
+        END {
+          for (r = 0; r < n; r++) {
+            split(rows[r], f, "\t")
+            printf "%-*s  %-*s  %-*s  %s\n", widths[1], f[1], widths[2], f[2], widths[3], f[3], f[4]
+          }
+        }
+      '
+  }
+
+  print_prune_skipped_table() {
+  	${pkgs.gawk}/bin/awk -F '\t' '
+        BEGIN {
+          rows[0] = "Branch\tReason\tWorktree"
+          n = 1
+          widths[1] = 6; widths[2] = 6; widths[3] = 8
+        }
+        {
+          rows[n] = $0
+          for (i = 1; i <= 3; i++) {
+            if (length($i) > widths[i]) widths[i] = length($i)
+          }
+          n++
+        }
+        END {
+          for (r = 0; r < n; r++) {
+            split(rows[r], f, "\t")
+            printf "%-*s  %-*s  %s\n", widths[1], f[1], widths[2], f[2], f[3]
+          }
+        }
+      '
+  }
+
+  collect_prune_records() {
+  	local base="$1" force="$2" targets="$3" skipped="$4"
+  	local default_branch current_root current_key main_root main_key branch path path_key dirty window
+  	default_branch="$(default_branch_name)"
+  	current_root="$(repo_root)"
+  	current_key="$(canonical_path "$current_root")"
+  	main_root="$(managed_repo_root)"
+  	main_key="$(canonical_path "$main_root")"
+
+  	: >"$targets"
+  	: >"$skipped"
+
+  	while IFS= read -r branch; do
+  		[[ -n "$branch" ]] || continue
+  		if [[ "$branch" == "$default_branch" ]]; then
+  			continue
+  		fi
+
+  		path="$(branch_checked_out_path "$branch")"
+  		if [[ -n "$path" ]]; then
+  			path_key="$(canonical_path "$path")"
+  			if [[ "$path_key" == "$current_key" ]]; then
+  				printf '%s\t%s\t%s\n' "$branch" "current worktree" "$path" >>"$skipped"
+  				continue
+  			fi
+  			if [[ "$path_key" == "$main_key" ]]; then
+  				printf '%s\t%s\t%s\n' "$branch" "main checkout" "$path" >>"$skipped"
+  				continue
+  			fi
+
+  			if [[ -n "$(${pkgs.git}/bin/git -C "$path" status --porcelain)" ]]; then
+  				dirty=yes
+  			else
+  				dirty=no
+  			fi
+  			if [[ "$dirty" == yes && "$force" == false ]]; then
+  				printf '%s\t%s\t%s\n' "$branch" "dirty worktree" "$path" >>"$skipped"
+  				continue
+  			fi
+  			window="$(tmux_window_name_for_path "$path" 2>/dev/null || true)"
+  			printf '%s\t%s\t%s\t%s\n' "$branch" "$path" "$dirty" "''${window:--}" >>"$targets"
+  		else
+  			printf '%s\t%s\t%s\t%s\n' "$branch" - no - >>"$targets"
+  		fi
+  	done < <(${pkgs.git}/bin/git for-each-ref --merged "$base" --format='%(refname:short)' refs/heads)
+  }
+
+  confirm_prune_records() {
+  	local response
+  	response=""
+  	if ! read -r -p "Prune? [y/N] " response </dev/tty; then
+  		die "Cancelled"
+  	fi
+  	case "$response" in
+  	[Yy] | [Yy][Ee][Ss]) return 0 ;;
+  	*) die "Cancelled" ;;
+  	esac
+  }
+
+  prune_records() {
+  	local targets="$1" branch path dirty _window remove_args=()
+  	while IFS=$'\t' read -r branch path dirty _window; do
+  		[[ -n "$branch" ]] || continue
+  		if [[ "$path" != - ]]; then
+  			remove_args=()
+  			if [[ "$dirty" == yes ]]; then
+  				remove_args+=(--force)
+  			fi
+  			${pkgs.git}/bin/git worktree remove "''${remove_args[@]}" "$path"
+  			remove_pending_state_for_path "$path"
+  			close_tmux_window_for_deleted_path "$path" "$(managed_repo_root)"
+  		fi
+  		${pkgs.git}/bin/git branch -D "$branch"
+  		unset_saved_window_for_branch "$branch"
+  		printf '%sPruned:%s %s\n' "$GREEN" "$RESET" "$branch"
+  	done <"$targets"
+  }
+
+  cmd_prune() {
+  	require_git_repo
+  	local force=false base tmpdir targets skipped target_count skipped_count
+  	while [[ $# -gt 0 ]]; do
+  		case "$1" in
+  		-h | --help)
+  			show_prune_help
+  			exit 0
+  			;;
+  		-f | --force)
+  			force=true
+  			shift
+  			;;
+  		*)
+  			die "Unknown prune option: $1"
+  			;;
+  		esac
+  	done
+
+  	base="$(default_base_ref)"
+  	${pkgs.git}/bin/git rev-parse --verify --quiet "$base^{commit}" >/dev/null || die "Could not resolve prune base: $base"
+  	tmpdir="$(${pkgs.coreutils}/bin/mktemp -d)"
+  	targets="$tmpdir/targets"
+  	skipped="$tmpdir/skipped"
+
+  	collect_prune_records "$base" "$force" "$targets" "$skipped"
+  	target_count="$(${pkgs.gnused}/bin/sed '/^$/d' "$targets" | ${pkgs.coreutils}/bin/wc -l | ${pkgs.coreutils}/bin/tr -d ' ')"
+  	skipped_count="$(${pkgs.gnused}/bin/sed '/^$/d' "$skipped" | ${pkgs.coreutils}/bin/wc -l | ${pkgs.coreutils}/bin/tr -d ' ')"
+
+  	printf 'Base: %s\n' "$base"
+  	if [[ "$target_count" -gt 0 ]]; then
+  		printf '\nPrune targets:\n'
+  		print_prune_table <"$targets"
+  	fi
+  	if [[ "$skipped_count" -gt 0 ]]; then
+  		printf '\nSkipped:\n'
+  		print_prune_skipped_table <"$skipped"
+  	fi
+  	if [[ "$target_count" -eq 0 ]]; then
+  		printf '\nNothing to prune.\n'
+  		${pkgs.coreutils}/bin/rm -rf "$tmpdir"
+  		return 0
+  	fi
+
+  	if [[ "$force" == false ]]; then
+  		printf '\n'
+  		confirm_prune_records
+  	fi
+
+  	prune_records "$targets"
+  	${pkgs.coreutils}/bin/rm -rf "$tmpdir"
+  }
+
   cmd_delete() {
   	require_git_repo
   	local arg="" record keep_branch=false
@@ -1399,6 +1605,10 @@ in
   	rename)
   		shift
   		cmd_rename "$@"
+  		;;
+  	prune)
+  		shift
+  		cmd_prune "$@"
   		;;
   	delete)
   		shift

@@ -8,6 +8,7 @@
     wtd = "worktree delete";
     wtdc = "worktree delete --current";
     wtl = "worktree list";
+    wtp = "worktree prune";
     wtr = "worktree rename";
     wts = "worktree status";
     wtsw = "worktree switch";
