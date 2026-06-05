@@ -77,7 +77,6 @@
     ./scripts.nix
     ./starship.nix
     ./tmux.nix
-    ./worktrunk.nix
     ./zed.nix
     ./zsh.nix
   ];
