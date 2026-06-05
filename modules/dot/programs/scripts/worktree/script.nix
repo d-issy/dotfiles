@@ -46,10 +46,10 @@ in
     worktree switch [<query>]
     worktree switch --pr [<number>]
     worktree rename [<new-branch>]
-    worktree delete
-    worktree delete --current
-    worktree delete .
-    worktree delete <name>
+    worktree delete [--keep-branch]
+    worktree delete [--keep-branch] --current
+    worktree delete [--keep-branch] .
+    worktree delete [--keep-branch] <name>
 
   Commands:
     create        Create a new worktree. Moves staged changes when present.
@@ -57,7 +57,7 @@ in
     status        Show pending create / PR status for the current worktree.
     switch        Switch to an existing worktree, or open a GitHub PR worktree.
     rename        Rename the current branch, worktree directory, and tmux window.
-    delete        Delete a worktree directory and its local branch.
+    delete        Delete a worktree directory and optionally its local branch.
 
   Options:
     -h, --help    Show help
@@ -152,12 +152,12 @@ in
   show_delete_help() {
   	${pkgs.coreutils}/bin/cat <<'EOF'
   Usage:
-    worktree delete
-    worktree delete --current
-    worktree delete .
-    worktree delete <name>
+    worktree delete [--keep-branch]
+    worktree delete [--keep-branch] --current
+    worktree delete [--keep-branch] .
+    worktree delete [--keep-branch] <name>
 
-  Deletes both the worktree directory and its local branch.
+  Deletes the worktree directory and, by default, its local branch.
 
   Target selection:
     worktree delete            Choose a managed worktree with the fuzzy finder.
@@ -166,12 +166,16 @@ in
     worktree delete <name>     Match exactly by branch name, path basename, or
                                tmux window name.
 
+  Options:
+    --keep-branch              Delete only the worktree directory and keep the
+                               local branch.
+
   Safety:
     - Always shows Branch, Path, and Window before asking Delete? [y/N].
     - Refuses to delete the main checkout.
     - Refuses detached/branchless worktrees.
     - Local changes require confirmation and are discarded only on y.
-    - Force-deletes the local branch with git branch -D.
+    - Force-deletes the local branch with git branch -D unless --keep-branch is used.
     - Never deletes remote branches or GitHub PRs.
   EOF
   }
@@ -1167,16 +1171,23 @@ in
   }
 
   confirm_delete_record() {
-  	local record="$1" branch window _managed path response
+  	local record="$1" keep_branch="$2" branch window _managed path response
   	IFS=$'\t' read -r branch window _managed path <<<"$record"
 
-  	printf '\nDelete worktree and local branch?\n\n' >/dev/tty
+  	if [[ "$keep_branch" == true ]]; then
+  		printf '\nDelete worktree and keep local branch?\n\n' >/dev/tty
+  	else
+  		printf '\nDelete worktree and local branch?\n\n' >/dev/tty
+  	fi
   	if [[ -n "$(${pkgs.git}/bin/git -C "$path" status --porcelain)" ]]; then
   		printf '%sWorktree has local changes. They will be discarded.%s\n\n' "$YELLOW" "$RESET" >/dev/tty
   	fi
   	printf '%sBranch:%s %s\n' "$BLUE" "$RESET" "$branch" >/dev/tty
   	printf '%sPath:%s %s\n' "$BLUE" "$RESET" "$path" >/dev/tty
   	printf '%sWindow:%s %s\n\n' "$BLUE" "$RESET" "$window" >/dev/tty
+  	if [[ "$keep_branch" == true ]]; then
+  		printf 'Local branch will be kept.\n' >/dev/tty
+  	fi
   	printf 'Remote branches and GitHub PRs will not be changed.\n\n' >/dev/tty
   	response=""
   	if ! read -r -p "Delete? [y/N] " response </dev/tty; then
@@ -1213,7 +1224,7 @@ in
   }
 
   delete_record() {
-  	local record="$1" branch window _managed path current_root current_key path_key destination dirty remove_args=()
+  	local record="$1" keep_branch="$2" branch window _managed path current_root current_key path_key destination dirty remove_args=()
   	IFS=$'\t' read -r branch window _managed path <<<"$record"
   	current_root="$(repo_root)"
   	current_key="$(canonical_path "$current_root")"
@@ -1221,7 +1232,7 @@ in
   	destination="$(managed_repo_root)"
   	[[ -d "$destination" ]] || destination="$HOME"
 
-  	confirm_delete_record "$record"
+  	confirm_delete_record "$record" "$keep_branch"
 
   	if [[ -n "$(${pkgs.git}/bin/git -C "$path" status --porcelain)" ]]; then
   		dirty=true
@@ -1235,8 +1246,10 @@ in
   	fi
 
   	${pkgs.git}/bin/git worktree remove "''${remove_args[@]}" "$path"
-  	${pkgs.git}/bin/git branch -D "$branch"
-  	unset_saved_window_for_branch "$branch"
+  	if [[ "$keep_branch" == false ]]; then
+  		${pkgs.git}/bin/git branch -D "$branch"
+  		unset_saved_window_for_branch "$branch"
+  	fi
   	remove_pending_state_for_path "$path"
 
   	if [[ "$current_key" == "$path_key" ]] && ! is_inside_tmux; then
@@ -1246,6 +1259,9 @@ in
 
   	printf '%sDeleted worktree.%s\n' "$GREEN" "$RESET"
   	printf 'Branch: %s\nPath: %s\nWindow: %s\n' "$branch" "$path" "$window"
+  	if [[ "$keep_branch" == true ]]; then
+  		printf 'Kept local branch.\n'
+  	fi
   	if [[ "$dirty" == true ]]; then
   		printf 'Discarded local changes.\n'
   	fi
@@ -1253,12 +1269,16 @@ in
 
   cmd_delete() {
   	require_git_repo
-  	local arg="" record
+  	local arg="" record keep_branch=false
   	while [[ $# -gt 0 ]]; do
   		case "$1" in
   		-h | --help)
   			show_delete_help
   			exit 0
+  			;;
+  		--keep-branch)
+  			keep_branch=true
+  			shift
   			;;
   		--current)
   			[[ -z "$arg" ]] || die "delete accepts only one target"
@@ -1275,7 +1295,7 @@ in
 
   	record="$(resolve_delete_record "$arg")"
   	ensure_deletable_record "$record"
-  	delete_record "$record"
+  	delete_record "$record" "$keep_branch"
   }
 
   update_pending_state_after_rename() {
