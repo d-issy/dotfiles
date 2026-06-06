@@ -16,8 +16,9 @@ Push local work to the remote branch.
 
 ## Tips
 
-- **Never rewrite history by default.** Do not amend, rebase, or force-push unless the user explicitly asks.
+- **Never rewrite history by default.** Do not amend, rebase, force-push, or use `--force-with-lease` unless the user explicitly asks.
 - **Add a commit instead.** If there are uncommitted changes, create a new commit and push it.
+- **Ask before risky branch operations.** If the safe path is unclear, stop and ask instead of guessing.
 
 ## Workflow
 

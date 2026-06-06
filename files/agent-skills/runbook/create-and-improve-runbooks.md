@@ -88,5 +88,5 @@ Walk through the runbook as if you were an agent seeing it for the first time. D
 ### 5. Place the File
 
 - Path: `files/agent-skills/runbook/<name>.md`
-- Naming: lowercase, hyphen-separated. Start with a base-form verb describing the action the user wants to perform. Prefer the most specific verb that matches the effect, such as `generate`, `create`, `copy`, `check`, `survey`, `delegate`, or `interpret`.
+- Naming: lowercase, hyphen-separated. Start with a base-form verb describing the action the user wants to perform. Prefer the most specific verb that matches the effect, such as `generate`, `create`, `copy`, `delegate`, or `interpret`.
 - `git add` and remind the user to switch

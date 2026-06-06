@@ -21,9 +21,9 @@ Create a pull request for the current branch. Default to draft mode.
 
 ## Workflow
 
-### 1. Check the Branch Diff
+### 1. Review the Branch Changes
 
-Follow the [check-git-branch-diff](check-git-branch-diff.md) runbook to identify the base branch and review the changes.
+Identify the base branch and review the changes against it. Start with a changed-file list, then inspect only the relevant diffs.
 
 ### 2. Generate Title and Body
 
