@@ -22,10 +22,9 @@ Generate a pull request body from the diff against the base branch.
 
 ## Workflow
 
-### 1. Check the Diff
+### 1. Review the Changes
 
-Follow the [check-git-branch-diff](check-git-branch-diff.md) runbook to identify the base branch and review changes.
-Skip if the changes are already well understood in the current session.
+Review the changes against the base branch. Start with a changed-file list, then inspect only the relevant diffs. Skip if the changes are already well understood in the current session.
 
 ### 2. Check for a PR Template
 
