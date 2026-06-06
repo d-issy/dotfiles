@@ -356,6 +356,31 @@ in
     '
   }
 
+  branch_upstream_gone() {
+  	local branch="$1" track
+  	track="$(${pkgs.git}/bin/git for-each-ref --format='%(upstream:track)' "refs/heads/$branch" 2>/dev/null || true)"
+  	[[ "$track" == "[gone]" ]]
+  }
+
+  branch_patch_merged() {
+  	local base="$1" branch="$2" cherry
+  	cherry="$(${pkgs.git}/bin/git cherry "$base" "$branch" 2>/dev/null || true)"
+  	[[ -n "$cherry" ]] || return 1
+  	printf '%s\n' "$cherry" | ${pkgs.gawk}/bin/awk '$1 == "+" { exit 1 }'
+  }
+
+  list_prune_branches() {
+  	local base="$1" branch
+  	while IFS= read -r branch; do
+  		[[ -n "$branch" ]] || continue
+  		if ${pkgs.git}/bin/git merge-base --is-ancestor "$branch" "$base" 2>/dev/null; then
+  			printf '%s\n' "$branch"
+  		elif branch_upstream_gone "$branch" && branch_patch_merged "$base" "$branch"; then
+  			printf '%s\n' "$branch"
+  		fi
+  	done < <(${pkgs.git}/bin/git for-each-ref --format='%(refname:short)' refs/heads)
+  }
+
   validate_new_branch_and_path() {
   	local branch="$1" path="$2"
   	${pkgs.git}/bin/git check-ref-format --branch "$branch" >/dev/null || die "Invalid branch name: $branch"
@@ -1386,7 +1411,7 @@ in
   		else
   			printf '%s\t%s\t%s\t%s\n' "$branch" - no - >>"$targets"
   		fi
-  	done < <(${pkgs.git}/bin/git for-each-ref --merged "$base" --format='%(refname:short)' refs/heads)
+  	done < <(list_prune_branches "$base")
   }
 
   confirm_prune_records() {
