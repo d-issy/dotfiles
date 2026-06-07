@@ -13,6 +13,11 @@ let
 
   borderToggle = ''if -F "#{==:#{window_panes},1}" "setw pane-border-status off" "setw pane-border-status ${cfg.paneBorder.title.position}"'';
   activeBorderToggle = ''if -F "#{==:#{window_panes},1}" "setw pane-active-border-style '${cfg.paneBorder.activeStyleWhenSinglePane}'" "setw pane-active-border-style '${cfg.paneBorder.activeStyle}'"'';
+  runInCurrentWindow = command: ''
+    if -F "#{window_id}" {
+      ${command}
+    }
+  '';
   activeBorderHookFlag = if cfg.paneBorder.hideWhenSinglePane then "-ag" else "-g";
   paneBorderTitleNotice = "#{?@pane_notice_icon, #{@pane_notice_icon} #{?@pane_notice_title,#{@pane_notice_title},#{pane_title}},#{?@status_notice_icon, #{@status_notice_icon} #{pane_title},#{pane_title}}}";
   paneBorderTitleFormat =
@@ -137,7 +142,9 @@ let
     ${
       if cfg.paneBorder.hideWhenSinglePane then
         ''
-          ${borderToggle}
+          ${runInCurrentWindow borderToggle}
+          set-hook -g session-created '${borderToggle}'
+          set-hook -g after-new-window '${borderToggle}'
           set-hook -g after-split-window '${borderToggle}'
           set-hook -g after-kill-pane '${borderToggle}'
           set-hook -g pane-exited '${borderToggle}'
@@ -154,7 +161,9 @@ let
     }
     ${mkSetGlobal "pane-active-border-style" "'${cfg.paneBorder.activeStyle}'"}
     ${lib.optionalString (cfg.paneBorder.activeStyleWhenSinglePane != null) ''
-      ${activeBorderToggle}
+      ${runInCurrentWindow activeBorderToggle}
+      set-hook ${activeBorderHookFlag} session-created '${activeBorderToggle}'
+      set-hook ${activeBorderHookFlag} after-new-window '${activeBorderToggle}'
       set-hook ${activeBorderHookFlag} after-split-window '${activeBorderToggle}'
       set-hook ${activeBorderHookFlag} after-kill-pane '${activeBorderToggle}'
       set-hook ${activeBorderHookFlag} pane-exited '${activeBorderToggle}'
