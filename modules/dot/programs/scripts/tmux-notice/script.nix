@@ -120,6 +120,8 @@
 
     set_tmux_option "$pane" "@tmux_notice_name" ""
     set_tmux_option "$pane" "@tmux_notice_icons" ""
+    set_tmux_option "$pane" "@tmux_notice_session_notification_indicator_color" ""
+    set_tmux_option "$pane" "@tmux_notice_session_indicator_color" ""
     set_tmux_option "$pane" "@tmux_notice_color" ""
     set_tmux_option "$pane" "@tmux_notice_original_title" ""
     set_tmux_option "$pane" "@tmux_notice_has_original_title" ""
@@ -275,14 +277,14 @@
           (($notice.stripPatterns // []) | if length == 0 then "-" else map("/" + . + "/") | join(", ") end);
         def pane_title($notice):
           if ($notice.paneTitle.enable // false) then "set" else "unchanged" end;
-        def color($notice):
-          ($notice.color // "-");
+        def session_notification_color($notice):
+          ($notice.sessionNotificationIndicatorColor // "-");
         def row($name; $notice):
           [
             $name,
             ($notice.titleMode // "current"),
             pane_title($notice),
-            color($notice),
+            session_notification_color($notice),
             strip_patterns($notice),
             animation($notice)
           ] | @tsv;
@@ -293,7 +295,7 @@
     )
 
     printf 'Usage: tmux-notice on <notice>\n\n'
-    print_list_row "notice" "title" "paneTitle" "color" "strip" "animation" "$strip_width"
+    print_list_row "notice" "title" "paneTitle" "session" "strip" "animation" "$strip_width"
     print_list_row "----------------" "--------" "----------" "-------" "$(printf '%*s' "$strip_width" "" | tr " " "-")" "---------" "$strip_width"
     for row in "''${rows[@]}"; do
       IFS=$'\t' read -r name title_mode pane_title color strip_patterns animation <<<"$row"
@@ -351,7 +353,7 @@
     local title
     local first_icon
     local icons
-    local color
+    local session_notification_indicator_color
     local pane_title_enabled
     local pane_title_template
     local pane_title_restore
@@ -361,7 +363,7 @@
     title=$(notice_title "$notice_json" "$current_title" "$name")
     first_icon=$(jq -r 'if ((.icons // []) | length) > 0 then .icons[0] else "•" end' <<<"$notice_json")
     icons=$(jq -r 'if ((.icons // []) | length) > 0 then .icons | join("|") else "•" end' <<<"$notice_json")
-    color=$(jq -r '.color // ""' <<<"$notice_json")
+    session_notification_indicator_color=$(jq -r '.sessionNotificationIndicatorColor // ""' <<<"$notice_json")
     pane_title_enabled=$(jq -r '.paneTitle.enable // false' <<<"$notice_json")
     pane_title_template=$(jq -r '.paneTitle.template // "{icon} {title}"' <<<"$notice_json")
     pane_title_restore=$(jq -r '.paneTitle.restoreOnClear // true' <<<"$notice_json")
@@ -373,7 +375,9 @@
 
     set_tmux_option "$pane" "@tmux_notice_name" "$name"
     set_tmux_option "$pane" "@tmux_notice_icons" "$icons"
-    set_tmux_option "$pane" "@tmux_notice_color" "$color"
+    set_tmux_option "$pane" "@tmux_notice_session_notification_indicator_color" "$session_notification_indicator_color"
+    set_tmux_option "$pane" "@tmux_notice_session_indicator_color" ""
+    set_tmux_option "$pane" "@tmux_notice_color" ""
     set_tmux_option "$pane" "@status_notice_icon" "$first_icon"
     set_tmux_option "$pane" "@pane_notice_icon" "$first_icon"
     set_tmux_option "$pane" "@pane_notice_title" "$title"

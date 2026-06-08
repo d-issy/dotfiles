@@ -22,10 +22,10 @@ let
         description = "Optional notice title used by titleMode = notice, or as current-title fallback.";
       };
 
-      color = lib.mkOption {
+      sessionNotificationIndicatorColor = lib.mkOption {
         type = lib.types.nullOr lib.types.str;
         default = null;
-        description = "Optional tmux foreground color used for this notice indicator.";
+        description = "Optional tmux foreground color used for this notice in the session notification indicator.";
       };
 
       titleMode = lib.mkOption {
