@@ -5,36 +5,42 @@ description: Use only when the user explicitly mentions Pi project tools, .pi/se
 
 # Project Tools
 
-Pi is the coding agent. A Pi project tool is a tool definition written by a repository in `.pi/settings.user.json` under `tools`.
+Pi project tools are repository-defined tools in `.pi/settings.user.json` under `tools`. They become callable Pi tools only for that project.
 
-Use this skill only when the user explicitly asks about one of these things:
+Use this skill only for:
 
 - Pi project tools
 - `.pi/settings.user.json` `tools`
 - adding, editing, renaming, removing, reviewing, or explaining a Pi tool definition
 
-Do not use this skill for general shell commands, ordinary lint/test/format requests, or non-Pi tool configuration.
+Do not use this skill for ordinary shell commands, lint/test/format requests, or non-Pi tool configuration.
 
-Project tools become callable Pi tools for that project only.
+## Workflow
 
-## Safety
+1. Inspect existing `.pi/settings.user.json` before editing.
+2. Preserve unrelated settings and unrelated `tools` entries.
+3. Add, rename, remove, or modify only the requested tool entries.
+4. Validate JSON after editing.
+5. Summarize changed tool names, commands, parameters, execution mode, and allowed modes.
+
+## Safety and style
 
 - Treat project tools as project-controlled command execution.
-- Prefer `allowedModes: ["read"]` for non-mutating checks.
-- Use `allowedModes: ["write"]` only for commands that modify the working tree, such as formatters.
-- Keep `allowedModes` to `read` and/or `write` unless the user explicitly requests otherwise.
-- Keep commands deterministic and scoped to the repository.
+- Prefer `allowedModes: ["read", "write"]` for non-mutating checks so they are available in both read and write modes.
+- Use `allowedModes: ["read"]` only when a read-only tool should be unavailable during write mode.
+- Use `allowedModes: ["write"]` for commands that modify the working tree, such as formatters.
+- Keep `allowedModes` to `read` and/or `write`.
 - Avoid commands that read secrets, access credentials, or modify paths outside the project.
+- Keep commands deterministic and scoped to the repository.
 - Set `timeoutSeconds` for commands that might hang.
-- Use `executionMode: "parallel"` only when the project tool is safe to run concurrently with other tool calls.
+- Use `executionMode: "parallel"` only when safe to run concurrently with other tool calls.
 - Prefer structured `command` + `arguments` over free-form shell strings.
 - Put fixed subcommands in `arguments`, not in `command`.
-- Use parameter placeholders only as whole arguments, e.g. `"{{path}}"`; do not embed them inside larger strings.
-- Parameter values are shell-quoted by the extension and are passed as single arguments. Do not add extra quoting around `"{{param}}"`.
+- Use parameter placeholders only as whole arguments, e.g. `"{{path}}"`.
+- Parameter values are shell-quoted and passed as single arguments; do not add extra quotes.
+- For variable-length inputs, use an `array` parameter with a `values` entry; do not invent fixed `path1`, `path2`, `path3` parameters.
 
 ## Settings shape
-
-Add or update `.pi/settings.user.json`:
 
 ```json
 {
@@ -56,52 +62,75 @@ Add or update `.pi/settings.user.json`:
 }
 ```
 
-Tool config fields:
+## Tool fields
 
 - `description` required; explain what the tool does.
-- `allowedModes` required; non-empty array. Use `read` and/or `write` for normal project tools.
-- `commands` required; non-empty array. Commands run in parallel within one project tool call.
-- `parameters` optional; object of LLM-provided parameters for this tool.
-- `executionMode` optional; `sequential` or `parallel`. Defaults to `sequential`. Use `parallel` only when this project tool is safe to run concurrently with other tool calls.
-- `cwd` optional; relative path inside the project root. Omit `cwd` when running from the project root.
+- `allowedModes` required; non-empty array of `read` and/or `write`.
+- `commands` required; non-empty array. Commands in one project tool run in parallel.
+- `parameters` optional; object of LLM-provided parameters.
+- `executionMode` optional; `sequential` or `parallel`. Defaults to `sequential`.
+- `cwd` optional; relative path inside the project root.
 - `timeoutSeconds` optional; default timeout for commands.
 - `promptSnippet` optional; one-line LLM-facing tool summary.
 - `promptGuidelines` optional; bullets that must name the tool explicitly.
 
-Parameter fields (`tools.<name>.parameters.<paramName>`):
+## Parameter fields
 
-- `type` required; one of `string`, `number`, or `boolean`.
-- `description` optional but recommended; explain what value the LLM should provide.
-- `required` optional; defaults to `false`. Set `true` for required parameters.
+`tools.<name>.parameters.<paramName>`:
 
-Command fields:
+- `type` required; `string`, `number`, `boolean`, `array`, or shorthand `string[]`, `number[]`, `boolean[]`.
+- `items` required only for `array`; object with `type` of `string`, `number`, or `boolean`.
+- `description` optional but recommended.
+- `required` optional; defaults to `false`.
 
-- `command` required; executable/program name as a single command token, e.g. `"brain"`, `"pnpm"`, or `"nix"`.
-- `arguments` optional; ordered array of fixed arguments, parameter placeholders, flags, and options.
-- `label` optional; display label in tool output.
-- `cwd` optional; relative path inside the project root. Omit `cwd` when running from the project root.
+Example:
+
+```json
+"parameters": {
+  "path": { "type": "string", "description": "Path to check.", "required": true },
+  "paths": { "type": "string[]", "description": "Paths to check." },
+  "detail": { "type": "boolean", "description": "Show detailed output." },
+  "top": { "type": "number", "description": "Number of entries." }
+}
+```
+
+## Command fields
+
+- `command` required; executable as a single token, e.g. `"brain"`, `"pnpm"`, `"nix"`.
+- `arguments` optional; ordered fixed args, placeholders, flags, options, and array expansions.
+- `label` optional; display label in output.
+- `cwd` optional; relative path inside the project root.
 - `timeoutSeconds` optional; overrides the tool default.
 
-Argument entries:
+## Argument entries
 
 - Fixed argument: `"rule"`
-- Parameter argument: `"{{path}}"`
+- Scalar parameter: `"{{path}}"`
   - References a `string`, `number`, or `boolean` parameter.
-  - If the parameter is optional and omitted, this argument is omitted.
-  - Empty string `""` is treated as provided and passed as an empty argument.
+  - Optional omitted values are omitted.
+  - Empty string `""` is passed as an empty argument.
+  - Array parameters cannot use this form; use `values` with `style`.
 - Boolean flag: `{ "flag": "--detail", "when": "detail" }`
   - `when` must reference a `boolean` parameter.
-  - The flag is included only when the parameter is `true`.
+  - Included only when the parameter is `true`.
 - Value option: `{ "option": "--top", "value": "{{top}}" }`
   - `value` must reference a `string` or `number` parameter.
-  - If the parameter is optional and omitted, both option name and value are omitted.
+  - Optional omitted values omit both option and value.
+- Array repeat option: `{ "option": "--path", "values": "{{paths}}", "style": "repeat" }`
+  - Expands to `--path a --path b --path c`.
+- Array positional spread: `{ "values": "{{paths}}", "style": "spread" }`
+  - Expands to `a b c`.
+- Array join: `{ "option": "--paths", "values": "{{paths}}", "style": "join", "separator": "," }`
+  - Expands to `--paths a,b,c`; without `option`, expands to `a,b,c`.
+  - `separator` is required for `join`.
+- For every `values` entry, `style` is required and `values` must reference an `array` parameter.
+- Optional omitted arrays and empty arrays expand to no arguments.
 
 ## Naming
 
 - Tool names must match `^[a-z][a-z0-9_-]*$`.
-- Parameter names must start with a letter or `_` and then use letters, numbers, `_`, or `-`.
-- Use concise names like `lint`, `test`, `format`, `check_types`, `homemanager_switch`, `brain_rule_match`.
-- Do not conflict with built-in or extension tools.
+- Parameter names must start with a letter or `_`, then use letters, numbers, `_`, or `-`.
+- Do not conflict with built-in tools (`read`, `write`, `edit`, `bash`, `grep`, `find`, `ls`, `mv`, `rm`) or extension tools.
 
 ## Examples
 
@@ -115,80 +144,14 @@ Read-only check:
       "allowedModes": ["read", "write"],
       "executionMode": "parallel",
       "commands": [
-        {
-          "label": "lint",
-          "command": "pnpm",
-          "arguments": ["lint"],
-          "timeoutSeconds": 120
-        }
+        { "label": "lint", "command": "pnpm", "arguments": ["lint"], "timeoutSeconds": 120 }
       ]
     }
   }
 }
 ```
 
-Formatter:
-
-```json
-{
-  "tools": {
-    "format": {
-      "description": "Format the project in place.",
-      "allowedModes": ["write"],
-      "commands": [
-        { "label": "treefmt", "command": "treefmt", "timeoutSeconds": 120 }
-      ]
-    }
-  }
-}
-```
-
-Multiple parallel checks:
-
-```json
-{
-  "tools": {
-    "check": {
-      "description": "Run project checks in parallel.",
-      "allowedModes": ["read", "write"],
-      "executionMode": "parallel",
-      "commands": [
-        { "label": "types", "command": "pnpm", "arguments": ["lint"], "timeoutSeconds": 120 },
-        { "label": "nix", "command": "nix", "arguments": ["flake", "check"], "timeoutSeconds": 600 }
-      ]
-    }
-  }
-}
-```
-
-Parameterized path command:
-
-```json
-{
-  "tools": {
-    "brain_rule_match": {
-      "description": "Show brain rules that apply to a path.",
-      "allowedModes": ["read"],
-      "parameters": {
-        "path": {
-          "type": "string",
-          "description": "Path to check.",
-          "required": true
-        }
-      },
-      "commands": [
-        {
-          "label": "brain rule match",
-          "command": "brain",
-          "arguments": ["rule", "match", "{{path}}"]
-        }
-      ]
-    }
-  }
-}
-```
-
-Flags and value options in a specific order:
+Parameterized command with flag and option:
 
 ```json
 {
@@ -197,14 +160,8 @@ Flags and value options in a specific order:
       "description": "Count approximate brain tokens.",
       "allowedModes": ["read"],
       "parameters": {
-        "detail": {
-          "type": "boolean",
-          "description": "Show detailed output."
-        },
-        "top": {
-          "type": "number",
-          "description": "Number of top entries to show."
-        }
+        "detail": { "type": "boolean", "description": "Show detailed output." },
+        "top": { "type": "number", "description": "Number of top entries." }
       },
       "commands": [
         {
@@ -223,11 +180,32 @@ Flags and value options in a specific order:
 }
 ```
 
-## Workflow
+Variable-length repeat option:
 
-1. Inspect existing `.pi/settings.user.json` before editing.
-2. Preserve unrelated settings and unrelated `tools` entries.
-3. Add, rename, remove, or modify only the requested `tools` entries.
-4. Keep each tool's `description`, `allowedModes`, `executionMode`, `parameters`, and `commands` consistent with the command behavior.
-5. Validate that `.pi/settings.user.json` remains valid JSON.
-6. Summarize the changed tool names, commands, parameters, execution mode, and allowed modes.
+```json
+{
+  "tools": {
+    "brain_context_suggest": {
+      "description": "Suggest applicable brain context files.",
+      "allowedModes": ["read"],
+      "parameters": {
+        "paths": { "type": "string[]", "description": "Paths to consider." },
+        "query": { "type": "string", "description": "Optional query to guide suggestions." }
+      },
+      "commands": [
+        {
+          "label": "brain context suggest",
+          "command": "brain",
+          "arguments": [
+            "context",
+            "suggest",
+            { "option": "--path", "values": "{{paths}}", "style": "repeat" },
+            { "option": "--query", "value": "{{query}}" }
+          ],
+          "timeoutSeconds": 60
+        }
+      ]
+    }
+  }
+}
+```
