@@ -46,22 +46,55 @@ type ProjectToolSettings = {
 	tools?: unknown;
 };
 
-type ProjectParameterType = "string" | "number" | "boolean";
+type ProjectScalarParameterType = "string" | "number" | "boolean";
+type ProjectArrayItemType = ProjectScalarParameterType;
 type ProjectToolExecutionMode = "sequential" | "parallel";
+type ProjectArrayArgumentStyle = "repeat" | "spread" | "join";
 
-type ProjectParameterConfig = {
-	readonly type: ProjectParameterType;
+type ProjectScalarParameterConfig = {
+	readonly type: ProjectScalarParameterType;
 	readonly description?: string;
 	readonly required: boolean;
 };
 
-type ProjectToolInput = Record<string, string | number | boolean | undefined>;
+type ProjectArrayParameterConfig = {
+	readonly type: "array";
+	readonly items: { readonly type: ProjectArrayItemType };
+	readonly description?: string;
+	readonly required: boolean;
+};
+
+type ProjectParameterConfig =
+	| ProjectScalarParameterConfig
+	| ProjectArrayParameterConfig;
+
+type ProjectScalarParameterValue = string | number | boolean;
+type ProjectArrayParameterValue = readonly ProjectScalarParameterValue[];
+type ProjectParameterValue =
+	| ProjectScalarParameterValue
+	| ProjectArrayParameterValue;
+
+type ProjectToolInput = Record<string, ProjectParameterValue | undefined>;
 
 type ProjectToolCommandArgument =
 	| { readonly kind: "literal"; readonly value: string }
 	| { readonly kind: "param"; readonly name: string }
 	| { readonly kind: "flag"; readonly flag: string; readonly when: string }
-	| { readonly kind: "option"; readonly option: string; readonly name: string };
+	| { readonly kind: "option"; readonly option: string; readonly name: string }
+	| {
+			readonly kind: "array";
+			readonly style: "repeat";
+			readonly option: string;
+			readonly name: string;
+	  }
+	| { readonly kind: "array"; readonly style: "spread"; readonly name: string }
+	| {
+			readonly kind: "array";
+			readonly style: "join";
+			readonly option?: string;
+			readonly name: string;
+			readonly separator: string;
+	  };
 
 type ProjectToolCommandConfig = {
 	readonly label?: string;
@@ -205,6 +238,21 @@ function resolveProjectCwd(
 	return { absolute, display: rel };
 }
 
+function isScalarParameterType(
+	value: unknown,
+): value is ProjectScalarParameterType {
+	return value === "string" || value === "number" || value === "boolean";
+}
+
+function parseArrayParameterType(
+	value: unknown,
+): ProjectArrayItemType | undefined {
+	if (value === "string[]") return "string";
+	if (value === "number[]") return "number";
+	if (value === "boolean[]") return "boolean";
+	return undefined;
+}
+
 function normalizeParameter(
 	name: string,
 	value: unknown,
@@ -216,23 +264,47 @@ function normalizeParameter(
 		);
 	}
 	if (!isObject(value)) throw new Error(`${path}.${name} must be an object.`);
+	const shorthandArrayItemType = parseArrayParameterType(value.type);
 	if (
-		value.type !== "string" &&
-		value.type !== "number" &&
-		value.type !== "boolean"
+		!isScalarParameterType(value.type) &&
+		value.type !== "array" &&
+		shorthandArrayItemType === undefined
 	) {
-		throw new Error(`${path}.${name}.type must be string, number, or boolean.`);
+		throw new Error(
+			`${path}.${name}.type must be string, number, boolean, array, string[], number[], or boolean[].`,
+		);
 	}
 	if (value.required !== undefined && typeof value.required !== "boolean") {
 		throw new Error(`${path}.${name}.required must be a boolean.`);
 	}
-	return {
-		type: value.type,
+	const common = {
 		description: normalizeOptionalString(
 			value.description,
 			`${path}.${name}.description`,
 		),
 		required: value.required ?? false,
+	};
+	if (isScalarParameterType(value.type)) return { type: value.type, ...common };
+	if (shorthandArrayItemType !== undefined) {
+		return {
+			type: "array",
+			items: { type: shorthandArrayItemType },
+			...common,
+		};
+	}
+
+	if (!isObject(value.items)) {
+		throw new Error(`${path}.${name}.items must be an object.`);
+	}
+	if (!isScalarParameterType(value.items.type)) {
+		throw new Error(
+			`${path}.${name}.items.type must be string, number, or boolean.`,
+		);
+	}
+	return {
+		type: "array",
+		items: { type: value.items.type },
+		...common,
 	};
 }
 
@@ -285,6 +357,16 @@ function parseRequiredParameterPlaceholder(
 	return name;
 }
 
+function normalizeArrayArgumentStyle(
+	value: unknown,
+	path: string,
+): ProjectArrayArgumentStyle {
+	if (value === "repeat" || value === "spread" || value === "join") {
+		return value;
+	}
+	throw new Error(`${path} must be repeat, spread, or join.`);
+}
+
 function normalizeArgument(
 	value: unknown,
 	path: string,
@@ -293,20 +375,32 @@ function normalizeArgument(
 	if (typeof value === "string") {
 		const name = parseOptionalParameterPlaceholder(value, path);
 		if (!name) return { kind: "literal", value };
-		getParameter(parameters, name, path);
+		const parameter = getParameter(parameters, name, path);
+		if (parameter.type === "array") {
+			throw new Error(
+				`${path} references array parameter '${name}'. Use an object with values and style.`,
+			);
+		}
 		return { kind: "param", name };
 	}
 
 	if (!isObject(value)) {
 		throw new Error(
-			`${path} must be a string, a flag object, or an option object.`,
+			`${path} must be a string, a flag object, an option object, or an array values object.`,
 		);
 	}
 
 	const hasFlag = "flag" in value;
 	const hasOption = "option" in value;
-	if (hasFlag && hasOption) {
-		throw new Error(`${path} cannot contain both flag and option.`);
+	const hasValue = "value" in value;
+	const hasValues = "values" in value;
+	if (hasFlag && (hasOption || hasValue || hasValues)) {
+		throw new Error(
+			`${path} flag arguments cannot contain option, value, or values.`,
+		);
+	}
+	if (hasValue && hasValues) {
+		throw new Error(`${path} cannot contain both value and values.`);
 	}
 
 	if (hasFlag) {
@@ -319,6 +413,48 @@ function normalizeArgument(
 			throw new Error(`${path}.when must reference a boolean parameter.`);
 		}
 		return { kind: "flag", flag, when };
+	}
+
+	if (hasValues) {
+		const valuesReference = normalizeOptionalString(
+			value.values,
+			`${path}.values`,
+		);
+		if (!valuesReference) throw new Error(`${path}.values is required.`);
+		const name = parseRequiredParameterPlaceholder(
+			valuesReference,
+			`${path}.values`,
+		);
+		const parameter = getParameter(parameters, name, `${path}.values`);
+		if (parameter.type !== "array") {
+			throw new Error(`${path}.values must reference an array parameter.`);
+		}
+		const style = normalizeArrayArgumentStyle(value.style, `${path}.style`);
+		const option = hasOption
+			? normalizeOptionalString(value.option, `${path}.option`)
+			: undefined;
+		if (hasOption && !option) throw new Error(`${path}.option is required.`);
+
+		if (style === "repeat") {
+			if (!option)
+				throw new Error(`${path}.option is required for repeat style.`);
+			return { kind: "array", style, option, name };
+		}
+		if (style === "spread") {
+			if (option)
+				throw new Error(`${path}.option is not allowed for spread style.`);
+			return { kind: "array", style, name };
+		}
+
+		const separator = normalizeOptionalString(
+			value.separator,
+			`${path}.separator`,
+		);
+		if (!separator)
+			throw new Error(`${path}.separator is required for join style.`);
+		return option
+			? { kind: "array", style, option, name, separator }
+			: { kind: "array", style, name, separator };
 	}
 
 	if (hasOption) {
@@ -334,7 +470,7 @@ function normalizeArgument(
 			`${path}.value`,
 		);
 		const parameter = getParameter(parameters, name, `${path}.value`);
-		if (parameter.type === "boolean") {
+		if (parameter.type === "boolean" || parameter.type === "array") {
 			throw new Error(
 				`${path}.value must reference a string or number parameter.`,
 			);
@@ -342,7 +478,7 @@ function normalizeArgument(
 		return { kind: "option", option, name };
 	}
 
-	throw new Error(`${path} must contain either flag or option.`);
+	throw new Error(`${path} must contain flag, option, or values.`);
 }
 
 function normalizeCommand(
@@ -375,13 +511,26 @@ function normalizeCommand(
 	};
 }
 
+function createScalarParameterSchema(
+	type: ProjectScalarParameterType,
+	options: { description: string } | undefined,
+): TSchema {
+	if (type === "string") return Type.String(options);
+	if (type === "number") return Type.Number(options);
+	return Type.Boolean(options);
+}
+
 function createParameterSchema(parameter: ProjectParameterConfig): TSchema {
 	const options = parameter.description
 		? { description: parameter.description }
 		: undefined;
-	if (parameter.type === "string") return Type.String(options);
-	if (parameter.type === "number") return Type.Number(options);
-	return Type.Boolean(options);
+	if (parameter.type === "array") {
+		return Type.Array(
+			createScalarParameterSchema(parameter.items.type, undefined),
+			options,
+		);
+	}
+	return createScalarParameterSchema(parameter.type, options);
 }
 
 function buildParameterSchema(
@@ -401,7 +550,13 @@ function formatArgumentForDisplay(
 	if (argument.kind === "literal") return argument.value;
 	if (argument.kind === "param") return `{{${argument.name}}}`;
 	if (argument.kind === "flag") return `${argument.flag} when ${argument.when}`;
-	return `${argument.option} {{${argument.name}}}`;
+	if (argument.kind === "option")
+		return `${argument.option} {{${argument.name}}}`;
+	if (argument.style === "repeat")
+		return `${argument.option} {{${argument.name}}}...`;
+	if (argument.style === "spread") return `{{${argument.name}}}...`;
+	const joined = `join({{${argument.name}}}, ${JSON.stringify(argument.separator)})`;
+	return argument.option ? `${argument.option} ${joined}` : joined;
 }
 
 function formatConfiguredCommand(command: ProjectToolCommandConfig): string {
@@ -630,16 +785,58 @@ function shellQuote(value: string): string {
 }
 
 function hasParameterValue(
-	value: string | number | boolean | undefined,
-): value is string | number | boolean {
+	value: ProjectParameterValue | undefined,
+): value is ProjectParameterValue {
 	return value !== undefined;
 }
 
-function stringifyParameterValue(value: string | number | boolean): string {
+function stringifyParameterValue(value: ProjectScalarParameterValue): string {
 	if (typeof value === "number" && !Number.isFinite(value)) {
 		throw new Error("Parameter values must be finite numbers.");
 	}
 	return String(value);
+}
+
+function isProjectArrayParameterValue(
+	value: ProjectParameterValue,
+): value is ProjectArrayParameterValue {
+	return Array.isArray(value);
+}
+
+function getScalarParameterValue(
+	value: ProjectParameterValue | undefined,
+	name: string,
+): ProjectScalarParameterValue | undefined {
+	if (!hasParameterValue(value)) return undefined;
+	if (isProjectArrayParameterValue(value)) {
+		throw new Error(`Parameter '${name}' must be a scalar value.`);
+	}
+	return value;
+}
+
+function getArrayParameterValue(
+	value: ProjectParameterValue | undefined,
+	name: string,
+): ProjectArrayParameterValue | undefined {
+	if (!hasParameterValue(value)) return undefined;
+	if (!isProjectArrayParameterValue(value)) {
+		throw new Error(`Parameter '${name}' must be an array value.`);
+	}
+	return value;
+}
+
+function renderArrayArgument(
+	argument: Extract<ProjectToolCommandArgument, { readonly kind: "array" }>,
+	value: ProjectArrayParameterValue,
+): string[] {
+	if (value.length === 0) return [];
+	const values = value.map(stringifyParameterValue);
+	if (argument.style === "spread") return values;
+	if (argument.style === "repeat") {
+		return values.flatMap((item) => [argument.option, item]);
+	}
+	const joined = values.join(argument.separator);
+	return argument.option ? [argument.option, joined] : [joined];
 }
 
 function renderCommandArguments(
@@ -653,19 +850,30 @@ function renderCommandArguments(
 			continue;
 		}
 		if (argument.kind === "param") {
-			const value = params[argument.name];
-			if (hasParameterValue(value)) args.push(stringifyParameterValue(value));
+			const value = getScalarParameterValue(
+				params[argument.name],
+				argument.name,
+			);
+			if (value !== undefined) args.push(stringifyParameterValue(value));
 			continue;
 		}
 		if (argument.kind === "flag") {
 			if (params[argument.when] === true) args.push(argument.flag);
 			continue;
 		}
-
-		const value = params[argument.name];
-		if (hasParameterValue(value)) {
-			args.push(argument.option, stringifyParameterValue(value));
+		if (argument.kind === "option") {
+			const value = getScalarParameterValue(
+				params[argument.name],
+				argument.name,
+			);
+			if (value !== undefined) {
+				args.push(argument.option, stringifyParameterValue(value));
+			}
+			continue;
 		}
+
+		const value = getArrayParameterValue(params[argument.name], argument.name);
+		if (value !== undefined) args.push(...renderArrayArgument(argument, value));
 	}
 	return args;
 }
@@ -882,20 +1090,30 @@ function isProjectToolDetails(value: unknown): value is ProjectToolDetails {
 	);
 }
 
-function formatParameterValueForDisplay(
-	value: string | number | boolean,
+function formatScalarParameterValueForDisplay(
+	value: ProjectScalarParameterValue,
 ): string {
-	let text: string;
 	if (typeof value === "string") {
-		text = value === "" ? '""' : value.replace(/[\r\n\t]/gu, " ");
+		return value === "" ? '""' : value.replace(/[\r\n\t]/gu, " ");
+	}
+	return String(value);
+}
+
+function formatParameterValueForDisplay(value: ProjectParameterValue): string {
+	let text: string;
+	if (isProjectArrayParameterValue(value)) {
+		text =
+			value.length === 1
+				? formatScalarParameterValueForDisplay(value[0])
+				: `[${value.map(formatScalarParameterValueForDisplay).join(", ")}]`;
 	} else {
-		text = String(value);
+		text = formatScalarParameterValueForDisplay(value);
 	}
 	return text.length > 80 ? `${text.slice(0, 77)}...` : text;
 }
 
 function formatParameterRecordForDisplay(
-	parameters: Readonly<Record<string, string | number | boolean>>,
+	parameters: Readonly<Record<string, ProjectParameterValue>>,
 	theme: Theme,
 ): string {
 	const parts = Object.entries(parameters).map(
@@ -914,7 +1132,7 @@ function formatParametersForDisplay(
 	params: ProjectToolInput,
 	theme: Theme,
 ): string {
-	const parameters: Record<string, string | number | boolean> = {};
+	const parameters: Record<string, ProjectParameterValue> = {};
 	for (const name of Object.keys(tool.parameters)) {
 		const value = params[name];
 		if (hasParameterValue(value)) parameters[name] = value;
