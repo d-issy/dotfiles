@@ -274,7 +274,7 @@
         def animation($notice):
           (($notice.icons // []) | map(icon_label) | join(" -> "));
         def strip_patterns($notice):
-          (($notice.stripPatterns // []) | if length == 0 then "-" else map("/" + . + "/") | join(", ") end);
+          (($notice.titleStripPatterns // []) | if length == 0 then "-" else map("/" + . + "/") | join(", ") end);
         def pane_title($notice):
           if ($notice.paneTitle.enable // false) then "set" else "unchanged" end;
         def session_notification_color($notice):
@@ -312,7 +312,7 @@
       --arg current "$current_title" \
       --arg name "$name" '
         def strip_patterns($s):
-          reduce (($notice.stripPatterns // [])[]) as $pattern ($s; sub($pattern; ""));
+          reduce (($notice.titleStripPatterns // [])[]) as $pattern ($s; sub($pattern; ""));
 
         ($notice.titleMode // "current") as $mode
         | if $mode == "none" then

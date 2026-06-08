@@ -36,7 +36,7 @@
             " "
           ];
           sessionNotificationIndicatorColor = "#8ec07c";
-          stripPatterns = [ "^(π| )\\s*" ];
+          titleStripPatterns = [ "^(π| )\\s*" ];
         };
         claude-wait = {
           icons = [
@@ -44,7 +44,7 @@
             " "
           ];
           sessionNotificationIndicatorColor = "#d08770";
-          stripPatterns = [ "^[✻✳]\\s*" ];
+          titleStripPatterns = [ "^[✻✳]\\s*" ];
         };
         codex-wait = {
           icons = [

@@ -39,7 +39,7 @@ let
         description = "How tmux-notice derives @pane_notice_title.";
       };
 
-      stripPatterns = lib.mkOption {
+      titleStripPatterns = lib.mkOption {
         type = lib.types.listOf lib.types.str;
         default = [ ];
         description = "Regular expressions stripped from derived notice titles.";
