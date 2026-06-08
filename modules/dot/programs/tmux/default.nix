@@ -10,6 +10,8 @@ let
   paneCommand = import ./pane-command.nix { inherit pkgs; };
   sessionSelector = import ./session-selector.nix { inherit config pkgs; };
   statusCommands = import ./status-commands.nix { inherit config pkgs; };
+  tmuxNoticeCfg = config.dot.programs.scripts.tmuxNotice;
+  tmuxNoticeCommand = "${tmuxNoticeCfg.package}/bin/tmux-notice";
 
   borderToggle = ''if -F "#{==:#{window_panes},1}" "setw pane-border-status off" "setw pane-border-status ${cfg.paneBorder.title.position}"'';
   activeBorderToggle = ''if -F "#{==:#{window_panes},1}" "setw pane-active-border-style '${cfg.paneBorder.activeStyleWhenSinglePane}'" "setw pane-active-border-style '${cfg.paneBorder.activeStyle}'"'';
@@ -19,10 +21,11 @@ let
     }
   '';
   activeBorderHookFlag = if cfg.paneBorder.hideWhenSinglePane then "-ag" else "-g";
-  paneBorderTitleNotice = "#{?@pane_notice_icon, #{@pane_notice_icon} #{?@pane_notice_title,#{@pane_notice_title},#{pane_title}},#{?@status_notice_icon, #{@status_notice_icon} #{pane_title},#{pane_title}}}";
+  paneBorderTitleNotice = "#(${statusCommands.paneNotice} #{q:pane_id})";
+  paneBorderTitleInactiveNotice = "#(${statusCommands.paneNotice} #{q:pane_id} inactive #{q:pane_index})";
   paneBorderTitleFormat =
     if cfg.paneBorder.title.format == null then
-      " #{?pane_active,#[${cfg.paneBorder.title.activeStyle}]#P ${paneBorderTitleNotice},#[${cfg.paneBorder.title.inactiveStyle}]#P ${paneBorderTitleNotice}} "
+      " #{?pane_active,#[${cfg.paneBorder.title.activeStyle}]#P ${paneBorderTitleNotice},#[${cfg.paneBorder.title.inactiveStyle}]${paneBorderTitleInactiveNotice}} "
     else
       cfg.paneBorder.title.format;
   resizeRepeatFlag = lib.optionalString cfg.keyBindings.paneResize.repeatable "-r ";
@@ -87,11 +90,12 @@ let
 
   windowNoticeText = lib.optionalString cfg.status.windowNotice.enable "#(${statusCommands.windowNotices} #{q:window_id})";
   statusSessions = lib.optionalString cfg.status.sessionList.enable "#(${statusCommands.sessions} #{q:session_id})";
-  statusNeedsRefresh = cfg.status.sessionList.enable || cfg.status.windowNotice.enable;
+  statusNeedsRefresh =
+    cfg.status.sessionList.enable || cfg.status.windowNotice.enable || tmuxNoticeCfg.enable;
 
   # Single-window sessions hide the index; multi-window sessions show
   # "#I[: notice #W]". Shared between the normal and current formats below.
-  windowStatusContent = "#{?#{>:#{session_windows},1}, #I#{?#{!=:#{window_name},Window},:${windowNoticeText} #W,${windowNoticeText}} ,}";
+  windowStatusContent = "#{?#{>:#{session_windows},1}, ${windowNoticeText}#I#{?#{!=:#{window_name},Window},:#W,} ,}";
 
   catppuccinStatusConfig = lib.optionalString cfg.plugins.catppuccin.enable ''
     set -g window-status-format "${windowStatusContent}"
@@ -176,6 +180,15 @@ let
     set -g set-titles-string "${cfg.terminalTitle.format}"
   '';
 
+  tmuxNoticeClearHooksConfig =
+    lib.optionalString (tmuxNoticeCfg.enable && tmuxNoticeCfg.clearOnSelect.enable)
+      ''
+        set-hook -g after-select-pane[${toString tmuxNoticeCfg.clearOnSelect.hookIndex}] 'run-shell -b "${tmuxNoticeCommand} clear --pane -t \"#{pane_id}\""'
+        set-hook -g after-select-window[${toString tmuxNoticeCfg.clearOnSelect.hookIndex}] 'run-shell -b "${tmuxNoticeCommand} clear --pane -t \"#{pane_id}\""'
+        set-hook -g client-session-changed[${toString tmuxNoticeCfg.clearOnSelect.hookIndex}] 'run-shell -b "${tmuxNoticeCommand} clear --pane -t \"#{pane_id}\""'
+        set-hook -g client-attached[${toString tmuxNoticeCfg.clearOnSelect.hookIndex}] 'run-shell -b "${tmuxNoticeCommand} clear --pane"'
+      '';
+
   generatedConfig = lib.concatStringsSep "\n" (
     lib.filter (value: value != "") [
       baseConfig
@@ -220,6 +233,7 @@ let
         set -g allow-passthrough on
       '')
       terminalTitleConfig
+      tmuxNoticeClearHooksConfig
       (lib.optionalString cfg.renumberWindows.enable ''
         set -g renumber-windows on
       '')

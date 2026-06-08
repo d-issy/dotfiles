@@ -5,7 +5,19 @@
     "command": "~/.claude/statusline.sh",
     "padding": 0
   },
-  "hooks": {},
+  "hooks": {
+    "Notification": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "tmux-notice on claude-wait"
+          }
+        ]
+      }
+    ]
+  },
   "permissions": {
     "allow": [
       "WebSearch",

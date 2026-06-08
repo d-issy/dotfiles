@@ -52,6 +52,7 @@
     ./bottom.nix
     ./carapace.nix
     ./claude.nix
+    ./codex.nix
     ./delta.nix
     ./difftastic.nix
     ./docker.nix

@@ -22,6 +22,36 @@
       thinking = "low";
     };
 
+    tmuxNotice = {
+      enable = true;
+      fallback = {
+        icons = [ "•" ];
+        titleMode = "name";
+      };
+      notices = {
+        pi-wait = {
+          icons = [
+            "π"
+            " "
+          ];
+          stripPatterns = [ "^(π| )\\s*" ];
+        };
+        claude-wait = {
+          icons = [
+            "✳"
+            " "
+          ];
+          stripPatterns = [ "^[✻✳]\\s*" ];
+        };
+        codex-wait = {
+          icons = [
+            "{}"
+            "  "
+          ];
+        };
+      };
+    };
+
     worktree = {
       enable = true;
       thinking = "low";
