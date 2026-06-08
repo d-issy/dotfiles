@@ -26,7 +26,7 @@
       enable = true;
       fallback = {
         icons = [ "•" ];
-        sessionNotificationIndicatorColor = "#ebcb8b";
+        sessionNotificationIndicatorColor = "#ebcb8b"; # yellow
         titleMode = "name";
       };
       notices = {
@@ -35,7 +35,7 @@
             "π"
             " "
           ];
-          sessionNotificationIndicatorColor = "#8ec07c";
+          sessionNotificationIndicatorColor = "#8ec07c"; # green
           titleStripPatterns = [ "^(π| )\\s*" ];
         };
         claude-wait = {
@@ -43,7 +43,7 @@
             "✳"
             " "
           ];
-          sessionNotificationIndicatorColor = "#d08770";
+          sessionNotificationIndicatorColor = "#d08770"; # orange
           titleStripPatterns = [ "^[✻✳]\\s*" ];
         };
         codex-wait = {
@@ -51,7 +51,7 @@
             "{}"
             "  "
           ];
-          sessionNotificationIndicatorColor = "#88c0d0";
+          sessionNotificationIndicatorColor = "#88c0d0"; # cyan
         };
       };
     };
