@@ -57,7 +57,7 @@ in
         colors = {
           active = colors.text;
           inactive = colors.muted;
-          noticeBright = colors.text;
+          noticeBright = colors.accent;
           noticeDim = colors.muted;
         };
       };

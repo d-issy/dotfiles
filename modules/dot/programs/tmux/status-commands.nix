@@ -2,82 +2,153 @@
 
 let
   cfg = config.dot.programs.tmux;
+  fieldSep = builtins.fromJSON ''"\u001f"'';
+
+  paneNoticeShellFunctions = ''
+    split_icons() {
+      local raw_icons="$1"
+      PARTS=()
+      local IFS='|'
+      read -r -a PARTS <<< "$raw_icons"
+    }
+
+    notice_icon_at() {
+      local raw_icons="$1"
+      local frame="$2"
+
+      split_icons "$raw_icons"
+      if (( ''${#PARTS[@]} == 0 )); then
+        return 0
+      fi
+
+      local local_frame=$((frame % (''${#PARTS[@]} + 1)))
+      if (( local_frame >= ''${#PARTS[@]} )); then
+        printf '%s' "''${PARTS[0]}"
+      else
+        printf '%s' "''${PARTS[$local_frame]}"
+      fi
+    }
+  '';
+
+  anyNoticeShellFunctions = ''
+    first_session_notification_indicator_color_by_session() {
+      local session_id="$1"
+      local pane_session_id
+      local notice_name
+      local session_notification_indicator_color
+
+      while IFS=$'\037' read -r pane_session_id notice_name session_notification_indicator_color; do
+        [[ "$pane_session_id" == "$session_id" && -n "$notice_name" ]] || continue
+        if [[ -n "$session_notification_indicator_color" ]]; then
+          printf '%s' "$session_notification_indicator_color"
+        else
+          printf '%s' "${cfg.status.sessionList.colors.noticeBright}"
+        fi
+        return 0
+      done < <(${cfg.package}/bin/tmux list-panes -a -F '#{session_id}${fieldSep}#{@tmux_notice_name}${fieldSep}#{@tmux_notice_session_notification_indicator_color}' 2>/dev/null || true)
+
+      return 1
+    }
+
+    any_notice_in_window() {
+      local window_id="$1"
+      local notice_name
+
+      while IFS= read -r notice_name; do
+        [[ -n "$notice_name" ]] || continue
+        return 0
+      done < <(${cfg.package}/bin/tmux list-panes -t "$window_id" -F '#{@tmux_notice_name}' 2>/dev/null || true)
+
+      return 1
+    }
+
+    blink_icon() {
+      local frame="$1"
+      if (( frame % 2 == 0 )); then
+        printf '•'
+      else
+        printf ' '
+      fi
+    }
+  '';
 in
 {
+  paneNotice = pkgs.writeShellScript "tmux-pane-notice" ''
+    target_pane=''${1-}
+    notice_scope=''${2-}
+    pane_label=''${3-}
+    [ -n "$target_pane" ] || exit 0
+
+    frame=$(( $(${pkgs.coreutils}/bin/date +%s%3N) / 1000 ))
+
+    ${paneNoticeShellFunctions}
+
+    line=$(${cfg.package}/bin/tmux display-message -p -t "$target_pane" '#{@tmux_notice_icons}${fieldSep}#{@pane_notice_icon}${fieldSep}#{@pane_notice_title}${fieldSep}#{pane_title}' 2>/dev/null || true)
+    IFS=$'\037' read -r raw_icons fallback_icon notice_title pane_title <<< "$line"
+
+    if [[ -z "$raw_icons" ]]; then
+      raw_icons="$fallback_icon"
+    fi
+    if [[ -z "$notice_title" ]]; then
+      notice_title="$pane_title"
+    fi
+
+    if [[ -z "$raw_icons" ]]; then
+      if [[ "$notice_scope" == "inactive" && -n "$pane_label" ]]; then
+        printf '#[%s]%s %s' "${cfg.paneBorder.title.inactiveStyle}" "$pane_label" "$pane_title"
+      else
+        printf '%s' "$pane_title"
+      fi
+      exit 0
+    fi
+
+    icon=$(notice_icon_at "$raw_icons" "$frame")
+    if [[ "$notice_scope" == "inactive" ]]; then
+      printf '#[%s]%s ' "${cfg.paneBorder.title.inactiveStyle}" "$pane_label"
+      if [[ "$icon" =~ [^[:space:]] ]]; then
+        printf '#[fg=%s]%s' "${cfg.status.sessionList.colors.noticeBright}" "$icon"
+      else
+        printf '%s' "$icon"
+      fi
+      printf '#[%s] %s' "${cfg.paneBorder.title.inactiveStyle}" "$notice_title"
+    else
+      printf '%s %s' "$icon" "$notice_title"
+    fi
+  '';
+
   sessions = pkgs.writeShellScript "tmux-status-sessions" ''
     current_session_id=''${1-}
-    frame=$(( $(${pkgs.coreutils}/bin/date +%s%3N) / ${toString cfg.status.sessionList.blinkIntervalMs} ))
+    frame=$(( $(${pkgs.coreutils}/bin/date +%s%3N) / 1000 ))
 
-    {
-      ${cfg.package}/bin/tmux list-sessions -F '#{session_id}	#{session_name}' \
-        | ${pkgs.gawk}/bin/awk -F '\t' '{ print "S\t" $1 "\t" $2 }'
-      ${cfg.package}/bin/tmux list-panes -a -F '#{session_id}	#{@status_notice_icon}' \
-        | ${pkgs.gawk}/bin/awk -F '\t' '{ print "P\t" $1 "\t" $2 }'
-    } 2>/dev/null \
-      | ${pkgs.gawk}/bin/awk -F '\t' \
-        -v current_session_id="$current_session_id" \
-        -v frame="$frame" \
-        -v active_color="${cfg.status.sessionList.colors.active}" \
-        -v inactive_color="${cfg.status.sessionList.colors.inactive}" \
-        -v notice_bright_color="${cfg.status.sessionList.colors.noticeBright}" \
-        -v notice_dim_color="${cfg.status.sessionList.colors.noticeDim}" '
-        $1 == "S" {
-          session_ids[++session_count] = $2
-          session_names[session_count] = $3
-          next
-        }
+    ${anyNoticeShellFunctions}
 
-        $1 == "P" && $3 != "" {
-          session_id = $2
-          icon = $3
-          if (!icon_seen[session_id SUBSEP icon]++) {
-            icons[session_id, ++icon_counts[session_id]] = icon
-          }
-          next
-        }
+    while IFS=$'\037' read -r session_id session_name; do
+      [[ -n "$session_id" ]] || continue
 
-        END {
-          for (i = 1; i <= session_count; i++) {
-            session_id = session_ids[i]
-            icon_count = icon_counts[session_id] + 0
-            name_color = (session_id == current_session_id) ? active_color : inactive_color
+      name_color="${cfg.status.sessionList.colors.inactive}"
+      if [[ "$session_id" == "$current_session_id" ]]; then
+        name_color="${cfg.status.sessionList.colors.active}"
+      fi
 
-            printf "#[range=session|%s]", session_id
-            for (j = 1; j <= icon_count; j++) {
-              icon_bright = (icon_count == 1) ? (frame % 2 == 0) : ((j - 1) == frame % icon_count)
-              icon_color = icon_bright ? notice_bright_color : notice_dim_color
-              printf "#[fg=%s]%s ", icon_color, icons[session_id, j]
-            }
-            printf "#[fg=%s]%s  #[norange]", name_color, session_names[i]
-          }
-        }
-      '
+      printf '#[range=session|%s]' "$session_id"
+      if session_notification_indicator_color=$(first_session_notification_indicator_color_by_session "$session_id"); then
+        icon=$(blink_icon "$frame")
+        printf '#[fg=%s]%s' "$session_notification_indicator_color" "$icon"
+      fi
+      printf '#[fg=%s]%s  #[norange]' "$name_color" "$session_name"
+    done < <(${cfg.package}/bin/tmux list-sessions -F '#{session_id}${fieldSep}#{session_name}' 2>/dev/null || true)
   '';
 
   windowNotices = pkgs.writeShellScript "tmux-status-window-notices" ''
     target_window=''${1-}
     [ -n "$target_window" ] || exit 0
 
-    frame=$(( $(${pkgs.coreutils}/bin/date +%s%3N) / ${toString cfg.status.windowNotice.blinkIntervalMs} ))
+    frame=$(( $(${pkgs.coreutils}/bin/date +%s%3N) / 1000 ))
 
-    ${cfg.package}/bin/tmux list-panes -t "$target_window" -F '#{@status_notice_icon}' 2>/dev/null \
-      | ${pkgs.gawk}/bin/awk \
-        -v frame="$frame" '
-          $0 != "" {
-            icon = $0
-            if (!icon_seen[icon]++) icons[++icon_count] = icon
-          }
+    ${anyNoticeShellFunctions}
 
-          END {
-            if (icon_count == 0) exit
-
-            printf " "
-            active = (icon_count == 1) ? frame % 2 : frame % icon_count
-            for (i = 1; i <= icon_count; i++) {
-              if (i > 1) printf " "
-              printf "%s", ((i - 1) == active) ? icons[i] : " "
-            }
-          }
-        '
+    if any_notice_in_window "$target_window"; then
+      blink_icon "$frame"
+    fi
   '';
 }
