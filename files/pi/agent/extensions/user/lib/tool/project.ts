@@ -1369,6 +1369,7 @@ export function registerProjectTools(
 	ctx: ExtensionContext,
 	registeredNames: Set<string>,
 ): readonly ProjectToolSummary[] {
+	const previouslyRegisteredNames = new Set(registeredNames);
 	registeredNames.clear();
 	let projectSettings: ProjectToolSettings;
 	try {
@@ -1392,7 +1393,8 @@ export function registerProjectTools(
 	const summaries: ProjectToolSummary[] = [];
 	for (const [name, rawConfig] of Object.entries(projectSettings.tools)) {
 		try {
-			if (existingToolNames.has(name) || registeredNames.has(name)) {
+			const isProjectToolUpdate = previouslyRegisteredNames.has(name);
+			if (existingToolNames.has(name) && !isProjectToolUpdate) {
 				notifyWarning(
 					ctx,
 					`Project tool '${name}' conflicts with an existing tool and was ignored.`,
