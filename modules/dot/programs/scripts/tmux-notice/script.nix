@@ -1,6 +1,7 @@
 {
   configFile,
   lib,
+  pkgs,
   ...
 }:
 
@@ -221,7 +222,7 @@
 
   notice_config() {
     local name="$1"
-    jq -c --arg name "$name" '.notices[$name] // .fallback' "$config_file"
+    ${pkgs.jq}/bin/jq -c --arg name "$name" '.notices[$name] // .fallback' "$config_file"
   }
 
   pad_right() {
@@ -268,7 +269,7 @@
         strip_width="''${#strip_patterns}"
       fi
     done < <(
-      jq -r '
+      ${pkgs.jq}/bin/jq -r '
         def icon_label:
           if test("^ +$") then "(blank)" elif . == "" then "(empty)" else . end;
         def animation($notice):
@@ -307,7 +308,7 @@
     local notice_json="$1"
     local current_title="$2"
     local name="$3"
-    jq -nr \
+    ${pkgs.jq}/bin/jq -nr \
       --argjson notice "$notice_json" \
       --arg current "$current_title" \
       --arg name "$name" '
@@ -361,12 +362,12 @@
     notice_json=$(notice_config "$name")
     current_title=$(get_pane_title "$pane")
     title=$(notice_title "$notice_json" "$current_title" "$name")
-    first_icon=$(jq -r 'if ((.icons // []) | length) > 0 then .icons[0] else "•" end' <<<"$notice_json")
-    icons=$(jq -r 'if ((.icons // []) | length) > 0 then .icons | join("|") else "•" end' <<<"$notice_json")
-    session_notification_indicator_color=$(jq -r '.sessionNotificationIndicatorColor // ""' <<<"$notice_json")
-    pane_title_enabled=$(jq -r '.paneTitle.enable // false' <<<"$notice_json")
-    pane_title_template=$(jq -r '.paneTitle.template // "{icon} {title}"' <<<"$notice_json")
-    pane_title_restore=$(jq -r '.paneTitle.restoreOnClear // true' <<<"$notice_json")
+    first_icon=$(${pkgs.jq}/bin/jq -r 'if ((.icons // []) | length) > 0 then .icons[0] else "•" end' <<<"$notice_json")
+    icons=$(${pkgs.jq}/bin/jq -r 'if ((.icons // []) | length) > 0 then .icons | join("|") else "•" end' <<<"$notice_json")
+    session_notification_indicator_color=$(${pkgs.jq}/bin/jq -r '.sessionNotificationIndicatorColor // ""' <<<"$notice_json")
+    pane_title_enabled=$(${pkgs.jq}/bin/jq -r '.paneTitle.enable // false' <<<"$notice_json")
+    pane_title_template=$(${pkgs.jq}/bin/jq -r '.paneTitle.template // "{icon} {title}"' <<<"$notice_json")
+    pane_title_restore=$(${pkgs.jq}/bin/jq -r '.paneTitle.restoreOnClear // true' <<<"$notice_json")
 
     if [[ "$(get_tmux_option "$pane" "@tmux_notice_has_original_title")" != "1" ]]; then
       set_tmux_option "$pane" "@tmux_notice_original_title" "$current_title"
