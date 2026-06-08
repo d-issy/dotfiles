@@ -79,7 +79,7 @@ in
     pane_label=''${3-}
     [ -n "$target_pane" ] || exit 0
 
-    frame=$(( $(${pkgs.coreutils}/bin/date +%s%3N) / ${toString cfg.status.windowNotice.blinkIntervalMs} ))
+    frame=$(( $(${pkgs.coreutils}/bin/date +%s%3N) / 1000 ))
 
     ${paneNoticeShellFunctions}
 
@@ -118,7 +118,7 @@ in
 
   sessions = pkgs.writeShellScript "tmux-status-sessions" ''
     current_session_id=''${1-}
-    frame=$(( $(${pkgs.coreutils}/bin/date +%s%3N) / ${toString cfg.status.sessionList.blinkIntervalMs} ))
+    frame=$(( $(${pkgs.coreutils}/bin/date +%s%3N) / 1000 ))
 
     ${anyNoticeShellFunctions}
 
@@ -143,7 +143,7 @@ in
     target_window=''${1-}
     [ -n "$target_window" ] || exit 0
 
-    frame=$(( $(${pkgs.coreutils}/bin/date +%s%3N) / ${toString cfg.status.windowNotice.blinkIntervalMs} ))
+    frame=$(( $(${pkgs.coreutils}/bin/date +%s%3N) / 1000 ))
 
     ${anyNoticeShellFunctions}
 

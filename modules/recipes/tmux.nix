@@ -51,13 +51,9 @@ in
     status = {
       position = "top";
       paneForegroundCommand.enable = true;
-      windowNotice = {
-        enable = true;
-        blinkIntervalMs = 1000;
-      };
+      windowNotice.enable = true;
       sessionList = {
         enable = true;
-        blinkIntervalMs = 1000;
         colors = {
           active = colors.text;
           inactive = colors.muted;

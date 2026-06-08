@@ -362,19 +362,9 @@ in
       paneForegroundCommand.enable = lib.mkEnableOption "argv[0]-based pane command in status-left";
       windowNotice = {
         enable = lib.mkEnableOption "pane-scoped notice icons in window status";
-        blinkIntervalMs = lib.mkOption {
-          type = lib.types.ints.positive;
-          default = 900;
-          description = "Notice icon blink interval in the window list.";
-        };
       };
       sessionList = {
         enable = lib.mkEnableOption "clickable tmux session list with pane notices in status-left";
-        blinkIntervalMs = lib.mkOption {
-          type = lib.types.ints.positive;
-          default = 900;
-          description = "Notice icon blink interval in the status session list.";
-        };
         colors = {
           active = lib.mkOption {
             type = lib.types.str;
