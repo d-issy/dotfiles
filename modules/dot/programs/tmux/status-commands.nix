@@ -31,26 +31,39 @@ let
   '';
 
   anyNoticeShellFunctions = ''
-    any_notice_by_session() {
+    first_notice_color_by_session() {
       local session_id="$1"
+      local pane_session_id
       local notice_name
+      local notice_color
 
-      while IFS=$'\037' read -r pane_session_id notice_name; do
+      while IFS=$'\037' read -r pane_session_id notice_name notice_color; do
         [[ "$pane_session_id" == "$session_id" && -n "$notice_name" ]] || continue
+        if [[ -n "$notice_color" ]]; then
+          printf '%s' "$notice_color"
+        else
+          printf '%s' "${cfg.status.sessionList.colors.noticeBright}"
+        fi
         return 0
-      done < <(${cfg.package}/bin/tmux list-panes -a -F '#{session_id}${fieldSep}#{@tmux_notice_name}' 2>/dev/null || true)
+      done < <(${cfg.package}/bin/tmux list-panes -a -F '#{session_id}${fieldSep}#{@tmux_notice_name}${fieldSep}#{@tmux_notice_color}' 2>/dev/null || true)
 
       return 1
     }
 
-    any_notice_in_window() {
+    first_notice_color_in_window() {
       local window_id="$1"
       local notice_name
+      local notice_color
 
-      while IFS= read -r notice_name; do
+      while IFS=$'\037' read -r notice_name notice_color; do
         [[ -n "$notice_name" ]] || continue
+        if [[ -n "$notice_color" ]]; then
+          printf '%s' "$notice_color"
+        else
+          printf '%s' "${cfg.status.sessionList.colors.noticeBright}"
+        fi
         return 0
-      done < <(${cfg.package}/bin/tmux list-panes -t "$window_id" -F '#{@tmux_notice_name}' 2>/dev/null || true)
+      done < <(${cfg.package}/bin/tmux list-panes -t "$window_id" -F '#{@tmux_notice_name}${fieldSep}#{@tmux_notice_color}' 2>/dev/null || true)
 
       return 1
     }
@@ -76,8 +89,8 @@ in
 
     ${paneNoticeShellFunctions}
 
-    line=$(${cfg.package}/bin/tmux display-message -p -t "$target_pane" '#{@tmux_notice_icons}${fieldSep}#{@pane_notice_icon}${fieldSep}#{@pane_notice_title}${fieldSep}#{pane_title}' 2>/dev/null || true)
-    IFS=$'\037' read -r raw_icons fallback_icon notice_title pane_title <<< "$line"
+    line=$(${cfg.package}/bin/tmux display-message -p -t "$target_pane" '#{@tmux_notice_icons}${fieldSep}#{@pane_notice_icon}${fieldSep}#{@pane_notice_title}${fieldSep}#{@tmux_notice_color}${fieldSep}#{pane_title}' 2>/dev/null || true)
+    IFS=$'\037' read -r raw_icons fallback_icon notice_title notice_color pane_title <<< "$line"
 
     if [[ -z "$raw_icons" ]]; then
       raw_icons="$fallback_icon"
@@ -95,17 +108,25 @@ in
       exit 0
     fi
 
+    if [[ -z "$notice_color" ]]; then
+      notice_color="${cfg.status.sessionList.colors.noticeBright}"
+    fi
+
     icon=$(notice_icon_at "$raw_icons" "$frame")
     if [[ "$notice_scope" == "inactive" ]]; then
       printf '#[%s]%s ' "${cfg.paneBorder.title.inactiveStyle}" "$pane_label"
       if [[ "$icon" =~ [^[:space:]] ]]; then
-        printf '#[fg=%s]%s' "${cfg.status.sessionList.colors.noticeBright}" "$icon"
+        printf '#[fg=%s]%s' "$notice_color" "$icon"
       else
         printf '%s' "$icon"
       fi
       printf '#[%s] %s' "${cfg.paneBorder.title.inactiveStyle}" "$notice_title"
     else
-      printf '%s %s' "$icon" "$notice_title"
+      if [[ "$icon" =~ [^[:space:]] ]]; then
+        printf '#[fg=%s]%s#[%s] %s' "$notice_color" "$icon" "${cfg.paneBorder.title.activeStyle}" "$notice_title"
+      else
+        printf '%s %s' "$icon" "$notice_title"
+      fi
     fi
   '';
 
@@ -124,9 +145,9 @@ in
       fi
 
       printf '#[range=session|%s]' "$session_id"
-      if any_notice_by_session "$session_id"; then
+      if notice_color=$(first_notice_color_by_session "$session_id"); then
         icon=$(blink_icon "$frame")
-        printf '#[fg=%s]%s' "${cfg.status.sessionList.colors.noticeBright}" "$icon"
+        printf '#[fg=%s]%s' "$notice_color" "$icon"
       fi
       printf '#[fg=%s]%s  #[norange]' "$name_color" "$session_name"
     done < <(${cfg.package}/bin/tmux list-sessions -F '#{session_id}${fieldSep}#{session_name}' 2>/dev/null || true)
@@ -140,8 +161,13 @@ in
 
     ${anyNoticeShellFunctions}
 
-    if any_notice_in_window "$target_window"; then
-      blink_icon "$frame"
+    if notice_color=$(first_notice_color_in_window "$target_window"); then
+      icon=$(blink_icon "$frame")
+      if [[ "$icon" =~ [^[:space:]] ]]; then
+        printf '#[push-default]#[fg=%s]%s#[default]#[pop-default]' "$notice_color" "$icon"
+      else
+        printf '%s' "$icon"
+      fi
     fi
   '';
 }

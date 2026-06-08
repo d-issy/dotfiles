@@ -26,6 +26,7 @@
       enable = true;
       fallback = {
         icons = [ "•" ];
+        color = "#ebcb8b";
         titleMode = "name";
       };
       notices = {
@@ -34,6 +35,7 @@
             "π"
             " "
           ];
+          color = "#a3be8c";
           stripPatterns = [ "^(π| )\\s*" ];
         };
         claude-wait = {
@@ -41,6 +43,7 @@
             "✳"
             " "
           ];
+          color = "#d08770";
           stripPatterns = [ "^[✻✳]\\s*" ];
         };
         codex-wait = {
@@ -48,6 +51,7 @@
             "{}"
             "  "
           ];
+          color = "#88c0d0";
         };
       };
     };

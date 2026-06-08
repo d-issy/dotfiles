@@ -120,6 +120,7 @@
 
     set_tmux_option "$pane" "@tmux_notice_name" ""
     set_tmux_option "$pane" "@tmux_notice_icons" ""
+    set_tmux_option "$pane" "@tmux_notice_color" ""
     set_tmux_option "$pane" "@tmux_notice_original_title" ""
     set_tmux_option "$pane" "@tmux_notice_has_original_title" ""
     set_tmux_option "$pane" "@tmux_notice_restore_title" ""
@@ -236,15 +237,18 @@
     local name="$1"
     local title_mode="$2"
     local pane_title="$3"
-    local strip_patterns="$4"
-    local animation="$5"
-    local strip_width="$6"
+    local color="$4"
+    local strip_patterns="$5"
+    local animation="$6"
+    local strip_width="$7"
 
     pad_right "$name" 16
     printf '  '
     pad_right "$title_mode" 8
     printf '  '
     pad_right "$pane_title" 10
+    printf '  '
+    pad_right "$color" 7
     printf '  '
     pad_right "$strip_patterns" "$strip_width"
     printf '  %s\n' "$animation"
@@ -257,7 +261,7 @@
 
     while IFS= read -r row; do
       rows+=("$row")
-      IFS=$'\t' read -r _name _title_mode _pane_title strip_patterns _animation <<<"$row"
+      IFS=$'\t' read -r _name _title_mode _pane_title _color strip_patterns _animation <<<"$row"
       if (( ''${#strip_patterns} > strip_width )); then
         strip_width="''${#strip_patterns}"
       fi
@@ -271,11 +275,14 @@
           (($notice.stripPatterns // []) | if length == 0 then "-" else map("/" + . + "/") | join(", ") end);
         def pane_title($notice):
           if ($notice.paneTitle.enable // false) then "set" else "unchanged" end;
+        def color($notice):
+          ($notice.color // "-");
         def row($name; $notice):
           [
             $name,
             ($notice.titleMode // "current"),
             pane_title($notice),
+            color($notice),
             strip_patterns($notice),
             animation($notice)
           ] | @tsv;
@@ -286,11 +293,11 @@
     )
 
     printf 'Usage: tmux-notice on <notice>\n\n'
-    print_list_row "notice" "title" "paneTitle" "strip" "animation" "$strip_width"
-    print_list_row "----------------" "--------" "----------" "$(printf '%*s' "$strip_width" "" | tr " " "-")" "---------" "$strip_width"
+    print_list_row "notice" "title" "paneTitle" "color" "strip" "animation" "$strip_width"
+    print_list_row "----------------" "--------" "----------" "-------" "$(printf '%*s' "$strip_width" "" | tr " " "-")" "---------" "$strip_width"
     for row in "''${rows[@]}"; do
-      IFS=$'\t' read -r name title_mode pane_title strip_patterns animation <<<"$row"
-      print_list_row "$name" "$title_mode" "$pane_title" "$strip_patterns" "$animation" "$strip_width"
+      IFS=$'\t' read -r name title_mode pane_title color strip_patterns animation <<<"$row"
+      print_list_row "$name" "$title_mode" "$pane_title" "$color" "$strip_patterns" "$animation" "$strip_width"
     done
   }
 
@@ -344,6 +351,7 @@
     local title
     local first_icon
     local icons
+    local color
     local pane_title_enabled
     local pane_title_template
     local pane_title_restore
@@ -353,6 +361,7 @@
     title=$(notice_title "$notice_json" "$current_title" "$name")
     first_icon=$(jq -r 'if ((.icons // []) | length) > 0 then .icons[0] else "•" end' <<<"$notice_json")
     icons=$(jq -r 'if ((.icons // []) | length) > 0 then .icons | join("|") else "•" end' <<<"$notice_json")
+    color=$(jq -r '.color // ""' <<<"$notice_json")
     pane_title_enabled=$(jq -r '.paneTitle.enable // false' <<<"$notice_json")
     pane_title_template=$(jq -r '.paneTitle.template // "{icon} {title}"' <<<"$notice_json")
     pane_title_restore=$(jq -r '.paneTitle.restoreOnClear // true' <<<"$notice_json")
@@ -364,6 +373,7 @@
 
     set_tmux_option "$pane" "@tmux_notice_name" "$name"
     set_tmux_option "$pane" "@tmux_notice_icons" "$icons"
+    set_tmux_option "$pane" "@tmux_notice_color" "$color"
     set_tmux_option "$pane" "@status_notice_icon" "$first_icon"
     set_tmux_option "$pane" "@pane_notice_icon" "$first_icon"
     set_tmux_option "$pane" "@pane_notice_title" "$title"

@@ -22,6 +22,12 @@ let
         description = "Optional notice title used by titleMode = notice, or as current-title fallback.";
       };
 
+      color = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = null;
+        description = "Optional tmux foreground color used for this notice indicator.";
+      };
+
       titleMode = lib.mkOption {
         type = lib.types.enum [
           "current"
