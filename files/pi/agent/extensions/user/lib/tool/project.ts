@@ -1364,12 +1364,6 @@ function loadProjectToolSettings(cwd: string): ProjectToolSettings {
 	return parsed as ProjectToolSettings;
 }
 
-function isProjectTrusted(ctx: ExtensionContext): boolean {
-	const maybeTrusted = (ctx as { isProjectTrusted?: () => boolean })
-		.isProjectTrusted;
-	return typeof maybeTrusted === "function" && maybeTrusted.call(ctx);
-}
-
 export function registerProjectTools(
 	pi: ExtensionAPI,
 	ctx: ExtensionContext,
@@ -1377,7 +1371,7 @@ export function registerProjectTools(
 ): readonly ProjectToolSummary[] {
 	const previouslyRegisteredNames = new Set(registeredNames);
 	policyRegistry.disable(previouslyRegisteredNames);
-	if (!isProjectTrusted(ctx)) return [];
+	if (!ctx.isProjectTrusted()) return [];
 
 	let projectSettings: ProjectToolSettings;
 	try {
