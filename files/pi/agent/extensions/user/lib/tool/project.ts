@@ -1370,7 +1370,9 @@ export function registerProjectTools(
 	registeredNames: Set<string>,
 ): readonly ProjectToolSummary[] {
 	const previouslyRegisteredNames = new Set(registeredNames);
-	registeredNames.clear();
+	policyRegistry.disable(previouslyRegisteredNames);
+	if (!ctx.isProjectTrusted()) return [];
+
 	let projectSettings: ProjectToolSettings;
 	try {
 		projectSettings = loadProjectToolSettings(ctx.cwd);

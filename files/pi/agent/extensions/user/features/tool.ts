@@ -49,7 +49,7 @@ function register(pi: ExtensionAPI): void {
 	const projectToolNames = new Set<string>();
 	pi.on("session_start", async (_event: SessionStartEvent, ctx) => {
 		const projectTools = registerProjectTools(pi, ctx, projectToolNames);
-		if (projectTools.length > 0) activateModeTools(pi, getCurrentModeName());
+		activateModeTools(pi, getCurrentModeName());
 		if (ctx.hasUI && projectTools.length > 0) {
 			setTimeout(() => {
 				ctx.ui.notify(
