@@ -19,6 +19,7 @@ export type ToolPolicy<TInput = unknown> = {
 
 export type PolicyRegistry = {
 	register<TInput>(policy: ToolPolicy<TInput>): void;
+	disable(names: Iterable<string>): void;
 	getAllowedToolsForMode(modeName: ModeName): string[];
 	getKnownToolNames(): string[];
 	checkToolAllowed(
@@ -37,6 +38,9 @@ function createPolicyRegistry(): PolicyRegistry {
 	return {
 		register(policy) {
 			policies.set(policy.name, policy as ToolPolicy);
+		},
+		disable(names) {
+			for (const name of names) policies.set(name, { name, allowedModes: [] });
 		},
 		getAllowedToolsForMode(modeName) {
 			const tools: string[] = [];
