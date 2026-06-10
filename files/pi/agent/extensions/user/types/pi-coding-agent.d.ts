@@ -1,4 +1,6 @@
-import "@earendil-works/pi-coding-agent";
+import type { ExtensionContext as PiExtensionContext } from "@earendil-works/pi-coding-agent";
+
+type _PiExtensionContext = PiExtensionContext;
 
 declare module "@earendil-works/pi-coding-agent" {
 	interface ExtensionContext {
