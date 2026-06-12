@@ -101,8 +101,8 @@
   pane_is_visible_active() {
     local pane="$1"
     local active
-    active=$(tmux display-message -p -t "$pane" '#{pane_active}:#{window_active}' 2>/dev/null || true)
-    [[ "$active" == "1:1" ]]
+    active=$(tmux display-message -p -t "$pane" '#{pane_active}:#{window_active}:#{session_attached}' 2>/dev/null || true)
+    [[ "$active" =~ ^1:1:[1-9][0-9]*$ ]]
   }
 
   clear_target() {
