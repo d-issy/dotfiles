@@ -15,7 +15,6 @@
         gh-dash
         gh-f
         gh-notify
-        gh-poi
       ];
     };
 
