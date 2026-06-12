@@ -167,6 +167,7 @@ in
 
   Safety:
     - Never deletes remote branches or GitHub PRs.
+    - Detects squash-merged branches via GitHub PR state when available.
     - Never deletes the default branch.
     - Skips the current worktree.
     - Skips dirty worktrees unless -f/--force is used.
@@ -369,14 +370,26 @@ in
   	printf '%s\n' "$cherry" | ${pkgs.gawk}/bin/awk '$1 == "+" { exit 1 }'
   }
 
+  branch_github_pr_merged() {
+    local branch="$1" info state head_oid local_oid
+    info="$(${pkgs.gh}/bin/gh pr view "$branch" --json state,headRefOid --jq '[.state, .headRefOid] | @tsv' 2>/dev/null || true)"
+    [[ -n "$info" ]] || return 1
+    IFS=$'\t' read -r state head_oid <<<"$info"
+    [[ "$state" == MERGED && -n "$head_oid" ]] || return 1
+    local_oid="$(${pkgs.git}/bin/git rev-parse --verify "$branch^{commit}" 2>/dev/null || true)"
+    [[ "$local_oid" == "$head_oid" ]]
+  }
+
   list_prune_branches() {
   	local base="$1" branch
   	while IFS= read -r branch; do
   		[[ -n "$branch" ]] || continue
   		if ${pkgs.git}/bin/git merge-base --is-ancestor "$branch" "$base" 2>/dev/null; then
   			printf '%s\n' "$branch"
-  		elif branch_upstream_gone "$branch" && branch_patch_merged "$base" "$branch"; then
-  			printf '%s\n' "$branch"
+      elif branch_upstream_gone "$branch"; then
+        if branch_patch_merged "$base" "$branch" || branch_github_pr_merged "$branch"; then
+          printf '%s\n' "$branch"
+        fi
   		fi
   	done < <(${pkgs.git}/bin/git for-each-ref --format='%(refname:short)' refs/heads)
   }
