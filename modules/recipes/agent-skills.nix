@@ -8,7 +8,7 @@
     ];
 
     skills = {
-      interview.enable = true;
+      interview-me.enable = true;
       pi-project-tools = {
         enable = true;
         agents.pi = true;
