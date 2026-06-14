@@ -84,22 +84,14 @@ function buildDefaultFocusPrompt(focus: FocusController): string {
 		name: definition.name,
 		description: definition.description,
 	}));
-	return `[DEFAULT FOCUS]\nYou are in default focus. Use enter_focus with a reason to enter one.\n\nAvailable focuses:\n${formatFocusList(focuses)}`;
-}
-
-function formatToolArg(value: string | undefined, fallback = "<none>"): string {
-	const normalized = value?.trim();
-	return normalized ? JSON.stringify(normalized) : fallback;
+	return `[DEFAULT FOCUS]\nYou are in default focus. Use enter_focus to enter one.\n\nAvailable focuses:\n${formatFocusList(focuses)}`;
 }
 
 function renderEnterFocusCall(
-	args: { name: string; reason: string },
+	_args: { name: string; reason?: string },
 	theme: Theme,
 ): Text {
-	let text = theme.fg("toolTitle", theme.bold(ENTER_FOCUS_TOOL));
-	text += theme.fg("muted", ` name=${formatToolArg(args.name)}`);
-	text += theme.fg("muted", ` reason=${formatToolArg(args.reason)}`);
-	return new Text(text, 0, 0);
+	return new Text(theme.fg("toolTitle", theme.bold(ENTER_FOCUS_TOOL)), 0, 0);
 }
 
 function resultText(result: AgentToolResult<FocusToolDetails>): string {
@@ -451,7 +443,12 @@ function registerEnterFocusTool(
 			"Enter or switch to a predefined focus available to the agent.",
 		parameters: Type.Object({
 			name: Type.String({ description: "Focus name to enter." }),
-			reason: Type.String({ description: "Why this focus is appropriate." }),
+			reason: Type.Optional(
+				Type.String({
+					description:
+						"Why this focus is appropriate. Required when user confirmation is needed.",
+				}),
+			),
 		}),
 		renderCall: renderEnterFocusCall,
 		renderResult: renderEnterFocusResult,
@@ -499,6 +496,7 @@ function registerEnterFocusTool(
 			}
 
 			if (definition.transition === "confirm") {
+				const confirmationReason = params.reason?.trim();
 				if (sessionDeniedConfirmFocuses.has(definition.name)) {
 					return {
 						content: [
@@ -514,6 +512,20 @@ function registerEnterFocusTool(
 					};
 				}
 				if (!sessionAllowedConfirmFocuses.has(definition.name)) {
+					if (!confirmationReason) {
+						return {
+							content: [
+								{
+									type: "text" as const,
+									text: `Focus '${definition.name}' requires a reason for user confirmation. Call enter_focus again with a concise reason.`,
+								},
+							],
+							details: {
+								ok: false,
+								reason: "reason-required",
+							} as FocusToolDetails,
+						};
+					}
 					if (!ctx.hasUI) {
 						return {
 							content: [
@@ -532,7 +544,7 @@ function registerEnterFocusTool(
 						ctx,
 						definition.name,
 						definition.description,
-						params.reason,
+						confirmationReason,
 					);
 					if (!decision || decision.startsWith("deny")) {
 						if (decision)
