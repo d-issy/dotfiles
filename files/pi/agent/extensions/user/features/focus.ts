@@ -1,21 +1,22 @@
-import type {
-	AgentEndEvent,
-	AgentToolResult,
-	BeforeAgentStartEvent,
-	BeforeAgentStartEventResult,
-	BeforeProviderRequestEvent,
-	ContextEvent,
-	ExtensionAPI,
-	ExtensionContext,
-	ExtensionHandler,
-	SessionBeforeSwitchEvent,
-	SessionStartEvent,
-	Theme,
-	ToolCallEvent,
-	ToolCallEventResult,
-	ToolRenderResultOptions,
+import {
+	type AgentEndEvent,
+	type AgentToolResult,
+	type BeforeAgentStartEvent,
+	type BeforeAgentStartEventResult,
+	type BeforeProviderRequestEvent,
+	type ContextEvent,
+	DynamicBorder,
+	type ExtensionAPI,
+	type ExtensionContext,
+	type ExtensionHandler,
+	type SessionBeforeSwitchEvent,
+	type SessionStartEvent,
+	type Theme,
+	type ToolCallEvent,
+	type ToolCallEventResult,
+	type ToolRenderResultOptions,
 } from "@earendil-works/pi-coding-agent";
-import { Text } from "@earendil-works/pi-tui";
+import { Text, truncateToWidth, visibleWidth } from "@earendil-works/pi-tui";
 import { Type } from "typebox";
 import type { Feature } from "../feature";
 import {
@@ -33,7 +34,7 @@ import {
 } from "../lib/focus";
 import { policyRegistry } from "../lib/policy";
 import { ensureProjectUserSettingsTrusted } from "../lib/project-settings";
-import { showFilterSelect } from "../lib/ui";
+import { decodePrintableInput } from "../lib/ui";
 
 type ContextResult = { messages?: ContextEvent["messages"] };
 type SessionBeforeSwitchResult = { cancel?: boolean };
@@ -52,6 +53,13 @@ type FocusConfirmDecision =
 	| "deny-once"
 	| "allow-session"
 	| "deny-session";
+
+type FocusConfirmItem = {
+	key: string;
+	value: FocusConfirmDecision;
+	label: string;
+	description: string;
+};
 
 let focusQuickAction: FocusQuickAction | undefined;
 let restorePromptPending = false;
@@ -117,14 +125,50 @@ function renderEnterFocusResult(
 	return new Text(theme.fg(color, text), 0, 0);
 }
 
-function isFocusConfirmDecision(
-	value: string | undefined,
-): value is FocusConfirmDecision {
-	return (
-		value === "allow-once" ||
-		value === "deny-once" ||
-		value === "allow-session" ||
-		value === "deny-session"
+function focusConfirmItems(description: string): readonly FocusConfirmItem[] {
+	return [
+		{
+			key: "y",
+			value: "allow-once",
+			label: "Allow once",
+			description,
+		},
+		{
+			key: "n",
+			value: "deny-once",
+			label: "Deny once",
+			description: "Decline this request only.",
+		},
+		{
+			key: "a",
+			value: "allow-session",
+			label: "Allow this session only",
+			description: "Enter this focus without asking again in this session.",
+		},
+		{
+			key: "d",
+			value: "deny-session",
+			label: "Deny this session only",
+			description: "Decline this focus without asking again in this session.",
+		},
+	];
+}
+
+function renderFocusConfirmItem(
+	theme: Theme,
+	item: FocusConfirmItem,
+	selected: boolean,
+	width: number,
+): string {
+	const prefix = selected ? theme.fg("accent", "→ ") : "  ";
+	const key = theme.fg("accent", item.key);
+	const label = selected ? theme.fg("accent", item.label) : item.label;
+	const left = `${prefix}${key}  ${label}`;
+	const gap = " ".repeat(Math.max(1, 30 - visibleWidth(left)));
+	return truncateToWidth(
+		`${left}${theme.fg("muted", gap + item.description)}`,
+		width,
+		"",
 	);
 }
 
@@ -134,34 +178,73 @@ async function confirmFocusTransition(
 	description: string,
 	reason: string,
 ): Promise<FocusConfirmDecision | undefined> {
-	const decision = await showFilterSelect(ctx, {
-		title: `Enter focus: ${name}`,
-		items: [
-			{
-				value: "allow-once",
-				label: "Allow once",
-				description,
-			},
-			{
-				value: "deny-once",
-				label: "Deny once",
-				description: "Decline this request only.",
-			},
-			{
-				value: "allow-session",
-				label: "Allow this session only",
-				description: "Enter this focus without asking again in this session.",
-			},
-			{
-				value: "deny-session",
-				label: "Deny this session only",
-				description: "Decline this focus without asking again in this session.",
-			},
-		],
-		filterPlaceholder: reason,
-		footer: "↑↓ navigate • enter select • esc cancel",
-	});
-	return isFocusConfirmDecision(decision) ? decision : undefined;
+	const items = focusConfirmItems(description);
+	return ctx.ui.custom<FocusConfirmDecision | undefined>(
+		(tui, theme, keybindings, done) => {
+			const border = new DynamicBorder((text) => theme.fg("accent", text));
+			let selectedIndex = 0;
+			const move = (delta: -1 | 1): void => {
+				selectedIndex = (selectedIndex + delta + items.length) % items.length;
+			};
+			const select = (item: FocusConfirmItem): void => done(item.value);
+			return {
+				render(width: number) {
+					return [
+						...border.render(width),
+						truncateToWidth(
+							theme.fg("accent", theme.bold(`Enter focus: ${name}`)),
+							width,
+							"",
+						),
+						truncateToWidth(theme.fg("dim", `Reason: ${reason}`), width, ""),
+						...items.map((item, index) =>
+							renderFocusConfirmItem(
+								theme,
+								item,
+								index === selectedIndex,
+								width,
+							),
+						),
+						truncateToWidth(
+							theme.fg(
+								"dim",
+								"y/n/a/d select • ↑↓ navigate • enter select • esc cancel",
+							),
+							width,
+							"",
+						),
+						...border.render(width),
+					];
+				},
+				invalidate: () => border.invalidate(),
+				handleInput(data: string) {
+					if (keybindings.matches(data, "tui.select.up")) {
+						move(-1);
+						tui.requestRender();
+						return;
+					}
+					if (keybindings.matches(data, "tui.select.down")) {
+						move(1);
+						tui.requestRender();
+						return;
+					}
+					if (keybindings.matches(data, "tui.select.confirm")) {
+						select(items[selectedIndex]);
+						return;
+					}
+					if (keybindings.matches(data, "tui.select.cancel")) {
+						done(undefined);
+						return;
+					}
+					const input = decodePrintableInput(data);
+					if (!input) return;
+					const key = input.toLowerCase();
+					const item = items.find((entry) => entry.key === key);
+					if (item) select(item);
+				},
+			};
+		},
+	);
 }
 
 function rememberFocusTransitionDecision(
