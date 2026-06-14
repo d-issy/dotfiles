@@ -72,6 +72,7 @@
   },
   "focuses": {
     "edit": {
+      "description": "Make repository file changes for this dotfiles project; use format and lint when appropriate.",
       "prompt": "For this dotfiles project, use format to auto-fix formatting and lint to verify changes after editing when appropriate.",
       "tools": [
         "format",
