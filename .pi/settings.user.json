@@ -71,19 +71,16 @@
     }
   },
   "focuses": {
-    "dotfiles": {
-      "description": "Run dotfiles project formatting and lint checks.",
-      "prompt": "You are in dotfiles focus. Use project tools for formatting and linting when appropriate.",
+    "edit": {
+      "prompt": "For this dotfiles project, use format to auto-fix formatting and lint to verify changes after editing when appropriate.",
       "tools": [
         "format",
         "lint"
-      ],
-      "transition": "auto",
-      "color": "accent"
+      ]
     },
-    "switch": {
+    "home-manager": {
       "description": "Run Home Manager switch for this dotfiles project.",
-      "prompt": "You are in switch focus. Use homemanager_switch when the user asks to apply the Home Manager configuration.",
+      "prompt": "You are in home-manager focus. Use homemanager_switch when the user asks to apply the Home Manager configuration.",
       "tools": [
         "homemanager_switch"
       ],

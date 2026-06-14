@@ -61,9 +61,9 @@ Do not use this skill for ordinary shell commands, lint/test/format requests, Pi
     }
   },
   "focuses": {
-    "verify": {
+    "edit": {
       "tools": ["lint"],
-      "prompt": "For this project, use lint to verify changes."
+      "prompt": "For this project, use lint to verify changes after editing when appropriate."
     }
   }
 }
@@ -95,6 +95,8 @@ Currently supported project user settings include:
 
 - Existing focus names merge into user-extension focuses.
 - New focus names create project-local focuses.
+- For an existing focus, `prompt` is appended after the built-in prompt with a blank line; it does not replace the built-in prompt.
+- When extending an existing focus, write `prompt` as a project-specific supplement, not a full replacement such as `You are in ... focus`.
 - `tools` are additive only.
 - Existing focus `transition` cannot be changed by project settings.
 - New focus `transition` defaults to `confirm` when omitted.
@@ -102,7 +104,7 @@ Currently supported project user settings include:
 Common focus fields:
 
 - `description` required for new focuses.
-- `prompt` required for new focuses; appended when merging an existing focus.
+- `prompt` required for new focuses; appended after the existing prompt when merging an existing focus.
 - `tools` required for new focuses; additive when merging.
 - `transition` optional for new focuses: `auto`, `confirm`, or `manual`.
 - `color` optional: `accent`, `positive`, `caution`, `alert`, or `muted`.
@@ -168,7 +170,7 @@ Example:
 
 ## Examples
 
-Project lint tool exposed through verify focus:
+Project lint tool added to the existing edit focus:
 
 ```json
 {
@@ -182,7 +184,10 @@ Project lint tool exposed through verify focus:
     }
   },
   "focuses": {
-    "verify": { "tools": ["lint"] }
+    "edit": {
+      "tools": ["lint"],
+      "prompt": "For this project, use lint to verify changes after editing when appropriate."
+    }
   }
 }
 ```
