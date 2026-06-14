@@ -718,6 +718,17 @@ const openFocusQuickAction =
 		focus.enter(ctx, selected, { source: "user" });
 	};
 
+const toggleFocusSelector =
+	(focus: FocusController) =>
+	async (ctx: ExtensionContext): Promise<void> => {
+		resetFocusAtAgentEndPending = false;
+		if (focus.current !== DEFAULT_FOCUS) {
+			focus.leave(ctx);
+			return;
+		}
+		await openFocusQuickAction(focus)(ctx);
+	};
+
 export async function showFocusQuickAction(
 	ctx: ExtensionContext,
 ): Promise<void> {
@@ -733,6 +744,10 @@ function register(pi: ExtensionAPI): void {
 	const focus = createFocusController(pi);
 	registerEnterFocusTool(pi, focus);
 	focusQuickAction = openFocusQuickAction(focus);
+	pi.registerShortcut("shift+tab", {
+		description: "Leave focus or open focus selector",
+		handler: toggleFocusSelector(focus),
+	});
 	pi.on("before_agent_start", injectFocusRestorePrompt(pi, focus));
 	pi.on("context", injectFocusReminder(pi, focus));
 	pi.on("before_provider_request", filterProviderTools(pi, focus));
