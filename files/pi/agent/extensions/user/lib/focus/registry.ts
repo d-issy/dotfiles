@@ -122,6 +122,10 @@ function mergeFocus(
 			? `${base.prompt}\n\n${project.prompt}`
 			: base.prompt,
 		tools: unique([...(base.tools ?? []), ...(project.tools ?? [])]),
+		settingsTools: unique([
+			...(base.settingsTools ?? []),
+			...(project.tools ?? []),
+		]),
 		// Existing focus transitions are security-sensitive and cannot be changed by project config.
 		transition: base.transition,
 		color: project.color ?? base.color,
@@ -146,6 +150,7 @@ function createProjectFocus(
 		description: project.description,
 		prompt: project.prompt,
 		tools: unique(project.tools),
+		settingsTools: unique(project.tools),
 		transition: project.transition ?? "confirm",
 		color: project.color,
 	};

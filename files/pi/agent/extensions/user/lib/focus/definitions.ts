@@ -8,6 +8,7 @@ export type FocusDefinition = {
 	readonly description: string;
 	readonly prompt: string;
 	readonly tools: readonly string[];
+	readonly settingsTools?: readonly string[];
 	readonly transition: FocusTransition;
 	readonly color?: ColorRole;
 };

@@ -18,10 +18,14 @@ import {
 	toolRegistry,
 } from "../lib/tool";
 
+type ToolInfo = ReturnType<ExtensionAPI["getAllTools"]>[number];
+
 type ProjectFocusToolGroup = {
 	readonly name: string;
 	readonly transition: string;
-	readonly tools: readonly string[];
+	readonly projectTools: readonly string[];
+	readonly builtinTools: readonly string[];
+	readonly otherTools: readonly string[];
 };
 
 function insertSorted(values: string[], value: string): string[] {
@@ -43,15 +47,39 @@ function sortedToolNames(tools: readonly ProjectToolSummary[]): string[] {
 	return sortStrings(tools.map((tool) => tool.name));
 }
 
+function formatToolNames(
+	names: readonly string[],
+	role: "accent" | "success" | "muted" | "warning",
+	theme: Theme,
+): string {
+	return names.map((name) => theme.fg(role, name)).join(theme.fg("dim", ", "));
+}
+
+function formatToolPart(
+	label: string,
+	names: readonly string[],
+	role: "accent" | "success" | "muted",
+	theme: Theme,
+): string | undefined {
+	if (names.length === 0) return undefined;
+	return `${theme.fg("dim", `${label}: `)}${formatToolNames(names, role, theme)}`;
+}
+
 function formatProjectGroup(
 	group: ProjectFocusToolGroup,
 	theme: Theme,
 ): string {
-	const tools = group.tools.join(", ");
+	const tools = [
+		formatToolPart("project", group.projectTools, "success", theme),
+		formatToolPart("builtin", group.builtinTools, "accent", theme),
+		formatToolPart("other", group.otherTools, "muted", theme),
+	]
+		.filter((part) => part !== undefined)
+		.join(theme.fg("dim", "; "));
 	if (group.transition === "auto") {
-		return `${theme.fg("dim", `  ${group.name} `)}${theme.fg("warning", "auto")}${theme.fg("dim", `: ${tools}`)}`;
+		return `${theme.fg("dim", `  ${group.name} `)}${theme.fg("warning", "auto")}${theme.fg("dim", ": ")}${tools}`;
 	}
-	return theme.fg("dim", `  ${group.name}: ${tools}`);
+	return `${theme.fg("dim", `  ${group.name}: `)}${tools}`;
 }
 
 function formatProjectSummary(
@@ -62,29 +90,67 @@ function formatProjectSummary(
 	const lines = groups.map((group) => formatProjectGroup(group, theme));
 	if (unfocusedTools.length > 0) {
 		lines.push(
-			theme.fg("warning", `  not in any focus: ${unfocusedTools.join(", ")}`),
+			`${theme.fg("warning", "  not in any focus: ")}${formatToolNames(unfocusedTools, "warning", theme)}`,
 		);
 	}
 	return [theme.fg("mdHeading", "[Project]"), ...lines].join("\n");
 }
 
-function projectToolGroups(tools: readonly ProjectToolSummary[]): {
+function projectToolGroups(
+	tools: readonly ProjectToolSummary[],
+	allTools: readonly ToolInfo[],
+): {
 	readonly groups: readonly ProjectFocusToolGroup[];
 	readonly unfocusedTools: readonly string[];
 } {
 	const projectToolNames = new Set(sortedToolNames(tools));
+	const toolByName = new Map(allTools.map((tool) => [tool.name, tool]));
+	const displayBuiltinToolNames = new Set(
+		toolRegistry.list().map((tool) => tool.definition.name),
+	);
 	const focusedToolNames = new Set<string>();
 	const groups: ProjectFocusToolGroup[] = [];
 	for (const focus of getCurrentFocusRegistry().list()) {
-		const focusTools = sortStrings(
-			focus.tools.filter((toolName) => projectToolNames.has(toolName)),
+		const settingsTools = focus.settingsTools ?? [];
+		const projectTools = sortStrings(
+			settingsTools.filter((toolName) => projectToolNames.has(toolName)),
 		);
-		if (focusTools.length === 0) continue;
-		for (const toolName of focusTools) focusedToolNames.add(toolName);
+		const builtinTools = sortStrings(
+			settingsTools.filter((toolName) => {
+				const tool = toolByName.get(toolName);
+				return (
+					tool &&
+					!projectToolNames.has(toolName) &&
+					(tool.sourceInfo.source === "builtin" ||
+						displayBuiltinToolNames.has(toolName))
+				);
+			}),
+		);
+		const otherTools = sortStrings(
+			settingsTools.filter((toolName) => {
+				const tool = toolByName.get(toolName);
+				return (
+					tool &&
+					!projectToolNames.has(toolName) &&
+					tool.sourceInfo.source !== "builtin" &&
+					!displayBuiltinToolNames.has(toolName)
+				);
+			}),
+		);
+		if (
+			projectTools.length === 0 &&
+			builtinTools.length === 0 &&
+			otherTools.length === 0
+		) {
+			continue;
+		}
+		for (const toolName of projectTools) focusedToolNames.add(toolName);
 		groups.push({
 			name: focus.name,
 			transition: focus.transition,
-			tools: focusTools,
+			projectTools,
+			builtinTools,
+			otherTools,
 		});
 	}
 	const unfocusedTools = sortedToolNames(tools).filter(
@@ -106,9 +172,13 @@ function register(pi: ExtensionAPI): void {
 		await ensureProjectUserSettingsTrusted(ctx);
 		const projectTools = registerProjectTools(pi, ctx, projectToolNames);
 		refreshCurrentFocusTools(pi);
-		if (ctx.hasUI && projectTools.length > 0) {
+		if (ctx.hasUI) {
 			setTimeout(() => {
-				const { groups, unfocusedTools } = projectToolGroups(projectTools);
+				const { groups, unfocusedTools } = projectToolGroups(
+					projectTools,
+					pi.getAllTools(),
+				);
+				if (groups.length === 0 && unfocusedTools.length === 0) return;
 				ctx.ui.notify(
 					formatProjectSummary(groups, unfocusedTools, ctx.ui.theme),
 					"info",

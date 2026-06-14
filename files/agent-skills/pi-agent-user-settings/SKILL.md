@@ -30,7 +30,7 @@ Do not use this skill for ordinary shell commands, lint/test/format requests, Pi
 - Treat `.pi/settings.user.json` as project-controlled configuration.
 - Treat project tools as project-controlled command execution.
 - Project tools do not declare focus access themselves.
-- Focus access is controlled by `.pi/settings.user.json` `focuses.<name>.tools`.
+- Focus access for both project tools and built-in / extension tools is controlled by `.pi/settings.user.json` `focuses.<name>.tools`.
 - Keep tools deterministic and scoped to the repository.
 - Avoid commands that read secrets, access credentials, or modify paths outside the project.
 - Set `timeoutSeconds` for commands that might hang.
@@ -64,6 +64,12 @@ Do not use this skill for ordinary shell commands, lint/test/format requests, Pi
     "edit": {
       "tools": ["lint"],
       "prompt": "For this project, use lint to verify changes after editing when appropriate."
+    },
+    "inspect": {
+      "description": "Inspect files without editing.",
+      "prompt": "Read and search files to answer the user's question.",
+      "tools": ["read", "grep", "find", "ls"],
+      "transition": "auto"
     }
   }
 }
@@ -97,7 +103,7 @@ Currently supported project user settings include:
 - New focus names create project-local focuses.
 - For an existing focus, `prompt` is appended after the built-in prompt with a blank line; it does not replace the built-in prompt.
 - When extending an existing focus, write `prompt` as a project-specific supplement, not a full replacement such as `You are in ... focus`.
-- `tools` are additive only.
+- `tools` is additive only.
 - Existing focus `transition` cannot be changed by project settings.
 - New focus `transition` defaults to `confirm` when omitted.
 
@@ -105,7 +111,7 @@ Common focus fields:
 
 - `description` required for new focuses.
 - `prompt` required for new focuses; appended after the existing prompt when merging an existing focus.
-- `tools` required for new focuses; additive when merging.
+- `tools` required for new focuses; additive when merging. It may include project tool names, built-in tool names, and extension tool names.
 - `transition` optional for new focuses: `auto`, `confirm`, or `manual`.
 - `color` optional: `accent`, `positive`, `caution`, `alert`, or `muted`.
 
@@ -166,7 +172,8 @@ Example:
 - Tool names must match `^[a-z][a-z0-9_-]*$`.
 - Focus names must match `^[a-z][a-z0-9_-]*$`.
 - Parameter names must start with a letter or `_`, then use letters, numbers, `_`, or `-`.
-- Do not conflict with built-in tools (`read`, `write`, `edit`, `bash`, `grep`, `find`, `ls`, `mv`, `rm`) or extension tools (`search_focus`, `enter_focus`, `leave_focus`).
+- Project tool names must not conflict with built-in tools (`read`, `write`, `edit`, `bash`, `grep`, `find`, `ls`, `mv`, `rm`) or extension tools (`enter_focus`).
+- To add built-in or extension tools to a focus, list them under `focuses.<name>.tools`.
 
 ## Examples
 
