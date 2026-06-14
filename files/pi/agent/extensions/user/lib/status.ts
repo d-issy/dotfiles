@@ -202,10 +202,16 @@ export function createStatusBarFooter(
 				.join(" ");
 		}
 
-		function renderSessionStatus(): string {
+		function hasVisibleFocusStatus(): boolean {
+			const focus = footerData.getExtensionStatuses().get("focus");
+			return typeof focus === "string" && visibleWidth(focus.trim()) > 0;
+		}
+
+		function renderSessionStatus(separator: string): string {
+			const statusSeparator = hasVisibleFocusStatus() ? ` ${separator} ` : " ";
 			return [renderExtensionStatuses(), renderModel()]
 				.filter(Boolean)
-				.join(" ");
+				.join(statusSeparator);
 		}
 
 		return {
@@ -221,7 +227,7 @@ export function createStatusBarFooter(
 				}
 
 				const separator = fg(colors.muted, "·");
-				const left = [renderSessionStatus(), renderLocation()]
+				const left = [renderSessionStatus(separator), renderLocation()]
 					.filter(Boolean)
 					.join(` ${separator} `);
 				const right = [renderCost(), renderContextUsage()]
