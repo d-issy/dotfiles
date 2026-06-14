@@ -6,6 +6,7 @@ import type {
 import type { Feature } from "../feature";
 import { refreshCurrentFocusTools } from "../lib/focus";
 import { policyRegistry } from "../lib/policy";
+import { ensureProjectUserSettingsTrusted } from "../lib/project-settings";
 import {
 	type ProjectToolSummary,
 	markFailedProjectToolResult,
@@ -47,6 +48,7 @@ function register(pi: ExtensionAPI): void {
 
 	const projectToolNames = new Set<string>();
 	pi.on("session_start", async (_event: SessionStartEvent, ctx) => {
+		await ensureProjectUserSettingsTrusted(ctx);
 		const projectTools = registerProjectTools(pi, ctx, projectToolNames);
 		refreshCurrentFocusTools(pi);
 		if (ctx.hasUI && projectTools.length > 0) {

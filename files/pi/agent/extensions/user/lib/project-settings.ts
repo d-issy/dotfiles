@@ -19,6 +19,8 @@ const TRUST_REQUIRING_PROJECT_CONFIG_RESOURCES = [
 	"APPEND_SYSTEM.md",
 ] as const;
 
+const sessionProjectUserSettingsTrust = new Map<string, boolean>();
+
 function hasCliTrustOverride(
 	argv: readonly string[] = process.argv.slice(2),
 ): boolean | undefined {
@@ -31,12 +33,29 @@ function hasCliTrustOverride(
 	return override;
 }
 
-function hasSavedTrust(cwd: string): boolean {
+function getSavedTrust(cwd: string): boolean | null {
 	try {
-		return new ProjectTrustStore(getAgentDir()).get(cwd) === true;
+		return new ProjectTrustStore(getAgentDir()).get(cwd);
 	} catch {
-		return false;
+		return null;
 	}
+}
+
+function saveTrust(cwd: string, trusted: boolean): string | undefined {
+	try {
+		new ProjectTrustStore(getAgentDir()).set(cwd, trusted);
+		return undefined;
+	} catch (error) {
+		return error instanceof Error ? error.message : String(error);
+	}
+}
+
+function getSessionTrust(cwd: string): boolean | undefined {
+	return sessionProjectUserSettingsTrust.get(canonicalize(cwd));
+}
+
+function setSessionTrust(cwd: string, trusted: boolean): void {
+	sessionProjectUserSettingsTrust.set(canonicalize(cwd), trusted);
 }
 
 function canonicalize(path: string): string {
@@ -80,6 +99,63 @@ export function hasProjectUserSettings(cwd: string): boolean {
 	return existsSync(join(cwd, PROJECT_USER_SETTINGS_RELATIVE_PATH));
 }
 
+function formatProjectUserSettingsTrustPrompt(cwd: string): string {
+	return `Trust project user settings?\n${cwd}\n\nThis allows the user extension to load ${PROJECT_USER_SETTINGS_RELATIVE_PATH} and enable project-defined tools. Project tools are repository-controlled commands.`;
+}
+
+export async function ensureProjectUserSettingsTrusted(
+	ctx: ExtensionContext,
+): Promise<void> {
+	if (!hasProjectUserSettings(ctx.cwd)) return;
+	if (!ctx.isProjectTrusted()) return;
+	if (hasStandardTrustRequiringProjectResources(ctx.cwd)) return;
+	if (hasCliTrustOverride() !== undefined) return;
+	if (getSessionTrust(ctx.cwd) !== undefined) return;
+	if (getSavedTrust(ctx.cwd) !== null) return;
+	if (!ctx.hasUI) return;
+
+	const trustOption = "Trust";
+	const trustSessionOption = "Trust (this session only)";
+	const doNotTrustOption = "Do not trust";
+	const doNotTrustSessionOption = "Do not trust (this session only)";
+	const selected = await ctx.ui.select(
+		formatProjectUserSettingsTrustPrompt(ctx.cwd),
+		[
+			trustOption,
+			trustSessionOption,
+			doNotTrustOption,
+			doNotTrustSessionOption,
+		],
+	);
+
+	const applySavedTrust = (trusted: boolean): void => {
+		const error = saveTrust(ctx.cwd, trusted);
+		if (!error) return;
+		setSessionTrust(ctx.cwd, trusted);
+		ctx.ui.notify(
+			`Failed to save project trust decision; applying it for this session only: ${error}`,
+			"warning",
+		);
+	};
+
+	switch (selected) {
+		case trustOption:
+			applySavedTrust(true);
+			break;
+		case trustSessionOption:
+			setSessionTrust(ctx.cwd, true);
+			break;
+		case doNotTrustOption:
+			applySavedTrust(false);
+			break;
+		case doNotTrustSessionOption:
+			setSessionTrust(ctx.cwd, false);
+			break;
+		default:
+			setSessionTrust(ctx.cwd, false);
+	}
+}
+
 export function isProjectUserSettingsTrusted(ctx: ExtensionContext): boolean {
 	if (!hasProjectUserSettings(ctx.cwd)) return true;
 	if (!ctx.isProjectTrusted()) return false;
@@ -90,7 +166,11 @@ export function isProjectUserSettingsTrusted(ctx: ExtensionContext): boolean {
 	// When Pi's own trust gate fired for standard project resources, ctx captures
 	// saved, temporary, and UI decisions. `.pi/settings.user.json` is a user
 	// extension convention, so a settings.user-only project needs an explicit
-	// saved trust decision (or --approve) instead of inheriting Pi's default true.
+	// saved or session trust decision (or --approve) instead of inheriting Pi's
+	// default true.
 	if (hasStandardTrustRequiringProjectResources(ctx.cwd)) return true;
-	return hasSavedTrust(ctx.cwd);
+
+	const sessionTrust = getSessionTrust(ctx.cwd);
+	if (sessionTrust !== undefined) return sessionTrust;
+	return getSavedTrust(ctx.cwd) === true;
 }

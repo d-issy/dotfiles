@@ -31,6 +31,7 @@ import {
 	showFocusSelector,
 } from "../lib/focus";
 import { policyRegistry } from "../lib/policy";
+import { ensureProjectUserSettingsTrusted } from "../lib/project-settings";
 
 type ContextResult = { messages?: ContextEvent["messages"] };
 type SessionBeforeSwitchResult = { cancel?: boolean };
@@ -503,6 +504,7 @@ const persistFocusBeforeNew =
 const restoreFocus =
 	(focus: FocusController): ExtensionHandler<SessionStartEvent> =>
 	async (_event, ctx) => {
+		await ensureProjectUserSettingsTrusted(ctx);
 		focus.loadProjectFocuses(ctx);
 		const persisted = findPersistedFocus(ctx);
 		focus.restore(ctx, persisted);
