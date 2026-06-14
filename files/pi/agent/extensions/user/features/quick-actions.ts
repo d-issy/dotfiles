@@ -6,15 +6,15 @@ import type { Feature } from "../feature";
 import { showModelSelector } from "../lib/model";
 import { showQuickActions } from "../lib/quick-actions";
 import { showEffortSelector } from "../lib/thinking";
-import { showModeQuickAction } from "./mode";
+import { showFocusQuickAction } from "./focus";
 
 const openQuickActions =
 	(pi: ExtensionAPI) =>
 	async (ctx: ExtensionContext): Promise<void> => {
 		const action = await showQuickActions(ctx);
 		switch (action) {
-			case "mode":
-				await showModeQuickAction(ctx);
+			case "focus":
+				await showFocusQuickAction(ctx);
 				break;
 			case "effort":
 				await showEffortSelector(pi, ctx);

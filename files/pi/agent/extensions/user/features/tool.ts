@@ -4,7 +4,7 @@ import type {
 	Theme,
 } from "@earendil-works/pi-coding-agent";
 import type { Feature } from "../feature";
-import { activateModeTools, getCurrentModeName } from "../lib/mode";
+import { refreshCurrentFocusTools } from "../lib/focus";
 import { policyRegistry } from "../lib/policy";
 import {
 	type ProjectToolSummary,
@@ -32,8 +32,7 @@ function formatProjectToolSummary(
 	}, []);
 	const lines = sortedTools.map((tool) => {
 		const commandLabel = `${tool.commandCount} cmd${tool.commandCount === 1 ? "" : "s"}`;
-		const modes = tool.allowedModes.join("/");
-		return dim(`  ${tool.name} (${modes} · ${commandLabel})`);
+		return dim(`  ${tool.name} (${commandLabel})`);
 	});
 	return [theme.fg("mdHeading", "[Project Tools]"), ...lines].join("\n");
 }
@@ -49,7 +48,7 @@ function register(pi: ExtensionAPI): void {
 	const projectToolNames = new Set<string>();
 	pi.on("session_start", async (_event: SessionStartEvent, ctx) => {
 		const projectTools = registerProjectTools(pi, ctx, projectToolNames);
-		activateModeTools(pi, getCurrentModeName());
+		refreshCurrentFocusTools(pi);
 		if (ctx.hasUI && projectTools.length > 0) {
 			setTimeout(() => {
 				ctx.ui.notify(

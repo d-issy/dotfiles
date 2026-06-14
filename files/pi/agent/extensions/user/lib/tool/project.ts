@@ -26,21 +26,25 @@ import {
 } from "@earendil-works/pi-coding-agent";
 import { type Component, Text } from "@earendil-works/pi-tui";
 import { type TSchema, Type } from "typebox";
-import { type ModeName, policyRegistry } from "../policy";
+import {
+	PROJECT_USER_SETTINGS_RELATIVE_PATH,
+	isProjectUserSettingsTrusted,
+} from "../project-settings";
 
-const PROJECT_TOOL_SETTINGS_RELATIVE_PATH = ".pi/settings.user.json";
+const PROJECT_TOOL_SETTINGS_RELATIVE_PATH = PROJECT_USER_SETTINGS_RELATIVE_PATH;
 const TOOL_NAME_RE = /^[a-z][a-z0-9_-]*$/u;
-const MODE_NAMES = [
-	"read",
-	"write",
-	"yolo",
-] as const satisfies readonly ModeName[];
 const RUNNING_TAIL_LINES = 3;
 const EXPANDED_TAIL_LINES = 200;
 const UPDATE_THROTTLE_MS = 100;
 
 const PARAMETER_NAME_RE = /^[A-Za-z_][A-Za-z0-9_-]*$/u;
 const PARAMETER_PLACEHOLDER_RE = /^\{\{([A-Za-z_][A-Za-z0-9_-]*)\}\}$/u;
+
+const registeredProjectTools = new Map<
+	string,
+	{ readonly projectRoot: string }
+>();
+let enabledProjectToolNames = new Set<string>();
 
 type ProjectToolSettings = {
 	tools?: unknown;
@@ -107,7 +111,6 @@ type ProjectToolCommandConfig = {
 type ProjectToolConfig = {
 	readonly name: string;
 	readonly description: string;
-	readonly allowedModes: readonly ModeName[];
 	readonly parameters: Readonly<Record<string, ProjectParameterConfig>>;
 	readonly executionMode?: ProjectToolExecutionMode;
 	readonly cwd?: string;
@@ -127,13 +130,13 @@ type ResolvedProjectToolCommand = ProjectToolCommandConfig & {
 };
 
 type ResolvedProjectTool = Omit<ProjectToolConfig, "commands"> & {
+	readonly projectRoot: string;
 	readonly parametersSchema: TSchema;
 	readonly commands: readonly ResolvedProjectToolCommand[];
 };
 
 export type ProjectToolSummary = {
 	readonly name: string;
-	readonly allowedModes: readonly ModeName[];
 	readonly commandCount: number;
 };
 
@@ -175,10 +178,6 @@ type MutableCommandState = {
 
 function isObject(value: unknown): value is Record<string, unknown> {
 	return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-function isModeName(value: unknown): value is ModeName {
-	return typeof value === "string" && MODE_NAMES.includes(value as ModeName);
 }
 
 function normalizeExecutionMode(
@@ -580,20 +579,6 @@ function normalizeTool(name: string, value: unknown): ProjectToolConfig {
 	);
 	if (!description) throw new Error(`${name}.description is required.`);
 
-	if (!Array.isArray(value.allowedModes) || value.allowedModes.length === 0) {
-		throw new Error(
-			`${name}.allowedModes is required and must be a non-empty array.`,
-		);
-	}
-	const allowedModes = value.allowedModes.map((mode, index) => {
-		if (!isModeName(mode)) {
-			throw new Error(
-				`${name}.allowedModes[${index}] must be one of: ${MODE_NAMES.join(", ")}.`,
-			);
-		}
-		return mode;
-	});
-
 	if (!Array.isArray(value.commands) || value.commands.length === 0) {
 		throw new Error(
 			`${name}.commands is required and must be a non-empty array.`,
@@ -622,7 +607,6 @@ function normalizeTool(name: string, value: unknown): ProjectToolConfig {
 	return {
 		name,
 		description,
-		allowedModes,
 		parameters,
 		executionMode: normalizeExecutionMode(
 			value.executionMode,
@@ -651,6 +635,7 @@ function resolveTool(
 	const toolCwd = resolveProjectCwd(root, config.cwd, `${config.name}.cwd`);
 	return {
 		...config,
+		projectRoot: realpathSync(root),
 		parametersSchema: buildParameterSchema(config.parameters),
 		commands: config.commands.map((command, index) => {
 			const cwd = resolveProjectCwd(
@@ -1318,6 +1303,34 @@ function renderResult(
 		: renderSummary(details, theme);
 }
 
+function createBlockedProjectToolResult(
+	tool: ResolvedProjectTool,
+	reason: string,
+): AgentToolResult<ProjectToolDetails> {
+	return {
+		content: [{ type: "text", text: reason }],
+		details: {
+			kind: "project-tool",
+			toolName: tool.name,
+			status: "finished",
+			commandCount: 0,
+			failed: true,
+			commands: [],
+		},
+	};
+}
+
+function isSameProjectRoot(
+	ctx: ExtensionContext,
+	tool: ResolvedProjectTool,
+): boolean {
+	try {
+		return realpathSync(ctx.cwd) === tool.projectRoot;
+	} catch {
+		return false;
+	}
+}
+
 function createProjectToolDefinition(
 	tool: ResolvedProjectTool,
 ): ToolDefinition<TSchema, ProjectToolDetails> {
@@ -1334,20 +1347,39 @@ function createProjectToolDefinition(
 		renderCall: (args, theme) =>
 			renderCallTitle(tool, args as ProjectToolInput, theme),
 		renderResult,
-		execute: (
+		execute: async (
 			_toolCallId: string,
 			params,
 			signal: AbortSignal | undefined,
 			onUpdate: AgentToolUpdateCallback<ProjectToolDetails> | undefined,
 			ctx: ExtensionContext,
-		) =>
-			executeProjectTool(
+		) => {
+			if (!isProjectUserSettingsTrusted(ctx)) {
+				return createBlockedProjectToolResult(
+					tool,
+					`Project tool '${tool.name}' is disabled because project user settings are not trusted.`,
+				);
+			}
+			if (!enabledProjectToolNames.has(tool.name)) {
+				return createBlockedProjectToolResult(
+					tool,
+					`Project tool '${tool.name}' is not enabled for the current project.`,
+				);
+			}
+			if (!isSameProjectRoot(ctx, tool)) {
+				return createBlockedProjectToolResult(
+					tool,
+					`Project tool '${tool.name}' belongs to a different project and is disabled here.`,
+				);
+			}
+			return executeProjectTool(
 				tool,
 				params as ProjectToolInput,
 				ctx,
 				signal,
 				onUpdate,
-			),
+			);
+		},
 	};
 }
 
@@ -1369,9 +1401,8 @@ export function registerProjectTools(
 	ctx: ExtensionContext,
 	registeredNames: Set<string>,
 ): readonly ProjectToolSummary[] {
-	const previouslyRegisteredNames = new Set(registeredNames);
-	policyRegistry.disable(previouslyRegisteredNames);
-	if (!ctx.isProjectTrusted()) return [];
+	enabledProjectToolNames = new Set();
+	if (!isProjectUserSettingsTrusted(ctx)) return [];
 
 	let projectSettings: ProjectToolSettings;
 	try {
@@ -1393,9 +1424,10 @@ export function registerProjectTools(
 
 	const existingToolNames = new Set(pi.getAllTools().map((tool) => tool.name));
 	const summaries: ProjectToolSummary[] = [];
+	const currentEnabledProjectToolNames = new Set<string>();
 	for (const [name, rawConfig] of Object.entries(projectSettings.tools)) {
 		try {
-			const isProjectToolUpdate = previouslyRegisteredNames.has(name);
+			const isProjectToolUpdate = registeredProjectTools.has(name);
 			if (existingToolNames.has(name) && !isProjectToolUpdate) {
 				notifyWarning(
 					ctx,
@@ -1405,11 +1437,11 @@ export function registerProjectTools(
 			}
 			const resolved = resolveTool(ctx.cwd, normalizeTool(name, rawConfig));
 			pi.registerTool(createProjectToolDefinition(resolved));
-			policyRegistry.register({ name, allowedModes: resolved.allowedModes });
 			registeredNames.add(name);
+			registeredProjectTools.set(name, { projectRoot: resolved.projectRoot });
+			currentEnabledProjectToolNames.add(name);
 			summaries.push({
 				name,
-				allowedModes: resolved.allowedModes,
 				commandCount: resolved.commands.length,
 			});
 		} catch (error) {
@@ -1420,7 +1452,12 @@ export function registerProjectTools(
 		}
 	}
 
+	enabledProjectToolNames = currentEnabledProjectToolNames;
 	return summaries;
+}
+
+export function isProjectToolAvailable(name: string): boolean {
+	return !registeredProjectTools.has(name) || enabledProjectToolNames.has(name);
 }
 
 export function markFailedProjectToolResult(

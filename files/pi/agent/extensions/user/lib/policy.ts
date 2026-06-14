@@ -1,33 +1,33 @@
 import type { ToolCallEvent } from "@earendil-works/pi-coding-agent";
 import { isSecretPath } from "./secrets";
 
-export type ModeName = "read" | "write" | "yolo";
+export type FocusName = string;
 
 export function makeSecretActionReason(
 	verb: string,
-): (modeName: ModeName) => string {
-	return (modeName) => `${verb} secret files is disabled in ${modeName} mode.`;
+): (focusName: FocusName) => string {
+	return (focusName) =>
+		`${verb} secret files is disabled in ${focusName} focus.`;
 }
 
 export type ToolPolicy<TInput = unknown> = {
 	name: string;
-	allowedModes: readonly ModeName[];
 	extractSecretPaths?: (input: TInput) => readonly string[];
-	secretBlockReason?: (modeName: ModeName) => string;
-	notAllowedReason?: (modeName: ModeName) => string;
+	secretBlockReason?: (focusName: FocusName) => string;
+	notAllowedReason?: (focusName: FocusName) => string;
 };
 
 export type PolicyRegistry = {
 	register<TInput>(policy: ToolPolicy<TInput>): void;
 	disable(names: Iterable<string>): void;
-	getAllowedToolsForMode(modeName: ModeName): string[];
 	getKnownToolNames(): string[];
 	checkToolAllowed(
-		modeName: ModeName,
+		focusName: FocusName,
+		allowedToolNames: ReadonlySet<string>,
 		event: ToolCallEvent,
 	): string | undefined;
 	checkSecretBlock(
-		modeName: ModeName,
+		focusName: FocusName,
 		event: ToolCallEvent,
 	): string | undefined;
 };
@@ -40,36 +40,27 @@ function createPolicyRegistry(): PolicyRegistry {
 			policies.set(policy.name, policy as ToolPolicy);
 		},
 		disable(names) {
-			for (const name of names) policies.set(name, { name, allowedModes: [] });
-		},
-		getAllowedToolsForMode(modeName) {
-			const tools: string[] = [];
-			for (const policy of policies.values()) {
-				if (policy.allowedModes.includes(modeName)) tools.push(policy.name);
-			}
-			return tools;
+			for (const name of names) policies.delete(name);
 		},
 		getKnownToolNames() {
 			return [...policies.keys()];
 		},
-		checkToolAllowed(modeName, event) {
+		checkToolAllowed(focusName, allowedToolNames, event) {
+			if (allowedToolNames.has(event.toolName)) return undefined;
 			const policy = policies.get(event.toolName);
-			if (!policy) return undefined;
-			if (policy.allowedModes.includes(modeName)) return undefined;
 			return (
-				policy.notAllowedReason?.(modeName) ??
-				`${event.toolName} is not available in ${modeName} mode.`
+				policy?.notAllowedReason?.(focusName) ??
+				`${event.toolName} is not available in ${focusName} focus.`
 			);
 		},
-		checkSecretBlock(modeName, event) {
+		checkSecretBlock(focusName, event) {
 			const policy = policies.get(event.toolName);
 			if (!policy?.extractSecretPaths) return undefined;
-			if (!policy.allowedModes.includes(modeName)) return undefined;
 			const paths = policy.extractSecretPaths(event.input as never);
 			if (!paths.some(isSecretPath)) return undefined;
 			return (
-				policy.secretBlockReason?.(modeName) ??
-				`${policy.name} on secret files is disabled in ${modeName} mode.`
+				policy.secretBlockReason?.(focusName) ??
+				`${policy.name} on secret files is disabled in ${focusName} focus.`
 			);
 		},
 	};

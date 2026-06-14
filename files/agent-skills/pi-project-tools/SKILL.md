@@ -20,18 +20,17 @@ Do not use this skill for ordinary shell commands, lint/test/format requests, or
 1. Inspect existing `.pi/settings.user.json` before editing.
 2. Preserve unrelated settings and unrelated `tools` entries.
 3. Add, rename, remove, or modify only the requested tool entries.
-4. Validate JSON after editing.
-5. Summarize changed tool names, commands, parameters, execution mode, and allowed modes.
+4. If the tool should be available to AI, add it to an appropriate `.pi/settings.user.json` `focuses` entry.
+5. Validate JSON after editing.
+6. Summarize changed tool names, commands, parameters, execution mode, and focus availability.
 
 ## Safety and style
 
 - Treat project tools as project-controlled command execution.
-- Prefer `allowedModes: ["read", "write"]` for non-mutating checks so they are available in both read and write modes.
-- Use `allowedModes: ["read"]` only when a read-only tool should be unavailable during write mode.
-- Use `allowedModes: ["write"]` for commands that modify the working tree, such as formatters.
-- Keep `allowedModes` to `read` and/or `write`.
+- Project tools do not declare focus access themselves.
+- Focus access is controlled by `.pi/settings.user.json` `focuses.<name>.tools`.
+- Keep tools deterministic and scoped to the repository.
 - Avoid commands that read secrets, access credentials, or modify paths outside the project.
-- Keep commands deterministic and scoped to the repository.
 - Set `timeoutSeconds` for commands that might hang.
 - Use `executionMode: "parallel"` only when safe to run concurrently with other tool calls.
 - Prefer structured `command` + `arguments` over free-form shell strings.
@@ -39,6 +38,7 @@ Do not use this skill for ordinary shell commands, lint/test/format requests, or
 - Use parameter placeholders only as whole arguments, e.g. `"{{path}}"`.
 - Parameter values are shell-quoted and passed as single arguments; do not add extra quotes.
 - For variable-length inputs, use an `array` parameter with a `values` entry; do not invent fixed `path1`, `path2`, `path3` parameters.
+- Do not define a project tool with the same name as a built-in or extension tool.
 
 ## Settings shape
 
@@ -47,7 +47,6 @@ Do not use this skill for ordinary shell commands, lint/test/format requests, or
   "tools": {
     "lint": {
       "description": "Run project lint and type checks.",
-      "allowedModes": ["read", "write"],
       "executionMode": "parallel",
       "commands": [
         {
@@ -58,6 +57,12 @@ Do not use this skill for ordinary shell commands, lint/test/format requests, or
         }
       ]
     }
+  },
+  "focuses": {
+    "verify": {
+      "tools": ["lint"],
+      "prompt": "For this project, use lint to verify changes."
+    }
   }
 }
 ```
@@ -65,14 +70,31 @@ Do not use this skill for ordinary shell commands, lint/test/format requests, or
 ## Tool fields
 
 - `description` required; explain what the tool does.
-- `allowedModes` required; non-empty array of `read` and/or `write`.
-- `commands` required; non-empty array. Commands in one project tool run in parallel.
+- `commands` required; non-empty array.
 - `parameters` optional; object of LLM-provided parameters.
 - `executionMode` optional; `sequential` or `parallel`. Defaults to `sequential`.
 - `cwd` optional; relative path inside the project root.
 - `timeoutSeconds` optional; default timeout for commands.
 - `promptSnippet` optional; one-line LLM-facing tool summary.
 - `promptGuidelines` optional; bullets that must name the tool explicitly.
+
+## Focus fields
+
+Project focuses live under `.pi/settings.user.json` `focuses`.
+
+- Existing focus names merge into user-extension focuses.
+- New focus names create project-local focuses.
+- `tools` are additive only.
+- Existing focus `transition` cannot be changed by project settings.
+- New focus `transition` defaults to `confirm` when omitted.
+
+Common focus fields:
+
+- `description` required for new focuses.
+- `prompt` required for new focuses; appended when merging an existing focus.
+- `tools` required for new focuses; additive when merging.
+- `transition` optional for new focuses: `auto`, `confirm`, or `manual`.
+- `color` optional: `accent`, `positive`, `caution`, `alert`, or `muted`.
 
 ## Parameter fields
 
@@ -130,23 +152,25 @@ Example:
 
 - Tool names must match `^[a-z][a-z0-9_-]*$`.
 - Parameter names must start with a letter or `_`, then use letters, numbers, `_`, or `-`.
-- Do not conflict with built-in tools (`read`, `write`, `edit`, `bash`, `grep`, `find`, `ls`, `mv`, `rm`) or extension tools.
+- Do not conflict with built-in tools (`read`, `write`, `edit`, `bash`, `grep`, `find`, `ls`, `mv`, `rm`) or extension tools (`search_focus`, `enter_focus`, `leave_focus`).
 
 ## Examples
 
-Read-only check:
+Project lint tool exposed through verify focus:
 
 ```json
 {
   "tools": {
     "lint": {
       "description": "Run lint and type checks.",
-      "allowedModes": ["read", "write"],
       "executionMode": "parallel",
       "commands": [
         { "label": "lint", "command": "pnpm", "arguments": ["lint"], "timeoutSeconds": 120 }
       ]
     }
+  },
+  "focuses": {
+    "verify": { "tools": ["lint"] }
   }
 }
 ```
@@ -158,7 +182,6 @@ Parameterized command with flag and option:
   "tools": {
     "brain_token_stats_count": {
       "description": "Count approximate brain tokens.",
-      "allowedModes": ["read"],
       "parameters": {
         "detail": { "type": "boolean", "description": "Show detailed output." },
         "top": { "type": "number", "description": "Number of top entries." }
@@ -176,6 +199,9 @@ Parameterized command with flag and option:
         }
       ]
     }
+  },
+  "focuses": {
+    "inspect": { "tools": ["brain_token_stats_count"] }
   }
 }
 ```
@@ -187,7 +213,6 @@ Variable-length repeat option:
   "tools": {
     "brain_context_suggest": {
       "description": "Suggest applicable brain context files.",
-      "allowedModes": ["read"],
       "parameters": {
         "paths": { "type": "string[]", "description": "Paths to consider." },
         "query": { "type": "string", "description": "Optional query to guide suggestions." }
@@ -206,6 +231,9 @@ Variable-length repeat option:
         }
       ]
     }
+  },
+  "focuses": {
+    "inspect": { "tools": ["brain_context_suggest"] }
   }
 }
 ```

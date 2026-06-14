@@ -23,7 +23,6 @@ function registerFileTools(): void {
 	toolRegistry.register({
 		policy: {
 			name: "mv",
-			allowedModes: ["write"],
 			extractSecretPaths: (input) => [
 				...normalizeStringOrArray(input.source),
 				input.destination,
@@ -51,7 +50,6 @@ function registerFileTools(): void {
 	toolRegistry.register({
 		policy: {
 			name: "rm",
-			allowedModes: ["write"],
 			extractSecretPaths: (input) => normalizeStringOrArray(input.path),
 			secretBlockReason: makeSecretActionReason("Removing"),
 		},

@@ -11,7 +11,7 @@ import {
 } from "@earendil-works/pi-tui";
 import { decodePrintableInput } from "./ui";
 
-export type QuickActionId = "mode" | "effort" | "model";
+export type QuickActionId = "focus" | "effort" | "model";
 
 type QuickAction = {
 	id: QuickActionId;
@@ -22,10 +22,10 @@ type QuickAction = {
 
 const QUICK_ACTIONS: readonly QuickAction[] = [
 	{
-		id: "mode",
-		key: "m",
-		label: "Mode",
-		description: "Select permission mode",
+		id: "focus",
+		key: "f",
+		label: "Focus",
+		description: "Enter or leave focus",
 	},
 	{
 		id: "effort",

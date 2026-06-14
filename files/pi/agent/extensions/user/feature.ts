@@ -1,7 +1,7 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 
 /**
- * A self-contained unit of the `user` extension (mode switching, status bar,
+ * A self-contained unit of the `user` extension (focus switching, status bar,
  * thinking effort, file tools, ...). Each feature registers its own flags,
  * commands, shortcuts, tools and event handlers against the pi extension API.
  */
