@@ -58,6 +58,7 @@ export function registerEnterFocusTool(
 		label: "enter_focus",
 		description:
 			"Enter or switch to a predefined focus available to the agent.",
+		executionMode: "sequential",
 		parameters: Type.Object({
 			name: Type.String({ description: "Focus name to enter." }),
 			reason: Type.Optional(
