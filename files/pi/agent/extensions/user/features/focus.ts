@@ -24,7 +24,6 @@ import {
 	FOCUS_REMINDER_TYPE,
 	FOCUS_STATE_TYPE,
 	type FocusController,
-	SEARCH_FOCUS_TOOL,
 	buildFocusRestorePrompt,
 	createFocusController,
 	findPersistedFocus,
@@ -72,26 +71,17 @@ function formatFocusList(
 		.join("\n");
 }
 
-function formatFocusSearchResult(
-	matches: readonly { name: string; description: string }[],
-	fallbacks: readonly { name: string; description: string }[],
-	query: string | undefined,
-): string {
-	if (matches.length > 0) return formatFocusList(matches);
-	const normalized = query?.trim();
-	if (!normalized) return "No available focus found.";
-	return `No focus matched query '${normalized}'. Available focuses:\n${formatFocusList(fallbacks)}`;
+function buildDefaultFocusPrompt(focus: FocusController): string {
+	const focuses = focus.registry.search().map((definition) => ({
+		name: definition.name,
+		description: definition.description,
+	}));
+	return `[DEFAULT FOCUS]\nYou are in default focus. Use enter_focus with a reason to enter one.\n\nAvailable focuses:\n${formatFocusList(focuses)}`;
 }
 
 function formatToolArg(value: string | undefined, fallback = "<none>"): string {
 	const normalized = value?.trim();
 	return normalized ? JSON.stringify(normalized) : fallback;
-}
-
-function renderSearchFocusCall(args: { query?: string }, theme: Theme): Text {
-	let text = theme.fg("toolTitle", theme.bold(SEARCH_FOCUS_TOOL));
-	text += theme.fg("muted", ` query=${formatToolArg(args.query, "*")}`);
-	return new Text(text, 0, 0);
 }
 
 function renderEnterFocusCall(
@@ -367,58 +357,6 @@ function buildFocusReminderPayloadWithTools(
 	};
 }
 
-function registerSearchFocusTool(
-	pi: ExtensionAPI,
-	focus: FocusController,
-): void {
-	pi.registerTool({
-		name: SEARCH_FOCUS_TOOL,
-		label: "search_focus",
-		description:
-			"Search predefined focuses by name or description. Manual-only focuses are hidden.",
-		parameters: Type.Object({
-			query: Type.Optional(
-				Type.String({ description: "Optional search query." }),
-			),
-		}),
-		renderCall: renderSearchFocusCall,
-		execute: async (_toolCallId, params) => {
-			if (focus.current !== DEFAULT_FOCUS) {
-				return {
-					content: [
-						{
-							type: "text" as const,
-							text: "search_focus is only available from default focus.",
-						},
-					],
-					details: { ok: false, reason: "not-default" } as FocusToolDetails,
-				};
-			}
-			const matches = focus.registry.search(params.query).map((definition) => ({
-				name: definition.name,
-				description: definition.description,
-			}));
-			const available = focus.registry.search().map((definition) => ({
-				name: definition.name,
-				description: definition.description,
-			}));
-			return {
-				content: [
-					{
-						type: "text" as const,
-						text: formatFocusSearchResult(matches, available, params.query),
-					},
-				],
-				details: {
-					ok: true,
-					focuses: matches,
-					availableFocuses: matches.length === 0 ? available : undefined,
-				} as FocusToolDetails,
-			};
-		},
-	});
-}
-
 function registerEnterFocusTool(
 	pi: ExtensionAPI,
 	focus: FocusController,
@@ -442,7 +380,7 @@ function registerEnterFocusTool(
 					content: [
 						{
 							type: "text" as const,
-							text: `Unknown focus '${params.name}'. Use search_focus to find available focuses.`,
+							text: `Unknown focus '${params.name}'. Choose one of the available focuses from the default focus instructions.`,
 						},
 					],
 					details: { ok: false, reason: "unknown-focus" } as FocusToolDetails,
@@ -520,7 +458,7 @@ function registerEnterFocusTool(
 							content: [
 								{
 									type: "text" as const,
-									text: `User declined entering focus '${definition.name}'.`,
+									text: `User rejected entering focus '${definition.name}' for this request. Do not request this focus again or route through another focus to request it. Use currently available tools if they can satisfy the request. If not, ask the user how to proceed.`,
 								},
 							],
 							details: { ok: false, reason: "declined" } as FocusToolDetails,
@@ -568,7 +506,7 @@ const injectFocusRestorePrompt =
 		);
 		if (!focus.active) {
 			return {
-				systemPrompt: `${systemPrompt}\n\n[DEFAULT FOCUS]\nYou are in default focus. Use search_focus to discover an appropriate focus, then use enter_focus with a reason before repository work.`,
+				systemPrompt: `${systemPrompt}\n\n${buildDefaultFocusPrompt(focus)}`,
 			};
 		}
 		if (!restorePromptPending) {
@@ -698,7 +636,6 @@ export async function showFocusQuickAction(
 function register(pi: ExtensionAPI): void {
 	registerBuiltInFocusPolicies();
 	const focus = createFocusController(pi);
-	registerSearchFocusTool(pi, focus);
 	registerEnterFocusTool(pi, focus);
 	focusQuickAction = openFocusQuickAction(focus);
 	pi.on("before_agent_start", injectFocusRestorePrompt(pi, focus));

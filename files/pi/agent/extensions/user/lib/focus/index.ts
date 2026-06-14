@@ -4,7 +4,6 @@ export {
 	ENTER_FOCUS_TOOL,
 	FOCUS_REMINDER_TYPE,
 	FOCUS_STATE_TYPE,
-	SEARCH_FOCUS_TOOL,
 	TRANSITION_TOOL_NAMES,
 	type FocusDefinition,
 	type FocusName,
