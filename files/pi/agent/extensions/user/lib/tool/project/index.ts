@@ -2,5 +2,5 @@ export {
 	isProjectToolAvailable,
 	markFailedProjectToolResult,
 	registerProjectTools,
-} from "./project/index";
-export type { ProjectToolSummary } from "./project/index";
+} from "./register";
+export type { ProjectToolSummary } from "./types";
