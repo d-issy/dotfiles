@@ -1,31 +1,33 @@
 ---
-name: pi-project-tools
-description: Use only when the user explicitly mentions Pi project tools, .pi/settings.user.json tools, or asks to add/change/remove/review a Pi tool definition.
+name: pi-agent-user-settings
+description: Use only when the user explicitly mentions Pi agent user settings, .pi/settings.user.json, project user settings, or asks to add/change/remove/review Pi project tools or project-local focus settings.
 ---
 
-# Project Tools
+# Pi Agent User Settings
 
-Pi project tools are repository-defined tools in `.pi/settings.user.json` under `tools`. They become callable Pi tools only for that project.
+Pi agent user settings are project-local settings in `.pi/settings.user.json` consumed by the user extension. They are separate from Pi's native `.pi/settings.json` and `~/.pi/agent/settings.json`.
 
 Use this skill only for:
 
-- Pi project tools
-- `.pi/settings.user.json` `tools`
-- adding, editing, renaming, removing, reviewing, or explaining a Pi tool definition
+- Pi agent user settings
+- `.pi/settings.user.json`
+- project user settings for Pi
+- adding, editing, renaming, removing, reviewing, or explaining `tools` or `focuses` in `.pi/settings.user.json`
 
-Do not use this skill for ordinary shell commands, lint/test/format requests, or non-Pi tool configuration.
+Do not use this skill for ordinary shell commands, lint/test/format requests, Pi's native settings files, or non-Pi configuration.
 
 ## Workflow
 
 1. Inspect existing `.pi/settings.user.json` before editing.
-2. Preserve unrelated settings and unrelated `tools` entries.
-3. Add, rename, remove, or modify only the requested tool entries.
-4. If the tool should be available to AI, add it to an appropriate `.pi/settings.user.json` `focuses` entry.
+2. Preserve unrelated settings and unrelated `tools` / `focuses` entries.
+3. Change only the requested settings.
+4. If adding a tool that should be available to AI, add it to an appropriate `.pi/settings.user.json` `focuses` entry.
 5. Validate JSON after editing.
-6. Summarize changed tool names, commands, parameters, execution mode, and focus availability.
+6. Summarize changed setting keys, tool names, commands, parameters, execution mode, and focus availability.
 
 ## Safety and style
 
+- Treat `.pi/settings.user.json` as project-controlled configuration.
 - Treat project tools as project-controlled command execution.
 - Project tools do not declare focus access themselves.
 - Focus access is controlled by `.pi/settings.user.json` `focuses.<name>.tools`.
@@ -67,7 +69,16 @@ Do not use this skill for ordinary shell commands, lint/test/format requests, or
 }
 ```
 
+## Top-level fields
+
+Currently supported project user settings include:
+
+- `tools`: repository-defined tool definitions callable only for that project.
+- `focuses`: project-local focus additions or overrides for user-extension focuses.
+
 ## Tool fields
+
+`tools.<name>`:
 
 - `description` required; explain what the tool does.
 - `commands` required; non-empty array.
@@ -80,7 +91,7 @@ Do not use this skill for ordinary shell commands, lint/test/format requests, or
 
 ## Focus fields
 
-Project focuses live under `.pi/settings.user.json` `focuses`.
+`focuses.<name>`:
 
 - Existing focus names merge into user-extension focuses.
 - New focus names create project-local focuses.
@@ -151,6 +162,7 @@ Example:
 ## Naming
 
 - Tool names must match `^[a-z][a-z0-9_-]*$`.
+- Focus names must match `^[a-z][a-z0-9_-]*$`.
 - Parameter names must start with a letter or `_`, then use letters, numbers, `_`, or `-`.
 - Do not conflict with built-in tools (`read`, `write`, `edit`, `bash`, `grep`, `find`, `ls`, `mv`, `rm`) or extension tools (`search_focus`, `enter_focus`, `leave_focus`).
 
@@ -202,38 +214,6 @@ Parameterized command with flag and option:
   },
   "focuses": {
     "inspect": { "tools": ["brain_token_stats_count"] }
-  }
-}
-```
-
-Variable-length repeat option:
-
-```json
-{
-  "tools": {
-    "brain_context_suggest": {
-      "description": "Suggest applicable brain context files.",
-      "parameters": {
-        "paths": { "type": "string[]", "description": "Paths to consider." },
-        "query": { "type": "string", "description": "Optional query to guide suggestions." }
-      },
-      "commands": [
-        {
-          "label": "brain context suggest",
-          "command": "brain",
-          "arguments": [
-            "context",
-            "suggest",
-            { "option": "--path", "values": "{{paths}}", "style": "repeat" },
-            { "option": "--query", "value": "{{query}}" }
-          ],
-          "timeoutSeconds": 60
-        }
-      ]
-    }
-  },
-  "focuses": {
-    "inspect": { "tools": ["brain_context_suggest"] }
   }
 }
 ```
