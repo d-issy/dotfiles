@@ -107,7 +107,7 @@ export function applyFocusStatus(
 	focus: FocusDefinition | undefined,
 ): void {
 	if (!focus) {
-		ctx.ui.setStatus("focus", fg(colors.muted, DEFAULT_FOCUS));
+		ctx.ui.setStatus("focus", undefined);
 		return;
 	}
 	ctx.ui.setStatus("focus", fg(colors[focus.color ?? "accent"], focus.name));

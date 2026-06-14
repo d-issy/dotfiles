@@ -195,6 +195,15 @@ export function createStatusBarFooter(
 
 		function renderExtensionStatuses(): string {
 			return [...footerData.getExtensionStatuses().values()]
+				.filter(
+					(status): status is string =>
+						Boolean(status) && visibleWidth(status.trim()) > 0,
+				)
+				.join(" ");
+		}
+
+		function renderSessionStatus(): string {
+			return [renderExtensionStatuses(), renderModel()]
 				.filter(Boolean)
 				.join(" ");
 		}
@@ -212,11 +221,7 @@ export function createStatusBarFooter(
 				}
 
 				const separator = fg(colors.muted, "·");
-				const left = [
-					renderExtensionStatuses(),
-					renderModel(),
-					renderLocation(),
-				]
+				const left = [renderSessionStatus(), renderLocation()]
 					.filter(Boolean)
 					.join(` ${separator} `);
 				const right = [renderCost(), renderContextUsage()]
