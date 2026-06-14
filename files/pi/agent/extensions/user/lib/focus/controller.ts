@@ -73,6 +73,10 @@ export function getCurrentFocusDefinition(): FocusDefinition | undefined {
 	return activeFocusDefinition;
 }
 
+export function getCurrentFocusRegistry(): FocusRegistry {
+	return activeFocusRegistry;
+}
+
 export function refreshCurrentFocusTools(pi: ExtensionAPI): void {
 	activateFocusTools(pi, activeFocusDefinition, activeFocusRegistry);
 }

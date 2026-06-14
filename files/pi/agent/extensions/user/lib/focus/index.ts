@@ -15,6 +15,7 @@ export {
 	createFocusController,
 	getCurrentFocusDefinition,
 	getCurrentFocusName,
+	getCurrentFocusRegistry,
 	isFocusReminderMessage,
 	refreshCurrentFocusTools,
 	type FocusController,
