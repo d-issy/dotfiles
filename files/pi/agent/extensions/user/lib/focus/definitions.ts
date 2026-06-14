@@ -30,10 +30,10 @@ export const DEFAULT_FOCUS_TOOLS = [ENTER_FOCUS_TOOL] as const;
 
 export const BASE_FOCUS_DEFINITIONS: readonly FocusDefinition[] = [
 	{
-		name: "inspect",
+		name: "explore",
 		description: "Read and search the repository to understand the task.",
 		prompt:
-			"You are in inspect focus. Read and search the repository to understand the task.",
+			"You are in explore focus. Read and search the repository to understand the task.",
 		tools: ["read", "grep", "find", "ls"],
 		transition: "auto",
 		color: "accent",
