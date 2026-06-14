@@ -1,5 +1,6 @@
 import type {
 	AgentEndEvent,
+	AgentToolResult,
 	BeforeAgentStartEvent,
 	BeforeAgentStartEventResult,
 	BeforeProviderRequestEvent,
@@ -12,6 +13,7 @@ import type {
 	Theme,
 	ToolCallEvent,
 	ToolCallEventResult,
+	ToolRenderResultOptions,
 } from "@earendil-works/pi-coding-agent";
 import { Text } from "@earendil-works/pi-tui";
 import { Type } from "typebox";
@@ -32,6 +34,7 @@ import {
 } from "../lib/focus";
 import { policyRegistry } from "../lib/policy";
 import { ensureProjectUserSettingsTrusted } from "../lib/project-settings";
+import { showFilterSelect } from "../lib/ui";
 
 type ContextResult = { messages?: ContextEvent["messages"] };
 type SessionBeforeSwitchResult = { cancel?: boolean };
@@ -45,10 +48,17 @@ type FocusReminderWithTools = {
 };
 
 type FocusQuickAction = (ctx: ExtensionContext) => Promise<void>;
+type FocusConfirmDecision =
+	| "allow-once"
+	| "deny-once"
+	| "allow-session"
+	| "deny-session";
 
 let focusQuickAction: FocusQuickAction | undefined;
 let restorePromptPending = false;
 let resetFocusAtAgentEndPending = false;
+const sessionAllowedConfirmFocuses = new Set<string>();
+const sessionDeniedConfirmFocuses = new Set<string>();
 
 function block(reason: string): BlockedToolCall {
 	return { block: true, reason };
@@ -92,6 +102,95 @@ function renderEnterFocusCall(
 	text += theme.fg("muted", ` name=${formatToolArg(args.name)}`);
 	text += theme.fg("muted", ` reason=${formatToolArg(args.reason)}`);
 	return new Text(text, 0, 0);
+}
+
+function resultText(result: AgentToolResult<FocusToolDetails>): string {
+	const content = result.content[0];
+	return content?.type === "text" ? content.text : "";
+}
+
+function firstResultLine(result: AgentToolResult<FocusToolDetails>): string {
+	return resultText(result).split("\n")[0] ?? "";
+}
+
+function isOkResult(result: AgentToolResult<FocusToolDetails>): boolean {
+	return result.details.ok !== false;
+}
+
+function renderEnterFocusResult(
+	result: AgentToolResult<FocusToolDetails>,
+	options: ToolRenderResultOptions,
+	theme: Theme,
+): Text {
+	const text = options.expanded ? resultText(result) : firstResultLine(result);
+	const color = isOkResult(result) ? "success" : "error";
+	return new Text(theme.fg(color, text), 0, 0);
+}
+
+function isFocusConfirmDecision(
+	value: string | undefined,
+): value is FocusConfirmDecision {
+	return (
+		value === "allow-once" ||
+		value === "deny-once" ||
+		value === "allow-session" ||
+		value === "deny-session"
+	);
+}
+
+async function confirmFocusTransition(
+	ctx: ExtensionContext,
+	name: string,
+	description: string,
+	reason: string,
+): Promise<FocusConfirmDecision | undefined> {
+	const decision = await showFilterSelect(ctx, {
+		title: `Enter focus: ${name}`,
+		items: [
+			{
+				value: "allow-once",
+				label: "Allow once",
+				description,
+			},
+			{
+				value: "deny-once",
+				label: "Deny once",
+				description: "Decline this request only.",
+			},
+			{
+				value: "allow-session",
+				label: "Allow this session only",
+				description: "Enter this focus without asking again in this session.",
+			},
+			{
+				value: "deny-session",
+				label: "Deny this session only",
+				description: "Decline this focus without asking again in this session.",
+			},
+		],
+		filterPlaceholder: reason,
+		footer: "↑↓ navigate • enter select • esc cancel",
+	});
+	return isFocusConfirmDecision(decision) ? decision : undefined;
+}
+
+function rememberFocusTransitionDecision(
+	name: string,
+	decision: FocusConfirmDecision,
+): void {
+	if (decision === "allow-session") {
+		sessionDeniedConfirmFocuses.delete(name);
+		sessionAllowedConfirmFocuses.add(name);
+	}
+	if (decision === "deny-session") {
+		sessionAllowedConfirmFocuses.delete(name);
+		sessionDeniedConfirmFocuses.add(name);
+	}
+}
+
+function clearFocusTransitionDecisions(): void {
+	sessionAllowedConfirmFocuses.clear();
+	sessionDeniedConfirmFocuses.clear();
 }
 
 type PayloadRecord = Record<string, unknown>;
@@ -262,7 +361,7 @@ function buildFocusReminderPayloadWithTools(
 	const tools = visibleToolDefinitions(pi, focus);
 	return {
 		customType: FOCUS_REMINDER_TYPE,
-		content: `<system-reminder>\nCurrent focus: ${focus.active.name}. Follow the focus instructions already provided. Only the tools listed below are visible and available in this focus. You may use enter_focus to switch to another non-manual focus when the user explicitly asks for it.\n\nAvailable tool definitions:\n\`\`\`json\n${formatToolDefinitions(tools)}\n\`\`\`\n</system-reminder>`,
+		content: `<system-reminder>\nCurrent focus: ${focus.active.name}. Follow the focus instructions already provided.\n\nAvailable tool definitions:\n\`\`\`json\n${formatToolDefinitions(tools)}\n\`\`\`\n</system-reminder>`,
 		display: false,
 		details: { focus: focus.active.name },
 	};
@@ -328,12 +427,13 @@ function registerEnterFocusTool(
 		name: ENTER_FOCUS_TOOL,
 		label: "enter_focus",
 		description:
-			"Enter or switch to a predefined non-manual focus. Manual-only focuses cannot be entered by AI.",
+			"Enter or switch to a predefined focus available to the agent.",
 		parameters: Type.Object({
 			name: Type.String({ description: "Focus name to enter." }),
 			reason: Type.String({ description: "Why this focus is appropriate." }),
 		}),
 		renderCall: renderEnterFocusCall,
+		renderResult: renderEnterFocusResult,
 		execute: async (_toolCallId, params, _signal, _onUpdate, ctx) => {
 			const previousFocusName = focus.current;
 			const definition = focus.registry.get(params.name);
@@ -354,10 +454,14 @@ function registerEnterFocusTool(
 					content: [
 						{
 							type: "text" as const,
-							text: `Already in focus '${definition.name}'.`,
+							text: `Already in focus '${definition.name}'. Continue with the current focus tools.`,
 						},
 					],
-					details: { ok: true, focus: definition.name } as FocusToolDetails,
+					details: {
+						ok: false,
+						focus: definition.name,
+						reason: "already-active",
+					} as FocusToolDetails,
 				};
 			}
 
@@ -366,7 +470,7 @@ function registerEnterFocusTool(
 					content: [
 						{
 							type: "text" as const,
-							text: `Focus '${definition.name}' is manual-only and must be entered by the user from Quick Actions.`,
+							text: `Focus '${definition.name}' is reserved for Quick Actions.`,
 						},
 					],
 					details: { ok: false, reason: "manual-only" } as FocusToolDetails,
@@ -374,39 +478,60 @@ function registerEnterFocusTool(
 			}
 
 			if (definition.transition === "confirm") {
-				if (!ctx.hasUI) {
+				if (sessionDeniedConfirmFocuses.has(definition.name)) {
 					return {
 						content: [
 							{
 								type: "text" as const,
-								text: `Focus '${definition.name}' requires user confirmation, but UI is unavailable.`,
+								text: `Focus '${definition.name}' is denied for this session.`,
 							},
 						],
 						details: {
 							ok: false,
-							reason: "confirmation-unavailable",
+							reason: "session-denied",
 						} as FocusToolDetails,
 					};
 				}
-				const confirmed = await ctx.ui.confirm(
-					`Enter focus: ${definition.name}`,
-					`${definition.description}\n\nReason: ${params.reason}`,
-				);
-				if (!confirmed) {
-					return {
-						content: [
-							{
-								type: "text" as const,
-								text: `User declined entering focus '${definition.name}'.`,
-							},
-						],
-						details: { ok: false, reason: "declined" } as FocusToolDetails,
-					};
+				if (!sessionAllowedConfirmFocuses.has(definition.name)) {
+					if (!ctx.hasUI) {
+						return {
+							content: [
+								{
+									type: "text" as const,
+									text: `Focus '${definition.name}' requires user confirmation, but UI is unavailable.`,
+								},
+							],
+							details: {
+								ok: false,
+								reason: "confirmation-unavailable",
+							} as FocusToolDetails,
+						};
+					}
+					const decision = await confirmFocusTransition(
+						ctx,
+						definition.name,
+						definition.description,
+						params.reason,
+					);
+					if (!decision || decision.startsWith("deny")) {
+						if (decision)
+							rememberFocusTransitionDecision(definition.name, decision);
+						return {
+							content: [
+								{
+									type: "text" as const,
+									text: `User declined entering focus '${definition.name}'.`,
+								},
+							],
+							details: { ok: false, reason: "declined" } as FocusToolDetails,
+						};
+					}
+					rememberFocusTransitionDecision(definition.name, decision);
 				}
 			}
 
 			resetFocusAtAgentEndPending = true;
-			const entered = focus.enter(ctx, definition.name);
+			const entered = focus.enter(ctx, definition.name, { source: "agent" });
 			const action =
 				previousFocusName === DEFAULT_FOCUS
 					? `Entered focus '${entered.name}'.`
@@ -443,7 +568,7 @@ const injectFocusRestorePrompt =
 		);
 		if (!focus.active) {
 			return {
-				systemPrompt: `${systemPrompt}\n\n[DEFAULT FOCUS]\nYou are in default focus. Do not attempt repository work here. Use search_focus when you need to discover an appropriate focus, then use enter_focus with a reason before doing work.`,
+				systemPrompt: `${systemPrompt}\n\n[DEFAULT FOCUS]\nYou are in default focus. Use search_focus to discover an appropriate focus, then use enter_focus with a reason before repository work.`,
 			};
 		}
 		if (!restorePromptPending) {
@@ -521,6 +646,11 @@ const resetFocusAtAgentEnd =
 		resetFocusAtAgentEndPending = false;
 	};
 
+const resetConfirmDecisions =
+	(): ExtensionHandler<SessionStartEvent> => async () => {
+		clearFocusTransitionDecisions();
+	};
+
 const guardToolCall =
 	(
 		pi: ExtensionAPI,
@@ -552,7 +682,7 @@ const openFocusQuickAction =
 			focus.leave(ctx);
 			return;
 		}
-		focus.enter(ctx, selected);
+		focus.enter(ctx, selected, { source: "user" });
 	};
 
 export async function showFocusQuickAction(
@@ -575,6 +705,7 @@ function register(pi: ExtensionAPI): void {
 	pi.on("context", injectFocusReminder(pi, focus));
 	pi.on("before_provider_request", filterProviderTools(pi, focus));
 	pi.on("session_before_switch", persistFocusBeforeNew(pi, focus));
+	pi.on("session_start", resetConfirmDecisions());
 	pi.on("session_start", restoreFocus(focus));
 	pi.on("agent_end", resetFocusAtAgentEnd(focus));
 	pi.on("tool_call", guardToolCall(pi, focus));

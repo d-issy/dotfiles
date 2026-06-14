@@ -62,14 +62,21 @@ export function getRoutableFocusTools(
 export function getFocusTools(
 	pi: ExtensionAPI,
 	focus: FocusDefinition,
+	options?: { includeEnterFocus?: boolean },
 ): string[] {
 	const existing = existingToolNames(pi);
 	const requested = focus.tools.includes(WILDCARD_TOOL)
 		? [...existing].filter((name) => !FOCUS_MANAGEMENT_TOOLS.has(name))
 		: focus.tools;
+	const focusManagementTools =
+		options?.includeEnterFocus === false ? [] : [ENTER_FOCUS_TOOL];
 	return filterExisting(
 		pi,
-		unique([...ALWAYS_ALLOWED_TOOL_NAMES, ...requested, ENTER_FOCUS_TOOL]),
+		unique([
+			...ALWAYS_ALLOWED_TOOL_NAMES,
+			...requested,
+			...focusManagementTools,
+		]),
 	);
 }
 
@@ -90,7 +97,10 @@ export function activateFocusTools(
 	registry?: FocusRegistry,
 ): string[] {
 	const tools = registry
-		? getRoutableFocusTools(pi, registry)
+		? unique([
+				...getRoutableFocusTools(pi, registry),
+				...(focus ? getFocusTools(pi, focus) : []),
+			])
 		: focus
 			? getFocusTools(pi, focus)
 			: getDefaultFocusTools(pi);
