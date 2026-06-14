@@ -98,4 +98,8 @@ function register(pi: ExtensionAPI): void {
 	pi.on("session_start", installConfirmExitEditor(pi));
 }
 
-export default { name: "exit-confirm", register } satisfies Feature;
+export function createExitConfirmFeature(): Feature {
+	return { name: "exit-confirm", dependsOn: ["status"], register };
+}
+
+export default createExitConfirmFeature();

@@ -8,6 +8,8 @@ import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 export interface Feature {
 	/** Identifier for logging / ordering; not surfaced in pi's UI. */
 	readonly name: string;
+	/** Other feature names that must be registered before this feature. */
+	readonly dependsOn?: readonly string[];
 	/** Wire this feature into pi. Called once at extension load. */
 	register(pi: ExtensionAPI): void;
 }

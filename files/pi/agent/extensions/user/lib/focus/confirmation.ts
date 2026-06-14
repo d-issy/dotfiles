@@ -1,10 +1,10 @@
 import {
 	DynamicBorder,
 	type ExtensionContext,
-	type Theme,
 } from "@earendil-works/pi-coding-agent";
-import { truncateToWidth, visibleWidth } from "@earendil-works/pi-tui";
+import { truncateToWidth } from "@earendil-works/pi-tui";
 import { decodePrintableInput } from "../ui";
+import { type KeyedPanelItem, renderKeyedPanelItem } from "../ui/keyed-panel";
 
 export type FocusConfirmDecision =
 	| "allow-once"
@@ -12,11 +12,8 @@ export type FocusConfirmDecision =
 	| "allow-session"
 	| "deny-session";
 
-type FocusConfirmItem = {
-	key: string;
+type FocusConfirmItem = KeyedPanelItem & {
 	value: FocusConfirmDecision;
-	label: string;
-	description: string;
 };
 
 const sessionAllowedConfirmFocuses = new Set<string>();
@@ -51,24 +48,6 @@ function focusConfirmItems(description: string): readonly FocusConfirmItem[] {
 	];
 }
 
-function renderFocusConfirmItem(
-	theme: Theme,
-	item: FocusConfirmItem,
-	selected: boolean,
-	width: number,
-): string {
-	const prefix = selected ? theme.fg("accent", "→ ") : "  ";
-	const key = theme.fg("accent", item.key);
-	const label = selected ? theme.fg("accent", item.label) : item.label;
-	const left = `${prefix}${key}  ${label}`;
-	const gap = " ".repeat(Math.max(1, 30 - visibleWidth(left)));
-	return truncateToWidth(
-		`${left}${theme.fg("muted", gap + item.description)}`,
-		width,
-		"",
-	);
-}
-
 export async function confirmFocusTransition(
 	ctx: ExtensionContext,
 	name: string,
@@ -95,12 +74,11 @@ export async function confirmFocusTransition(
 						),
 						truncateToWidth(theme.fg("dim", `Reason: ${reason}`), width, ""),
 						...items.map((item, index) =>
-							renderFocusConfirmItem(
-								theme,
-								item,
-								index === selectedIndex,
+							renderKeyedPanelItem(theme, item, {
 								width,
-							),
+								selected: index === selectedIndex,
+								labelWidth: 30,
+							}),
 						),
 						truncateToWidth(
 							theme.fg(

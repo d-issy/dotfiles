@@ -3,22 +3,21 @@ import {
 	type ExtensionContext,
 	type Theme,
 } from "@earendil-works/pi-coding-agent";
-import {
-	type TUI,
-	matchesKey,
-	truncateToWidth,
-	visibleWidth,
-} from "@earendil-works/pi-tui";
+import { type TUI, matchesKey, truncateToWidth } from "@earendil-works/pi-tui";
 import { decodePrintableInput } from "./ui";
+import {
+	type KeyedPanelItem,
+	describePrintableInput,
+	renderKeyedPanelItem,
+} from "./ui/keyed-panel";
 
 export type QuickActionId = "focus" | "effort" | "model";
 
-type QuickAction = {
+type QuickAction = KeyedPanelItem & {
 	id: QuickActionId;
-	key: string;
-	label: string;
-	description: string;
 };
+
+type QuickActionHandler = (ctx: ExtensionContext) => Promise<void>;
 
 const QUICK_ACTIONS: readonly QuickAction[] = [
 	{
@@ -42,22 +41,28 @@ const QUICK_ACTIONS: readonly QuickAction[] = [
 ];
 
 const NOTICE_CLEAR_MS = 1200;
+const quickActionHandlers = new Map<QuickActionId, QuickActionHandler>();
 
-function renderAction(
-	theme: Theme,
-	action: QuickAction,
-	width: number,
-): string {
-	const key = theme.fg("accent", action.key);
-	const label = theme.bold(action.label);
-	const left = `  ${key}  ${label}`;
-	const gap = " ".repeat(Math.max(1, 18 - visibleWidth(left)));
-	const line = `${left}${theme.fg("muted", gap + action.description)}`;
-	return truncateToWidth(line, width, "");
+export function registerQuickActionHandler(
+	id: QuickActionId,
+	handler: QuickActionHandler,
+): () => void {
+	quickActionHandlers.set(id, handler);
+	return () => {
+		if (quickActionHandlers.get(id) === handler) quickActionHandlers.delete(id);
+	};
 }
 
-function describeInput(input: string): string {
-	return input === " " ? "space" : input;
+export async function runQuickAction(
+	id: QuickActionId,
+	ctx: ExtensionContext,
+): Promise<void> {
+	const handler = quickActionHandlers.get(id);
+	if (!handler) {
+		ctx.ui.notify(`Quick action is unavailable: ${id}`, "error");
+		return;
+	}
+	await handler(ctx);
 }
 
 type QuickActionsComponent = {
@@ -75,7 +80,9 @@ function renderQuickActions(
 	return [
 		...border.render(width),
 		truncateToWidth(theme.fg("accent", theme.bold("Quick Actions")), width, ""),
-		...QUICK_ACTIONS.map((action) => renderAction(theme, action, width)),
+		...QUICK_ACTIONS.map((action) =>
+			renderKeyedPanelItem(theme, action, { width }),
+		),
 		truncateToWidth(
 			notice ? theme.fg("warning", notice) : theme.fg("dim", "q/esc close"),
 			width,
@@ -132,7 +139,7 @@ function createQuickActionsComponent(
 				return;
 			}
 
-			setNotice(`Unknown action: ${describeInput(input)}`);
+			setNotice(`Unknown action: ${describePrintableInput(input)}`);
 			tui.requestRender();
 		},
 	};

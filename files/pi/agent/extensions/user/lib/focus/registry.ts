@@ -1,5 +1,7 @@
-import { existsSync, readFileSync } from "node:fs";
-import { join } from "node:path";
+import {
+	PROJECT_USER_SETTINGS_RELATIVE_PATH,
+	loadProjectUserSettings,
+} from "../project-settings";
 import type { ColorRole } from "../theme";
 import { colors } from "../theme";
 import {
@@ -11,7 +13,6 @@ import {
 	isFocusTransition,
 } from "./definitions";
 
-const PROJECT_SETTINGS_RELATIVE_PATH = ".pi/settings.user.json";
 const FOCUS_NAME_RE = /^[a-z][a-z0-9_-]*$/u;
 
 export type FocusRegistry = {
@@ -150,18 +151,6 @@ function createProjectFocus(
 	};
 }
 
-function loadProjectSettings(cwd: string): ProjectSettings {
-	const path = join(cwd, PROJECT_SETTINGS_RELATIVE_PATH);
-	if (!existsSync(path)) return {};
-	const parsed: unknown = JSON.parse(readFileSync(path, "utf-8"));
-	if (!isObject(parsed)) {
-		throw new Error(
-			`${PROJECT_SETTINGS_RELATIVE_PATH} must contain a JSON object.`,
-		);
-	}
-	return parsed as ProjectSettings;
-}
-
 function createRegistry(focuses: readonly FocusDefinition[]): FocusRegistry {
 	const byName = new Map(focuses.map((focus) => [focus.name, focus]));
 	return {
@@ -197,12 +186,12 @@ export function loadFocusRegistry(
 
 	let settings: ProjectSettings;
 	try {
-		settings = loadProjectSettings(cwd);
+		settings = loadProjectUserSettings(cwd) as ProjectSettings;
 	} catch (error) {
 		return {
 			registry: createRegistry([...focuses.values()]),
 			warnings: [
-				`Failed to read ${PROJECT_SETTINGS_RELATIVE_PATH} focuses: ${error instanceof Error ? error.message : String(error)}`,
+				`Failed to read ${PROJECT_USER_SETTINGS_RELATIVE_PATH} focuses: ${error instanceof Error ? error.message : String(error)}`,
 			],
 		};
 	}

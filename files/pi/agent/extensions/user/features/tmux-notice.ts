@@ -20,4 +20,8 @@ function register(pi: ExtensionAPI): void {
 	});
 }
 
-export default { name: "tmux-notice", register } satisfies Feature;
+export function createTmuxNoticeFeature(): Feature {
+	return { name: "tmux-notice", register };
+}
+
+export default createTmuxNoticeFeature();

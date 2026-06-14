@@ -10,6 +10,7 @@ import {
 	registerBuiltInFocusPolicies,
 	showFocusSelector,
 } from "../lib/focus";
+import { registerQuickActionHandler } from "../lib/quick-actions";
 import { guardToolCall } from "../lib/focus/guard";
 import { filterProviderTools } from "../lib/focus/provider-filter";
 import {
@@ -24,10 +25,6 @@ import {
 	restoreFocus,
 } from "../lib/focus/session";
 import { registerEnterFocusTool } from "../lib/focus/tool";
-
-type FocusQuickAction = (ctx: ExtensionContext) => Promise<void>;
-
-let focusQuickAction: FocusQuickAction | undefined;
 
 const openFocusQuickAction =
 	(focus: FocusController, runtime: FocusRuntime) =>
@@ -57,22 +54,12 @@ const toggleFocusSelector =
 		await openFocusQuickAction(focus, runtime)(ctx);
 	};
 
-export async function showFocusQuickAction(
-	ctx: ExtensionContext,
-): Promise<void> {
-	if (!focusQuickAction) {
-		ctx.ui.notify("Focus selector is unavailable.", "error");
-		return;
-	}
-	await focusQuickAction(ctx);
-}
-
 function register(pi: ExtensionAPI): void {
 	registerBuiltInFocusPolicies();
 	const focus = createFocusController(pi);
 	const runtime = createFocusRuntime();
 	registerEnterFocusTool(pi, focus, runtime);
-	focusQuickAction = openFocusQuickAction(focus, runtime);
+	registerQuickActionHandler("focus", openFocusQuickAction(focus, runtime));
 	pi.registerShortcut("shift+tab", {
 		description: "Leave focus or open focus selector",
 		handler: toggleFocusSelector(focus, runtime),
@@ -87,4 +74,8 @@ function register(pi: ExtensionAPI): void {
 	pi.on("tool_call", guardToolCall(pi, focus));
 }
 
-export default { name: "focus", register } satisfies Feature;
+export function createFocusFeature(): Feature {
+	return { name: "focus", register };
+}
+
+export default createFocusFeature();

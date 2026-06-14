@@ -47,4 +47,8 @@ function register(pi: ExtensionAPI): void {
 	});
 }
 
-export default { name: "thinking", register } satisfies Feature;
+export function createThinkingFeature(): Feature {
+	return { name: "thinking", register };
+}
+
+export default createThinkingFeature();

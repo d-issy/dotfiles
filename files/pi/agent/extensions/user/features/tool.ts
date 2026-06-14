@@ -121,4 +121,8 @@ function register(pi: ExtensionAPI): void {
 	);
 }
 
-export default { name: "tool", register } satisfies Feature;
+export function createToolFeature(): Feature {
+	return { name: "tool", dependsOn: ["focus"], register };
+}
+
+export default createToolFeature();

@@ -1,4 +1,4 @@
-import { existsSync, realpathSync } from "node:fs";
+import { existsSync, readFileSync, realpathSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import {
@@ -8,6 +8,8 @@ import {
 } from "@earendil-works/pi-coding-agent";
 
 export const PROJECT_USER_SETTINGS_RELATIVE_PATH = ".pi/settings.user.json";
+
+export type ProjectUserSettings = Record<string, unknown>;
 
 const TRUST_REQUIRING_PROJECT_CONFIG_RESOURCES = [
 	"settings.json",
@@ -97,6 +99,19 @@ function hasStandardTrustRequiringProjectResources(cwd: string): boolean {
 
 export function hasProjectUserSettings(cwd: string): boolean {
 	return existsSync(join(cwd, PROJECT_USER_SETTINGS_RELATIVE_PATH));
+}
+
+export function loadProjectUserSettings(cwd: string): ProjectUserSettings {
+	const path = join(cwd, PROJECT_USER_SETTINGS_RELATIVE_PATH);
+	if (!existsSync(path)) return {};
+
+	const parsed: unknown = JSON.parse(readFileSync(path, "utf-8"));
+	if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
+		throw new Error(
+			`${PROJECT_USER_SETTINGS_RELATIVE_PATH} must contain a JSON object.`,
+		);
+	}
+	return parsed as ProjectUserSettings;
 }
 
 function formatProjectUserSettingsTrustPrompt(cwd: string): string {

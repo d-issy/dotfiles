@@ -1,5 +1,4 @@
-import { existsSync, readFileSync, realpathSync } from "node:fs";
-import { join } from "node:path";
+import { realpathSync } from "node:fs";
 import {
 	type AgentToolResult,
 	type AgentToolUpdateCallback,
@@ -23,7 +22,10 @@ import type {
 } from "./types";
 import { PROJECT_TOOL_SETTINGS_RELATIVE_PATH } from "./types";
 import { isObject, notifyWarning } from "./utils";
-import { isProjectUserSettingsTrusted } from "../../project-settings";
+import {
+	isProjectUserSettingsTrusted,
+	loadProjectUserSettings,
+} from "../../project-settings";
 
 const registeredProjectTools = new Map<
 	string,
@@ -112,16 +114,7 @@ function createProjectToolDefinition(
 }
 
 function loadProjectToolSettings(cwd: string): ProjectToolSettings {
-	const path = join(cwd, PROJECT_TOOL_SETTINGS_RELATIVE_PATH);
-	if (!existsSync(path)) return {};
-
-	const parsed: unknown = JSON.parse(readFileSync(path, "utf-8"));
-	if (!isObject(parsed)) {
-		throw new Error(
-			`${PROJECT_TOOL_SETTINGS_RELATIVE_PATH} must contain a JSON object.`,
-		);
-	}
-	return parsed as ProjectToolSettings;
+	return loadProjectUserSettings(cwd) as ProjectToolSettings;
 }
 
 export function registerProjectTools(

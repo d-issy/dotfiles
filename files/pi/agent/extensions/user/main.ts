@@ -1,25 +1,45 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import type { Feature } from "./feature";
-import turnMetricsFeature from "./features/turn-metrics";
-import exitConfirmFeature from "./features/exit-confirm";
-import focusFeature from "./features/focus";
-import quickActionsFeature from "./features/quick-actions";
-import statusFeature from "./features/status";
-import thinkingFeature from "./features/thinking";
-import tmuxNoticeFeature from "./features/tmux-notice";
-import fileToolsFeature from "./features/tool";
+import { createExitConfirmFeature } from "./features/exit-confirm";
+import { createFocusFeature } from "./features/focus";
+import { createQuickActionsFeature } from "./features/quick-actions";
+import { createStatusFeature } from "./features/status";
+import { createThinkingFeature } from "./features/thinking";
+import { createTmuxNoticeFeature } from "./features/tmux-notice";
+import { createToolFeature } from "./features/tool";
+import { createTurnMetricsFeature } from "./features/turn-metrics";
 
-const features: readonly Feature[] = [
-	turnMetricsFeature,
-	exitConfirmFeature,
-	focusFeature,
-	quickActionsFeature,
-	statusFeature,
-	thinkingFeature,
-	tmuxNoticeFeature,
-	fileToolsFeature,
-];
+function createFeatures(): readonly Feature[] {
+	return [
+		createStatusFeature(),
+		createTurnMetricsFeature(),
+		createExitConfirmFeature(),
+		createFocusFeature(),
+		createQuickActionsFeature(),
+		createThinkingFeature(),
+		createTmuxNoticeFeature(),
+		createToolFeature(),
+	];
+}
+
+function assertFeatureDependencies(features: readonly Feature[]): void {
+	const seen = new Set<string>();
+	for (const feature of features) {
+		if (seen.has(feature.name))
+			throw new Error(`Duplicate feature: ${feature.name}`);
+		for (const dependency of feature.dependsOn ?? []) {
+			if (!seen.has(dependency)) {
+				throw new Error(
+					`Feature '${feature.name}' must be registered after '${dependency}'.`,
+				);
+			}
+		}
+		seen.add(feature.name);
+	}
+}
 
 export default function user(pi: ExtensionAPI): void {
+	const features = createFeatures();
+	assertFeatureDependencies(features);
 	for (const feature of features) feature.register(pi);
 }
