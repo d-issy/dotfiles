@@ -10,21 +10,12 @@ export type FocusDefinition = {
 	readonly tools: readonly string[];
 	readonly transition: FocusTransition;
 	readonly color?: ColorRole;
-	readonly pathPolicy?: unknown;
-	readonly bashPolicy?: unknown;
-	readonly model?: unknown;
-	readonly thinkingLevel?: unknown;
-};
-
-export type ProjectFocusDefinition = Partial<FocusDefinition> & {
-	readonly tools?: readonly string[];
 };
 
 export const DEFAULT_FOCUS = "default";
 export const FOCUS_STATE_TYPE = "focus-state";
 export const FOCUS_REMINDER_TYPE = "focus-reminder";
 export const ENTER_FOCUS_TOOL = "enter_focus";
-export const TRANSITION_TOOL_NAMES = [ENTER_FOCUS_TOOL] as const;
 
 export const DEFAULT_FOCUS_TOOLS = [ENTER_FOCUS_TOOL] as const;
 

@@ -25,13 +25,6 @@ export type FocusStateEntry = {
 
 export type FocusActivationSource = "agent" | "user";
 
-export type FocusReminderPayload = {
-	customType: string;
-	content: string;
-	display: boolean;
-	details: { focus: FocusName };
-};
-
 export type FocusController = {
 	readonly current: FocusName | typeof DEFAULT_FOCUS;
 	readonly active: FocusDefinition | undefined;
@@ -65,31 +58,12 @@ let activeFocusDefinition: FocusDefinition | undefined;
 let activeFocusRegistry: FocusRegistry = emptyRegistry;
 let activeFocusSource: FocusActivationSource | undefined;
 
-export function getCurrentFocusName(): FocusName | typeof DEFAULT_FOCUS {
-	return activeFocusName;
-}
-
-export function getCurrentFocusDefinition(): FocusDefinition | undefined {
-	return activeFocusDefinition;
-}
-
 export function getCurrentFocusRegistry(): FocusRegistry {
 	return activeFocusRegistry;
 }
 
 export function refreshCurrentFocusTools(pi: ExtensionAPI): void {
 	activateFocusTools(pi, activeFocusDefinition, activeFocusRegistry);
-}
-
-export function buildFocusReminderPayload(
-	focus: FocusDefinition,
-): FocusReminderPayload {
-	return {
-		customType: FOCUS_REMINDER_TYPE,
-		content: `<system-reminder>\nCurrent focus: ${focus.name}. Follow the focus instructions already provided.\n</system-reminder>`,
-		display: false,
-		details: { focus: focus.name },
-	};
 }
 
 export function buildFocusRestorePrompt(focus: FocusDefinition): string {

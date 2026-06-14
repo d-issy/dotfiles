@@ -19,8 +19,6 @@ export type ToolPolicy<TInput = unknown> = {
 
 export type PolicyRegistry = {
 	register<TInput>(policy: ToolPolicy<TInput>): void;
-	disable(names: Iterable<string>): void;
-	getKnownToolNames(): string[];
 	checkToolAllowed(
 		focusName: FocusName,
 		allowedToolNames: ReadonlySet<string>,
@@ -38,12 +36,6 @@ function createPolicyRegistry(): PolicyRegistry {
 	return {
 		register(policy) {
 			policies.set(policy.name, policy as ToolPolicy);
-		},
-		disable(names) {
-			for (const name of names) policies.delete(name);
-		},
-		getKnownToolNames() {
-			return [...policies.keys()];
 		},
 		checkToolAllowed(focusName, allowedToolNames, event) {
 			if (allowedToolNames.has(event.toolName)) return undefined;

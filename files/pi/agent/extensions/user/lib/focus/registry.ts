@@ -18,7 +18,6 @@ export type FocusRegistry = {
 	get(name: FocusName): FocusDefinition | undefined;
 	list(): readonly FocusDefinition[];
 	search(query?: string): readonly FocusDefinition[];
-	manual(): readonly FocusDefinition[];
 };
 
 export type ProjectFocusLoadResult = {
@@ -108,10 +107,6 @@ function normalizeProjectFocus(
 		tools: normalizeTools(value.tools, `${name}.tools`),
 		transition: normalizeTransition(value.transition, `${name}.transition`),
 		color: normalizeColor(value.color, `${name}.color`),
-		pathPolicy: value.pathPolicy,
-		bashPolicy: value.bashPolicy,
-		model: value.model,
-		thinkingLevel: value.thinkingLevel,
 	};
 }
 
@@ -129,10 +124,6 @@ function mergeFocus(
 		// Existing focus transitions are security-sensitive and cannot be changed by project config.
 		transition: base.transition,
 		color: project.color ?? base.color,
-		pathPolicy: project.pathPolicy ?? base.pathPolicy,
-		bashPolicy: project.bashPolicy ?? base.bashPolicy,
-		model: project.model ?? base.model,
-		thinkingLevel: project.thinkingLevel ?? base.thinkingLevel,
 	};
 }
 
@@ -156,10 +147,6 @@ function createProjectFocus(
 		tools: unique(project.tools),
 		transition: project.transition ?? "confirm",
 		color: project.color,
-		pathPolicy: project.pathPolicy,
-		bashPolicy: project.bashPolicy,
-		model: project.model,
-		thinkingLevel: project.thinkingLevel,
 	};
 }
 
@@ -180,8 +167,6 @@ function createRegistry(focuses: readonly FocusDefinition[]): FocusRegistry {
 	return {
 		get: (name) => (name === DEFAULT_FOCUS ? undefined : byName.get(name)),
 		list: () => [...byName.values()],
-		manual: () =>
-			[...byName.values()].filter((focus) => focus.transition === "manual"),
 		search(query) {
 			const searchable = [...byName.values()].filter(
 				(focus) => focus.transition !== "manual",
