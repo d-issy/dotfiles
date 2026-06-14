@@ -35,7 +35,7 @@ function buildDefaultFocusPrompt(focus: FocusController): string {
 		name: definition.name,
 		description: definition.description,
 	}));
-	return `[DEFAULT FOCUS]\nYou are in default focus. Use enter_focus to enter one.\n\nAvailable focuses:\n${formatFocusList(focuses)}`;
+	return `[DEFAULT FOCUS]\nYou are in default focus. This is a routing state, not a work mode. Use enter_focus to enter one.\n\nRouting rules:\n- Select the best matching focus from Available focuses using its description.\n- If the user's request matches an available focus, enter that focus before doing the work.\n- Auto focuses may be entered without asking the user.\n- Do not claim tools are unavailable while an available focus would expose the needed tools.\n\nAvailable focuses:\n${formatFocusList(focuses)}`;
 }
 
 function formatVisibleToolsList(

@@ -8,6 +8,8 @@ import {
 	rmSchema,
 } from "../file";
 import { makeSecretActionReason } from "../policy";
+import { registerGitTools } from "./git";
+import { registerGithubTools } from "./github";
 import { toolRegistry } from "./registry";
 
 /**
@@ -17,6 +19,8 @@ import { toolRegistry } from "./registry";
  */
 export function registerBuiltInTools(): void {
 	registerFileTools();
+	registerGitTools();
+	registerGithubTools();
 }
 
 function registerFileTools(): void {
