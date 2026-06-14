@@ -8,7 +8,6 @@ import {
 	type FocusDefinition,
 	type FocusName,
 	type FocusTransition,
-	WILDCARD_TOOL,
 	isFocusTransition,
 } from "./definitions";
 
@@ -251,5 +250,3 @@ export function loadFocusRegistry(
 
 	return { registry: createRegistry([...focuses.values()]), warnings };
 }
-
-export { WILDCARD_TOOL };

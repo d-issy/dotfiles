@@ -11,13 +11,10 @@ import {
 	ENTER_FOCUS_TOOL,
 	type FocusDefinition,
 	type FocusName,
-	SEARCH_FOCUS_TOOL,
-	WILDCARD_TOOL,
 } from "./definitions";
 import type { FocusRegistry } from "./registry";
 
 const ALWAYS_ALLOWED_TOOL_NAMES = ["multi_tool_use.parallel"] as const;
-const FOCUS_MANAGEMENT_TOOLS = new Set([SEARCH_FOCUS_TOOL, ENTER_FOCUS_TOOL]);
 
 function unique(names: readonly string[]): string[] {
 	return [...new Set(names)];
@@ -64,10 +61,7 @@ export function getFocusTools(
 	focus: FocusDefinition,
 	options?: { includeEnterFocus?: boolean },
 ): string[] {
-	const existing = existingToolNames(pi);
-	const requested = focus.tools.includes(WILDCARD_TOOL)
-		? [...existing].filter((name) => !FOCUS_MANAGEMENT_TOOLS.has(name))
-		: focus.tools;
+	const requested = focus.tools;
 	const focusManagementTools =
 		options?.includeEnterFocus === false ? [] : [ENTER_FOCUS_TOOL];
 	return filterExisting(

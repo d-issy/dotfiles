@@ -6,7 +6,6 @@ export {
 	FOCUS_STATE_TYPE,
 	SEARCH_FOCUS_TOOL,
 	TRANSITION_TOOL_NAMES,
-	WILDCARD_TOOL,
 	type FocusDefinition,
 	type FocusName,
 	type FocusTransition,
