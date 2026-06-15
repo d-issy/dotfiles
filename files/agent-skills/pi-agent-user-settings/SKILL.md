@@ -12,14 +12,14 @@ Use this skill only for:
 - Pi agent user settings
 - `.pi/settings.user.json`
 - project user settings for Pi
-- adding, editing, renaming, removing, reviewing, or explaining `tools` or `focuses` in `.pi/settings.user.json`
+- adding, editing, renaming, removing, reviewing, or explaining `tools`, `toolSets`, or `focuses` in `.pi/settings.user.json`
 
 Do not use this skill for ordinary shell commands, lint/test/format requests, Pi's native settings files, or non-Pi configuration.
 
 ## Workflow
 
 1. Inspect existing `.pi/settings.user.json` before editing.
-2. Preserve unrelated settings and unrelated `tools` / `focuses` entries.
+2. Preserve unrelated settings and unrelated `tools` / `toolSets` / `focuses` entries.
 3. Change only the requested settings.
 4. If adding a tool that should be available to AI, add it to an appropriate `.pi/settings.user.json` `focuses` entry.
 5. Validate JSON after editing.
@@ -30,7 +30,7 @@ Do not use this skill for ordinary shell commands, lint/test/format requests, Pi
 - Treat `.pi/settings.user.json` as project-controlled configuration.
 - Treat project tools as project-controlled command execution.
 - Project tools do not declare focus access themselves.
-- Focus access for both project tools and built-in / extension tools is controlled by `.pi/settings.user.json` `focuses.<name>.tools`.
+- Focus access for both project tools and built-in / extension tools is controlled by `.pi/settings.user.json` `focuses.<name>.tools` and `focuses.<name>.toolSets`.
 - Keep tools deterministic and scoped to the repository.
 - Avoid commands that read secrets, access credentials, or modify paths outside the project.
 - Set `timeoutSeconds` for commands that might hang.
@@ -60,6 +60,9 @@ Do not use this skill for ordinary shell commands, lint/test/format requests, Pi
       ]
     }
   },
+  "toolSets": {
+    "verify": ["lint"]
+  },
   "focuses": {
     "edit": {
       "tools": ["lint"],
@@ -68,7 +71,7 @@ Do not use this skill for ordinary shell commands, lint/test/format requests, Pi
     "inspect": {
       "description": "Inspect files without editing.",
       "prompt": "Read and search files to answer the user's question.",
-      "tools": ["read", "grep", "find", "ls"],
+      "toolSets": ["file_read"],
       "transition": "auto"
     }
   }
@@ -80,6 +83,7 @@ Do not use this skill for ordinary shell commands, lint/test/format requests, Pi
 Currently supported project user settings include:
 
 - `tools`: repository-defined tool definitions callable only for that project.
+- `toolSets`: reusable groups of tool names for focus tool lists.
 - `focuses`: project-local focus additions or overrides for user-extension focuses.
 
 ## Tool fields
@@ -95,6 +99,18 @@ Currently supported project user settings include:
 - `promptSnippet` optional; one-line LLM-facing tool summary.
 - `promptGuidelines` optional; bullets that must name the tool explicitly.
 
+## Tool set fields
+
+`toolSets.<name>`:
+
+- Defines a reusable list of tool names.
+- Values must be arrays of tool names.
+- Built-in tool sets are available by default: `file_read` (`read`, `grep`, `find`, `ls`) and `file_write` (`write`, `edit`, `mv`, `rm`).
+- Project `toolSets` with the same name as a built-in tool set override the built-in definition.
+- A tool set may include another tool set by name; included tool sets are expanded recursively.
+- Avoid naming a tool set the same as a tool because matching tool set names are expanded.
+- Unknown tool sets and circular tool set references cause the consuming focus to be ignored with a warning.
+
 ## Focus fields
 
 `focuses.<name>`:
@@ -104,6 +120,7 @@ Currently supported project user settings include:
 - For an existing focus, `prompt` is appended after the built-in prompt with a blank line; it does not replace the built-in prompt.
 - When extending an existing focus, write `prompt` as a project-specific supplement, not a full replacement such as `You are in ... focus`.
 - `tools` is additive only.
+- `toolSets` is additive only and expands reusable `toolSets.<name>` entries into the focus tool list.
 - Existing focus `transition` cannot be changed by project settings.
 - New focus `transition` defaults to `confirm` when omitted.
 
@@ -111,7 +128,8 @@ Common focus fields:
 
 - `description` required for new focuses.
 - `prompt` required for new focuses; appended after the existing prompt when merging an existing focus.
-- `tools` required for new focuses; additive when merging. It may include project tool names, built-in tool names, and extension tool names.
+- `tools` required for new focuses unless `toolSets` supplies at least one tool; additive when merging. It may include project tool names, built-in tool names, and extension tool names.
+- `toolSets` optional; array of top-level `toolSets` names to add to the focus tool list.
 - `transition` optional for new focuses: `auto`, `confirm`, or `manual`.
 - `color` optional: `accent`, `positive`, `caution`, `alert`, or `muted`.
 
@@ -171,9 +189,10 @@ Example:
 
 - Tool names must match `^[a-z][a-z0-9_-]*$`.
 - Focus names must match `^[a-z][a-z0-9_-]*$`.
+- Tool set names must match `^[a-z][a-z0-9_-]*$`.
 - Parameter names must start with a letter or `_`, then use letters, numbers, `_`, or `-`.
 - Project tool names must not conflict with built-in tools (`read`, `write`, `edit`, `bash`, `grep`, `find`, `ls`, `mv`, `rm`) or extension tools (`enter_focus`).
-- To add built-in or extension tools to a focus, list them under `focuses.<name>.tools`.
+- To add built-in or extension tools to a focus, list them under `focuses.<name>.tools` or a `toolSets` entry referenced by `focuses.<name>.toolSets`.
 
 ## Examples
 
@@ -190,9 +209,12 @@ Project lint tool added to the existing edit focus:
       ]
     }
   },
+  "toolSets": {
+    "verify": ["lint"]
+  },
   "focuses": {
     "edit": {
-      "tools": ["lint"],
+      "toolSets": ["verify"],
       "prompt": "For this project, use lint to verify changes after editing when appropriate."
     }
   }

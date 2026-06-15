@@ -7,6 +7,7 @@ import { colors } from "../theme";
 import {
 	BASE_FOCUS,
 	BASE_FOCUS_DEFINITIONS,
+	BUILT_IN_TOOL_SETS,
 	type FocusDefinition,
 	type FocusName,
 	type FocusTransition,
@@ -31,7 +32,18 @@ export type FocusRegistryLoadOptions = {
 };
 
 type ProjectSettings = {
+	toolSets?: unknown;
 	focuses?: unknown;
+};
+
+type ProjectFocusDefinition = {
+	readonly name: FocusName;
+	readonly description?: string;
+	readonly prompt?: string;
+	readonly tools?: readonly string[];
+	readonly toolSets?: readonly string[];
+	readonly transition?: FocusTransition;
+	readonly color?: ColorRole;
 };
 
 function isObject(value: unknown): value is Record<string, unknown> {
@@ -90,15 +102,19 @@ function normalizeColor(value: unknown, path: string): ColorRole | undefined {
 	return value;
 }
 
+function assertFocusName(name: string, kind: string): void {
+	if (!FOCUS_NAME_RE.test(name)) {
+		throw new Error(
+			`Invalid ${kind} name '${name}'. Use lowercase letters, numbers, '_' and '-'.`,
+		);
+	}
+}
+
 function normalizeProjectFocus(
 	name: string,
 	value: unknown,
-): Partial<FocusDefinition> {
-	if (!FOCUS_NAME_RE.test(name)) {
-		throw new Error(
-			`Invalid focus name '${name}'. Use lowercase letters, numbers, '_' and '-'.`,
-		);
-	}
+): ProjectFocusDefinition {
+	assertFocusName(name, "focus");
 	if (!isObject(value)) throw new Error(`${name} must be an object.`);
 
 	return {
@@ -106,14 +122,112 @@ function normalizeProjectFocus(
 		description: normalizeString(value.description, `${name}.description`),
 		prompt: normalizeString(value.prompt, `${name}.prompt`),
 		tools: normalizeTools(value.tools, `${name}.tools`),
+		toolSets: normalizeTools(value.toolSets, `${name}.toolSets`),
 		transition: normalizeTransition(value.transition, `${name}.transition`),
 		color: normalizeColor(value.color, `${name}.color`),
 	};
 }
 
+function normalizeProjectToolSets(
+	value: unknown,
+	warnings: string[],
+): Map<string, readonly string[]> {
+	const toolSets = new Map(BUILT_IN_TOOL_SETS);
+	if (value === undefined) return toolSets;
+	if (!isObject(value)) {
+		warnings.push("Project toolSets ignored: toolSets must be an object.");
+		return toolSets;
+	}
+	for (const [name, rawTools] of Object.entries(value)) {
+		try {
+			assertFocusName(name, "toolSet");
+			toolSets.set(name, normalizeTools(rawTools, `toolSets.${name}`) ?? []);
+		} catch (error) {
+			warnings.push(
+				`Project toolSet '${name}' ignored: ${error instanceof Error ? error.message : String(error)}`,
+			);
+		}
+	}
+	return toolSets;
+}
+
+function resolveToolSetTools(
+	name: string,
+	toolSets: ReadonlyMap<string, readonly string[]>,
+	stack: readonly string[] = [],
+): readonly string[] {
+	const tools = toolSets.get(name);
+	if (!tools) throw new Error(`Unknown toolSet '${name}'.`);
+	if (stack.includes(name)) {
+		throw new Error(
+			`Circular toolSet reference: ${[...stack, name].join(" -> ")}.`,
+		);
+	}
+	return unique(
+		tools.flatMap((tool) =>
+			toolSets.has(tool)
+				? resolveToolSetTools(tool, toolSets, [...stack, name])
+				: [tool],
+		),
+	);
+}
+
+function resolveToolSetListTools(
+	toolSetNames: readonly string[] | undefined,
+	toolSets: ReadonlyMap<string, readonly string[]>,
+): readonly string[] {
+	return unique(
+		(toolSetNames ?? []).flatMap((toolSetName) =>
+			resolveToolSetTools(toolSetName, toolSets),
+		),
+	);
+}
+
+function resolveProjectFocusTools(
+	project: ProjectFocusDefinition,
+	toolSets: ReadonlyMap<string, readonly string[]>,
+): readonly string[] {
+	return unique([
+		...resolveToolSetListTools(project.toolSets, toolSets),
+		...(project.tools ?? []),
+	]);
+}
+
+function resolveFocusDefinitionTools(
+	focus: FocusDefinition,
+	toolSets: ReadonlyMap<string, readonly string[]>,
+): FocusDefinition {
+	return {
+		...focus,
+		tools: unique([
+			...resolveToolSetListTools(focus.toolSets, toolSets),
+			...focus.tools,
+		]),
+	};
+}
+
+function finalizeFocuses(
+	focuses: readonly FocusDefinition[],
+	toolSets: ReadonlyMap<string, readonly string[]>,
+	warnings: string[],
+): readonly FocusDefinition[] {
+	const resolved: FocusDefinition[] = [];
+	for (const focus of focuses) {
+		try {
+			resolved.push(resolveFocusDefinitionTools(focus, toolSets));
+		} catch (error) {
+			warnings.push(
+				`Focus '${focus.name}' ignored: ${error instanceof Error ? error.message : String(error)}`,
+			);
+		}
+	}
+	return resolved;
+}
+
 function mergeFocus(
 	base: FocusDefinition,
-	project: Partial<FocusDefinition>,
+	project: ProjectFocusDefinition,
+	projectTools: readonly string[],
 ): FocusDefinition {
 	return {
 		...base,
@@ -121,11 +235,8 @@ function mergeFocus(
 		prompt: project.prompt
 			? `${base.prompt}\n\n${project.prompt}`
 			: base.prompt,
-		tools: unique([...(base.tools ?? []), ...(project.tools ?? [])]),
-		settingsTools: unique([
-			...(base.settingsTools ?? []),
-			...(project.tools ?? []),
-		]),
+		tools: unique([...(base.tools ?? []), ...projectTools]),
+		settingsTools: unique([...(base.settingsTools ?? []), ...projectTools]),
 		// Existing focus transitions are security-sensitive and cannot be changed by project config.
 		transition: base.transition,
 		color: project.color ?? base.color,
@@ -133,31 +244,38 @@ function mergeFocus(
 }
 
 function createProjectFocus(
-	project: Partial<FocusDefinition>,
+	project: ProjectFocusDefinition,
+	projectTools: readonly string[],
 ): FocusDefinition {
-	if (!project.name) throw new Error("Project focus name is required.");
 	if (!project.description) {
 		throw new Error(`${project.name}.description is required for new focuses.`);
 	}
 	if (!project.prompt) {
 		throw new Error(`${project.name}.prompt is required for new focuses.`);
 	}
-	if (!project.tools || project.tools.length === 0) {
-		throw new Error(`${project.name}.tools is required for new focuses.`);
+	if (projectTools.length === 0) {
+		throw new Error(
+			`${project.name}.tools or ${project.name}.toolSets is required for new focuses.`,
+		);
 	}
 	return {
 		name: project.name,
 		description: project.description,
 		prompt: project.prompt,
-		tools: unique(project.tools),
-		settingsTools: unique(project.tools),
+		tools: unique(projectTools),
+		settingsTools: unique(projectTools),
 		transition: project.transition ?? "confirm",
 		color: project.color,
 	};
 }
 
-function createRegistry(focuses: readonly FocusDefinition[]): FocusRegistry {
-	const byName = new Map(focuses.map((focus) => [focus.name, focus]));
+function createRegistry(
+	focuses: readonly FocusDefinition[],
+	toolSets: ReadonlyMap<string, readonly string[]>,
+	warnings: string[],
+): FocusRegistry {
+	const resolvedFocuses = finalizeFocuses(focuses, toolSets, warnings);
+	const byName = new Map(resolvedFocuses.map((focus) => [focus.name, focus]));
 	return {
 		get: (name) => (name === BASE_FOCUS ? undefined : byName.get(name)),
 		list: () => [...byName.values()],
@@ -184,41 +302,53 @@ export function loadFocusRegistry(
 	const focuses = new Map(
 		BASE_FOCUS_DEFINITIONS.map((focus) => [focus.name, focus]),
 	);
+	let toolSets = new Map(BUILT_IN_TOOL_SETS);
 
 	if (options?.includeProject === false) {
-		return { registry: createRegistry([...focuses.values()]), warnings };
+		return {
+			registry: createRegistry([...focuses.values()], toolSets, warnings),
+			warnings,
+		};
 	}
 
 	let settings: ProjectSettings;
 	try {
 		settings = loadProjectUserSettings(cwd) as ProjectSettings;
 	} catch (error) {
+		warnings.push(
+			`Failed to read ${PROJECT_USER_SETTINGS_RELATIVE_PATH}: ${error instanceof Error ? error.message : String(error)}`,
+		);
 		return {
-			registry: createRegistry([...focuses.values()]),
-			warnings: [
-				`Failed to read ${PROJECT_USER_SETTINGS_RELATIVE_PATH} focuses: ${error instanceof Error ? error.message : String(error)}`,
-			],
+			registry: createRegistry([...focuses.values()], toolSets, warnings),
+			warnings,
 		};
 	}
 
+	toolSets = normalizeProjectToolSets(settings.toolSets, warnings);
+
 	if (settings.focuses === undefined) {
-		return { registry: createRegistry([...focuses.values()]), warnings };
+		return {
+			registry: createRegistry([...focuses.values()], toolSets, warnings),
+			warnings,
+		};
 	}
 	if (!isObject(settings.focuses)) {
+		warnings.push("Project focuses ignored: focuses must be an object.");
 		return {
-			registry: createRegistry([...focuses.values()]),
-			warnings: ["Project focuses ignored: focuses must be an object."],
+			registry: createRegistry([...focuses.values()], toolSets, warnings),
+			warnings,
 		};
 	}
 
 	for (const [name, rawFocus] of Object.entries(settings.focuses)) {
 		try {
 			const projectFocus = normalizeProjectFocus(name, rawFocus);
+			const projectTools = resolveProjectFocusTools(projectFocus, toolSets);
 			const existing = focuses.get(name);
 			if (existing) {
-				focuses.set(name, mergeFocus(existing, projectFocus));
+				focuses.set(name, mergeFocus(existing, projectFocus, projectTools));
 			} else {
-				focuses.set(name, createProjectFocus(projectFocus));
+				focuses.set(name, createProjectFocus(projectFocus, projectTools));
 			}
 		} catch (error) {
 			warnings.push(
@@ -227,5 +357,8 @@ export function loadFocusRegistry(
 		}
 	}
 
-	return { registry: createRegistry([...focuses.values()]), warnings };
+	return {
+		registry: createRegistry([...focuses.values()], toolSets, warnings),
+		warnings,
+	};
 }

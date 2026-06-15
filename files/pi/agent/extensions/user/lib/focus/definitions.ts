@@ -8,6 +8,7 @@ export type FocusDefinition = {
 	readonly description: string;
 	readonly prompt: string;
 	readonly tools: readonly string[];
+	readonly toolSets?: readonly string[];
 	readonly settingsTools?: readonly string[];
 	readonly transition: FocusTransition;
 	readonly color?: ColorRole;
@@ -20,6 +21,12 @@ export const ENTER_FOCUS_TOOL = "enter_focus";
 
 export const BASE_FOCUS_TOOLS = [ENTER_FOCUS_TOOL] as const;
 
+export const BUILT_IN_TOOL_SETS: ReadonlyMap<string, readonly string[]> =
+	new Map([
+		["file_read", ["read", "grep", "find", "ls"]],
+		["file_write", ["write", "edit", "mv", "rm"]],
+	]);
+
 export const BASE_FOCUS_DEFINITIONS: readonly FocusDefinition[] = [
 	{
 		name: "explore",
@@ -27,7 +34,8 @@ export const BASE_FOCUS_DEFINITIONS: readonly FocusDefinition[] = [
 			"Use when the task requires reading or searching the repository to understand requirements, inspect files, or answer questions without modifying files.",
 		prompt:
 			"You are in explore focus. Read and search the repository to understand the task.",
-		tools: ["read", "grep", "find", "ls"],
+		tools: [],
+		toolSets: ["file_read"],
 		transition: "auto",
 		color: "accent",
 	},
@@ -37,7 +45,8 @@ export const BASE_FOCUS_DEFINITIONS: readonly FocusDefinition[] = [
 			"Use when the user asks for repository file changes, or after investigation establishes that file changes are needed.",
 		prompt:
 			"You are in edit focus. Make focused file changes with read/write/edit/mv/rm. Keep changes minimal.",
-		tools: ["read", "grep", "find", "ls", "write", "edit", "mv", "rm"],
+		tools: [],
+		toolSets: ["file_read", "file_write"],
 		transition: "confirm",
 		color: "positive",
 	},
