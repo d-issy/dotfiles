@@ -8,7 +8,6 @@
     ];
 
     skills = {
-      interview-me.enable = true;
       pi-agent-user-settings = {
         enable = true;
         agents.pi = true;
