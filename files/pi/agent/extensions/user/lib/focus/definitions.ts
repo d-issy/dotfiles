@@ -8,6 +8,7 @@ export type FocusDefinition = {
 	readonly name: FocusName;
 	readonly description: string;
 	readonly prompt: string;
+	readonly exitPrompt?: string;
 	readonly tools: readonly string[];
 	readonly toolSets?: readonly string[];
 	readonly settingsTools?: readonly string[];
@@ -22,8 +23,6 @@ export const FOCUS_STATE_TYPE = "focus-state";
 export const FOCUS_REMINDER_TYPE = "focus-reminder";
 export const ENTER_FOCUS_TOOL = "enter_focus";
 export const EXIT_FOCUS_TOOL = "exit_focus";
-
-export const BASE_FOCUS_TOOLS = [ENTER_FOCUS_TOOL] as const;
 
 export function getFocusExitMode(focus: FocusDefinition): FocusExitMode {
 	return focus.exitMode ?? "single-turn";
@@ -64,13 +63,19 @@ export const BASE_FOCUS_DEFINITIONS: readonly FocusDefinition[] = [
 			"Use when requirements are unclear or incomplete and structured interviewing is needed before proceeding.",
 		prompt: [
 			"You are in interview focus. Clarify the user's real requirements by understanding their goals, background, pain points, constraints, and success criteria before proceeding.",
-			"Ask one necessary question at a time, but do not ask questions whose answers are already available from the conversation, loaded context, or repository inspection. Use read, grep, find, or ls first when they can fill in missing context or make the next question sharper.",
+			"Do not enter edit focus while requirements are unclear. Treat implementation feasibility and requirement clarity as separate things.",
+			"Before asking, use read, grep, find, or ls when they can answer the question or make the next question sharper. Do not ask the user for information that can be inspected from code or repository state.",
+			"When requirements remain unclear, send a brief normal message summarizing the current understanding, then in the same turn call ask_user_question. Do not stop after the message. Continue this short-message plus ask_user_question loop until the user's intent is clear.",
+			"Use ask_user_question for clarification instead of asking free-form questions in normal chat. Use normal chat only for the brief summary immediately before the structured question, or when the user explicitly asks for discussion instead of answering the question.",
+			"Keep ask_user_question question text focused on the question itself, put rationale in the reason field, and do not stuff long summaries into the question.",
+			"When requirements are clear and the user asks to leave interview focus, call exit_focus.",
 			"Prefer high-value questions that reduce specific uncertainty. Early in the interview, focus on why the user is asking, what is not working, and what would count as a good outcome instead of prematurely asking about implementation tactics or tool categories.",
 			"Treat prior answers, Other responses, corrections, objections, and criticism as strong signals. Update the interview direction immediately, discard stale assumptions, and never treat unconfirmed guesses as settled requirements.",
-			"Use ask-user-question for structured questions when choices help the user clarify their requirements; otherwise continue conversationally. Keep choice sets broad enough to include the user's real concern, and use multiple selection when several concerns may apply.",
-			"Before leaving interview focus, summarize the agreed requirements, important dissatisfaction, remaining open questions, and the proposed next plan. Only use exit_focus after the user accepts that summary and is ready to proceed.",
+			"When the requirements are clear and the user has approved proceeding, use exit_focus with a concise reason. Do not end with only a normal message.",
 		].join(" "),
-		tools: ["ask-user-question"],
+		exitPrompt:
+			"Interview focus has ended. Continue from the agreed requirements instead of stopping. If the user approved implementation, enter the appropriate implementation focus and proceed; otherwise follow the agreed next action.",
+		tools: ["ask_user_question"],
 		toolSets: ["file_read"],
 		transition: "auto",
 		exitMode: "explicit",

@@ -19,6 +19,7 @@ import {
 } from "../lib/focus/prompt";
 import { type FocusRuntime, createFocusRuntime } from "../lib/focus/runtime";
 import {
+	autoContinueAfterFocusTransition,
 	persistFocusBeforeNew,
 	resetConfirmDecisions,
 	resetFocusAtAgentEnd,
@@ -39,19 +40,24 @@ const openFocusQuickAction =
 		);
 		if (!selected) return;
 		runtime.resetFocusAtAgentEndPending = false;
+		runtime.autoContinueFocusName = undefined;
 		if (selected === BASE_FOCUS) {
 			focus.leave(ctx);
+			runtime.focusReminderPending = true;
 			return;
 		}
-		focus.enter(ctx, selected, { source: "user" });
+		focus.enter(ctx, selected);
+		runtime.focusReminderPending = true;
 	};
 
 const toggleFocusSelector =
 	(focus: FocusController, runtime: FocusRuntime) =>
 	async (ctx: ExtensionContext): Promise<void> => {
 		runtime.resetFocusAtAgentEndPending = false;
+		runtime.autoContinueFocusName = undefined;
 		if (focus.current !== BASE_FOCUS) {
 			focus.leave(ctx);
+			runtime.focusReminderPending = true;
 			return;
 		}
 		await openFocusQuickAction(focus, runtime)(ctx);
@@ -69,12 +75,13 @@ function register(pi: ExtensionAPI): void {
 		handler: toggleFocusSelector(focus, runtime),
 	});
 	pi.on("before_agent_start", injectFocusRestorePrompt(pi, focus, runtime));
-	pi.on("context", injectFocusReminder(pi, focus));
+	pi.on("context", injectFocusReminder(pi, focus, runtime));
 	pi.on("before_provider_request", filterProviderTools(pi, focus));
 	pi.on("session_before_switch", persistFocusBeforeNew(pi, focus));
 	pi.on("session_start", resetConfirmDecisions());
 	pi.on("session_start", restoreFocus(focus, runtime));
 	pi.on("agent_end", resetFocusAtAgentEnd(focus, runtime));
+	pi.on("agent_end", autoContinueAfterFocusTransition(pi, focus, runtime));
 	pi.on("tool_call", guardToolCall(pi, focus));
 }
 

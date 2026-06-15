@@ -41,6 +41,7 @@ type ProjectFocusDefinition = {
 	readonly name: FocusName;
 	readonly description?: string;
 	readonly prompt?: string;
+	readonly exitPrompt?: string;
 	readonly tools?: readonly string[];
 	readonly toolSets?: readonly string[];
 	readonly transition?: FocusTransition;
@@ -122,6 +123,7 @@ function normalizeProjectFocus(
 		name,
 		description: normalizeString(value.description, `${name}.description`),
 		prompt: normalizeString(value.prompt, `${name}.prompt`),
+		exitPrompt: normalizeString(value.exitPrompt, `${name}.exitPrompt`),
 		tools: normalizeTools(value.tools, `${name}.tools`),
 		toolSets: normalizeTools(value.toolSets, `${name}.toolSets`),
 		transition: normalizeTransition(value.transition, `${name}.transition`),
@@ -236,6 +238,9 @@ function mergeFocus(
 		prompt: project.prompt
 			? `${base.prompt}\n\n${project.prompt}`
 			: base.prompt,
+		exitPrompt: project.exitPrompt
+			? [base.exitPrompt, project.exitPrompt].filter(Boolean).join("\n\n")
+			: base.exitPrompt,
 		tools: unique([...(base.tools ?? []), ...projectTools]),
 		settingsTools: unique([...(base.settingsTools ?? []), ...projectTools]),
 		// Existing focus transitions are security-sensitive and cannot be changed by project config.
@@ -263,6 +268,7 @@ function createProjectFocus(
 		name: project.name,
 		description: project.description,
 		prompt: project.prompt,
+		exitPrompt: project.exitPrompt,
 		tools: unique(projectTools),
 		settingsTools: unique(projectTools),
 		transition: project.transition ?? "confirm",

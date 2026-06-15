@@ -7,7 +7,6 @@ import { isProjectToolAvailable } from "../tool/project";
 import { showFilterSelect } from "../ui";
 import {
 	BASE_FOCUS,
-	BASE_FOCUS_TOOLS,
 	ENTER_FOCUS_TOOL,
 	EXIT_FOCUS_TOOL,
 	type FocusDefinition,
@@ -36,55 +35,44 @@ function filterExisting(pi: ExtensionAPI, names: readonly string[]): string[] {
 export function getBaseFocusTools(pi: ExtensionAPI): string[] {
 	return filterExisting(
 		pi,
-		unique([...ALWAYS_ALLOWED_TOOL_NAMES, ...BASE_FOCUS_TOOLS]),
+		unique([...ALWAYS_ALLOWED_TOOL_NAMES, ENTER_FOCUS_TOOL]),
 	);
 }
 
-export function getRoutableFocusTools(
-	pi: ExtensionAPI,
-	registry: FocusRegistry,
-): string[] {
-	const focusTools = registry
-		.list()
-		.filter((focus) => focus.transition !== "manual")
-		.flatMap((focus) => getFocusTools(pi, focus, { includeExitFocus: false }));
-	return filterExisting(
-		pi,
-		unique([...ALWAYS_ALLOWED_TOOL_NAMES, ...BASE_FOCUS_TOOLS, ...focusTools]),
+function declaredFocusToolNames(focus: FocusDefinition): string[] {
+	return focus.tools.filter(
+		(name) =>
+			name !== ENTER_FOCUS_TOOL &&
+			name !== EXIT_FOCUS_TOOL &&
+			isProjectToolAvailable(name),
 	);
 }
 
-export function getFocusTools(
+function activeFocusManagementToolNames(focus: FocusDefinition): string[] {
+	switch (getFocusExitMode(focus)) {
+		case "explicit":
+			return [EXIT_FOCUS_TOOL];
+		case "single-turn":
+			return [ENTER_FOCUS_TOOL];
+	}
+}
+
+export function getActiveFocusTools(
 	pi: ExtensionAPI,
 	focus: FocusDefinition,
-	options?: { includeEnterFocus?: boolean; includeExitFocus?: boolean },
 ): string[] {
-	const requested = focus.tools;
-	const focusManagementTools =
-		getFocusExitMode(focus) === "explicit"
-			? options?.includeExitFocus === false
-				? []
-				: [EXIT_FOCUS_TOOL]
-			: options?.includeEnterFocus === false
-				? []
-				: [ENTER_FOCUS_TOOL];
 	return filterExisting(
 		pi,
 		unique([
 			...ALWAYS_ALLOWED_TOOL_NAMES,
-			...requested,
-			...focusManagementTools,
+			...declaredFocusToolNames(focus),
+			...activeFocusManagementToolNames(focus),
 		]),
 	);
 }
 
-export function activateBaseFocusTools(
-	pi: ExtensionAPI,
-	registry?: FocusRegistry,
-): string[] {
-	const tools = registry
-		? getRoutableFocusTools(pi, registry)
-		: getBaseFocusTools(pi);
+export function activateBaseFocusTools(pi: ExtensionAPI): string[] {
+	const tools = getBaseFocusTools(pi);
 	pi.setActiveTools(tools);
 	return tools;
 }
@@ -92,16 +80,9 @@ export function activateBaseFocusTools(
 export function activateFocusTools(
 	pi: ExtensionAPI,
 	focus: FocusDefinition | undefined,
-	registry?: FocusRegistry,
+	_optionsRegistry?: FocusRegistry,
 ): string[] {
-	const tools = registry
-		? unique([
-				...getRoutableFocusTools(pi, registry),
-				...(focus ? getFocusTools(pi, focus) : []),
-			])
-		: focus
-			? getFocusTools(pi, focus)
-			: getBaseFocusTools(pi);
+	const tools = focus ? getActiveFocusTools(pi, focus) : getBaseFocusTools(pi);
 	pi.setActiveTools(tools);
 	return tools;
 }

@@ -15,15 +15,13 @@ import {
 	activateBaseFocusTools,
 	activateFocusTools,
 	applyFocusStatus,
+	getActiveFocusTools,
 	getBaseFocusTools,
-	getFocusTools,
 } from "./ui";
 
 export type FocusStateEntry = {
 	focus?: FocusName | typeof BASE_FOCUS;
 };
-
-export type FocusActivationSource = "agent" | "user";
 
 export type FocusController = {
 	readonly current: FocusName | typeof BASE_FOCUS;
@@ -33,11 +31,7 @@ export type FocusController = {
 	enter(
 		ctx: ExtensionContext,
 		focusName: FocusName,
-		options?: {
-			persist?: boolean;
-			force?: boolean;
-			source?: FocusActivationSource;
-		},
+		options?: { persist?: boolean; force?: boolean },
 	): FocusDefinition;
 	leave(
 		ctx: ExtensionContext,
@@ -56,7 +50,6 @@ const emptyRegistry = loadFocusRegistry("/", {
 let activeFocusName: FocusName | typeof BASE_FOCUS = BASE_FOCUS;
 let activeFocusDefinition: FocusDefinition | undefined;
 let activeFocusRegistry: FocusRegistry = emptyRegistry;
-let activeFocusSource: FocusActivationSource | undefined;
 
 export function getCurrentFocusRegistry(): FocusRegistry {
 	return activeFocusRegistry;
@@ -89,7 +82,6 @@ export function createFocusController(pi: ExtensionAPI): FocusController {
 	let registry: FocusRegistry = emptyRegistry;
 	let currentFocusName: FocusName | typeof BASE_FOCUS = activeFocusName;
 	let currentFocus: FocusDefinition | undefined;
-	let currentFocusSource: FocusActivationSource | undefined = activeFocusSource;
 
 	function persist(focusName: FocusName | typeof BASE_FOCUS): void {
 		pi.appendEntry(FOCUS_STATE_TYPE, { focus: focusName });
@@ -100,7 +92,6 @@ export function createFocusController(pi: ExtensionAPI): FocusController {
 		activeFocusName = currentFocusName;
 		activeFocusDefinition = currentFocus;
 		activeFocusRegistry = registry;
-		activeFocusSource = currentFocusSource;
 		activateFocusTools(pi, currentFocus, registry);
 		applyFocusStatus(ctx, currentFocus);
 	}
@@ -124,15 +115,11 @@ export function createFocusController(pi: ExtensionAPI): FocusController {
 			for (const warning of result.warnings) ctx.ui.notify(warning, "warning");
 			if (currentFocusName !== BASE_FOCUS) {
 				currentFocus = registry.get(currentFocusName);
-				if (!currentFocus) {
-					currentFocusName = BASE_FOCUS;
-					currentFocusSource = undefined;
-				}
+				if (!currentFocus) currentFocusName = BASE_FOCUS;
 			}
 			activeFocusName = currentFocusName;
 			activeFocusDefinition = currentFocus;
 			activeFocusRegistry = registry;
-			activeFocusSource = currentFocusSource;
 			activateFocusTools(pi, currentFocus, registry);
 			applyFocusStatus(ctx, currentFocus);
 		},
@@ -143,7 +130,6 @@ export function createFocusController(pi: ExtensionAPI): FocusController {
 			if (!changed && !options?.force) return focus;
 			currentFocusName = focus.name;
 			currentFocus = focus;
-			currentFocusSource = options?.source ?? "user";
 			if (options?.persist ?? true) persist(focus.name);
 			apply(ctx, { force: true });
 			return focus;
@@ -154,58 +140,48 @@ export function createFocusController(pi: ExtensionAPI): FocusController {
 			if (!changed && !options?.force) return previous;
 			currentFocusName = BASE_FOCUS;
 			currentFocus = undefined;
-			currentFocusSource = undefined;
 			if (options?.persist ?? true) persist(BASE_FOCUS);
-			activateBaseFocusTools(pi, registry);
+			activateBaseFocusTools(pi);
 			applyFocusStatus(ctx, undefined);
 			activeFocusName = BASE_FOCUS;
 			activeFocusDefinition = undefined;
 			activeFocusRegistry = registry;
-			activeFocusSource = undefined;
 			return previous;
 		},
 		restore(ctx, focusName) {
 			if (!focusName || focusName === BASE_FOCUS) {
 				currentFocusName = BASE_FOCUS;
 				currentFocus = undefined;
-				currentFocusSource = undefined;
-				activateBaseFocusTools(pi, registry);
+				activateBaseFocusTools(pi);
 				applyFocusStatus(ctx, undefined);
 				activeFocusName = BASE_FOCUS;
 				activeFocusDefinition = undefined;
 				activeFocusRegistry = registry;
-				activeFocusSource = undefined;
 				return;
 			}
 			const focus = registry.get(focusName);
 			if (!focus) {
 				currentFocusName = BASE_FOCUS;
 				currentFocus = undefined;
-				currentFocusSource = undefined;
-				activateBaseFocusTools(pi, registry);
+				activateBaseFocusTools(pi);
 				applyFocusStatus(ctx, undefined);
 				activeFocusName = BASE_FOCUS;
 				activeFocusDefinition = undefined;
 				activeFocusRegistry = registry;
-				activeFocusSource = undefined;
 				return;
 			}
 			currentFocusName = focus.name;
 			currentFocus = focus;
-			currentFocusSource = "user";
 			activateFocusTools(pi, focus, registry);
 			applyFocusStatus(ctx, focus);
 			activeFocusName = focus.name;
 			activeFocusDefinition = focus;
 			activeFocusRegistry = registry;
-			activeFocusSource = currentFocusSource;
 		},
 		allowedToolNames(focusPi) {
 			return new Set(
 				currentFocus
-					? getFocusTools(focusPi, currentFocus, {
-							includeEnterFocus: currentFocusSource !== "user",
-						})
+					? getActiveFocusTools(focusPi, currentFocus)
 					: getBaseFocusTools(focusPi),
 			);
 		},

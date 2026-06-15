@@ -5,11 +5,7 @@ import type {
 	ExtensionAPI,
 	ExtensionHandler,
 } from "@earendil-works/pi-coding-agent";
-import {
-	type FocusController,
-	buildFocusRestorePrompt,
-	isFocusReminderMessage,
-} from "./controller";
+import { type FocusController, buildFocusRestorePrompt } from "./controller";
 import { FOCUS_REMINDER_TYPE } from "./definitions";
 import type { FocusRuntime } from "./runtime";
 
@@ -128,17 +124,26 @@ function formatToolDefinitions(tools: readonly ToolInfo[]): string {
 	);
 }
 
+function buildActiveFocusPrompt(focus: FocusController): string | undefined {
+	return focus.active
+		? `[ACTIVE FOCUS: ${focus.active.name}]\n${focus.active.prompt}`
+		: undefined;
+}
+
 function buildFocusReminderPayloadWithTools(
 	pi: ExtensionAPI,
 	focus: FocusController,
-): FocusReminderWithTools | undefined {
-	if (!focus.active) return undefined;
+): FocusReminderWithTools {
 	const tools = visibleToolDefinitions(pi, focus);
+	const activePrompt = buildActiveFocusPrompt(focus);
+	const focusInstructions = activePrompt
+		? `Focus instructions:\n${activePrompt}`
+		: `Focus routing instructions:\n${buildFocusSystemPrompt(focus)}`;
 	return {
 		customType: FOCUS_REMINDER_TYPE,
-		content: `<system-reminder>\nCurrent focus: ${focus.active.name}. Follow the focus instructions already provided.\n\nAvailable tool definitions:\n\`\`\`json\n${formatToolDefinitions(tools)}\n\`\`\`\n</system-reminder>`,
+		content: `<system-reminder>\nCurrent focus: ${focus.current}. Follow the focus instructions.\n\n${focusInstructions}\n\nAvailable tool definitions:\n\`\`\`json\n${formatToolDefinitions(tools)}\n\`\`\`\n</system-reminder>`,
 		display: false,
-		details: { focus: focus.active.name },
+		details: { focus: focus.current },
 	};
 }
 
@@ -160,34 +165,33 @@ export const injectFocusRestorePrompt =
 				systemPrompt: `${systemPrompt}\n\n${buildFocusSystemPrompt(focus)}`,
 			};
 		}
-		if (!runtime.restorePromptPending) {
-			return systemPrompt === event.systemPrompt ? undefined : { systemPrompt };
+		if (runtime.restorePromptPending) {
+			runtime.restorePromptPending = false;
+			return {
+				systemPrompt: `${systemPrompt}\n\n${buildFocusRestorePrompt(focus.active)}`,
+			};
 		}
-		runtime.restorePromptPending = false;
-		return {
-			systemPrompt: `${systemPrompt}\n\n${buildFocusRestorePrompt(focus.active)}`,
-		};
+		const activePrompt = buildActiveFocusPrompt(focus);
+		return activePrompt
+			? { systemPrompt: `${systemPrompt}\n\n${activePrompt}` }
+			: systemPrompt === event.systemPrompt
+				? undefined
+				: { systemPrompt };
 	};
 
 export const injectFocusReminder =
 	(
 		pi: ExtensionAPI,
 		focus: FocusController,
+		runtime: FocusRuntime,
 	): ExtensionHandler<ContextEvent, ContextResult> =>
 	async (event) => {
-		const messages = event.messages.filter(
-			(message) => !isFocusReminderMessage(message),
-		);
-		if (!focus.active) {
-			return messages.length === event.messages.length
-				? undefined
-				: { messages };
-		}
+		if (!runtime.focusReminderPending) return;
+		runtime.focusReminderPending = false;
 		const reminder = buildFocusReminderPayloadWithTools(pi, focus);
-		if (!reminder) return;
 		return {
 			messages: [
-				...messages,
+				...event.messages,
 				{
 					role: "custom",
 					...reminder,

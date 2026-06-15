@@ -1,6 +1,5 @@
 export {
 	BASE_FOCUS,
-	BASE_FOCUS_TOOLS,
 	ENTER_FOCUS_TOOL,
 	FOCUS_REMINDER_TYPE,
 	FOCUS_STATE_TYPE,
@@ -24,7 +23,7 @@ export {
 	activateBaseFocusTools,
 	activateFocusTools,
 	applyFocusStatus,
+	getActiveFocusTools,
 	getBaseFocusTools,
-	getFocusTools,
 	showFocusSelector,
 } from "./ui";

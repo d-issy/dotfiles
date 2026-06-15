@@ -7,6 +7,7 @@ import {
 import { Text } from "@earendil-works/pi-tui";
 import { Type } from "typebox";
 import {
+	confirmExitFocusTransition,
 	confirmFocusTransition,
 	isFocusAllowedForSession,
 	isFocusDeniedForSession,
@@ -95,6 +96,7 @@ export function registerEnterFocusTool(
 		renderResult: renderEnterFocusResult,
 		execute: async (_toolCallId, params, _signal, _onUpdate, ctx) => {
 			const previousFocusName = focus.current;
+			const activeFocus = focus.active;
 			const definition = focus.registry.get(params.name);
 			if (!definition) {
 				const availableFocuses = getEnterableFocusNames(focus);
@@ -109,6 +111,27 @@ export function registerEnterFocusTool(
 						ok: false,
 						reason: "unknown-focus",
 						availableFocuses,
+					} as FocusToolDetails,
+				};
+			}
+
+			if (
+				activeFocus &&
+				activeFocus.name !== definition.name &&
+				getFocusExitMode(activeFocus) === "explicit"
+			) {
+				return {
+					content: [
+						{
+							type: "text" as const,
+							text: `Focus '${activeFocus.name}' requires exit_focus before entering '${definition.name}'.`,
+						},
+					],
+					details: {
+						ok: false,
+						reason: "explicit-exit-required",
+						focus: activeFocus.name,
+						requested: definition.name,
 					} as FocusToolDetails,
 				};
 			}
@@ -211,7 +234,9 @@ export function registerEnterFocusTool(
 
 			runtime.resetFocusAtAgentEndPending =
 				getFocusExitMode(definition) === "single-turn";
-			const entered = focus.enter(ctx, definition.name, { source: "agent" });
+			const entered = focus.enter(ctx, definition.name);
+			runtime.autoContinueFocusName = entered.name;
+			runtime.focusReminderPending = true;
 			const action =
 				previousFocusName === BASE_FOCUS
 					? `Entered focus '${entered.name}'.`
@@ -229,13 +254,47 @@ export function registerEnterFocusTool(
 					previous:
 						previousFocusName === BASE_FOCUS ? undefined : previousFocusName,
 				} as FocusToolDetails,
+				terminate: true,
 			};
 		},
+	});
+
+	pi.on("tool_result", (event) => {
+		if (event.toolName !== ENTER_FOCUS_TOOL) return undefined;
+		if (!isFailedFocusToolDetails(event.details)) return undefined;
+		return { isError: true };
 	});
 }
 
 function renderExitFocusCall(_args: { reason: string }, theme: Theme): Text {
 	return new Text(theme.fg("toolTitle", theme.bold(EXIT_FOCUS_TOOL)), 0, 0);
+}
+
+function renderExitFocusResult(
+	result: AgentToolResult<FocusToolDetails>,
+	options: ToolRenderResultOptions,
+	theme: Theme,
+): Text {
+	const rejectReason =
+		typeof result.details.rejectReason === "string"
+			? result.details.rejectReason
+			: undefined;
+	const text = options.expanded
+		? resultText(result)
+		: rejectReason
+			? `${firstResultLine(result)}\nReject reason: ${rejectReason}`
+			: firstResultLine(result);
+	const color = isOkResult(result) ? "muted" : "error";
+	return new Text(theme.fg(color, text), 0, 0);
+}
+
+function isFailedFocusToolDetails(details: unknown): boolean {
+	return (
+		typeof details === "object" &&
+		details !== null &&
+		"ok" in details &&
+		details.ok === false
+	);
 }
 
 export function registerExitFocusTool(
@@ -246,7 +305,8 @@ export function registerExitFocusTool(
 	pi.registerTool({
 		name: EXIT_FOCUS_TOOL,
 		label: "exit_focus",
-		description: "Exit the current focus and return to base focus.",
+		description:
+			"Exit the current focus and return to base focus. If already in base focus, no action is taken.",
 		executionMode: "sequential",
 		parameters: Type.Object({
 			reason: Type.String({
@@ -254,7 +314,7 @@ export function registerExitFocusTool(
 			}),
 		}),
 		renderCall: renderExitFocusCall,
-		renderResult: renderEnterFocusResult,
+		renderResult: renderExitFocusResult,
 		execute: async (_toolCallId, params, _signal, _onUpdate, ctx) => {
 			const active = focus.active;
 			if (!active) {
@@ -284,11 +344,12 @@ export function registerExitFocusTool(
 						} as FocusToolDetails,
 					};
 				}
-				const confirmed = await ctx.ui.confirm(
-					`Exit focus: ${active.name}`,
+				const decision = await confirmExitFocusTransition(
+					ctx,
+					active.name,
 					params.reason,
 				);
-				if (!confirmed) {
+				if (!decision) {
 					return {
 						content: [
 							{
@@ -303,25 +364,61 @@ export function registerExitFocusTool(
 						} as FocusToolDetails,
 					};
 				}
+				if (!decision.confirmed) {
+					const rejectReason = decision.rejectReason;
+					const text = rejectReason
+						? [
+								`User rejected exiting focus '${active.name}'. Continue in the current focus.`,
+								`Reject reason: ${rejectReason}`,
+								"Use the reject reason to address the missing work before trying to exit again.",
+							].join("\n\n")
+						: `User rejected exiting focus '${active.name}'. Continue in the current focus.`;
+					return {
+						content: [
+							{
+								type: "text" as const,
+								text,
+							},
+						],
+						details: {
+							ok: false,
+							cancelled: false,
+							focus: active.name,
+							...(rejectReason ? { rejectReason } : {}),
+						} as FocusToolDetails,
+					};
+				}
 			}
 
 			const previous = focus.leave(ctx);
+			const exitPrompt = previous?.exitPrompt?.trim();
+			const exitText = previous
+				? `Exited focus '${previous.name}'.`
+				: "Exited focus.";
 			runtime.restorePromptPending = false;
+			runtime.focusReminderPending = true;
 			runtime.resetFocusAtAgentEndPending = false;
+			runtime.autoContinueFocusName = BASE_FOCUS;
 			return {
 				content: [
 					{
 						type: "text" as const,
-						text: previous
-							? `Exited focus '${previous.name}'.`
-							: "Exited focus.",
+						text: exitPrompt ? `${exitText}\n\n${exitPrompt}` : exitText,
 					},
 				],
 				details: {
 					ok: true,
 					previous: previous?.name,
+					exitPrompt,
 				} as FocusToolDetails,
+				terminate: true,
 			};
 		},
+	});
+
+	pi.on("tool_result", (event) => {
+		if (event.toolName !== EXIT_FOCUS_TOOL) return undefined;
+		if (!isFailedFocusToolDetails(event.details)) return undefined;
+		return { isError: true };
 	});
 }

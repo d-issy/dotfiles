@@ -34,8 +34,15 @@ const choiceSchema = Type.Object({
 
 const askUserQuestionSchema = Type.Object({
 	question: Type.String({
-		description: "Question to ask the user, including any necessary context.",
+		description:
+			"Question to ask the user. Keep this focused on the question itself.",
 	}),
+	reason: Type.Optional(
+		Type.String({
+			description:
+				"Why this question is being asked. Displayed separately from the question.",
+		}),
+	),
 	choices: Type.Array(choiceSchema, {
 		description:
 			"Choices to present. Use clear labels and add descriptions when useful.",
@@ -50,7 +57,7 @@ const askUserQuestionSchema = Type.Object({
 type AskUserQuestionInput = Static<typeof askUserQuestionSchema>;
 type AskUserQuestionChoice = AskUserQuestionInput["choices"][number];
 
-const ASK_USER_QUESTION_TOOL = "ask-user-question";
+const ASK_USER_QUESTION_TOOL = "ask_user_question";
 
 type AskUserQuestionDetails =
 	| {
@@ -100,6 +107,7 @@ type QuestionRow = {
 };
 
 const OTHER_LABEL = "Other";
+const OTHER_INPUT_TITLE = "Provide Other Answer";
 const CHAT_LABEL = "Ask about this question";
 const DONE_LABEL = "Done";
 
@@ -123,7 +131,7 @@ function labels(): {
 			"Discuss this question in normal chat instead of answering now",
 		helpSingle: "↑↓/j/k move • Enter select • Tab edits Other • Esc cancel",
 		helpMultiple:
-			"↑↓/j/k move • Space toggles/activates • Enter done • Tab edits Other • Esc cancel",
+			"↑↓/j/k move • Space toggles choice • Enter done • Tab edits Other • Esc cancel",
 	};
 }
 
@@ -291,16 +299,6 @@ function makeRows(
 			selected: otherSelected,
 			section: "choice",
 		},
-		...(multiple
-			? [
-					{
-						action: { type: "done" as const },
-						label: text.done,
-						description: text.doneDescription,
-						section: "action" as const,
-					},
-				]
-			: []),
 		{
 			action: { type: "chat" },
 			label: text.chat,
@@ -340,6 +338,19 @@ function renderQuestionLines(
 	return wrapLine(line, width).map((wrapped) =>
 		truncateToWidth(theme.fg("accent", theme.bold(wrapped)), width, ""),
 	);
+}
+
+function renderReasonLines(
+	theme: Theme,
+	reason: string | undefined,
+	width: number,
+): string[] {
+	const trimmed = reason?.trim();
+	if (!trimmed) return [];
+	return trimmed
+		.split("\n")
+		.flatMap((line) => wrapText(line, width))
+		.map((line) => truncateToWidth(theme.fg("dim", line), width, ""));
 }
 
 function styledLabel(theme: Theme, row: QuestionRow, label: string): string {
@@ -422,11 +433,13 @@ async function showQuestion(
 			return {
 				render(width: number) {
 					const help = options.multiple ? text.helpMultiple : text.helpSingle;
+					const reasonLines = renderReasonLines(theme, params.reason, width);
 					const lines = [
 						...border.render(width),
 						...params.question
 							.split("\n")
 							.flatMap((line) => renderQuestionLines(theme, line, width)),
+						...(reasonLines.length > 0 ? ["", ...reasonLines] : []),
 						...wrapText(help, width).map((line) =>
 							truncateToWidth(theme.fg("dim", line), width, ""),
 						),
@@ -493,10 +506,19 @@ async function showQuestion(
 
 async function showOtherInput(
 	ctx: ExtensionContext,
+	params: AskUserQuestionInput,
 	text: QuestionLabels,
 	initialValue: string | undefined,
 ): Promise<string | undefined> {
-	return ctx.ui.editor(text.other, initialValue ?? "");
+	const title = [
+		OTHER_INPUT_TITLE,
+		"",
+		`Question: ${params.question.trim()}`,
+		params.reason?.trim() ? `Reason: ${params.reason.trim()}` : undefined,
+	]
+		.filter((line): line is string => line !== undefined)
+		.join("\n");
+	return ctx.ui.editor(title, initialValue ?? "");
 }
 
 async function askSingle(
@@ -532,7 +554,7 @@ async function askSingle(
 		}
 		if (action.type === "other" || action.type === "other-input") {
 			// oxlint-disable-next-line no-await-in-loop -- Other input is part of the current question flow.
-			const otherText = await showOtherInput(ctx, text, undefined);
+			const otherText = await showOtherInput(ctx, params, text, undefined);
 			if (otherText === undefined || !otherText.trim()) continue;
 			return answeredResult({
 				status: "answered",
@@ -618,7 +640,7 @@ async function askMultiple(
 		}
 		if (action.type === "other-input") {
 			// oxlint-disable-next-line no-await-in-loop -- Other input is part of the current selection loop state.
-			const input = await showOtherInput(ctx, text, otherText);
+			const input = await showOtherInput(ctx, params, text, otherText);
 			if (input !== undefined) {
 				otherText = input.trim() || undefined;
 				otherSelected = Boolean(otherText);
@@ -647,11 +669,12 @@ export function registerInterviewTools(): void {
 			promptSnippet:
 				"Ask a structured user interview question with choices, Other, and chat fallback",
 			promptGuidelines: [
-				"Use ask-user-question to ask one necessary structured interview question at a time only after using available context and file-read tools to avoid asking what can be inferred or inspected.",
-				"Use ask-user-question to clarify the user's goals, pain points, constraints, success criteria, or remaining uncertainties; do not use it for low-value classification or implementation-convenience questions.",
-				"For ask-user-question choices, include descriptions when they help the user compare options, keep choices broad enough to cover the user's real concern, and use multiple=true when several concerns may apply.",
-				"Treat ask-user-question Other responses, chat requests, corrections, objections, and criticism as primary interview signals that should update the next question instead of forcing the user back into stale choices.",
-				"For single-choice ask-user-question calls, mark exactly one choice as recommended; the tool displays recommended choices first and appends (recommend) automatically.",
+				"Use ask_user_question to ask one necessary structured interview question at a time only after using available context and file-read tools to avoid asking what can be inferred or inspected.",
+				"Use ask_user_question to clarify the user's goals, pain points, constraints, success criteria, or remaining uncertainties; do not use it for low-value classification or implementation-convenience questions.",
+				"Keep ask_user_question question focused on the question itself, and put the rationale for asking it in the optional reason field instead of embedding long setup text in the question.",
+				"For ask_user_question choices, include descriptions when they help the user compare options, keep choices broad enough to cover the user's real concern, and use multiple=true when several concerns may apply.",
+				"Treat ask_user_question Other responses, chat requests, corrections, objections, and criticism as primary interview signals that should update the next question instead of forcing the user back into stale choices.",
+				"For single-choice ask_user_question calls, mark exactly one choice as recommended; the tool displays recommended choices first and appends (recommend) automatically.",
 			],
 			parameters: askUserQuestionSchema,
 			executionMode: "sequential",
