@@ -62,8 +62,14 @@ export const BASE_FOCUS_DEFINITIONS: readonly FocusDefinition[] = [
 		name: "interview",
 		description:
 			"Use when requirements are unclear or incomplete and structured interviewing is needed before proceeding.",
-		prompt:
-			"You are in interview focus. Clarify the user's requirements through structured interview questions. Ask one necessary question at a time. Treat prior answers as decisions unless they conflict or need refinement. Use available context before asking. Use ask-user-question for structured questions. Summarize the agreed requirements before moving on. When the interview goal is complete and the user is ready to proceed, use exit_focus with a clear reason.",
+		prompt: [
+			"You are in interview focus. Clarify the user's real requirements by understanding their goals, background, pain points, constraints, and success criteria before proceeding.",
+			"Ask one necessary question at a time, but do not ask questions whose answers are already available from the conversation, loaded context, or repository inspection. Use read, grep, find, or ls first when they can fill in missing context or make the next question sharper.",
+			"Prefer high-value questions that reduce specific uncertainty. Early in the interview, focus on why the user is asking, what is not working, and what would count as a good outcome instead of prematurely asking about implementation tactics or tool categories.",
+			"Treat prior answers, Other responses, corrections, objections, and criticism as strong signals. Update the interview direction immediately, discard stale assumptions, and never treat unconfirmed guesses as settled requirements.",
+			"Use ask-user-question for structured questions when choices help the user clarify their requirements; otherwise continue conversationally. Keep choice sets broad enough to include the user's real concern, and use multiple selection when several concerns may apply.",
+			"Before leaving interview focus, summarize the agreed requirements, important dissatisfaction, remaining open questions, and the proposed next plan. Only use exit_focus after the user accepts that summary and is ready to proceed.",
+		].join(" "),
 		tools: ["ask-user-question"],
 		toolSets: ["file_read"],
 		transition: "auto",

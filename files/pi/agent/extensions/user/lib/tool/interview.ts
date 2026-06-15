@@ -239,6 +239,18 @@ function choiceLabel(choice: AskUserQuestionChoice): string {
 		: choice.label;
 }
 
+function sortedChoices(
+	choices: readonly AskUserQuestionChoice[],
+): AskUserQuestionChoice[] {
+	const recommended: AskUserQuestionChoice[] = [];
+	const regular: AskUserQuestionChoice[] = [];
+	for (const choice of choices) {
+		if (choice.recommended === true) recommended.push(choice);
+		else regular.push(choice);
+	}
+	return [...recommended, ...regular];
+}
+
 function otherDescription(
 	text: QuestionLabels,
 	multiple: boolean,
@@ -262,7 +274,7 @@ function makeRows(
 	otherText: string | undefined,
 	otherSelected: boolean,
 ): QuestionRow[] {
-	const choiceRows = params.choices.map((choice) => ({
+	const choiceRows = sortedChoices(params.choices).map((choice) => ({
 		action: { type: "choice" as const, label: choice.label },
 		label: choiceLabel(choice),
 		description: choiceDescription(choice),
@@ -635,9 +647,11 @@ export function registerInterviewTools(): void {
 			promptSnippet:
 				"Ask a structured user interview question with choices, Other, and chat fallback",
 			promptGuidelines: [
-				"Use ask-user-question to ask one necessary structured interview question at a time.",
-				"For ask-user-question choices, include descriptions when they help the user compare options.",
-				"For single-choice ask-user-question calls, mark exactly one choice as recommended; the tool displays (recommend) automatically.",
+				"Use ask-user-question to ask one necessary structured interview question at a time only after using available context and file-read tools to avoid asking what can be inferred or inspected.",
+				"Use ask-user-question to clarify the user's goals, pain points, constraints, success criteria, or remaining uncertainties; do not use it for low-value classification or implementation-convenience questions.",
+				"For ask-user-question choices, include descriptions when they help the user compare options, keep choices broad enough to cover the user's real concern, and use multiple=true when several concerns may apply.",
+				"Treat ask-user-question Other responses, chat requests, corrections, objections, and criticism as primary interview signals that should update the next question instead of forcing the user back into stale choices.",
+				"For single-choice ask-user-question calls, mark exactly one choice as recommended; the tool displays recommended choices first and appends (recommend) automatically.",
 			],
 			parameters: askUserQuestionSchema,
 			executionMode: "sequential",
