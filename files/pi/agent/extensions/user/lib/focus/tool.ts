@@ -234,6 +234,7 @@ export function registerEnterFocusTool(
 
 			runtime.resetFocusAtAgentEndPending =
 				getFocusExitMode(definition) === "single-turn";
+			runtime.userSelectedFocus = false;
 			const entered = focus.enter(ctx, definition.name);
 			runtime.autoContinueFocusName = entered.name;
 			runtime.focusReminderPending = true;
@@ -398,6 +399,7 @@ export function registerExitFocusTool(
 			runtime.restorePromptPending = false;
 			runtime.focusReminderPending = true;
 			runtime.resetFocusAtAgentEndPending = false;
+			runtime.userSelectedFocus = false;
 			runtime.autoContinueFocusName = BASE_FOCUS;
 			return {
 				content: [

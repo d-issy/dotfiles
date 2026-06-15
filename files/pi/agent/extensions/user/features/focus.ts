@@ -40,6 +40,7 @@ const openFocusQuickAction =
 		);
 		if (!selected) return;
 		runtime.resetFocusAtAgentEndPending = false;
+		runtime.userSelectedFocus = true;
 		runtime.autoContinueFocusName = undefined;
 		if (selected === BASE_FOCUS) {
 			focus.leave(ctx);
@@ -54,6 +55,7 @@ const toggleFocusSelector =
 	(focus: FocusController, runtime: FocusRuntime) =>
 	async (ctx: ExtensionContext): Promise<void> => {
 		runtime.resetFocusAtAgentEndPending = false;
+		runtime.userSelectedFocus = true;
 		runtime.autoContinueFocusName = undefined;
 		if (focus.current !== BASE_FOCUS) {
 			focus.leave(ctx);
