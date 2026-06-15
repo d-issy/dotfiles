@@ -43,6 +43,24 @@ function isOkResult(result: AgentToolResult<FocusToolDetails>): boolean {
 	return result.details.ok !== false;
 }
 
+function getEnterableFocusNames(focus: FocusController): readonly string[] {
+	return focus.registry
+		.list()
+		.filter((definition) => definition.transition !== "manual")
+		.map((definition) => definition.name);
+}
+
+function formatUnknownFocusMessage(
+	name: string,
+	availableFocuses: readonly string[],
+): string {
+	const availableText =
+		availableFocuses.length > 0
+			? `Available focuses: ${availableFocuses.map((focus) => `'${focus}'`).join(", ")}.`
+			: "No enterable focuses are currently available.";
+	return `Unknown focus '${name}'. ${availableText}`;
+}
+
 function renderEnterFocusResult(
 	result: AgentToolResult<FocusToolDetails>,
 	options: ToolRenderResultOptions,
@@ -79,14 +97,19 @@ export function registerEnterFocusTool(
 			const previousFocusName = focus.current;
 			const definition = focus.registry.get(params.name);
 			if (!definition) {
+				const availableFocuses = getEnterableFocusNames(focus);
 				return {
 					content: [
 						{
 							type: "text" as const,
-							text: `Unknown focus '${params.name}'. Choose one of the available focuses from the focus instructions.`,
+							text: formatUnknownFocusMessage(params.name, availableFocuses),
 						},
 					],
-					details: { ok: false, reason: "unknown-focus" } as FocusToolDetails,
+					details: {
+						ok: false,
+						reason: "unknown-focus",
+						availableFocuses,
+					} as FocusToolDetails,
 				};
 			}
 
