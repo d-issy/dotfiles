@@ -4,6 +4,7 @@ import type {
 	Theme,
 } from "@earendil-works/pi-coding-agent";
 import type { Feature } from "../feature";
+import { activateFocusTools } from "../lib/focus/tool-access";
 import { ensureProjectUserSettingsTrusted } from "../lib/project-settings";
 import type { UserExtensionServices } from "../lib/services";
 import {
@@ -167,7 +168,7 @@ function register(pi: ExtensionAPI, services: UserExtensionServices): void {
 	pi.on("session_start", async (_event: SessionStartEvent, ctx) => {
 		await ensureProjectUserSettingsTrusted(ctx);
 		const projectTools = registerProjectTools(pi, ctx);
-		services.focus.refreshTools(pi);
+		activateFocusTools(pi, services.focus.activeFocusDefinition);
 		if (ctx.hasUI) {
 			setTimeout(() => {
 				const { groups, unfocusedTools } = projectToolGroups(

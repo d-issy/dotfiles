@@ -63,19 +63,23 @@ export function createFocusController(
 	sharedState: FocusSharedState,
 ): FocusController {
 	let registry: FocusRegistry = sharedState.registry;
-	let currentFocusName: FocusName | typeof BASE_FOCUS = sharedState.currentName;
-	let currentFocus: FocusDefinition | undefined = sharedState.activeDefinition;
+	let currentFocusName: FocusName | typeof BASE_FOCUS =
+		sharedState.currentFocusName;
+	let currentFocus: FocusDefinition | undefined =
+		sharedState.activeFocusDefinition;
 
 	function persist(focusName: FocusName | typeof BASE_FOCUS): void {
 		pi.appendEntry(FOCUS_STATE_TYPE, { focus: focusName });
 	}
 
 	function publish(): void {
-		sharedState.setCurrent(currentFocusName, currentFocus, registry);
+		sharedState.setFocusState(currentFocusName, currentFocus, registry);
 	}
 
 	function apply(ctx: ExtensionContext, options?: { force?: boolean }): void {
-		if (!options?.force && currentFocusName === sharedState.currentName) return;
+		if (!options?.force && currentFocusName === sharedState.currentFocusName) {
+			return;
+		}
 		publish();
 		activateFocusTools(pi, currentFocus);
 		applyFocusStatus(ctx, currentFocus);
