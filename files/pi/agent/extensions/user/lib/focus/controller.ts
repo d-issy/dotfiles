@@ -52,15 +52,9 @@ export function buildFocusRestorePrompt(focus: FocusDefinition): string {
 export function isFocusReminderMessage(message: {
 	role: string;
 	customType?: string;
-	details?: unknown;
 }): boolean {
-	if (message.role !== "custom" || message.customType !== FOCUS_REMINDER_TYPE) {
-		return false;
-	}
 	return (
-		typeof message.details === "object" &&
-		message.details !== null &&
-		"focus" in message.details
+		message.role === "custom" && message.customType === FOCUS_REMINDER_TYPE
 	);
 }
 
