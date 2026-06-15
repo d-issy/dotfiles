@@ -181,7 +181,7 @@ export function isProjectToolAvailable(name: string): boolean {
 	return !registeredProjectTools.has(name) || enabledProjectToolNames.has(name);
 }
 
-export function markFailedProjectToolResult(
+export function projectToolResultError(
 	registeredNames: ReadonlySet<string>,
 	event: ToolResultEvent,
 ): { isError: true } | undefined {

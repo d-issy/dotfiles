@@ -29,6 +29,7 @@ export type ProjectFocusLoadResult = {
 
 export type FocusRegistryLoadOptions = {
 	readonly includeProject?: boolean;
+	readonly includeInteractive?: boolean;
 };
 
 type ProjectSettings = {
@@ -273,8 +274,13 @@ function createRegistry(
 	focuses: readonly FocusDefinition[],
 	toolSets: ReadonlyMap<string, readonly string[]>,
 	warnings: string[],
+	options?: { readonly includeInteractive?: boolean },
 ): FocusRegistry {
-	const resolvedFocuses = finalizeFocuses(focuses, toolSets, warnings);
+	const includeInteractive = options?.includeInteractive ?? true;
+	const visibleFocuses = includeInteractive
+		? focuses
+		: focuses.filter((focus) => !focus.interactiveOnly);
+	const resolvedFocuses = finalizeFocuses(visibleFocuses, toolSets, warnings);
 	const byName = new Map(resolvedFocuses.map((focus) => [focus.name, focus]));
 	return {
 		get: (name) => (name === BASE_FOCUS ? undefined : byName.get(name)),
@@ -306,7 +312,12 @@ export function loadFocusRegistry(
 
 	if (options?.includeProject === false) {
 		return {
-			registry: createRegistry([...focuses.values()], toolSets, warnings),
+			registry: createRegistry(
+				[...focuses.values()],
+				toolSets,
+				warnings,
+				options,
+			),
 			warnings,
 		};
 	}
@@ -319,7 +330,12 @@ export function loadFocusRegistry(
 			`Failed to read ${PROJECT_USER_SETTINGS_RELATIVE_PATH}: ${error instanceof Error ? error.message : String(error)}`,
 		);
 		return {
-			registry: createRegistry([...focuses.values()], toolSets, warnings),
+			registry: createRegistry(
+				[...focuses.values()],
+				toolSets,
+				warnings,
+				options,
+			),
 			warnings,
 		};
 	}
@@ -328,14 +344,24 @@ export function loadFocusRegistry(
 
 	if (settings.focuses === undefined) {
 		return {
-			registry: createRegistry([...focuses.values()], toolSets, warnings),
+			registry: createRegistry(
+				[...focuses.values()],
+				toolSets,
+				warnings,
+				options,
+			),
 			warnings,
 		};
 	}
 	if (!isObject(settings.focuses)) {
 		warnings.push("Project focuses ignored: focuses must be an object.");
 		return {
-			registry: createRegistry([...focuses.values()], toolSets, warnings),
+			registry: createRegistry(
+				[...focuses.values()],
+				toolSets,
+				warnings,
+				options,
+			),
 			warnings,
 		};
 	}
@@ -358,7 +384,12 @@ export function loadFocusRegistry(
 	}
 
 	return {
-		registry: createRegistry([...focuses.values()], toolSets, warnings),
+		registry: createRegistry(
+			[...focuses.values()],
+			toolSets,
+			warnings,
+			options,
+		),
 		warnings,
 	};
 }

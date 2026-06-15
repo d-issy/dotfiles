@@ -118,6 +118,7 @@ export function createFocusController(pi: ExtensionAPI): FocusController {
 		loadProjectFocuses(ctx) {
 			const result = loadFocusRegistry(ctx.cwd, {
 				includeProject: isProjectUserSettingsTrusted(ctx),
+				includeInteractive: ctx.hasUI,
 			});
 			registry = result.registry;
 			for (const warning of result.warnings) ctx.ui.notify(warning, "warning");

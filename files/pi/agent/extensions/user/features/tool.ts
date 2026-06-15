@@ -12,7 +12,7 @@ import { policyRegistry } from "../lib/policy";
 import { ensureProjectUserSettingsTrusted } from "../lib/project-settings";
 import {
 	type ProjectToolSummary,
-	markFailedProjectToolResult,
+	projectToolResultError,
 	registerBuiltInTools,
 	registerProjectTools,
 	toolRegistry,
@@ -186,8 +186,11 @@ function register(pi: ExtensionAPI): void {
 			}, 50);
 		}
 	});
-	pi.on("tool_result", async (event) =>
-		markFailedProjectToolResult(projectToolNames, event),
+	pi.on(
+		"tool_result",
+		async (event) =>
+			toolRegistry.toolResultError(event) ??
+			projectToolResultError(projectToolNames, event),
 	);
 }
 

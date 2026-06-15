@@ -8,7 +8,7 @@ import type {
 import { ensureProjectUserSettingsTrusted } from "../project-settings";
 import { clearFocusTransitionDecisions } from "./confirmation";
 import type { FocusController } from "./controller";
-import { FOCUS_STATE_TYPE } from "./definitions";
+import { FOCUS_STATE_TYPE, getFocusExitMode } from "./definitions";
 import type { FocusRuntime } from "./runtime";
 import { findPersistedFocus } from "./startup";
 
@@ -45,6 +45,10 @@ export const resetFocusAtAgentEnd =
 	): ExtensionHandler<AgentEndEvent> =>
 	async (_event, ctx) => {
 		if (!focus.active || !runtime.resetFocusAtAgentEndPending) return;
+		if (getFocusExitMode(focus.active) !== "single-turn") {
+			runtime.resetFocusAtAgentEndPending = false;
+			return;
+		}
 		focus.leave(ctx);
 		runtime.restorePromptPending = false;
 		runtime.resetFocusAtAgentEndPending = false;

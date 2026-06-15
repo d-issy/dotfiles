@@ -1,6 +1,7 @@
 import type { ColorRole } from "../theme";
 
 export type FocusTransition = "auto" | "confirm" | "manual";
+export type FocusExitMode = "single-turn" | "explicit";
 export type FocusName = string;
 
 export type FocusDefinition = {
@@ -11,6 +12,8 @@ export type FocusDefinition = {
 	readonly toolSets?: readonly string[];
 	readonly settingsTools?: readonly string[];
 	readonly transition: FocusTransition;
+	readonly exitMode?: FocusExitMode;
+	readonly interactiveOnly?: boolean;
 	readonly color?: ColorRole;
 };
 
@@ -18,8 +21,13 @@ export const BASE_FOCUS = "base";
 export const FOCUS_STATE_TYPE = "focus-state";
 export const FOCUS_REMINDER_TYPE = "focus-reminder";
 export const ENTER_FOCUS_TOOL = "enter_focus";
+export const EXIT_FOCUS_TOOL = "exit_focus";
 
 export const BASE_FOCUS_TOOLS = [ENTER_FOCUS_TOOL] as const;
+
+export function getFocusExitMode(focus: FocusDefinition): FocusExitMode {
+	return focus.exitMode ?? "single-turn";
+}
 
 export const BUILT_IN_TOOL_SETS: ReadonlyMap<string, readonly string[]> =
 	new Map([
@@ -49,6 +57,19 @@ export const BASE_FOCUS_DEFINITIONS: readonly FocusDefinition[] = [
 		toolSets: ["file_read", "file_write"],
 		transition: "confirm",
 		color: "positive",
+	},
+	{
+		name: "interview",
+		description:
+			"Use when requirements are unclear or incomplete and structured interviewing is needed before proceeding.",
+		prompt:
+			"You are in interview focus. Clarify the user's requirements through structured interview questions. Ask one necessary question at a time. Treat prior answers as decisions unless they conflict or need refinement. Use available context before asking. Use ask-user-question for structured questions. Summarize the agreed requirements before moving on. When the interview goal is complete and the user is ready to proceed, use exit_focus with a clear reason.",
+		tools: ["ask-user-question"],
+		toolSets: ["file_read"],
+		transition: "auto",
+		exitMode: "explicit",
+		interactiveOnly: true,
+		color: "accent",
 	},
 	{
 		name: "git-read",

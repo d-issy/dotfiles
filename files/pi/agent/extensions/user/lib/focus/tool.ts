@@ -12,7 +12,12 @@ import {
 	isFocusDeniedForSession,
 	rememberFocusTransitionDecision,
 } from "./confirmation";
-import { BASE_FOCUS, ENTER_FOCUS_TOOL } from "./definitions";
+import {
+	BASE_FOCUS,
+	ENTER_FOCUS_TOOL,
+	EXIT_FOCUS_TOOL,
+	getFocusExitMode,
+} from "./definitions";
 import type { FocusController } from "./controller";
 import type { FocusRuntime } from "./runtime";
 
@@ -90,11 +95,11 @@ export function registerEnterFocusTool(
 					content: [
 						{
 							type: "text" as const,
-							text: `Already in focus '${definition.name}'. Continue with the current focus tools.`,
+							text: `Focus '${definition.name}' is already active. No action taken.`,
 						},
 					],
 					details: {
-						ok: false,
+						ok: true,
 						focus: definition.name,
 						reason: "already-active",
 					} as FocusToolDetails,
@@ -181,7 +186,8 @@ export function registerEnterFocusTool(
 				}
 			}
 
-			runtime.resetFocusAtAgentEndPending = true;
+			runtime.resetFocusAtAgentEndPending =
+				getFocusExitMode(definition) === "single-turn";
 			const entered = focus.enter(ctx, definition.name, { source: "agent" });
 			const action =
 				previousFocusName === BASE_FOCUS
@@ -199,6 +205,98 @@ export function registerEnterFocusTool(
 					focus: entered.name,
 					previous:
 						previousFocusName === BASE_FOCUS ? undefined : previousFocusName,
+				} as FocusToolDetails,
+			};
+		},
+	});
+}
+
+function renderExitFocusCall(_args: { reason: string }, theme: Theme): Text {
+	return new Text(theme.fg("toolTitle", theme.bold(EXIT_FOCUS_TOOL)), 0, 0);
+}
+
+export function registerExitFocusTool(
+	pi: ExtensionAPI,
+	focus: FocusController,
+	runtime: FocusRuntime,
+): void {
+	pi.registerTool({
+		name: EXIT_FOCUS_TOOL,
+		label: "exit_focus",
+		description: "Exit the current focus and return to base focus.",
+		executionMode: "sequential",
+		parameters: Type.Object({
+			reason: Type.String({
+				description: "Why the current focus goal is complete.",
+			}),
+		}),
+		renderCall: renderExitFocusCall,
+		renderResult: renderEnterFocusResult,
+		execute: async (_toolCallId, params, _signal, _onUpdate, ctx) => {
+			const active = focus.active;
+			if (!active) {
+				return {
+					content: [
+						{
+							type: "text" as const,
+							text: "Already in base focus. No action taken.",
+						},
+					],
+					details: { ok: true, reason: "already-base" } as FocusToolDetails,
+				};
+			}
+
+			if (getFocusExitMode(active) === "explicit") {
+				if (!ctx.hasUI) {
+					return {
+						content: [
+							{
+								type: "text" as const,
+								text: `Focus '${active.name}' requires confirmation before exiting, but UI is unavailable.`,
+							},
+						],
+						details: {
+							ok: false,
+							reason: "confirmation-unavailable",
+						} as FocusToolDetails,
+					};
+				}
+				const confirmed = await ctx.ui.confirm(
+					`Exit focus: ${active.name}`,
+					params.reason,
+				);
+				if (!confirmed) {
+					return {
+						content: [
+							{
+								type: "text" as const,
+								text: `User cancelled exiting focus '${active.name}'. Continue in the current focus.`,
+							},
+						],
+						details: {
+							ok: false,
+							cancelled: true,
+							focus: active.name,
+						} as FocusToolDetails,
+					};
+				}
+			}
+
+			const previous = focus.leave(ctx);
+			runtime.restorePromptPending = false;
+			runtime.resetFocusAtAgentEndPending = false;
+			return {
+				content: [
+					{
+						type: "text" as const,
+						text: previous
+							? `Exited focus '${previous.name}'.`
+							: "Exited focus.",
+					},
+				],
+				details: {
+					ok: true,
+					previous: previous?.name,
 				} as FocusToolDetails,
 			};
 		},

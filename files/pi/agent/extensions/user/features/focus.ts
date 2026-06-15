@@ -24,7 +24,10 @@ import {
 	resetFocusAtAgentEnd,
 	restoreFocus,
 } from "../lib/focus/session";
-import { registerEnterFocusTool } from "../lib/focus/tool";
+import {
+	registerEnterFocusTool,
+	registerExitFocusTool,
+} from "../lib/focus/tool";
 
 const openFocusQuickAction =
 	(focus: FocusController, runtime: FocusRuntime) =>
@@ -59,6 +62,7 @@ function register(pi: ExtensionAPI): void {
 	const focus = createFocusController(pi);
 	const runtime = createFocusRuntime();
 	registerEnterFocusTool(pi, focus, runtime);
+	registerExitFocusTool(pi, focus, runtime);
 	registerQuickActionHandler("focus", openFocusQuickAction(focus, runtime));
 	pi.registerShortcut("shift+tab", {
 		description: "Leave focus or open focus selector",

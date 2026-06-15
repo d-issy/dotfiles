@@ -10,6 +10,7 @@ import {
 import { makeSecretActionReason } from "../policy";
 import { registerGitTools } from "./git";
 import { registerGithubTools } from "./github";
+import { registerInterviewTools } from "./interview";
 import { toolRegistry } from "./registry";
 
 /**
@@ -21,6 +22,7 @@ export function registerBuiltInTools(): void {
 	registerFileTools();
 	registerGitTools();
 	registerGithubTools();
+	registerInterviewTools();
 }
 
 function registerFileTools(): void {

@@ -1,6 +1,6 @@
 export {
 	isProjectToolAvailable,
-	markFailedProjectToolResult,
+	projectToolResultError,
 	registerProjectTools,
 } from "./register";
 export type { ProjectToolSummary } from "./types";

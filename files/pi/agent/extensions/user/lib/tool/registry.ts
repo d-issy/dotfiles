@@ -1,4 +1,7 @@
-import type { ToolDefinition } from "@earendil-works/pi-coding-agent";
+import type {
+	ToolDefinition,
+	ToolResultEvent,
+} from "@earendil-works/pi-coding-agent";
 import type { Static, TSchema } from "typebox";
 import type { ToolPolicy } from "../policy";
 
@@ -11,6 +14,7 @@ import type { ToolPolicy } from "../policy";
 export type Tool<TParams extends TSchema = TSchema, TDetails = unknown> = {
 	readonly policy: ToolPolicy<Static<TParams>>;
 	readonly definition: ToolDefinition<TParams, TDetails>;
+	readonly isErrorResult?: (details: TDetails) => boolean;
 };
 
 export type ToolRegistry = {
@@ -23,6 +27,7 @@ export type ToolRegistry = {
 		tool: Tool<TParams, TDetails>,
 	): void;
 	list(): readonly Tool[];
+	toolResultError(event: ToolResultEvent): { isError: true } | undefined;
 };
 
 function createToolRegistry(): ToolRegistry {
@@ -34,6 +39,13 @@ function createToolRegistry(): ToolRegistry {
 		},
 		list() {
 			return tools;
+		},
+		toolResultError(event) {
+			const tool = tools.find(
+				(candidate) => candidate.definition.name === event.toolName,
+			);
+			if (!tool?.isErrorResult) return undefined;
+			return tool.isErrorResult(event.details) ? { isError: true } : undefined;
 		},
 	};
 }

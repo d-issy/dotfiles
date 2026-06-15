@@ -9,8 +9,10 @@ import {
 	BASE_FOCUS,
 	BASE_FOCUS_TOOLS,
 	ENTER_FOCUS_TOOL,
+	EXIT_FOCUS_TOOL,
 	type FocusDefinition,
 	type FocusName,
+	getFocusExitMode,
 } from "./definitions";
 import type { FocusRegistry } from "./registry";
 
@@ -45,7 +47,7 @@ export function getRoutableFocusTools(
 	const focusTools = registry
 		.list()
 		.filter((focus) => focus.transition !== "manual")
-		.flatMap((focus) => getFocusTools(pi, focus));
+		.flatMap((focus) => getFocusTools(pi, focus, { includeExitFocus: false }));
 	return filterExisting(
 		pi,
 		unique([...ALWAYS_ALLOWED_TOOL_NAMES, ...BASE_FOCUS_TOOLS, ...focusTools]),
@@ -55,11 +57,17 @@ export function getRoutableFocusTools(
 export function getFocusTools(
 	pi: ExtensionAPI,
 	focus: FocusDefinition,
-	options?: { includeEnterFocus?: boolean },
+	options?: { includeEnterFocus?: boolean; includeExitFocus?: boolean },
 ): string[] {
 	const requested = focus.tools;
 	const focusManagementTools =
-		options?.includeEnterFocus === false ? [] : [ENTER_FOCUS_TOOL];
+		getFocusExitMode(focus) === "explicit"
+			? options?.includeExitFocus === false
+				? []
+				: [EXIT_FOCUS_TOOL]
+			: options?.includeEnterFocus === false
+				? []
+				: [ENTER_FOCUS_TOOL];
 	return filterExisting(
 		pi,
 		unique([
