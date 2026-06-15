@@ -77,22 +77,26 @@ export const autoContinueAfterFocusTransition =
 		if (focusName !== BASE_FOCUS && !focus.active) return;
 		runtime.focusReminderPending = true;
 		const isBase = focusName === BASE_FOCUS;
+		// This message only wakes the agent up. Its delivery can lag behind later
+		// focus changes, so keep focus-specific guidance in the regenerated
+		// context reminder instead of embedding it here.
 		pi.sendMessage(
 			{
 				customType: FOCUS_REMINDER_TYPE,
 				content: [
 					"<system-reminder>",
 					isBase
-						? "Returned to base focus after exit_focus."
-						: `Focus '${focusName}' is now active after enter_focus.`,
+						? "A focus exit completed. Continue from the latest focus state."
+						: "A focus transition completed. Continue from the latest focus state.",
+					"Use the current focus reminder injected for this turn as authoritative; ignore older focus reminders if they conflict.",
 					isBase
 						? "Continue from the focus tool result and its exit handoff. If another focus is needed, use enter_focus."
-						: "Continue the user's request under this focus now. Follow the active focus instructions and available tools. Do not answer only with a focus status message.",
+						: "Continue the user's request under the current focus. Follow the active focus instructions and available tools. Do not answer only with a focus status message.",
 					"</system-reminder>",
 				].join("\n"),
 				display: false,
 				details: {
-					focus: focusName,
+					queuedFocus: focusName,
 					reason: isBase
 						? "auto-continue-after-exit"
 						: "auto-continue-after-enter",

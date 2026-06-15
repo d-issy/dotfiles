@@ -4,7 +4,7 @@ import type {
 	ToolCallEvent,
 	ToolCallEventResult,
 } from "@earendil-works/pi-coding-agent";
-import { policyRegistry } from "../policy";
+import { toolCatalog } from "../tool";
 import type { FocusController } from "./controller";
 
 type BlockedToolCall = { block: true; reason: string };
@@ -19,13 +19,13 @@ export const guardToolCall =
 		focus: FocusController,
 	): ExtensionHandler<ToolCallEvent, ToolCallEventResult> =>
 	async (event) => {
-		const notAllowed = policyRegistry.checkToolAllowed(
+		const notAllowed = toolCatalog.checkToolAllowed(
 			focus.current,
 			focus.allowedToolNames(pi),
 			event,
 		);
 		if (notAllowed) return block(notAllowed);
 
-		const secret = policyRegistry.checkSecretBlock(focus.current, event);
+		const secret = toolCatalog.checkSecretBlock(focus.current, event);
 		if (secret) return block(secret);
 	};

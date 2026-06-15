@@ -5,7 +5,11 @@ import type {
 	ExtensionAPI,
 	ExtensionHandler,
 } from "@earendil-works/pi-coding-agent";
-import { type FocusController, buildFocusRestorePrompt } from "./controller";
+import {
+	type FocusController,
+	buildFocusRestorePrompt,
+	isFocusReminderMessage,
+} from "./controller";
 import {
 	ENTER_FOCUS_TOOL,
 	EXIT_FOCUS_TOOL,
@@ -211,12 +215,21 @@ export const injectFocusReminder =
 		runtime: FocusRuntime,
 	): ExtensionHandler<ContextEvent, ContextResult> =>
 	async (event) => {
-		if (!runtime.focusReminderPending) return;
+		const messagesWithoutFocusReminders = event.messages.filter(
+			(message) => !isFocusReminderMessage(message),
+		);
+		const removedStoredReminder =
+			messagesWithoutFocusReminders.length !== event.messages.length;
+		if (!runtime.focusReminderPending && !removedStoredReminder) return;
+
+		// Stored focus reminders can be delivered after a later focus transition.
+		// Treat them as triggers only and regenerate the actual reminder from the
+		// current runtime state so the model never sees stale focus/tool guidance.
 		runtime.focusReminderPending = false;
 		const reminder = buildFocusReminderPayloadWithTools(pi, focus, runtime);
 		return {
 			messages: [
-				...event.messages,
+				...messagesWithoutFocusReminders,
 				{
 					role: "custom",
 					...reminder,

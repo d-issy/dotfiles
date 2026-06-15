@@ -4,18 +4,13 @@ import type {
 	Theme,
 } from "@earendil-works/pi-coding-agent";
 import type { Feature } from "../feature";
-import {
-	getCurrentFocusRegistry,
-	refreshCurrentFocusTools,
-} from "../lib/focus";
-import { policyRegistry } from "../lib/policy";
+import { activateFocusTools } from "../lib/focus/tool-access";
 import { ensureProjectUserSettingsTrusted } from "../lib/project-settings";
+import type { UserExtensionServices } from "../lib/services";
 import {
 	type ProjectToolSummary,
-	projectToolResultError,
-	registerBuiltInTools,
+	registerCoreUserTools,
 	registerProjectTools,
-	toolRegistry,
 } from "../lib/tool";
 
 type ToolInfo = ReturnType<ExtensionAPI["getAllTools"]>[number];
@@ -99,6 +94,7 @@ function formatProjectSummary(
 function projectToolGroups(
 	tools: readonly ProjectToolSummary[],
 	allTools: readonly ToolInfo[],
+	services: UserExtensionServices,
 ): {
 	readonly groups: readonly ProjectFocusToolGroup[];
 	readonly unfocusedTools: readonly string[];
@@ -106,11 +102,14 @@ function projectToolGroups(
 	const projectToolNames = new Set(sortedToolNames(tools));
 	const toolByName = new Map(allTools.map((tool) => [tool.name, tool]));
 	const displayBuiltinToolNames = new Set(
-		toolRegistry.list().map((tool) => tool.definition.name),
+		services.tools
+			.list()
+			.filter((tool) => tool.source !== "project")
+			.map((tool) => tool.definition.name),
 	);
 	const focusedToolNames = new Set<string>();
 	const groups: ProjectFocusToolGroup[] = [];
-	for (const focus of getCurrentFocusRegistry().list()) {
+	for (const focus of services.focus.registry.list()) {
 		const settingsTools = focus.settingsTools ?? [];
 		const projectTools = sortStrings(
 			settingsTools.filter((toolName) => projectToolNames.has(toolName)),
@@ -159,24 +158,23 @@ function projectToolGroups(
 	return { groups, unfocusedTools };
 }
 
-function register(pi: ExtensionAPI): void {
-	registerBuiltInTools();
+function register(pi: ExtensionAPI, services: UserExtensionServices): void {
+	registerCoreUserTools();
 
-	for (const { policy, definition } of toolRegistry.list()) {
-		policyRegistry.register(policy);
+	for (const { definition } of services.tools.list()) {
 		pi.registerTool(definition);
 	}
 
-	const projectToolNames = new Set<string>();
 	pi.on("session_start", async (_event: SessionStartEvent, ctx) => {
 		await ensureProjectUserSettingsTrusted(ctx);
-		const projectTools = registerProjectTools(pi, ctx, projectToolNames);
-		refreshCurrentFocusTools(pi);
+		const projectTools = registerProjectTools(pi, ctx);
+		activateFocusTools(pi, services.focus.activeFocusDefinition);
 		if (ctx.hasUI) {
 			setTimeout(() => {
 				const { groups, unfocusedTools } = projectToolGroups(
 					projectTools,
 					pi.getAllTools(),
+					services,
 				);
 				if (groups.length === 0 && unfocusedTools.length === 0) return;
 				ctx.ui.notify(
@@ -186,12 +184,7 @@ function register(pi: ExtensionAPI): void {
 			}, 50);
 		}
 	});
-	pi.on(
-		"tool_result",
-		async (event) =>
-			toolRegistry.toolResultError(event) ??
-			projectToolResultError(projectToolNames, event),
-	);
+	pi.on("tool_result", async (event) => services.tools.toolResultError(event));
 }
 
 export function createToolFeature(): Feature {

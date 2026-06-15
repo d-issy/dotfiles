@@ -8,7 +8,7 @@ import {
 	limitToolOutput,
 	renderLimitedTextResult,
 } from "./output";
-import { toolRegistry } from "./registry";
+import { defineToolContribution, toolCatalog } from "./catalog";
 
 const GIT_TIMEOUT_MS = 30_000;
 const GIT_MAX_BUFFER_BYTES = 10 * 1024 * 1024;
@@ -333,7 +333,7 @@ function registerGitTool<TInput extends object>(config: {
 	readonly label: string;
 	readonly description: string;
 	readonly parameters: Parameters<
-		typeof toolRegistry.register
+		typeof toolCatalog.register
 	>[0]["definition"]["parameters"];
 	readonly promptSnippet: string;
 	readonly buildArgs: (params: TInput) => string[];
@@ -343,38 +343,40 @@ function registerGitTool<TInput extends object>(config: {
 	readonly outputFileName?: string;
 	readonly extractSecretPaths?: (input: TInput) => readonly string[];
 }): void {
-	toolRegistry.register({
-		policy: {
-			name: config.name,
-			extractSecretPaths: config.extractSecretPaths
-				? (input) => config.extractSecretPaths?.(input as TInput) ?? []
-				: undefined,
-			notAllowedReason: (focus) =>
-				`${config.name} is available only in git read-only investigation focuses, not in ${focus} focus.`,
-		} satisfies ToolPolicy,
-		definition: {
-			name: config.name,
-			label: config.label,
-			description: config.description,
-			promptSnippet: config.promptSnippet,
-			promptGuidelines: [
-				`${config.name} runs a fixed read-only git command; it must not be used for checkout, reset, commit, push, fetch, stash, clean, or config changes.`,
-				"Outputs are bounded like built-in tools. If output is truncated, inspect the saved temp file with read offset/limit or retry with narrower parameters such as paths/context.",
-			],
-			parameters: config.parameters,
-			executionMode: "parallel",
-			renderCall: (args, theme) => renderGitCall(config.name, args, theme),
-			renderResult: renderLimitedTextResult,
-			execute: (_toolCallId, params, signal, _onUpdate, ctx) =>
-				runGitTool(ctx.cwd, config.buildArgs(params as TInput), signal, {
-					allowedExitCodes: config.allowedExitCodes,
-					emptyMessage: config.emptyMessage,
-					lineLimit: lineLimitFromInput(params as Record<string, unknown>),
-					hint: config.hint,
-					fileName: config.outputFileName,
-				}),
-		},
-	});
+	toolCatalog.register(
+		defineToolContribution({
+			policy: {
+				name: config.name,
+				extractSecretPaths: config.extractSecretPaths
+					? (input) => config.extractSecretPaths?.(input as TInput) ?? []
+					: undefined,
+				notAllowedReason: (focus) =>
+					`${config.name} is available only in git read-only investigation focuses, not in ${focus} focus.`,
+			} satisfies ToolPolicy,
+			definition: {
+				name: config.name,
+				label: config.label,
+				description: config.description,
+				promptSnippet: config.promptSnippet,
+				promptGuidelines: [
+					`${config.name} runs a fixed read-only git command; it must not be used for checkout, reset, commit, push, fetch, stash, clean, or config changes.`,
+					"Outputs are bounded like built-in tools. If output is truncated, inspect the saved temp file with read offset/limit or retry with narrower parameters such as paths/context.",
+				],
+				parameters: config.parameters,
+				executionMode: "parallel",
+				renderCall: (args, theme) => renderGitCall(config.name, args, theme),
+				renderResult: renderLimitedTextResult,
+				execute: (_toolCallId, params, signal, _onUpdate, ctx) =>
+					runGitTool(ctx.cwd, config.buildArgs(params as TInput), signal, {
+						allowedExitCodes: config.allowedExitCodes,
+						emptyMessage: config.emptyMessage,
+						lineLimit: lineLimitFromInput(params as Record<string, unknown>),
+						hint: config.hint,
+						fileName: config.outputFileName,
+					}),
+			},
+		}),
+	);
 }
 
 export function registerGitTools(): void {

@@ -1,4 +1,5 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import type { UserExtensionServices } from "./lib/services";
 
 /**
  * A self-contained unit of the `user` extension (focus switching, status bar,
@@ -11,5 +12,5 @@ export interface Feature {
 	/** Other feature names that must be registered before this feature. */
 	readonly dependsOn?: readonly string[];
 	/** Wire this feature into pi. Called once at extension load. */
-	register(pi: ExtensionAPI): void;
+	register(pi: ExtensionAPI, services: UserExtensionServices): void;
 }

@@ -1,6 +1,5 @@
 import {
 	type AgentToolResult,
-	type ExtensionAPI,
 	type Theme,
 	type ToolRenderResultOptions,
 } from "@earendil-works/pi-coding-agent";
@@ -21,6 +20,7 @@ import {
 } from "./definitions";
 import type { FocusController } from "./controller";
 import type { FocusRuntime } from "./runtime";
+import { defineToolContribution, toolCatalog } from "../tool/catalog";
 
 type FocusToolDetails = Record<string, unknown>;
 
@@ -73,198 +73,197 @@ function renderEnterFocusResult(
 }
 
 export function registerEnterFocusTool(
-	pi: ExtensionAPI,
 	focus: FocusController,
 	runtime: FocusRuntime,
 ): void {
-	pi.registerTool({
-		name: ENTER_FOCUS_TOOL,
-		label: "enter_focus",
-		description:
-			"Enter or switch to a predefined focus available to the agent.",
-		executionMode: "sequential",
-		parameters: Type.Object({
-			name: Type.String({ description: "Focus name to enter." }),
-			reason: Type.Optional(
-				Type.String({
-					description:
-						"Why this focus is appropriate. Required when user confirmation is needed.",
-				}),
-			),
-		}),
-		renderCall: renderEnterFocusCall,
-		renderResult: renderEnterFocusResult,
-		execute: async (_toolCallId, params, _signal, _onUpdate, ctx) => {
-			const previousFocusName = focus.current;
-			const activeFocus = focus.active;
-			const definition = focus.registry.get(params.name);
-			if (!definition) {
-				const availableFocuses = getEnterableFocusNames(focus);
-				return {
-					content: [
-						{
-							type: "text" as const,
-							text: formatUnknownFocusMessage(params.name, availableFocuses),
-						},
-					],
-					details: {
-						ok: false,
-						reason: "unknown-focus",
-						availableFocuses,
-					} as FocusToolDetails,
-				};
-			}
-
-			if (
-				activeFocus &&
-				activeFocus.name !== definition.name &&
-				getFocusExitMode(activeFocus) === "explicit"
-			) {
-				return {
-					content: [
-						{
-							type: "text" as const,
-							text: `Focus '${activeFocus.name}' requires exit_focus before entering '${definition.name}'.`,
-						},
-					],
-					details: {
-						ok: false,
-						reason: "explicit-exit-required",
-						focus: activeFocus.name,
-						requested: definition.name,
-					} as FocusToolDetails,
-				};
-			}
-
-			if (previousFocusName === definition.name) {
-				return {
-					content: [
-						{
-							type: "text" as const,
-							text: `Focus '${definition.name}' is already active. No action taken.`,
-						},
-					],
-					details: {
-						ok: true,
-						focus: definition.name,
-						reason: "already-active",
-					} as FocusToolDetails,
-				};
-			}
-
-			if (definition.transition === "manual") {
-				return {
-					content: [
-						{
-							type: "text" as const,
-							text: `Focus '${definition.name}' is reserved for Quick Actions.`,
-						},
-					],
-					details: { ok: false, reason: "manual-only" } as FocusToolDetails,
-				};
-			}
-
-			if (definition.transition === "confirm") {
-				const confirmationReason = params.reason?.trim();
-				if (isFocusDeniedForSession(definition.name)) {
+	const contribution = defineToolContribution({
+		source: "focus-management",
+		policy: { name: ENTER_FOCUS_TOOL },
+		isErrorResult: isFailedFocusToolDetails,
+		definition: {
+			name: ENTER_FOCUS_TOOL,
+			label: "enter_focus",
+			description:
+				"Enter or switch to a predefined focus available to the agent.",
+			executionMode: "sequential",
+			parameters: Type.Object({
+				name: Type.String({ description: "Focus name to enter." }),
+				reason: Type.Optional(
+					Type.String({
+						description:
+							"Why this focus is appropriate. Required when user confirmation is needed.",
+					}),
+				),
+			}),
+			renderCall: renderEnterFocusCall,
+			renderResult: renderEnterFocusResult,
+			execute: async (_toolCallId, params, _signal, _onUpdate, ctx) => {
+				const previousFocusName = focus.current;
+				const activeFocus = focus.active;
+				const definition = focus.registry.get(params.name);
+				if (!definition) {
+					const availableFocuses = getEnterableFocusNames(focus);
 					return {
 						content: [
 							{
 								type: "text" as const,
-								text: `Focus '${definition.name}' is denied for this session.`,
+								text: formatUnknownFocusMessage(params.name, availableFocuses),
 							},
 						],
 						details: {
 							ok: false,
-							reason: "session-denied",
+							reason: "unknown-focus",
+							availableFocuses,
 						} as FocusToolDetails,
 					};
 				}
-				if (!isFocusAllowedForSession(definition.name)) {
-					if (!confirmationReason) {
-						return {
-							content: [
-								{
-									type: "text" as const,
-									text: `Focus '${definition.name}' requires a reason for user confirmation. Call enter_focus again with a concise reason.`,
-								},
-							],
-							details: {
-								ok: false,
-								reason: "reason-required",
-							} as FocusToolDetails,
-						};
-					}
-					if (!ctx.hasUI) {
-						return {
-							content: [
-								{
-									type: "text" as const,
-									text: `Focus '${definition.name}' requires user confirmation, but UI is unavailable.`,
-								},
-							],
-							details: {
-								ok: false,
-								reason: "confirmation-unavailable",
-							} as FocusToolDetails,
-						};
-					}
-					const decision = await confirmFocusTransition(
-						ctx,
-						definition.name,
-						definition.description,
-						confirmationReason,
-					);
-					if (!decision || decision.startsWith("deny")) {
-						if (decision)
-							rememberFocusTransitionDecision(definition.name, decision);
-						return {
-							content: [
-								{
-									type: "text" as const,
-									text: `User rejected entering focus '${definition.name}' for this request. Do not request this focus again or route through another focus to request it. Use currently available tools if they can satisfy the request. If not, ask the user how to proceed.`,
-								},
-							],
-							details: { ok: false, reason: "declined" } as FocusToolDetails,
-						};
-					}
-					rememberFocusTransitionDecision(definition.name, decision);
-				}
-			}
 
-			runtime.resetFocusAtAgentEndPending =
-				getFocusExitMode(definition) === "single-turn";
-			runtime.userSelectedFocus = false;
-			const entered = focus.enter(ctx, definition.name);
-			runtime.autoContinueFocusName = entered.name;
-			runtime.focusReminderPending = true;
-			const action =
-				previousFocusName === BASE_FOCUS
-					? `Entered focus '${entered.name}'.`
-					: `Switched focus from '${previousFocusName}' to '${entered.name}'.`;
-			return {
-				content: [
-					{
-						type: "text" as const,
-						text: `${action}\n\n${entered.prompt}`,
-					},
-				],
-				details: {
-					ok: true,
-					focus: entered.name,
-					previous:
-						previousFocusName === BASE_FOCUS ? undefined : previousFocusName,
-				} as FocusToolDetails,
-				terminate: true,
-			};
+				if (
+					activeFocus &&
+					activeFocus.name !== definition.name &&
+					getFocusExitMode(activeFocus) === "explicit"
+				) {
+					return {
+						content: [
+							{
+								type: "text" as const,
+								text: `Focus '${activeFocus.name}' requires exit_focus before entering '${definition.name}'.`,
+							},
+						],
+						details: {
+							ok: false,
+							reason: "explicit-exit-required",
+							focus: activeFocus.name,
+							requested: definition.name,
+						} as FocusToolDetails,
+					};
+				}
+
+				if (previousFocusName === definition.name) {
+					return {
+						content: [
+							{
+								type: "text" as const,
+								text: `Focus '${definition.name}' is already active. No action taken.`,
+							},
+						],
+						details: {
+							ok: true,
+							focus: definition.name,
+							reason: "already-active",
+						} as FocusToolDetails,
+					};
+				}
+
+				if (definition.transition === "manual") {
+					return {
+						content: [
+							{
+								type: "text" as const,
+								text: `Focus '${definition.name}' is reserved for Quick Actions.`,
+							},
+						],
+						details: { ok: false, reason: "manual-only" } as FocusToolDetails,
+					};
+				}
+
+				if (definition.transition === "confirm") {
+					const confirmationReason = params.reason?.trim();
+					if (isFocusDeniedForSession(definition.name)) {
+						return {
+							content: [
+								{
+									type: "text" as const,
+									text: `Focus '${definition.name}' is denied for this session.`,
+								},
+							],
+							details: {
+								ok: false,
+								reason: "session-denied",
+							} as FocusToolDetails,
+						};
+					}
+					if (!isFocusAllowedForSession(definition.name)) {
+						if (!confirmationReason) {
+							return {
+								content: [
+									{
+										type: "text" as const,
+										text: `Focus '${definition.name}' requires a reason for user confirmation. Call enter_focus again with a concise reason.`,
+									},
+								],
+								details: {
+									ok: false,
+									reason: "reason-required",
+								} as FocusToolDetails,
+							};
+						}
+						if (!ctx.hasUI) {
+							return {
+								content: [
+									{
+										type: "text" as const,
+										text: `Focus '${definition.name}' requires user confirmation, but UI is unavailable.`,
+									},
+								],
+								details: {
+									ok: false,
+									reason: "confirmation-unavailable",
+								} as FocusToolDetails,
+							};
+						}
+						const decision = await confirmFocusTransition(
+							ctx,
+							definition.name,
+							definition.description,
+							confirmationReason,
+						);
+						if (!decision || decision.startsWith("deny")) {
+							if (decision)
+								rememberFocusTransitionDecision(definition.name, decision);
+							return {
+								content: [
+									{
+										type: "text" as const,
+										text: `User rejected entering focus '${definition.name}' for this request. Do not request this focus again or route through another focus to request it. Use currently available tools if they can satisfy the request. If not, ask the user how to proceed.`,
+									},
+								],
+								details: { ok: false, reason: "declined" } as FocusToolDetails,
+							};
+						}
+						rememberFocusTransitionDecision(definition.name, decision);
+					}
+				}
+
+				runtime.resetFocusAtAgentEndPending =
+					getFocusExitMode(definition) === "single-turn";
+				runtime.userSelectedFocus = false;
+				const entered = focus.enter(ctx, definition.name);
+				runtime.autoContinueFocusName = entered.name;
+				runtime.focusReminderPending = true;
+				const action =
+					previousFocusName === BASE_FOCUS
+						? `Entered focus '${entered.name}'.`
+						: `Switched focus from '${previousFocusName}' to '${entered.name}'.`;
+				return {
+					content: [
+						{
+							type: "text" as const,
+							text: `${action}\n\n${entered.prompt}`,
+						},
+					],
+					details: {
+						ok: true,
+						focus: entered.name,
+						previous:
+							previousFocusName === BASE_FOCUS ? undefined : previousFocusName,
+					} as FocusToolDetails,
+					terminate: true,
+				};
+			},
 		},
 	});
-
-	pi.on("tool_result", (event) => {
-		if (event.toolName !== ENTER_FOCUS_TOOL) return undefined;
-		if (!isFailedFocusToolDetails(event.details)) return undefined;
-		return { isError: true };
-	});
+	toolCatalog.register(contribution);
 }
 
 function renderExitFocusCall(_args: { reason: string }, theme: Theme): Text {
@@ -299,128 +298,127 @@ function isFailedFocusToolDetails(details: unknown): boolean {
 }
 
 export function registerExitFocusTool(
-	pi: ExtensionAPI,
 	focus: FocusController,
 	runtime: FocusRuntime,
 ): void {
-	pi.registerTool({
-		name: EXIT_FOCUS_TOOL,
-		label: "exit_focus",
-		description:
-			"Exit the current focus and return to base focus. If already in base focus, no action is taken.",
-		executionMode: "sequential",
-		parameters: Type.Object({
-			reason: Type.String({
-				description: "Why the current focus goal is complete.",
+	const contribution = defineToolContribution({
+		source: "focus-management",
+		policy: { name: EXIT_FOCUS_TOOL },
+		isErrorResult: isFailedFocusToolDetails,
+		definition: {
+			name: EXIT_FOCUS_TOOL,
+			label: "exit_focus",
+			description:
+				"Exit the current focus and return to base focus. If already in base focus, no action is taken.",
+			executionMode: "sequential",
+			parameters: Type.Object({
+				reason: Type.String({
+					description: "Why the current focus goal is complete.",
+				}),
 			}),
-		}),
-		renderCall: renderExitFocusCall,
-		renderResult: renderExitFocusResult,
-		execute: async (_toolCallId, params, _signal, _onUpdate, ctx) => {
-			const active = focus.active;
-			if (!active) {
+			renderCall: renderExitFocusCall,
+			renderResult: renderExitFocusResult,
+			execute: async (_toolCallId, params, _signal, _onUpdate, ctx) => {
+				const active = focus.active;
+				if (!active) {
+					return {
+						content: [
+							{
+								type: "text" as const,
+								text: "Already in base focus. No action taken.",
+							},
+						],
+						details: { ok: true, reason: "already-base" } as FocusToolDetails,
+					};
+				}
+
+				if (getFocusExitMode(active) === "explicit") {
+					if (!ctx.hasUI) {
+						return {
+							content: [
+								{
+									type: "text" as const,
+									text: `Focus '${active.name}' requires confirmation before exiting, but UI is unavailable.`,
+								},
+							],
+							details: {
+								ok: false,
+								reason: "confirmation-unavailable",
+							} as FocusToolDetails,
+						};
+					}
+					const decision = await confirmExitFocusTransition(
+						ctx,
+						active.name,
+						params.reason,
+					);
+					if (!decision) {
+						return {
+							content: [
+								{
+									type: "text" as const,
+									text: `User cancelled exiting focus '${active.name}'. Continue in the current focus.`,
+								},
+							],
+							details: {
+								ok: false,
+								cancelled: true,
+								focus: active.name,
+							} as FocusToolDetails,
+						};
+					}
+					if (!decision.confirmed) {
+						const rejectReason = decision.rejectReason;
+						const text = rejectReason
+							? [
+									`User rejected exiting focus '${active.name}'. Continue in the current focus.`,
+									`Reject reason: ${rejectReason}`,
+									"Use the reject reason to address the missing work before trying to exit again.",
+								].join("\n\n")
+							: `User rejected exiting focus '${active.name}'. Continue in the current focus.`;
+						return {
+							content: [
+								{
+									type: "text" as const,
+									text,
+								},
+							],
+							details: {
+								ok: false,
+								cancelled: false,
+								focus: active.name,
+								...(rejectReason ? { rejectReason } : {}),
+							} as FocusToolDetails,
+						};
+					}
+				}
+
+				const previous = focus.leave(ctx);
+				const exitPrompt = previous?.exitPrompt?.trim();
+				const exitText = previous
+					? `Exited focus '${previous.name}'.`
+					: "Exited focus.";
+				runtime.restorePromptPending = false;
+				runtime.focusReminderPending = true;
+				runtime.resetFocusAtAgentEndPending = false;
+				runtime.userSelectedFocus = false;
+				runtime.autoContinueFocusName = BASE_FOCUS;
 				return {
 					content: [
 						{
 							type: "text" as const,
-							text: "Already in base focus. No action taken.",
+							text: exitPrompt ? `${exitText}\n\n${exitPrompt}` : exitText,
 						},
 					],
-					details: { ok: true, reason: "already-base" } as FocusToolDetails,
+					details: {
+						ok: true,
+						previous: previous?.name,
+						exitPrompt,
+					} as FocusToolDetails,
+					terminate: true,
 				};
-			}
-
-			if (getFocusExitMode(active) === "explicit") {
-				if (!ctx.hasUI) {
-					return {
-						content: [
-							{
-								type: "text" as const,
-								text: `Focus '${active.name}' requires confirmation before exiting, but UI is unavailable.`,
-							},
-						],
-						details: {
-							ok: false,
-							reason: "confirmation-unavailable",
-						} as FocusToolDetails,
-					};
-				}
-				const decision = await confirmExitFocusTransition(
-					ctx,
-					active.name,
-					params.reason,
-				);
-				if (!decision) {
-					return {
-						content: [
-							{
-								type: "text" as const,
-								text: `User cancelled exiting focus '${active.name}'. Continue in the current focus.`,
-							},
-						],
-						details: {
-							ok: false,
-							cancelled: true,
-							focus: active.name,
-						} as FocusToolDetails,
-					};
-				}
-				if (!decision.confirmed) {
-					const rejectReason = decision.rejectReason;
-					const text = rejectReason
-						? [
-								`User rejected exiting focus '${active.name}'. Continue in the current focus.`,
-								`Reject reason: ${rejectReason}`,
-								"Use the reject reason to address the missing work before trying to exit again.",
-							].join("\n\n")
-						: `User rejected exiting focus '${active.name}'. Continue in the current focus.`;
-					return {
-						content: [
-							{
-								type: "text" as const,
-								text,
-							},
-						],
-						details: {
-							ok: false,
-							cancelled: false,
-							focus: active.name,
-							...(rejectReason ? { rejectReason } : {}),
-						} as FocusToolDetails,
-					};
-				}
-			}
-
-			const previous = focus.leave(ctx);
-			const exitPrompt = previous?.exitPrompt?.trim();
-			const exitText = previous
-				? `Exited focus '${previous.name}'.`
-				: "Exited focus.";
-			runtime.restorePromptPending = false;
-			runtime.focusReminderPending = true;
-			runtime.resetFocusAtAgentEndPending = false;
-			runtime.userSelectedFocus = false;
-			runtime.autoContinueFocusName = BASE_FOCUS;
-			return {
-				content: [
-					{
-						type: "text" as const,
-						text: exitPrompt ? `${exitText}\n\n${exitPrompt}` : exitText,
-					},
-				],
-				details: {
-					ok: true,
-					previous: previous?.name,
-					exitPrompt,
-				} as FocusToolDetails,
-				terminate: true,
-			};
+			},
 		},
 	});
-
-	pi.on("tool_result", (event) => {
-		if (event.toolName !== EXIT_FOCUS_TOOL) return undefined;
-		if (!isFailedFocusToolDetails(event.details)) return undefined;
-		return { isError: true };
-	});
+	toolCatalog.register(contribution);
 }

@@ -8,7 +8,7 @@ import {
 	limitToolOutput,
 	renderLimitedTextResult,
 } from "./output";
-import { toolRegistry } from "./registry";
+import { defineToolContribution, toolCatalog } from "./catalog";
 
 const GH_TIMEOUT_MS = 30_000;
 const GH_WATCH_TIMEOUT_MS = 30 * 60 * 1000;
@@ -794,7 +794,7 @@ function registerGithubTool<TInput extends object>(config: {
 	readonly label: string;
 	readonly description: string;
 	readonly parameters: Parameters<
-		typeof toolRegistry.register
+		typeof toolCatalog.register
 	>[0]["definition"]["parameters"];
 	readonly promptSnippet: string;
 	readonly execute: (
@@ -804,52 +804,58 @@ function registerGithubTool<TInput extends object>(config: {
 	) => Promise<GithubToolOutput>;
 	readonly extractSecretPaths?: (input: TInput) => readonly string[];
 }): void {
-	toolRegistry.register({
-		policy: {
-			name: config.name,
-			extractSecretPaths: config.extractSecretPaths
-				? (input) => config.extractSecretPaths?.(input as TInput) ?? []
-				: undefined,
-			notAllowedReason: (focus) =>
-				`${config.name} is available only in git/GitHub read-only investigation focuses, not in ${focus} focus.`,
-		} satisfies ToolPolicy,
-		definition: {
-			name: config.name,
-			label: config.label,
-			description: config.description,
-			promptSnippet: config.promptSnippet,
-			promptGuidelines: [
-				`${config.name} runs fixed read-only GitHub CLI commands. Use filtering parameters such as paths, mode, maxFiles, and include* flags to keep context small.`,
-				"Outputs are bounded like built-in tools. If output is truncated, inspect the saved temp file with read offset/limit or retry with narrower parameters.",
-			],
-			parameters: config.parameters,
-			executionMode: "parallel",
-			renderCall: (args, theme) => renderGithubCall(config.name, args, theme),
-			renderResult: renderLimitedTextResult,
-			execute: async (_toolCallId, params, signal, _onUpdate, ctx) => {
-				const startedAt = Date.now();
-				const output = await config.execute(params as TInput, ctx.cwd, signal);
-				const limited = await limitToolOutput(output.text, {
-					tempPrefix: "pi-github-tool",
-					fileName: `${config.name}.txt`,
-					lineLimit: lineLimitFromInput(params as Record<string, unknown>),
-					emptyMessage: "(no output)",
-					hint: "Retry with narrower paths, mode, maxFiles, include* flags, or check filters when possible.",
-				});
-				return {
-					content: [{ type: "text", text: limited.text }],
-					details: {
-						commands: output.commands,
-						durationMs: Date.now() - startedAt,
-						output: limited.output,
-						truncated: output.truncated === true || limited.truncated,
-						truncation: limited.truncation,
-						fullOutputPath: limited.fullOutputPath,
-					} satisfies GithubToolDetails,
-				} satisfies AgentToolResult<GithubToolDetails>;
+	toolCatalog.register(
+		defineToolContribution({
+			policy: {
+				name: config.name,
+				extractSecretPaths: config.extractSecretPaths
+					? (input) => config.extractSecretPaths?.(input as TInput) ?? []
+					: undefined,
+				notAllowedReason: (focus) =>
+					`${config.name} is available only in git/GitHub read-only investigation focuses, not in ${focus} focus.`,
+			} satisfies ToolPolicy,
+			definition: {
+				name: config.name,
+				label: config.label,
+				description: config.description,
+				promptSnippet: config.promptSnippet,
+				promptGuidelines: [
+					`${config.name} runs fixed read-only GitHub CLI commands. Use filtering parameters such as paths, mode, maxFiles, and include* flags to keep context small.`,
+					"Outputs are bounded like built-in tools. If output is truncated, inspect the saved temp file with read offset/limit or retry with narrower parameters.",
+				],
+				parameters: config.parameters,
+				executionMode: "parallel",
+				renderCall: (args, theme) => renderGithubCall(config.name, args, theme),
+				renderResult: renderLimitedTextResult,
+				execute: async (_toolCallId, params, signal, _onUpdate, ctx) => {
+					const startedAt = Date.now();
+					const output = await config.execute(
+						params as TInput,
+						ctx.cwd,
+						signal,
+					);
+					const limited = await limitToolOutput(output.text, {
+						tempPrefix: "pi-github-tool",
+						fileName: `${config.name}.txt`,
+						lineLimit: lineLimitFromInput(params as Record<string, unknown>),
+						emptyMessage: "(no output)",
+						hint: "Retry with narrower paths, mode, maxFiles, include* flags, or check filters when possible.",
+					});
+					return {
+						content: [{ type: "text", text: limited.text }],
+						details: {
+							commands: output.commands,
+							durationMs: Date.now() - startedAt,
+							output: limited.output,
+							truncated: output.truncated === true || limited.truncated,
+							truncation: limited.truncation,
+							fullOutputPath: limited.fullOutputPath,
+						} satisfies GithubToolDetails,
+					} satisfies AgentToolResult<GithubToolDetails>;
+				},
 			},
-		},
-	});
+		}),
+	);
 }
 
 export function registerGithubTools(): void {
