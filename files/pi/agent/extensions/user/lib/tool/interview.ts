@@ -170,7 +170,7 @@ function resultText(details: AskUserQuestionDetails): string {
 		return "User cancelled the question.";
 	}
 	if (details.status === "chat_requested") {
-		return `User wants to discuss this question in chat instead of answering now. Current selection: ${formatSelection(details)}`;
+		return "User wants to discuss this question in chat instead of answering now.";
 	}
 	const label = details.multiple ? "answers" : "answer";
 	return `User selected ${label}: ${formatSelection(details)}`;
