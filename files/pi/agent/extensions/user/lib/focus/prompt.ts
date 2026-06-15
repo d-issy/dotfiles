@@ -30,12 +30,12 @@ function formatFocusList(
 		.join("\n");
 }
 
-function buildDefaultFocusPrompt(focus: FocusController): string {
+function buildFocusSystemPrompt(focus: FocusController): string {
 	const focuses = focus.registry.search().map((definition) => ({
 		name: definition.name,
 		description: definition.description,
 	}));
-	return `[DEFAULT FOCUS]\nYou are in default focus. This is a routing state, not a work mode. Use enter_focus to enter one.\n\nRouting rules:\n- Select the best matching focus from Available focuses using its description.\n- If the user's request matches an available focus, enter that focus before doing the work.\n- Auto focuses may be entered without asking the user.\n- Do not claim tools are unavailable while an available focus would expose the needed tools.\n\nAvailable focuses:\n${formatFocusList(focuses)}`;
+	return `[FOCUS]\nUse focuses to solve the user's request.\n\nFocus rules:\n- A focus is an operational mode that controls available tools and instructions.\n- Use the descriptions below to choose when to enter each focus.\n- Enter the appropriate focus before doing substantive work.\n- Auto focuses may be entered without asking the user.\n- Do not ask the user for information that can be discovered after entering an appropriate focus.\n- If a needed capability is not visible, first check whether another available focus exposes it.\n\nAvailable focuses:\n${formatFocusList(focuses)}`;
 }
 
 function formatVisibleToolsList(
@@ -157,7 +157,7 @@ export const injectFocusRestorePrompt =
 		);
 		if (!focus.active) {
 			return {
-				systemPrompt: `${systemPrompt}\n\n${buildDefaultFocusPrompt(focus)}`,
+				systemPrompt: `${systemPrompt}\n\n${buildFocusSystemPrompt(focus)}`,
 			};
 		}
 		if (!runtime.restorePromptPending) {

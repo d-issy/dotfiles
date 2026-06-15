@@ -12,7 +12,7 @@ import {
 	isFocusDeniedForSession,
 	rememberFocusTransitionDecision,
 } from "./confirmation";
-import { DEFAULT_FOCUS, ENTER_FOCUS_TOOL } from "./definitions";
+import { BASE_FOCUS, ENTER_FOCUS_TOOL } from "./definitions";
 import type { FocusController } from "./controller";
 import type { FocusRuntime } from "./runtime";
 
@@ -78,7 +78,7 @@ export function registerEnterFocusTool(
 					content: [
 						{
 							type: "text" as const,
-							text: `Unknown focus '${params.name}'. Choose one of the available focuses from the default focus instructions.`,
+							text: `Unknown focus '${params.name}'. Choose one of the available focuses from the focus instructions.`,
 						},
 					],
 					details: { ok: false, reason: "unknown-focus" } as FocusToolDetails,
@@ -184,7 +184,7 @@ export function registerEnterFocusTool(
 			runtime.resetFocusAtAgentEndPending = true;
 			const entered = focus.enter(ctx, definition.name, { source: "agent" });
 			const action =
-				previousFocusName === DEFAULT_FOCUS
+				previousFocusName === BASE_FOCUS
 					? `Entered focus '${entered.name}'.`
 					: `Switched focus from '${previousFocusName}' to '${entered.name}'.`;
 			return {
@@ -198,7 +198,7 @@ export function registerEnterFocusTool(
 					ok: true,
 					focus: entered.name,
 					previous:
-						previousFocusName === DEFAULT_FOCUS ? undefined : previousFocusName,
+						previousFocusName === BASE_FOCUS ? undefined : previousFocusName,
 				} as FocusToolDetails,
 			};
 		},

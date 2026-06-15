@@ -13,17 +13,18 @@ export type FocusDefinition = {
 	readonly color?: ColorRole;
 };
 
-export const DEFAULT_FOCUS = "default";
+export const BASE_FOCUS = "base";
 export const FOCUS_STATE_TYPE = "focus-state";
 export const FOCUS_REMINDER_TYPE = "focus-reminder";
 export const ENTER_FOCUS_TOOL = "enter_focus";
 
-export const DEFAULT_FOCUS_TOOLS = [ENTER_FOCUS_TOOL] as const;
+export const BASE_FOCUS_TOOLS = [ENTER_FOCUS_TOOL] as const;
 
 export const BASE_FOCUS_DEFINITIONS: readonly FocusDefinition[] = [
 	{
 		name: "explore",
-		description: "Read and search the repository to understand the task.",
+		description:
+			"Use when the task requires reading or searching the repository to understand requirements, inspect files, or answer questions without modifying files.",
 		prompt:
 			"You are in explore focus. Read and search the repository to understand the task.",
 		tools: ["read", "grep", "find", "ls"],
@@ -32,7 +33,8 @@ export const BASE_FOCUS_DEFINITIONS: readonly FocusDefinition[] = [
 	},
 	{
 		name: "edit",
-		description: "Make repository file changes using structured file tools.",
+		description:
+			"Use when the user asks for repository file changes, or after investigation establishes that file changes are needed.",
 		prompt:
 			"You are in edit focus. Make focused file changes with read/write/edit/mv/rm. Keep changes minimal.",
 		tools: ["read", "grep", "find", "ls", "write", "edit", "mv", "rm"],
@@ -42,7 +44,7 @@ export const BASE_FOCUS_DEFINITIONS: readonly FocusDefinition[] = [
 	{
 		name: "git-read",
 		description:
-			"Read git/GitHub status, diffs, current changes, staged changes, history, branches, files, search, blame, PRs, compares, and CI checks with read-only tools.",
+			"Use when the task requires read-only git/GitHub inspection such as status, diffs, history, branches, tracked files, grep matches, blame, pull requests, GitHub compares, or CI checks.",
 		prompt:
 			"You are in git-read focus. Use only read-only git and GitHub tools to inspect repository state, diffs, history, branches, tracked files, grep matches, blame, pull requests, GitHub compares, and CI checks. Prefer narrow parameters such as paths, mode, maxFiles, maxPatchBytes, include* flags, and check state filters to keep context small. Do not modify the worktree, index, branches, remotes, GitHub state, or git configuration. Do not use checkout, switch, reset, restore, add, commit, push, pull, fetch, merge, rebase, stash, clean, tag, branch creation/deletion, gh edit/merge/close/comment, or config-changing commands.",
 		tools: [

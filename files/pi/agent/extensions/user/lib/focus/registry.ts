@@ -5,8 +5,8 @@ import {
 import type { ColorRole } from "../theme";
 import { colors } from "../theme";
 import {
+	BASE_FOCUS,
 	BASE_FOCUS_DEFINITIONS,
-	DEFAULT_FOCUS,
 	type FocusDefinition,
 	type FocusName,
 	type FocusTransition,
@@ -159,7 +159,7 @@ function createProjectFocus(
 function createRegistry(focuses: readonly FocusDefinition[]): FocusRegistry {
 	const byName = new Map(focuses.map((focus) => [focus.name, focus]));
 	return {
-		get: (name) => (name === DEFAULT_FOCUS ? undefined : byName.get(name)),
+		get: (name) => (name === BASE_FOCUS ? undefined : byName.get(name)),
 		list: () => [...byName.values()],
 		search(query) {
 			const searchable = [...byName.values()].filter(

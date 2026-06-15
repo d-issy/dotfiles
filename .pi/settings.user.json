@@ -72,7 +72,7 @@
   },
   "focuses": {
     "edit": {
-      "description": "Make repository file changes for this dotfiles project; use format and lint when appropriate.",
+      "description": "Use when making repository file changes for this dotfiles project; use format and lint when appropriate.",
       "prompt": "For this dotfiles project, use format to auto-fix formatting and lint to verify changes after editing when appropriate.",
       "tools": [
         "format",
@@ -80,7 +80,7 @@
       ]
     },
     "home-manager": {
-      "description": "Run Home Manager switch for this dotfiles project.",
+      "description": "Use when the user asks to apply this dotfiles Home Manager configuration.",
       "prompt": "You are in home-manager focus. Use homemanager_switch when the user asks to apply the Home Manager configuration.",
       "tools": [
         "homemanager_switch"

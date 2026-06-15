@@ -4,7 +4,7 @@ import type {
 } from "@earendil-works/pi-coding-agent";
 import type { Feature } from "../feature";
 import {
-	DEFAULT_FOCUS,
+	BASE_FOCUS,
 	type FocusController,
 	createFocusController,
 	registerBuiltInFocusPolicies,
@@ -36,7 +36,7 @@ const openFocusQuickAction =
 		);
 		if (!selected) return;
 		runtime.resetFocusAtAgentEndPending = false;
-		if (selected === DEFAULT_FOCUS) {
+		if (selected === BASE_FOCUS) {
 			focus.leave(ctx);
 			return;
 		}
@@ -47,7 +47,7 @@ const toggleFocusSelector =
 	(focus: FocusController, runtime: FocusRuntime) =>
 	async (ctx: ExtensionContext): Promise<void> => {
 		runtime.resetFocusAtAgentEndPending = false;
-		if (focus.current !== DEFAULT_FOCUS) {
+		if (focus.current !== BASE_FOCUS) {
 			focus.leave(ctx);
 			return;
 		}

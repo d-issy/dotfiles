@@ -6,8 +6,8 @@ import { colors, fg } from "../theme";
 import { isProjectToolAvailable } from "../tool/project";
 import { showFilterSelect } from "../ui";
 import {
-	DEFAULT_FOCUS,
-	DEFAULT_FOCUS_TOOLS,
+	BASE_FOCUS,
+	BASE_FOCUS_TOOLS,
 	ENTER_FOCUS_TOOL,
 	type FocusDefinition,
 	type FocusName,
@@ -31,10 +31,10 @@ function filterExisting(pi: ExtensionAPI, names: readonly string[]): string[] {
 	);
 }
 
-export function getDefaultFocusTools(pi: ExtensionAPI): string[] {
+export function getBaseFocusTools(pi: ExtensionAPI): string[] {
 	return filterExisting(
 		pi,
-		unique([...ALWAYS_ALLOWED_TOOL_NAMES, ...DEFAULT_FOCUS_TOOLS]),
+		unique([...ALWAYS_ALLOWED_TOOL_NAMES, ...BASE_FOCUS_TOOLS]),
 	);
 }
 
@@ -48,11 +48,7 @@ export function getRoutableFocusTools(
 		.flatMap((focus) => getFocusTools(pi, focus));
 	return filterExisting(
 		pi,
-		unique([
-			...ALWAYS_ALLOWED_TOOL_NAMES,
-			...DEFAULT_FOCUS_TOOLS,
-			...focusTools,
-		]),
+		unique([...ALWAYS_ALLOWED_TOOL_NAMES, ...BASE_FOCUS_TOOLS, ...focusTools]),
 	);
 }
 
@@ -74,13 +70,13 @@ export function getFocusTools(
 	);
 }
 
-export function activateDefaultFocusTools(
+export function activateBaseFocusTools(
 	pi: ExtensionAPI,
 	registry?: FocusRegistry,
 ): string[] {
 	const tools = registry
 		? getRoutableFocusTools(pi, registry)
-		: getDefaultFocusTools(pi);
+		: getBaseFocusTools(pi);
 	pi.setActiveTools(tools);
 	return tools;
 }
@@ -97,7 +93,7 @@ export function activateFocusTools(
 			])
 		: focus
 			? getFocusTools(pi, focus)
-			: getDefaultFocusTools(pi);
+			: getBaseFocusTools(pi);
 	pi.setActiveTools(tools);
 	return tools;
 }
@@ -116,15 +112,15 @@ export function applyFocusStatus(
 export async function showFocusSelector(
 	ctx: ExtensionContext,
 	registry: FocusRegistry,
-	currentFocusName: FocusName | typeof DEFAULT_FOCUS,
-): Promise<FocusName | typeof DEFAULT_FOCUS | undefined> {
+	currentFocusName: FocusName | typeof BASE_FOCUS,
+): Promise<FocusName | typeof BASE_FOCUS | undefined> {
 	const result = await showFilterSelect(ctx, {
 		title: "Select Focus",
 		items: [
 			{
-				value: DEFAULT_FOCUS,
-				label: DEFAULT_FOCUS,
-				description: "Return to the default routing state.",
+				value: BASE_FOCUS,
+				label: BASE_FOCUS,
+				description: "Leave the active focus.",
 			},
 			...registry.list().map((focus) => ({
 				value: focus.name,
@@ -138,7 +134,7 @@ export async function showFocusSelector(
 		currentValue: currentFocusName,
 	});
 
-	return result === DEFAULT_FOCUS || (result && registry.get(result))
+	return result === BASE_FOCUS || (result && registry.get(result))
 		? result
 		: undefined;
 }

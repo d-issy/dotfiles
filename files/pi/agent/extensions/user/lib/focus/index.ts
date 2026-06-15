@@ -1,6 +1,6 @@
 export {
-	DEFAULT_FOCUS,
-	DEFAULT_FOCUS_TOOLS,
+	BASE_FOCUS,
+	BASE_FOCUS_TOOLS,
 	ENTER_FOCUS_TOOL,
 	FOCUS_REMINDER_TYPE,
 	FOCUS_STATE_TYPE,
@@ -21,10 +21,10 @@ export { registerBuiltInFocusPolicies } from "./policies";
 export { loadFocusRegistry, type FocusRegistry } from "./registry";
 export { findPersistedFocus } from "./startup";
 export {
-	activateDefaultFocusTools,
+	activateBaseFocusTools,
 	activateFocusTools,
 	applyFocusStatus,
-	getDefaultFocusTools,
+	getBaseFocusTools,
 	getFocusTools,
 	showFocusSelector,
 } from "./ui";
