@@ -1,12 +1,13 @@
 import { execFile } from "node:child_process";
 import type { AgentToolResult, Theme } from "@earendil-works/pi-coding-agent";
-import {
-	DEFAULT_MAX_BYTES,
-	DEFAULT_MAX_LINES,
-} from "@earendil-works/pi-coding-agent";
 import { type Component, Text } from "@earendil-works/pi-tui";
 import { type Static, Type } from "typebox";
 import type { ToolPolicy } from "../policy";
+import {
+	type RenderableTextDetails,
+	limitToolOutput,
+	renderLimitedTextResult,
+} from "./output";
 import { toolRegistry } from "./registry";
 
 const GIT_TIMEOUT_MS = 30_000;
@@ -28,9 +29,20 @@ const revisionSchema = Type.String({
 	description: "Revision, commit, tag, branch, or range to inspect.",
 });
 
-const gitStatusSchema = Type.Object({
-	paths: pathsSchema,
-});
+const lineLimitSchema = Type.Optional(
+	Type.Number({
+		description: "Maximum output lines to return. Defaults to 2000.",
+	}),
+);
+
+const diffModeSchema = Type.Optional(
+	Type.Union([Type.Literal("stat"), Type.Literal("patch")], {
+		description:
+			"Output detail level. stat lists changed files and change sizes; patch includes diff hunks. Defaults to stat.",
+	}),
+);
+
+const gitStatusSchema = Type.Object({});
 
 type GitStatusInput = Static<typeof gitStatusSchema>;
 
@@ -40,15 +52,14 @@ const gitDiffSchema = Type.Object({
 	),
 	revisionRange: revisionRangeSchema,
 	paths: pathsSchema,
-	stat: Type.Optional(
-		Type.Boolean({ description: "Show a diffstat instead of the full patch." }),
-	),
-	nameOnly: Type.Optional(
-		Type.Boolean({ description: "Show only changed file names." }),
-	),
+	mode: diffModeSchema,
 	context: Type.Optional(
-		Type.Number({ description: "Number of context lines for patch output." }),
+		Type.Number({
+			description:
+				"Number of context lines for patch output. Omit to use git's default.",
+		}),
 	),
+	limit: lineLimitSchema,
 });
 
 type GitDiffInput = Static<typeof gitDiffSchema>;
@@ -66,19 +77,22 @@ const gitLogSchema = Type.Object({
 			description: "Use compact one-line output. Defaults to true.",
 		}),
 	),
+	limit: lineLimitSchema,
 });
 
 type GitLogInput = Static<typeof gitLogSchema>;
 
 const gitShowSchema = Type.Object({
 	revision: revisionSchema,
-	stat: Type.Optional(Type.Boolean({ description: "Show diffstat." })),
-	nameOnly: Type.Optional(
-		Type.Boolean({ description: "Show only changed file names." }),
+	paths: pathsSchema,
+	mode: diffModeSchema,
+	context: Type.Optional(
+		Type.Number({
+			description:
+				"Number of context lines for patch output. Omit to use git's default.",
+		}),
 	),
-	patch: Type.Optional(
-		Type.Boolean({ description: "Show patch content. Defaults to true." }),
-	),
+	limit: lineLimitSchema,
 });
 
 type GitShowInput = Static<typeof gitShowSchema>;
@@ -97,6 +111,7 @@ const gitBranchSchema = Type.Object({
 	contains: Type.Optional(
 		Type.String({ description: "Show branches containing this commit." }),
 	),
+	limit: lineLimitSchema,
 });
 
 type GitBranchInput = Static<typeof gitBranchSchema>;
@@ -112,6 +127,7 @@ const gitLsFilesSchema = Type.Object({
 	others: Type.Optional(
 		Type.Boolean({ description: "Show untracked, non-ignored files." }),
 	),
+	limit: lineLimitSchema,
 });
 
 type GitLsFilesInput = Static<typeof gitLsFilesSchema>;
@@ -133,6 +149,7 @@ const gitGrepSchema = Type.Object({
 	maxCount: Type.Optional(
 		Type.Number({ description: "Maximum matches per file." }),
 	),
+	limit: lineLimitSchema,
 });
 
 type GitGrepInput = Static<typeof gitGrepSchema>;
@@ -148,17 +165,16 @@ const gitBlameSchema = Type.Object({
 		Type.Number({ description: "First line to blame." }),
 	),
 	endLine: Type.Optional(Type.Number({ description: "Last line to blame." })),
+	limit: lineLimitSchema,
 });
 
 type GitBlameInput = Static<typeof gitBlameSchema>;
 
-type GitToolDetails = {
+type GitToolDetails = RenderableTextDetails & {
 	readonly command: string;
 	readonly exitCode: number | null;
-	readonly durationMs: number;
 	readonly stdout: string;
 	readonly stderr: string;
-	readonly truncated: boolean;
 };
 
 type ExecResult = {
@@ -223,29 +239,6 @@ function appendPathspecs(
 	args.push("--", ...paths);
 }
 
-function truncateOutput(text: string): { text: string; truncated: boolean } {
-	let linesTruncated = false;
-	let next = text;
-	const lines = next.split("\n");
-	if (lines.length > DEFAULT_MAX_LINES) {
-		next = lines.slice(-DEFAULT_MAX_LINES).join("\n");
-		linesTruncated = true;
-	}
-
-	let bytesTruncated = false;
-	while (Buffer.byteLength(next, "utf8") > DEFAULT_MAX_BYTES) {
-		const newline = next.indexOf("\n");
-		if (newline === -1) {
-			next = next.slice(Math.max(0, next.length - DEFAULT_MAX_BYTES));
-			bytesTruncated = true;
-			break;
-		}
-		next = next.slice(newline + 1);
-		bytesTruncated = true;
-	}
-	return { text: next, truncated: linesTruncated || bytesTruncated };
-}
-
 async function execGit(
 	cwd: string,
 	args: readonly string[],
@@ -278,7 +271,13 @@ async function runGitTool(
 	cwd: string,
 	args: readonly string[],
 	signal: AbortSignal | undefined,
-	options?: { allowedExitCodes?: readonly number[]; emptyMessage?: string },
+	options?: {
+		allowedExitCodes?: readonly number[];
+		emptyMessage?: string;
+		lineLimit?: number;
+		hint?: string;
+		fileName?: string;
+	},
 ): Promise<AgentToolResult<GitToolDetails>> {
 	const startedAt = Date.now();
 	const result = await execGit(cwd, ["--no-pager", ...args], signal);
@@ -291,26 +290,45 @@ async function runGitTool(
 		);
 	}
 
-	const stdout = truncateOutput(result.stdout);
-	const stderr = truncateOutput(result.stderr);
-	const output = [stdout.text.trimEnd(), stderr.text.trimEnd()]
+	const fullOutput = [result.stdout.trimEnd(), result.stderr.trimEnd()]
 		.filter(Boolean)
 		.join("\n");
-	const text = output || options?.emptyMessage || "(no output)";
+	const output = await limitToolOutput(fullOutput, {
+		tempPrefix: "pi-git-tool",
+		fileName: options?.fileName ?? "output.txt",
+		lineLimit: options?.lineLimit,
+		emptyMessage: options?.emptyMessage,
+		hint: options?.hint,
+	});
 	return {
-		content: [{ type: "text", text }],
+		content: [{ type: "text", text: output.text }],
 		details: {
 			command: commandText(["--no-pager", ...args]),
 			exitCode: result.exitCode,
 			durationMs,
-			stdout: stdout.text,
-			stderr: stderr.text,
-			truncated: stdout.truncated || stderr.truncated,
+			stdout: output.output,
+			stderr: "",
+			output: output.output,
+			truncated: output.truncated,
+			truncation: output.truncation,
+			fullOutputPath: output.fullOutputPath,
 		},
 	};
 }
 
-function registerGitTool<TInput extends Record<string, unknown>>(config: {
+function lineLimitFromInput(
+	input: Record<string, unknown>,
+): number | undefined {
+	return positiveInteger(
+		typeof input.limit === "number" ? input.limit : undefined,
+		"limit",
+	);
+}
+
+const DIFF_TRUNCATION_HINT =
+	"Narrow large diffs with paths, or use mode=patch with context=0 to locate changed lines before reading surrounding code.";
+
+function registerGitTool<TInput extends object>(config: {
 	readonly name: string;
 	readonly label: string;
 	readonly description: string;
@@ -321,6 +339,8 @@ function registerGitTool<TInput extends Record<string, unknown>>(config: {
 	readonly buildArgs: (params: TInput) => string[];
 	readonly allowedExitCodes?: readonly number[];
 	readonly emptyMessage?: string;
+	readonly hint?: string;
+	readonly outputFileName?: string;
 	readonly extractSecretPaths?: (input: TInput) => readonly string[];
 }): void {
 	toolRegistry.register({
@@ -339,14 +359,19 @@ function registerGitTool<TInput extends Record<string, unknown>>(config: {
 			promptSnippet: config.promptSnippet,
 			promptGuidelines: [
 				`${config.name} runs a fixed read-only git command; it must not be used for checkout, reset, commit, push, fetch, stash, clean, or config changes.`,
+				"Outputs are bounded like built-in tools. If output is truncated, inspect the saved temp file with read offset/limit or retry with narrower parameters such as paths/context.",
 			],
 			parameters: config.parameters,
 			executionMode: "parallel",
 			renderCall: (args, theme) => renderGitCall(config.name, args, theme),
+			renderResult: renderLimitedTextResult,
 			execute: (_toolCallId, params, signal, _onUpdate, ctx) =>
 				runGitTool(ctx.cwd, config.buildArgs(params as TInput), signal, {
 					allowedExitCodes: config.allowedExitCodes,
 					emptyMessage: config.emptyMessage,
+					lineLimit: lineLimitFromInput(params as Record<string, unknown>),
+					hint: config.hint,
+					fileName: config.outputFileName,
 				}),
 		},
 	});
@@ -359,31 +384,33 @@ export function registerGitTools(): void {
 		description: "Inspect repository status with git status --short --branch.",
 		parameters: gitStatusSchema,
 		promptSnippet: "Inspect git status",
-		extractSecretPaths: (input) => input.paths ?? [],
-		buildArgs(input) {
-			const args = ["status", "--short", "--branch"];
-			appendPathspecs(args, input.paths);
-			return args;
+		buildArgs() {
+			return ["status", "--short", "--branch"];
 		},
 	});
 
 	registerGitTool<GitDiffInput>({
 		name: "git_diff",
 		label: "git diff",
-		description: "Inspect unstaged, staged, or revision-based diffs.",
+		description:
+			"Inspect unstaged, staged, or revision-based diffs. Defaults to compact diffstat; use mode=patch only for detailed hunks.",
 		parameters: gitDiffSchema,
 		promptSnippet: "Inspect git diffs",
+		hint: DIFF_TRUNCATION_HINT,
+		outputFileName: "diff.txt",
 		extractSecretPaths: (input) => input.paths ?? [],
 		buildArgs(input) {
 			if (input.cached && input.revisionRange) {
 				throw new Error("cached and revisionRange cannot be combined.");
 			}
 			validateRevision(input.revisionRange, "revisionRange");
+			const mode = input.mode ?? "stat";
 			const args = ["diff", "--no-ext-diff", "--no-color"];
-			const context = positiveInteger(input.context, "context");
-			if (context !== undefined) args.push(`--unified=${context}`);
-			if (input.nameOnly) args.push("--name-only");
-			else if (input.stat) args.push("--stat");
+			if (mode === "stat") args.push("--stat");
+			else {
+				const context = positiveInteger(input.context, "context");
+				if (context !== undefined) args.push(`--unified=${context}`);
+			}
 			if (input.cached) args.push("--cached");
 			if (input.revisionRange) args.push(input.revisionRange);
 			appendPathspecs(args, input.paths);
@@ -416,16 +443,23 @@ export function registerGitTools(): void {
 		name: "git_show",
 		label: "git show",
 		description:
-			"Inspect a git object, commit, tag, or revision with git show.",
+			"Inspect a git object, commit, tag, or revision. Defaults to compact diffstat; use mode=patch only for detailed hunks.",
 		parameters: gitShowSchema,
 		promptSnippet: "Inspect a git revision or object",
+		hint: DIFF_TRUNCATION_HINT,
+		outputFileName: "show.txt",
+		extractSecretPaths: (input) => input.paths ?? [],
 		buildArgs(input) {
 			validateRevision(input.revision, "revision");
+			const mode = input.mode ?? "stat";
 			const args = ["show", "--no-color"];
-			if (input.nameOnly) args.push("--name-only");
-			else if (input.stat) args.push("--stat");
-			if (input.patch === false) args.push("--no-patch");
+			if (mode === "stat") args.push("--stat");
+			else {
+				const context = positiveInteger(input.context, "context");
+				if (context !== undefined) args.push(`--unified=${context}`);
+			}
 			args.push(input.revision);
+			appendPathspecs(args, input.paths);
 			return args;
 		},
 	});

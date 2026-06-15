@@ -1,15 +1,17 @@
 import { execFile } from "node:child_process";
 import type { AgentToolResult, Theme } from "@earendil-works/pi-coding-agent";
-import {
-	DEFAULT_MAX_BYTES,
-	DEFAULT_MAX_LINES,
-} from "@earendil-works/pi-coding-agent";
 import { type Component, Text } from "@earendil-works/pi-tui";
 import { type Static, Type } from "typebox";
 import type { ToolPolicy } from "../policy";
+import {
+	type RenderableTextDetails,
+	limitToolOutput,
+	renderLimitedTextResult,
+} from "./output";
 import { toolRegistry } from "./registry";
 
 const GH_TIMEOUT_MS = 30_000;
+const GH_WATCH_TIMEOUT_MS = 30 * 60 * 1000;
 const GH_MAX_BUFFER_BYTES = 10 * 1024 * 1024;
 const DEFAULT_MAX_FILES = 50;
 const MAX_FILES_LIMIT = 200;
@@ -43,6 +45,12 @@ const modeSchema = Type.Optional(
 	),
 );
 
+const lineLimitSchema = Type.Optional(
+	Type.Number({
+		description: "Maximum output lines to return. Defaults to 2000.",
+	}),
+);
+
 const githubPrViewSchema = Type.Object({
 	pr: prSelectorSchema,
 	includeBody: Type.Optional(
@@ -64,6 +72,7 @@ const githubPrViewSchema = Type.Object({
 	maxFiles: Type.Optional(
 		Type.Number({ description: "Maximum changed files to include." }),
 	),
+	limit: lineLimitSchema,
 });
 
 type GithubPrViewInput = Static<typeof githubPrViewSchema>;
@@ -80,6 +89,7 @@ const githubPrFilesSchema = Type.Object({
 	maxFiles: Type.Optional(
 		Type.Number({ description: "Maximum files to return." }),
 	),
+	limit: lineLimitSchema,
 });
 
 type GithubPrFilesInput = Static<typeof githubPrFilesSchema>;
@@ -96,6 +106,7 @@ const githubPrDiffSchema = Type.Object({
 			description: "Maximum total patch bytes when mode is patch.",
 		}),
 	),
+	limit: lineLimitSchema,
 });
 
 type GithubPrDiffInput = Static<typeof githubPrDiffSchema>;
@@ -118,6 +129,7 @@ const githubCompareSchema = Type.Object({
 			description: "Maximum total patch bytes when mode is patch.",
 		}),
 	),
+	limit: lineLimitSchema,
 });
 
 type GithubCompareInput = Static<typeof githubCompareSchema>;
@@ -145,14 +157,19 @@ const githubPrChecksSchema = Type.Object({
 	includeLinks: Type.Optional(
 		Type.Boolean({ description: "Include check URLs. Defaults to false." }),
 	),
+	watch: Type.Optional(
+		Type.Boolean({
+			description:
+				"Wait for checks to complete before returning. Defaults to false.",
+		}),
+	),
+	limit: lineLimitSchema,
 });
 
 type GithubPrChecksInput = Static<typeof githubPrChecksSchema>;
 
-type GithubToolDetails = {
+type GithubToolDetails = RenderableTextDetails & {
 	readonly commands: readonly string[];
-	readonly durationMs: number;
-	readonly truncated: boolean;
 };
 
 type GhExecResult = {
@@ -220,29 +237,6 @@ function commandText(args: readonly string[]): string {
 	return ["gh", ...args].map(shellQuote).join(" ");
 }
 
-function truncateOutput(text: string): { text: string; truncated: boolean } {
-	let linesTruncated = false;
-	let next = text;
-	const lines = next.split("\n");
-	if (lines.length > DEFAULT_MAX_LINES) {
-		next = lines.slice(-DEFAULT_MAX_LINES).join("\n");
-		linesTruncated = true;
-	}
-
-	let bytesTruncated = false;
-	while (Buffer.byteLength(next, "utf8") > DEFAULT_MAX_BYTES) {
-		const newline = next.indexOf("\n");
-		if (newline === -1) {
-			next = next.slice(Math.max(0, next.length - DEFAULT_MAX_BYTES));
-			bytesTruncated = true;
-			break;
-		}
-		next = next.slice(newline + 1);
-		bytesTruncated = true;
-	}
-	return { text: next, truncated: linesTruncated || bytesTruncated };
-}
-
 function positiveInteger(
 	value: number | undefined,
 	field: string,
@@ -297,6 +291,7 @@ async function execGh(
 	cwd: string,
 	args: readonly string[],
 	signal: AbortSignal | undefined,
+	options?: { readonly timeoutMs?: number },
 ): Promise<GhExecResult> {
 	return await new Promise((resolve) => {
 		execFile(
@@ -306,7 +301,7 @@ async function execGh(
 				cwd,
 				env: { ...process.env, GH_PAGER: "cat", NO_COLOR: "1" },
 				maxBuffer: GH_MAX_BUFFER_BYTES,
-				timeout: GH_TIMEOUT_MS,
+				timeout: options?.timeoutMs ?? GH_TIMEOUT_MS,
 				signal,
 			},
 			(error, stdout, stderr) => {
@@ -762,14 +757,13 @@ async function githubPrChecks(
 	cwd: string,
 	signal: AbortSignal | undefined,
 ): Promise<GithubToolOutput> {
-	const args = [
-		"pr",
-		"checks",
-		...selectorArgs(params.pr),
-		"--json",
-		"name,state,conclusion,bucket,workflow,link,detailsUrl",
-	];
-	const result = await execGh(cwd, args, signal);
+	const args = ["pr", "checks", ...selectorArgs(params.pr)];
+	if (params.state === "required") args.push("--required");
+	if (params.watch) args.push("--watch");
+	args.push("--json", "name,state,bucket,workflow,link");
+	const result = await execGh(cwd, args, signal, {
+		timeoutMs: params.watch ? GH_WATCH_TIMEOUT_MS : undefined,
+	});
 	if (result.exitCode !== 0 && result.stdout.trim() === "") {
 		assertGhSuccess(result);
 	}
@@ -778,7 +772,7 @@ async function githubPrChecks(
 	);
 	return {
 		text: formatChecks(checks, {
-			state: params.state,
+			state: params.state === "required" ? "all" : params.state,
 			maxChecks: params.maxChecks,
 			includeLinks: params.includeLinks,
 		}),
@@ -786,7 +780,16 @@ async function githubPrChecks(
 	};
 }
 
-function registerGithubTool<TInput extends Record<string, unknown>>(config: {
+function lineLimitFromInput(
+	input: Record<string, unknown>,
+): number | undefined {
+	return positiveInteger(
+		typeof input.limit === "number" ? input.limit : undefined,
+		"limit",
+	);
+}
+
+function registerGithubTool<TInput extends object>(config: {
 	readonly name: string;
 	readonly label: string;
 	readonly description: string;
@@ -817,20 +820,31 @@ function registerGithubTool<TInput extends Record<string, unknown>>(config: {
 			promptSnippet: config.promptSnippet,
 			promptGuidelines: [
 				`${config.name} runs fixed read-only GitHub CLI commands. Use filtering parameters such as paths, mode, maxFiles, and include* flags to keep context small.`,
+				"Outputs are bounded like built-in tools. If output is truncated, inspect the saved temp file with read offset/limit or retry with narrower parameters.",
 			],
 			parameters: config.parameters,
 			executionMode: "parallel",
 			renderCall: (args, theme) => renderGithubCall(config.name, args, theme),
+			renderResult: renderLimitedTextResult,
 			execute: async (_toolCallId, params, signal, _onUpdate, ctx) => {
 				const startedAt = Date.now();
 				const output = await config.execute(params as TInput, ctx.cwd, signal);
-				const truncated = truncateOutput(output.text);
+				const limited = await limitToolOutput(output.text, {
+					tempPrefix: "pi-github-tool",
+					fileName: `${config.name}.txt`,
+					lineLimit: lineLimitFromInput(params as Record<string, unknown>),
+					emptyMessage: "(no output)",
+					hint: "Retry with narrower paths, mode, maxFiles, include* flags, or check filters when possible.",
+				});
 				return {
-					content: [{ type: "text", text: truncated.text || "(no output)" }],
+					content: [{ type: "text", text: limited.text }],
 					details: {
 						commands: output.commands,
 						durationMs: Date.now() - startedAt,
-						truncated: output.truncated === true || truncated.truncated,
+						output: limited.output,
+						truncated: output.truncated === true || limited.truncated,
+						truncation: limited.truncation,
+						fullOutputPath: limited.fullOutputPath,
 					} satisfies GithubToolDetails,
 				} satisfies AgentToolResult<GithubToolDetails>;
 			},
