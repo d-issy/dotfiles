@@ -9,7 +9,7 @@
       ],
       "commands": [
         {
-          "label": "tsgo",
+          "label": "tsc",
           "command": "pnpm",
           "arguments": [
             "lint"
