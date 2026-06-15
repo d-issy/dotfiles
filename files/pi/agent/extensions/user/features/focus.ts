@@ -3,6 +3,7 @@ import type {
 	ExtensionContext,
 } from "@earendil-works/pi-coding-agent";
 import type { Feature } from "../feature";
+import type { UserExtensionServices } from "../lib/services";
 import {
 	BASE_FOCUS,
 	type FocusController,
@@ -66,12 +67,12 @@ const toggleFocusSelector =
 		await openFocusQuickAction(focus, runtime)(ctx);
 	};
 
-function register(pi: ExtensionAPI): void {
+function register(pi: ExtensionAPI, services: UserExtensionServices): void {
 	registerBuiltInFocusPolicies();
-	const focus = createFocusController(pi);
+	const focus = createFocusController(pi, services.focus);
 	const runtime = createFocusRuntime();
-	registerEnterFocusTool(pi, focus, runtime);
-	registerExitFocusTool(pi, focus, runtime);
+	registerEnterFocusTool(focus, runtime);
+	registerExitFocusTool(focus, runtime);
 	registerQuickActionHandler("focus", openFocusQuickAction(focus, runtime));
 	pi.registerShortcut("shift+tab", {
 		description: "Leave focus or open focus selector",

@@ -14,7 +14,7 @@ import {
 import { type Static, Type } from "typebox";
 import type { ToolPolicy } from "../policy";
 import { decodePrintableInput } from "../ui";
-import { toolRegistry } from "./registry";
+import { defineToolContribution, toolCatalog } from "./catalog";
 
 const choiceSchema = Type.Object({
 	label: Type.String({ description: "User-visible choice label." }),
@@ -658,35 +658,37 @@ export function registerInterviewTools(): void {
 		name: ASK_USER_QUESTION_TOOL,
 	};
 
-	toolRegistry.register({
-		policy,
-		isErrorResult: isErrorInterviewResult,
-		definition: {
-			name: ASK_USER_QUESTION_TOOL,
-			label: ASK_USER_QUESTION_TOOL,
-			description:
-				"Ask the user a structured interview question with described choices, automatic Other, recommendation markers, and an option to discuss the question in chat.",
-			promptSnippet:
-				"Ask a structured user interview question with choices, Other, and chat fallback",
-			promptGuidelines: [
-				"Use ask_user_question to ask one necessary structured interview question at a time only after using available context and file-read tools to avoid asking what can be inferred or inspected.",
-				"Use ask_user_question to clarify the user's goals, pain points, constraints, success criteria, or remaining uncertainties; do not use it for low-value classification or implementation-convenience questions.",
-				"Keep ask_user_question question focused on the question itself, and put the rationale for asking it in the optional reason field instead of embedding long setup text in the question.",
-				"For ask_user_question choices, include descriptions when they help the user compare options, keep choices broad enough to cover the user's real concern, and use multiple=true when several concerns may apply.",
-				"Treat ask_user_question Other responses, chat requests, corrections, objections, and criticism as primary interview signals that should update the next question instead of forcing the user back into stale choices.",
-				"For single-choice ask_user_question calls, mark exactly one choice as recommended; the tool displays recommended choices first and appends (recommend) automatically.",
-			],
-			parameters: askUserQuestionSchema,
-			executionMode: "sequential",
-			renderResult: renderInterviewResult,
-			execute: async (_toolCallId, params, _signal, _onUpdate, ctx) => {
-				if (!ctx.hasUI) return invalidResult("UI is unavailable.");
-				const error = validateInput(params);
-				if (error) return invalidResult(error);
-				return params.multiple === true
-					? askMultiple(params, ctx)
-					: askSingle(params, ctx);
+	toolCatalog.register(
+		defineToolContribution({
+			policy,
+			isErrorResult: isErrorInterviewResult,
+			definition: {
+				name: ASK_USER_QUESTION_TOOL,
+				label: ASK_USER_QUESTION_TOOL,
+				description:
+					"Ask the user a structured interview question with described choices, automatic Other, recommendation markers, and an option to discuss the question in chat.",
+				promptSnippet:
+					"Ask a structured user interview question with choices, Other, and chat fallback",
+				promptGuidelines: [
+					"Use ask_user_question to ask one necessary structured interview question at a time only after using available context and file-read tools to avoid asking what can be inferred or inspected.",
+					"Use ask_user_question to clarify the user's goals, pain points, constraints, success criteria, or remaining uncertainties; do not use it for low-value classification or implementation-convenience questions.",
+					"Keep ask_user_question question focused on the question itself, and put the rationale for asking it in the optional reason field instead of embedding long setup text in the question.",
+					"For ask_user_question choices, include descriptions when they help the user compare options, keep choices broad enough to cover the user's real concern, and use multiple=true when several concerns may apply.",
+					"Treat ask_user_question Other responses, chat requests, corrections, objections, and criticism as primary interview signals that should update the next question instead of forcing the user back into stale choices.",
+					"For single-choice ask_user_question calls, mark exactly one choice as recommended; the tool displays recommended choices first and appends (recommend) automatically.",
+				],
+				parameters: askUserQuestionSchema,
+				executionMode: "sequential",
+				renderResult: renderInterviewResult,
+				execute: async (_toolCallId, params, _signal, _onUpdate, ctx) => {
+					if (!ctx.hasUI) return invalidResult("UI is unavailable.");
+					const error = validateInput(params);
+					if (error) return invalidResult(error);
+					return params.multiple === true
+						? askMultiple(params, ctx)
+						: askSingle(params, ctx);
+				},
 			},
-		},
-	});
+		}),
+	);
 }

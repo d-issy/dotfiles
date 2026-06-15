@@ -113,11 +113,25 @@ export async function executeProjectTool(
 
 	try {
 		scheduleUpdate();
-		await Promise.all(
-			states.map((state) =>
-				runCommand(state, params, ops, commandPrefix, signal, scheduleUpdate),
-			),
-		);
+		if (tool.executionMode === "sequential") {
+			for (const state of states) {
+				// oxlint-disable-next-line no-await-in-loop -- commands are intentionally serialized by project tool configuration.
+				await runCommand(
+					state,
+					params,
+					ops,
+					commandPrefix,
+					signal,
+					scheduleUpdate,
+				);
+			}
+		} else {
+			await Promise.all(
+				states.map((state) =>
+					runCommand(state, params, ops, commandPrefix, signal, scheduleUpdate),
+				),
+			);
+		}
 	} finally {
 		if (updateTimer) clearTimeout(updateTimer);
 	}

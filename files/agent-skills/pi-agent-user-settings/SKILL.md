@@ -34,7 +34,7 @@ Do not use this skill for ordinary shell commands, lint/test/format requests, Pi
 - Keep tools deterministic and scoped to the repository.
 - Avoid commands that read secrets, access credentials, or modify paths outside the project.
 - Set `timeoutSeconds` for commands that might hang.
-- Use `executionMode: "parallel"` only when safe to run concurrently with other tool calls.
+- Use `executionMode: "parallel"` only when the project tool and its commands are safe to run concurrently.
 - Prefer structured `command` + `arguments` over free-form shell strings.
 - Put fixed subcommands in `arguments`, not in `command`.
 - Use parameter placeholders only as whole arguments, e.g. `"{{path}}"`.
@@ -93,7 +93,7 @@ Currently supported project user settings include:
 - `description` required; explain what the tool does.
 - `commands` required; non-empty array.
 - `parameters` optional; object of LLM-provided parameters.
-- `executionMode` optional; `sequential` or `parallel`. Defaults to `sequential`.
+- `executionMode` optional; `sequential` or `parallel`. Controls both this tool's Pi tool-call execution mode and whether its configured `commands` run one-by-one (`sequential`) or concurrently (`parallel`/omitted).
 - `cwd` optional; relative path inside the project root.
 - `timeoutSeconds` optional; default timeout for commands.
 - `promptSnippet` optional; one-line LLM-facing tool summary.

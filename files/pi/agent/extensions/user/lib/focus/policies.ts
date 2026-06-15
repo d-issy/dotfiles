@@ -6,34 +6,35 @@ import type {
 	ReadToolInput,
 	WriteToolInput,
 } from "@earendil-works/pi-coding-agent";
-import { makeSecretActionReason, policyRegistry } from "../policy";
+import { makeSecretActionReason } from "../policy";
+import { toolCatalog } from "../tool";
 
 export function registerBuiltInFocusPolicies(): void {
-	policyRegistry.register({
+	toolCatalog.registerPolicy({
 		name: "bash",
 		notAllowedReason: (focus) =>
 			`Running bash commands is disabled in ${focus} focus.`,
 	});
-	policyRegistry.register<ReadToolInput>({
+	toolCatalog.registerPolicy<ReadToolInput>({
 		name: "read",
 		extractSecretPaths: (input) => [input.path],
 		secretBlockReason: makeSecretActionReason("Reading"),
 	});
-	policyRegistry.register<WriteToolInput>({
+	toolCatalog.registerPolicy<WriteToolInput>({
 		name: "write",
 		extractSecretPaths: (input) => [input.path],
 		secretBlockReason: makeSecretActionReason("Writing to"),
 	});
-	policyRegistry.register<EditToolInput>({
+	toolCatalog.registerPolicy<EditToolInput>({
 		name: "edit",
 		extractSecretPaths: (input) => [input.path],
 		secretBlockReason: makeSecretActionReason("Writing to"),
 	});
-	policyRegistry.register<GrepToolInput>({
+	toolCatalog.registerPolicy<GrepToolInput>({
 		name: "grep",
 		extractSecretPaths: (input) => (input.path ? [input.path] : []),
 		secretBlockReason: makeSecretActionReason("Grepping"),
 	});
-	policyRegistry.register<FindToolInput>({ name: "find" });
-	policyRegistry.register<LsToolInput>({ name: "ls" });
+	toolCatalog.registerPolicy<FindToolInput>({ name: "find" });
+	toolCatalog.registerPolicy<LsToolInput>({ name: "ls" });
 }

@@ -1,6 +1,2 @@
-export {
-	isProjectToolAvailable,
-	projectToolResultError,
-	registerProjectTools,
-} from "./project/index";
+export { isProjectToolAvailable, registerProjectTools } from "./project/index";
 export type { ProjectToolSummary } from "./project/index";

@@ -4,10 +4,13 @@ import {
 	type AgentToolUpdateCallback,
 	type ExtensionAPI,
 	type ExtensionContext,
-	type ToolDefinition,
-	type ToolResultEvent,
 } from "@earendil-works/pi-coding-agent";
 import type { TSchema } from "typebox";
+import {
+	type ToolContribution,
+	defineToolContribution,
+	toolCatalog,
+} from "../catalog";
 import { executeProjectTool } from "./execute";
 import { isProjectToolDetails } from "./details";
 import { normalizeTool } from "./normalize";
@@ -61,56 +64,61 @@ function isSameProjectRoot(
 	}
 }
 
-function createProjectToolDefinition(
+function createProjectToolContribution(
 	tool: ResolvedProjectTool,
-): ToolDefinition<TSchema, ProjectToolDetails> {
-	return {
-		name: tool.name,
-		label: tool.name,
-		description: tool.description,
-		promptSnippet: tool.promptSnippet,
-		promptGuidelines: tool.promptGuidelines
-			? [...tool.promptGuidelines]
-			: undefined,
-		parameters: tool.parametersSchema,
-		executionMode: tool.executionMode ?? "sequential",
-		renderCall: (args, theme) =>
-			renderCallTitle(tool, args as ProjectToolInput, theme),
-		renderResult,
-		execute: async (
-			_toolCallId: string,
-			params,
-			signal: AbortSignal | undefined,
-			onUpdate: AgentToolUpdateCallback<ProjectToolDetails> | undefined,
-			ctx: ExtensionContext,
-		) => {
-			if (!isProjectUserSettingsTrusted(ctx)) {
-				return createBlockedProjectToolResult(
+): ToolContribution<TSchema, ProjectToolDetails> {
+	return defineToolContribution<TSchema, ProjectToolDetails>({
+		source: "project",
+		policy: { name: tool.name },
+		isErrorResult: (details) => isProjectToolDetails(details) && details.failed,
+		definition: {
+			name: tool.name,
+			label: tool.name,
+			description: tool.description,
+			promptSnippet: tool.promptSnippet,
+			promptGuidelines: tool.promptGuidelines
+				? [...tool.promptGuidelines]
+				: undefined,
+			parameters: tool.parametersSchema,
+			executionMode: tool.executionMode,
+			renderCall: (args, theme) =>
+				renderCallTitle(tool, args as ProjectToolInput, theme),
+			renderResult,
+			execute: async (
+				_toolCallId: string,
+				params,
+				signal: AbortSignal | undefined,
+				onUpdate: AgentToolUpdateCallback<ProjectToolDetails> | undefined,
+				ctx: ExtensionContext,
+			) => {
+				if (!isProjectUserSettingsTrusted(ctx)) {
+					return createBlockedProjectToolResult(
+						tool,
+						`Project tool '${tool.name}' is disabled because project user settings are not trusted.`,
+					);
+				}
+				if (!enabledProjectToolNames.has(tool.name)) {
+					return createBlockedProjectToolResult(
+						tool,
+						`Project tool '${tool.name}' is not enabled for the current project.`,
+					);
+				}
+				if (!isSameProjectRoot(ctx, tool)) {
+					return createBlockedProjectToolResult(
+						tool,
+						`Project tool '${tool.name}' belongs to a different project and is disabled here.`,
+					);
+				}
+				return executeProjectTool(
 					tool,
-					`Project tool '${tool.name}' is disabled because project user settings are not trusted.`,
+					params as ProjectToolInput,
+					ctx,
+					signal,
+					onUpdate,
 				);
-			}
-			if (!enabledProjectToolNames.has(tool.name)) {
-				return createBlockedProjectToolResult(
-					tool,
-					`Project tool '${tool.name}' is not enabled for the current project.`,
-				);
-			}
-			if (!isSameProjectRoot(ctx, tool)) {
-				return createBlockedProjectToolResult(
-					tool,
-					`Project tool '${tool.name}' belongs to a different project and is disabled here.`,
-				);
-			}
-			return executeProjectTool(
-				tool,
-				params as ProjectToolInput,
-				ctx,
-				signal,
-				onUpdate,
-			);
+			},
 		},
-	};
+	});
 }
 
 function loadProjectToolSettings(cwd: string): ProjectToolSettings {
@@ -120,7 +128,6 @@ function loadProjectToolSettings(cwd: string): ProjectToolSettings {
 export function registerProjectTools(
 	pi: ExtensionAPI,
 	ctx: ExtensionContext,
-	registeredNames: Set<string>,
 ): readonly ProjectToolSummary[] {
 	enabledProjectToolNames = new Set();
 	if (!isProjectUserSettingsTrusted(ctx)) return [];
@@ -157,8 +164,9 @@ export function registerProjectTools(
 				continue;
 			}
 			const resolved = resolveTool(ctx.cwd, normalizeTool(name, rawConfig));
-			pi.registerTool(createProjectToolDefinition(resolved));
-			registeredNames.add(name);
+			const contribution = createProjectToolContribution(resolved);
+			toolCatalog.register(contribution);
+			pi.registerTool(contribution.definition);
 			registeredProjectTools.set(name, { projectRoot: resolved.projectRoot });
 			currentEnabledProjectToolNames.add(name);
 			summaries.push({
@@ -179,13 +187,4 @@ export function registerProjectTools(
 
 export function isProjectToolAvailable(name: string): boolean {
 	return !registeredProjectTools.has(name) || enabledProjectToolNames.has(name);
-}
-
-export function projectToolResultError(
-	registeredNames: ReadonlySet<string>,
-	event: ToolResultEvent,
-): { isError: true } | undefined {
-	if (!registeredNames.has(event.toolName)) return undefined;
-	if (!isProjectToolDetails(event.details)) return undefined;
-	return event.details.failed ? { isError: true } : undefined;
 }

@@ -10,14 +10,13 @@ export {
 export {
 	buildFocusRestorePrompt,
 	createFocusController,
-	getCurrentFocusRegistry,
 	isFocusReminderMessage,
-	refreshCurrentFocusTools,
 	type FocusController,
 	type FocusStateEntry,
 } from "./controller";
 export { registerBuiltInFocusPolicies } from "./policies";
 export { loadFocusRegistry, type FocusRegistry } from "./registry";
+export { createFocusSharedState, type FocusSharedState } from "./state";
 export { findPersistedFocus } from "./startup";
 export {
 	activateBaseFocusTools,
