@@ -121,8 +121,9 @@ Currently supported project user settings include:
 - When extending an existing focus, write `prompt` as a project-specific supplement, not a full replacement such as `You are in ... focus`.
 - `tools` is additive only.
 - `toolSets` is additive only and expands reusable `toolSets.<name>` entries into the focus tool list.
-- Existing focus `transition` cannot be changed by project settings.
+- Existing focus `transition` and `exitMode` cannot be changed by project settings.
 - New focus `transition` defaults to `confirm` when omitted.
+- New focus `exitMode` defaults to `single-turn` when omitted.
 
 Common focus fields:
 
@@ -131,6 +132,7 @@ Common focus fields:
 - `tools` required for new focuses unless `toolSets` supplies at least one tool; additive when merging. It may include project tool names, built-in tool names, and extension tool names.
 - `toolSets` optional; array of top-level `toolSets` names to add to the focus tool list.
 - `transition` optional for new focuses: `auto`, `confirm`, or `manual`.
+- `exitMode` optional for new focuses: `single-turn` or `explicit`.
 - `color` optional: `accent`, `positive`, `caution`, `alert`, or `muted`.
 
 ## Parameter fields

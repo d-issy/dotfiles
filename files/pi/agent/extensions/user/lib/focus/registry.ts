@@ -9,6 +9,7 @@ import {
 	BASE_FOCUS_DEFINITIONS,
 	BUILT_IN_TOOL_SETS,
 	type FocusDefinition,
+	type FocusExitMode,
 	type FocusName,
 	type FocusTransition,
 	isFocusTransition,
@@ -45,6 +46,7 @@ type ProjectFocusDefinition = {
 	readonly tools?: readonly string[];
 	readonly toolSets?: readonly string[];
 	readonly transition?: FocusTransition;
+	readonly exitMode?: FocusExitMode;
 	readonly color?: ColorRole;
 };
 
@@ -94,6 +96,17 @@ function normalizeTransition(
 	return value;
 }
 
+function normalizeExitMode(
+	value: unknown,
+	path: string,
+): FocusExitMode | undefined {
+	if (value === undefined) return undefined;
+	if (value !== "single-turn" && value !== "explicit") {
+		throw new Error(`${path} must be single-turn or explicit.`);
+	}
+	return value;
+}
+
 function normalizeColor(value: unknown, path: string): ColorRole | undefined {
 	if (value === undefined) return undefined;
 	if (!isColorRole(value)) {
@@ -127,6 +140,7 @@ function normalizeProjectFocus(
 		tools: normalizeTools(value.tools, `${name}.tools`),
 		toolSets: normalizeTools(value.toolSets, `${name}.toolSets`),
 		transition: normalizeTransition(value.transition, `${name}.transition`),
+		exitMode: normalizeExitMode(value.exitMode, `${name}.exitMode`),
 		color: normalizeColor(value.color, `${name}.color`),
 	};
 }
@@ -243,7 +257,7 @@ function mergeFocus(
 			: base.exitPrompt,
 		tools: unique([...(base.tools ?? []), ...projectTools]),
 		settingsTools: unique([...(base.settingsTools ?? []), ...projectTools]),
-		// Existing focus transitions are security-sensitive and cannot be changed by project config.
+		// Existing focus transitions and exit modes are security-sensitive and cannot be changed by project config.
 		transition: base.transition,
 		color: project.color ?? base.color,
 	};
@@ -272,6 +286,7 @@ function createProjectFocus(
 		tools: unique(projectTools),
 		settingsTools: unique(projectTools),
 		transition: project.transition ?? "confirm",
+		exitMode: project.exitMode,
 		color: project.color,
 	};
 }
