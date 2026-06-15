@@ -260,7 +260,6 @@ function sortedChoices(
 }
 
 function otherDescription(
-	text: QuestionLabels,
 	multiple: boolean,
 	otherText: string | undefined,
 ): string {
@@ -295,7 +294,7 @@ function makeRows(
 		{
 			action: { type: "other" },
 			label: text.other,
-			description: otherDescription(text, multiple, otherText),
+			description: otherDescription(multiple, otherText),
 			selected: otherSelected,
 			section: "choice",
 		},
@@ -507,7 +506,6 @@ async function showQuestion(
 async function showOtherInput(
 	ctx: ExtensionContext,
 	params: AskUserQuestionInput,
-	text: QuestionLabels,
 	initialValue: string | undefined,
 ): Promise<string | undefined> {
 	const title = [
@@ -554,7 +552,7 @@ async function askSingle(
 		}
 		if (action.type === "other" || action.type === "other-input") {
 			// oxlint-disable-next-line no-await-in-loop -- Other input is part of the current question flow.
-			const otherText = await showOtherInput(ctx, params, text, undefined);
+			const otherText = await showOtherInput(ctx, params, undefined);
 			if (otherText === undefined || !otherText.trim()) continue;
 			return answeredResult({
 				status: "answered",
@@ -640,7 +638,7 @@ async function askMultiple(
 		}
 		if (action.type === "other-input") {
 			// oxlint-disable-next-line no-await-in-loop -- Other input is part of the current selection loop state.
-			const input = await showOtherInput(ctx, params, text, otherText);
+			const input = await showOtherInput(ctx, params, otherText);
 			if (input !== undefined) {
 				otherText = input.trim() || undefined;
 				otherSelected = Boolean(otherText);
