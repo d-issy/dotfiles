@@ -44,7 +44,7 @@
       "matchManagers": [
         "github-actions"
       ],
-      "minimumReleaseAge": "3 days",
+      "minimumReleaseAge": "1 week",
       "groupName": "github-actions",
       "groupSlug": "github-actions"
     },
