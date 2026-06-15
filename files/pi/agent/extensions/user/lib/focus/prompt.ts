@@ -6,7 +6,11 @@ import type {
 	ExtensionHandler,
 } from "@earendil-works/pi-coding-agent";
 import { type FocusController, buildFocusRestorePrompt } from "./controller";
-import { FOCUS_REMINDER_TYPE } from "./definitions";
+import {
+	ENTER_FOCUS_TOOL,
+	EXIT_FOCUS_TOOL,
+	FOCUS_REMINDER_TYPE,
+} from "./definitions";
 import type { FocusRuntime } from "./runtime";
 
 type ContextResult = { messages?: ContextEvent["messages"] };
@@ -82,13 +86,31 @@ function removeSkillsSection(prompt: string): string {
 	);
 }
 
+function focusManagementToolNames(): ReadonlySet<string> {
+	return new Set([ENTER_FOCUS_TOOL, EXIT_FOCUS_TOOL]);
+}
+
+function visiblePromptToolNames(
+	pi: ExtensionAPI,
+	focus: FocusController,
+	runtime: FocusRuntime,
+): ReadonlySet<string> {
+	const allowedToolNames = focus.allowedToolNames(pi);
+	if (!runtime.userSelectedFocus) return allowedToolNames;
+	const managementTools = focusManagementToolNames();
+	return new Set(
+		[...allowedToolNames].filter((name) => !managementTools.has(name)),
+	);
+}
+
 function rewriteSystemPromptForVisibleTools(
 	pi: ExtensionAPI,
 	focus: FocusController,
+	runtime: FocusRuntime,
 	systemPrompt: string,
 	toolSnippets: Record<string, string> | undefined,
 ): string {
-	const allowedToolNames = focus.allowedToolNames(pi);
+	const allowedToolNames = visiblePromptToolNames(pi, focus, runtime);
 	let prompt = rewritePromptSection(
 		systemPrompt,
 		"Available tools:\n",
@@ -107,8 +129,9 @@ function rewriteSystemPromptForVisibleTools(
 function visibleToolDefinitions(
 	pi: ExtensionAPI,
 	focus: FocusController,
+	runtime: FocusRuntime,
 ): ToolInfo[] {
-	const allowedToolNames = focus.allowedToolNames(pi);
+	const allowedToolNames = visiblePromptToolNames(pi, focus, runtime);
 	return pi.getAllTools().filter((tool) => allowedToolNames.has(tool.name));
 }
 
@@ -133,8 +156,9 @@ function buildActiveFocusPrompt(focus: FocusController): string | undefined {
 function buildFocusReminderPayloadWithTools(
 	pi: ExtensionAPI,
 	focus: FocusController,
+	runtime: FocusRuntime,
 ): FocusReminderWithTools {
-	const tools = visibleToolDefinitions(pi, focus);
+	const tools = visibleToolDefinitions(pi, focus, runtime);
 	const activePrompt = buildActiveFocusPrompt(focus);
 	const focusInstructions = activePrompt
 		? `Focus instructions:\n${activePrompt}`
@@ -157,6 +181,7 @@ export const injectFocusRestorePrompt =
 		const systemPrompt = rewriteSystemPromptForVisibleTools(
 			pi,
 			focus,
+			runtime,
 			event.systemPrompt,
 			event.systemPromptOptions.toolSnippets,
 		);
@@ -188,7 +213,7 @@ export const injectFocusReminder =
 	async (event) => {
 		if (!runtime.focusReminderPending) return;
 		runtime.focusReminderPending = false;
-		const reminder = buildFocusReminderPayloadWithTools(pi, focus);
+		const reminder = buildFocusReminderPayloadWithTools(pi, focus, runtime);
 		return {
 			messages: [
 				...event.messages,

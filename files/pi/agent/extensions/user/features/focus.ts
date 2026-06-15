@@ -42,10 +42,12 @@ const openFocusQuickAction =
 		runtime.resetFocusAtAgentEndPending = false;
 		runtime.autoContinueFocusName = undefined;
 		if (selected === BASE_FOCUS) {
+			runtime.userSelectedFocus = false;
 			focus.leave(ctx);
 			runtime.focusReminderPending = true;
 			return;
 		}
+		runtime.userSelectedFocus = true;
 		focus.enter(ctx, selected);
 		runtime.focusReminderPending = true;
 	};
@@ -56,6 +58,7 @@ const toggleFocusSelector =
 		runtime.resetFocusAtAgentEndPending = false;
 		runtime.autoContinueFocusName = undefined;
 		if (focus.current !== BASE_FOCUS) {
+			runtime.userSelectedFocus = false;
 			focus.leave(ctx);
 			runtime.focusReminderPending = true;
 			return;
