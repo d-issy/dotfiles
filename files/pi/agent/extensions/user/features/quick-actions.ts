@@ -4,17 +4,16 @@ import type {
 } from "@earendil-works/pi-coding-agent";
 import type { Feature } from "../feature";
 import { showModelSelector } from "../lib/model";
-import { showQuickActions } from "../lib/quick-actions";
+import { runQuickAction, showQuickActions } from "../lib/quick-actions";
 import { showEffortSelector } from "../lib/thinking";
-import { showModeQuickAction } from "./mode";
 
 const openQuickActions =
 	(pi: ExtensionAPI) =>
 	async (ctx: ExtensionContext): Promise<void> => {
 		const action = await showQuickActions(ctx);
 		switch (action) {
-			case "mode":
-				await showModeQuickAction(ctx);
+			case "focus":
+				await runQuickAction("focus", ctx);
 				break;
 			case "effort":
 				await showEffortSelector(pi, ctx);
@@ -32,4 +31,8 @@ function register(pi: ExtensionAPI): void {
 	});
 }
 
-export default { name: "quick-actions", register } satisfies Feature;
+export function createQuickActionsFeature(): Feature {
+	return { name: "quick-actions", dependsOn: ["focus"], register };
+}
+
+export default createQuickActionsFeature();

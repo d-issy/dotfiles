@@ -1,9 +1,9 @@
 /**
  * Reusable fuzzy-filter selection overlay built on `ctx.ui.custom`.
  *
- * This is generic, feature-agnostic terminal UI — it knows nothing about modes,
+ * This is generic, feature-agnostic terminal UI — it knows nothing about focus,
  * thinking effort, or any specific domain. Features feed it a list of
- * {@link FilterSelectItem}s and get back the chosen value. Shared by the `mode`
+ * {@link FilterSelectItem}s and get back the chosen value. Shared by the `focus`
  * and `thinking` features today; that is why it lives under `lib/ui/` rather
  * than next to a single caller.
  *

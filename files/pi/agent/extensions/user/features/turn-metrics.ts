@@ -263,4 +263,8 @@ function register(pi: ExtensionAPI): void {
 	});
 }
 
-export default { name: "turn-metrics", register } satisfies Feature;
+export function createTurnMetricsFeature(): Feature {
+	return { name: "turn-metrics", register };
+}
+
+export default createTurnMetricsFeature();

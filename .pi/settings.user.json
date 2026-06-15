@@ -2,7 +2,6 @@
   "tools": {
     "lint": {
       "description": "Run all lint and type checks for the project (no files are modified).",
-      "allowedModes": ["read", "write"],
       "executionMode": "parallel",
       "promptSnippet": "Run lint and type checks for the project",
       "promptGuidelines": [
@@ -12,28 +11,37 @@
         {
           "label": "tsgo",
           "command": "pnpm",
-          "arguments": ["lint"]
+          "arguments": [
+            "lint"
+          ]
         },
         {
           "label": "oxlint",
           "command": "oxlint",
-          "arguments": ["--deny-warnings"]
+          "arguments": [
+            "--deny-warnings"
+          ]
         },
         {
           "label": "deadnix",
           "command": "deadnix",
-          "arguments": ["--fail", "."]
+          "arguments": [
+            "--fail",
+            "."
+          ]
         },
         {
           "label": "statix",
           "command": "statix",
-          "arguments": ["check", "."]
+          "arguments": [
+            "check",
+            "."
+          ]
         }
       ]
     },
     "format": {
       "description": "Format the project in place with treefmt.",
-      "allowedModes": ["write"],
       "executionMode": "sequential",
       "promptSnippet": "Format the project in place",
       "promptGuidelines": [
@@ -48,16 +56,37 @@
     },
     "homemanager_switch": {
       "description": "Run Home Manager switch for the current host via the flake.",
-      "allowedModes": ["write"],
       "executionMode": "sequential",
       "commands": [
         {
           "label": "home-manager switch",
           "command": "nix",
-          "arguments": ["run", ".#switch"],
+          "arguments": [
+            "run",
+            ".#switch"
+          ],
           "timeoutSeconds": 600
         }
       ]
+    }
+  },
+  "focuses": {
+    "edit": {
+      "description": "Use when making repository file changes for this dotfiles project; use format and lint when appropriate.",
+      "prompt": "For this dotfiles project, use format to auto-fix formatting and lint to verify changes after editing when appropriate.",
+      "tools": [
+        "format",
+        "lint"
+      ]
+    },
+    "home-manager": {
+      "description": "Use when the user asks to apply this dotfiles Home Manager configuration.",
+      "prompt": "You are in home-manager focus. Use homemanager_switch when the user asks to apply the Home Manager configuration.",
+      "tools": [
+        "homemanager_switch"
+      ],
+      "transition": "confirm",
+      "color": "caution"
     }
   }
 }

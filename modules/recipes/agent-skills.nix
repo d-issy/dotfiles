@@ -9,7 +9,7 @@
 
     skills = {
       interview-me.enable = true;
-      pi-project-tools = {
+      pi-agent-user-settings = {
         enable = true;
         agents.pi = true;
       };

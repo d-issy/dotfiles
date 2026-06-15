@@ -8,6 +8,9 @@ import {
 	rmSchema,
 } from "../file";
 import { makeSecretActionReason } from "../policy";
+import { registerGitTools } from "./git";
+import { registerGithubTools } from "./github";
+import { registerInterviewTools } from "./interview";
 import { toolRegistry } from "./registry";
 
 /**
@@ -17,13 +20,15 @@ import { toolRegistry } from "./registry";
  */
 export function registerBuiltInTools(): void {
 	registerFileTools();
+	registerGitTools();
+	registerGithubTools();
+	registerInterviewTools();
 }
 
 function registerFileTools(): void {
 	toolRegistry.register({
 		policy: {
 			name: "mv",
-			allowedModes: ["write"],
 			extractSecretPaths: (input) => [
 				...normalizeStringOrArray(input.source),
 				input.destination,
@@ -51,7 +56,6 @@ function registerFileTools(): void {
 	toolRegistry.register({
 		policy: {
 			name: "rm",
-			allowedModes: ["write"],
 			extractSecretPaths: (input) => normalizeStringOrArray(input.path),
 			secretBlockReason: makeSecretActionReason("Removing"),
 		},

@@ -14,28 +14,6 @@ export const thinkingLevels: readonly ModelThinkingLevel[] = [
 	"xhigh",
 ];
 
-export function selectThinkingLevel(
-	pi: ExtensionAPI,
-	direction: -1 | 1,
-): ModelThinkingLevel {
-	const current = pi.getThinkingLevel();
-	const currentIndex = Math.max(0, thinkingLevels.indexOf(current));
-
-	for (let offset = 1; offset <= thinkingLevels.length; offset++) {
-		const nextIndex =
-			(currentIndex + direction * offset + thinkingLevels.length) %
-			thinkingLevels.length;
-		const nextLevel = thinkingLevels[nextIndex];
-		pi.setThinkingLevel(nextLevel);
-
-		const selectedLevel = pi.getThinkingLevel();
-		if (selectedLevel !== current || nextLevel === current)
-			return selectedLevel;
-	}
-
-	return pi.getThinkingLevel();
-}
-
 export function isThinkingLevel(value: string): value is ModelThinkingLevel {
 	return thinkingLevels.includes(value as ModelThinkingLevel);
 }

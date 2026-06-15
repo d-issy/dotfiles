@@ -7,4 +7,9 @@ export {
 	showFilterSelect,
 } from "./filter-select";
 export { decodePrintableInput } from "./input";
+export {
+	describePrintableInput,
+	renderKeyedPanelItem,
+	type KeyedPanelItem,
+} from "./keyed-panel";
 export { type VisibleRange, getVisibleRange } from "./scroll";

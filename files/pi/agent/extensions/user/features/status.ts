@@ -6,14 +6,13 @@ import type {
 } from "@earendil-works/pi-coding-agent";
 import type { Feature } from "../feature";
 import {
-	FOOTER_NOTICE_DEFAULT_MS,
 	FOOTER_NOTICE_EVENT,
-	type FooterNoticeEvent,
 	type FooterNoticeState,
 	type RenderTrigger,
 	createFooterNoticeState,
 	createRenderTrigger,
 	createStatusBarFooter,
+	handleFooterNotice,
 } from "../lib/status";
 
 const initFooter =
@@ -25,18 +24,6 @@ const initFooter =
 	(_event, ctx) => {
 		if (!ctx.hasUI) return;
 		ctx.ui.setFooter(createStatusBarFooter(pi, ctx, render.set, notice));
-	};
-
-const handleFooterNotice =
-	(notice: FooterNoticeState) =>
-	(data: unknown): void => {
-		const event = data as FooterNoticeEvent;
-		if (!event.message) {
-			notice.clear();
-			return;
-		}
-
-		notice.show(event.message, event.durationMs ?? FOOTER_NOTICE_DEFAULT_MS);
 	};
 
 const cleanupFooterNotice =
@@ -67,4 +54,8 @@ function register(pi: ExtensionAPI): void {
 	);
 }
 
-export default { name: "status", register } satisfies Feature;
+export function createStatusFeature(): Feature {
+	return { name: "status", register };
+}
+
+export default createStatusFeature();
