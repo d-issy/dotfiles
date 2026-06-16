@@ -58,6 +58,24 @@
         }
       ]
     },
+    "coverage": {
+      "description": "Run the test suite with coverage reporting.",
+      "executionMode": "parallel",
+      "promptSnippet": "Run the test suite with coverage reporting",
+      "promptGuidelines": [
+        "Use coverage when evaluating test coverage or deciding where to add tests."
+      ],
+      "commands": [
+        {
+          "label": "coverage",
+          "command": "pnpm",
+          "arguments": [
+            "test:coverage"
+          ],
+          "timeoutSeconds": 120
+        }
+      ]
+    },
     "format": {
       "description": "Format the project in place with treefmt.",
       "executionMode": "sequential",
@@ -91,11 +109,12 @@
   "focuses": {
     "edit": {
       "description": "Use when making repository file changes for this dotfiles project; use format and lint when appropriate.",
-      "prompt": "For this dotfiles project, use format to auto-fix formatting and lint/test to verify changes after editing when appropriate.",
+      "prompt": "For this dotfiles project, use format to auto-fix formatting and lint/test/coverage to verify changes after editing when appropriate.",
       "tools": [
         "format",
         "lint",
-        "test"
+        "test",
+        "coverage"
       ]
     },
     "home-manager": {
