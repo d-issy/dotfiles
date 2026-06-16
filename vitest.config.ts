@@ -9,6 +9,7 @@ export default defineConfig({
 			include: ["files/pi/agent/extensions/user/**/*.ts"],
 			exclude: [
 				"files/pi/agent/extensions/**/*.test.ts",
+				"files/pi/agent/extensions/**/test-support/**",
 				"files/pi/agent/extensions/**/index.ts",
 				"files/pi/agent/extensions/**/types.ts",
 			],
