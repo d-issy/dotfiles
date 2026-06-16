@@ -39,10 +39,12 @@ export const restoreFocus =
 		focus.loadProjectFocuses(ctx);
 		const persisted = findPersistedFocus(ctx);
 		focus.restore(ctx, persisted);
-		runtime.restorePromptPending = focus.active !== undefined;
-		runtime.focusReminderPending = focus.active !== undefined;
-		runtime.resetFocusAtAgentEndPending = false;
-		runtime.autoContinueFocusName = undefined;
+		runtime.recordFocusChange(focus.current);
+		runtime.setRestorePromptPending(focus.active !== undefined);
+		runtime.setFocusReminderPending(focus.active !== undefined);
+		runtime.setResetFocusAtAgentEndPending(false);
+		runtime.setUserSelectedFocus(false);
+		runtime.cancelAutoContinue();
 	};
 
 export const resetFocusAtAgentEnd =
@@ -51,16 +53,16 @@ export const resetFocusAtAgentEnd =
 		runtime: FocusRuntime,
 	): ExtensionHandler<AgentEndEvent> =>
 	async (_event, ctx) => {
-		if (runtime.autoContinueFocusName) return;
+		if (runtime.pendingAutoContinue) return;
 		if (!focus.active || !runtime.resetFocusAtAgentEndPending) return;
 		if (getFocusExitMode(focus.active) !== "single-turn") {
-			runtime.resetFocusAtAgentEndPending = false;
+			runtime.setResetFocusAtAgentEndPending(false);
 			return;
 		}
 		focus.leave(ctx);
-		runtime.restorePromptPending = false;
-		runtime.focusReminderPending = true;
-		runtime.resetFocusAtAgentEndPending = false;
+		runtime.recordFocusChange(BASE_FOCUS);
+		runtime.setRestorePromptPending(false);
+		runtime.setResetFocusAtAgentEndPending(false);
 	};
 
 export const autoContinueAfterFocusTransition =
@@ -70,16 +72,16 @@ export const autoContinueAfterFocusTransition =
 		runtime: FocusRuntime,
 	): ExtensionHandler<AgentEndEvent> =>
 	async () => {
-		const focusName = runtime.autoContinueFocusName;
-		if (!focusName) return;
-		runtime.autoContinueFocusName = undefined;
-		if (focus.current !== focusName) return;
-		if (focusName !== BASE_FOCUS && !focus.active) return;
-		runtime.focusReminderPending = true;
-		const isBase = focusName === BASE_FOCUS;
-		// This message only wakes the agent up. Its delivery can lag behind later
-		// focus changes, so keep focus-specific guidance in the regenerated
-		// context reminder instead of embedding it here.
+		const transition = runtime.consumeAutoContinue();
+		if (!transition) return;
+		if (!runtime.isCurrentTransition(transition.id)) return;
+		if (focus.current !== transition.focusName) return;
+		if (transition.focusName !== BASE_FOCUS && !focus.active) return;
+		runtime.requestFocusReminder();
+		const isBase = transition.focusName === BASE_FOCUS;
+		// This message only wakes the agent up. Focus-specific guidance is rebuilt
+		// from current runtime state in the context hook. The transition id lets us
+		// drop older queued wakeups if a later focus change happens first.
 		pi.sendMessage(
 			{
 				customType: FOCUS_REMINDER_TYPE,
@@ -96,13 +98,14 @@ export const autoContinueAfterFocusTransition =
 				].join("\n"),
 				display: false,
 				details: {
-					queuedFocus: focusName,
+					queuedFocus: transition.focusName,
+					transitionId: transition.id,
 					reason: isBase
 						? "auto-continue-after-exit"
 						: "auto-continue-after-enter",
 				},
 			},
-			{ triggerTurn: true, deliverAs: "followUp" },
+			{ triggerTurn: true, deliverAs: "steer" },
 		);
 	};
 

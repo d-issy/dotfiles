@@ -8,7 +8,7 @@ import {
 	limitToolOutput,
 	renderLimitedTextResult,
 } from "./output";
-import { defineToolContribution, toolCatalog } from "./catalog";
+import { type ToolCatalog, defineToolContribution } from "./catalog";
 
 const GH_TIMEOUT_MS = 30_000;
 const GH_WATCH_TIMEOUT_MS = 30 * 60 * 1000;
@@ -789,22 +789,25 @@ function lineLimitFromInput(
 	);
 }
 
-function registerGithubTool<TInput extends object>(config: {
-	readonly name: string;
-	readonly label: string;
-	readonly description: string;
-	readonly parameters: Parameters<
-		typeof toolCatalog.register
-	>[0]["definition"]["parameters"];
-	readonly promptSnippet: string;
-	readonly execute: (
-		params: TInput,
-		cwd: string,
-		signal: AbortSignal | undefined,
-	) => Promise<GithubToolOutput>;
-	readonly extractSecretPaths?: (input: TInput) => readonly string[];
-}): void {
-	toolCatalog.register(
+function registerGithubTool<TInput extends object>(
+	catalog: ToolCatalog,
+	config: {
+		readonly name: string;
+		readonly label: string;
+		readonly description: string;
+		readonly parameters: Parameters<
+			ToolCatalog["register"]
+		>[0]["definition"]["parameters"];
+		readonly promptSnippet: string;
+		readonly execute: (
+			params: TInput,
+			cwd: string,
+			signal: AbortSignal | undefined,
+		) => Promise<GithubToolOutput>;
+		readonly extractSecretPaths?: (input: TInput) => readonly string[];
+	},
+): void {
+	catalog.register(
 		defineToolContribution({
 			policy: {
 				name: config.name,
@@ -858,8 +861,8 @@ function registerGithubTool<TInput extends object>(config: {
 	);
 }
 
-export function registerGithubTools(): void {
-	registerGithubTool<GithubPrViewInput>({
+export function registerGithubTools(catalog: ToolCatalog): void {
+	registerGithubTool<GithubPrViewInput>(catalog, {
 		name: "github_pr_view",
 		label: "github pr view",
 		description:
@@ -869,7 +872,7 @@ export function registerGithubTools(): void {
 		execute: githubPrView,
 	});
 
-	registerGithubTool<GithubPrFilesInput>({
+	registerGithubTool<GithubPrFilesInput>(catalog, {
 		name: "github_pr_files",
 		label: "github pr files",
 		description:
@@ -880,7 +883,7 @@ export function registerGithubTools(): void {
 		execute: githubPrFiles,
 	});
 
-	registerGithubTool<GithubPrDiffInput>({
+	registerGithubTool<GithubPrDiffInput>(catalog, {
 		name: "github_pr_diff",
 		label: "github pr diff",
 		description: "Inspect GitHub PR diff summaries, names, or bounded patches.",
@@ -890,7 +893,7 @@ export function registerGithubTools(): void {
 		execute: githubPrDiff,
 	});
 
-	registerGithubTool<GithubCompareInput>({
+	registerGithubTool<GithubCompareInput>(catalog, {
 		name: "github_compare",
 		label: "github compare",
 		description: "Inspect a GitHub base...head comparison with bounded output.",
@@ -900,7 +903,7 @@ export function registerGithubTools(): void {
 		execute: githubCompare,
 	});
 
-	registerGithubTool<GithubPrChecksInput>({
+	registerGithubTool<GithubPrChecksInput>(catalog, {
 		name: "github_pr_checks",
 		label: "github pr checks",
 		description: "Inspect GitHub PR CI/check status with optional filters.",

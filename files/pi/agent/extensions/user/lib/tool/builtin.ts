@@ -8,25 +8,25 @@ import {
 	rmSchema,
 } from "../file";
 import { makeSecretActionReason } from "../policy";
-import { defineToolContribution, toolCatalog } from "./catalog";
+import { type ToolCatalog, defineToolContribution } from "./catalog";
 import { registerGitTools } from "./git";
 import { registerGithubTools } from "./github";
 import { registerInterviewTools } from "./interview";
 
 /**
- * Register every core user-extension tool into {@link toolCatalog}. Grouped by
+ * Register every core user-extension tool into the provided catalog. Grouped by
  * domain so non-file tools (git, …) can be added here without touching the
  * `tool` feature.
  */
-export function registerCoreUserTools(): void {
-	registerFileTools();
-	registerGitTools();
-	registerGithubTools();
-	registerInterviewTools();
+export function registerCoreUserTools(catalog: ToolCatalog): void {
+	registerFileTools(catalog);
+	registerGitTools(catalog);
+	registerGithubTools(catalog);
+	registerInterviewTools(catalog);
 }
 
-function registerFileTools(): void {
-	toolCatalog.register(
+function registerFileTools(catalog: ToolCatalog): void {
+	catalog.register(
 		defineToolContribution({
 			policy: {
 				name: "mv",
@@ -55,7 +55,7 @@ function registerFileTools(): void {
 		}),
 	);
 
-	toolCatalog.register(
+	catalog.register(
 		defineToolContribution({
 			policy: {
 				name: "rm",

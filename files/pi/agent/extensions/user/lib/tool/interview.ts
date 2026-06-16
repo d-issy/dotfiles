@@ -14,7 +14,7 @@ import {
 import { type Static, Type } from "typebox";
 import type { ToolPolicy } from "../policy";
 import { decodePrintableInput } from "../ui";
-import { defineToolContribution, toolCatalog } from "./catalog";
+import { type ToolCatalog, defineToolContribution } from "./catalog";
 
 const choiceSchema = Type.Object({
 	label: Type.String({ description: "User-visible choice label." }),
@@ -651,12 +651,12 @@ async function askMultiple(
 	}
 }
 
-export function registerInterviewTools(): void {
+export function registerInterviewTools(catalog: ToolCatalog): void {
 	const policy: ToolPolicy<AskUserQuestionInput> = {
 		name: ASK_USER_QUESTION_TOOL,
 	};
 
-	toolCatalog.register(
+	catalog.register(
 		defineToolContribution({
 			policy,
 			isErrorResult: isErrorInterviewResult,

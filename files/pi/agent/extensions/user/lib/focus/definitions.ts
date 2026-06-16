@@ -51,7 +51,7 @@ export const BASE_FOCUS_DEFINITIONS: readonly FocusDefinition[] = [
 		description:
 			"Use when the user asks for repository file changes, or after investigation establishes that file changes are needed.",
 		prompt:
-			"You are in edit focus. Make focused file changes with read/write/edit/mv/rm. Keep changes minimal.",
+			"You are in edit focus. Make focused file changes with read/write/edit/mv/rm. Keep changes minimal. Once you have enough exact context for a change, use edit/write instead of rereading the same file repeatedly.",
 		tools: [],
 		toolSets: ["file_read", "file_write"],
 		transition: "confirm",

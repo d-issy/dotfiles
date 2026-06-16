@@ -7,9 +7,9 @@ import {
 } from "@earendil-works/pi-coding-agent";
 import type { TSchema } from "typebox";
 import {
+	type ToolCatalog,
 	type ToolContribution,
 	defineToolContribution,
-	toolCatalog,
 } from "../catalog";
 import { executeProjectTool } from "./execute";
 import { isProjectToolDetails } from "./details";
@@ -128,6 +128,7 @@ function loadProjectToolSettings(cwd: string): ProjectToolSettings {
 export function registerProjectTools(
 	pi: ExtensionAPI,
 	ctx: ExtensionContext,
+	catalog: ToolCatalog,
 ): readonly ProjectToolSummary[] {
 	enabledProjectToolNames = new Set();
 	if (!isProjectUserSettingsTrusted(ctx)) return [];
@@ -165,7 +166,7 @@ export function registerProjectTools(
 			}
 			const resolved = resolveTool(ctx.cwd, normalizeTool(name, rawConfig));
 			const contribution = createProjectToolContribution(resolved);
-			toolCatalog.register(contribution);
+			catalog.register(contribution);
 			pi.registerTool(contribution.definition);
 			registeredProjectTools.set(name, { projectRoot: resolved.projectRoot });
 			currentEnabledProjectToolNames.add(name);

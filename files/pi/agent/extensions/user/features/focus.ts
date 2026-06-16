@@ -40,39 +40,39 @@ const openFocusQuickAction =
 			focus.current,
 		);
 		if (!selected) return;
-		runtime.resetFocusAtAgentEndPending = false;
-		runtime.autoContinueFocusName = undefined;
+		runtime.setResetFocusAtAgentEndPending(false);
+		runtime.cancelAutoContinue();
 		if (selected === BASE_FOCUS) {
-			runtime.userSelectedFocus = false;
+			runtime.setUserSelectedFocus(false);
 			focus.leave(ctx);
-			runtime.focusReminderPending = true;
+			runtime.recordFocusChange(BASE_FOCUS);
 			return;
 		}
-		runtime.userSelectedFocus = true;
+		runtime.setUserSelectedFocus(true);
 		focus.enter(ctx, selected);
-		runtime.focusReminderPending = true;
+		runtime.recordFocusChange(selected);
 	};
 
 const toggleFocusSelector =
 	(focus: FocusController, runtime: FocusRuntime) =>
 	async (ctx: ExtensionContext): Promise<void> => {
-		runtime.resetFocusAtAgentEndPending = false;
-		runtime.autoContinueFocusName = undefined;
+		runtime.setResetFocusAtAgentEndPending(false);
+		runtime.cancelAutoContinue();
 		if (focus.current !== BASE_FOCUS) {
-			runtime.userSelectedFocus = false;
+			runtime.setUserSelectedFocus(false);
 			focus.leave(ctx);
-			runtime.focusReminderPending = true;
+			runtime.recordFocusChange(BASE_FOCUS);
 			return;
 		}
 		await openFocusQuickAction(focus, runtime)(ctx);
 	};
 
 function register(pi: ExtensionAPI, services: UserExtensionServices): void {
-	registerBuiltInFocusPolicies();
+	registerBuiltInFocusPolicies(services.tools);
 	const focus = createFocusController(pi, services.focus);
 	const runtime = createFocusRuntime();
-	registerEnterFocusTool(focus, runtime);
-	registerExitFocusTool(focus, runtime);
+	registerEnterFocusTool(focus, runtime, services.tools);
+	registerExitFocusTool(focus, runtime, services.tools);
 	registerQuickActionHandler("focus", openFocusQuickAction(focus, runtime));
 	pi.registerShortcut("shift+tab", {
 		description: "Leave focus or open focus selector",
@@ -86,7 +86,7 @@ function register(pi: ExtensionAPI, services: UserExtensionServices): void {
 	pi.on("session_start", restoreFocus(focus, runtime));
 	pi.on("agent_end", resetFocusAtAgentEnd(focus, runtime));
 	pi.on("agent_end", autoContinueAfterFocusTransition(pi, focus, runtime));
-	pi.on("tool_call", guardToolCall(pi, focus));
+	pi.on("tool_call", guardToolCall(pi, focus, services.tools));
 }
 
 export function createFocusFeature(): Feature {

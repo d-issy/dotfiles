@@ -57,7 +57,7 @@ export type ToolCatalog = {
 	checkSecretBlock(focusName: string, event: ToolCallEvent): string | undefined;
 };
 
-function createToolCatalog(): ToolCatalog {
+export function createToolCatalog(): ToolCatalog {
 	const tools: ToolContribution[] = [];
 	const policies = new Map<string, ToolPolicy>();
 
@@ -109,5 +109,3 @@ function createToolCatalog(): ToolCatalog {
 		},
 	};
 }
-
-export const toolCatalog: ToolCatalog = createToolCatalog();

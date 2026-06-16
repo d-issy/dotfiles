@@ -8,7 +8,7 @@ import {
 	limitToolOutput,
 	renderLimitedTextResult,
 } from "./output";
-import { defineToolContribution, toolCatalog } from "./catalog";
+import { type ToolCatalog, defineToolContribution } from "./catalog";
 
 const GIT_TIMEOUT_MS = 30_000;
 const GIT_MAX_BUFFER_BYTES = 10 * 1024 * 1024;
@@ -328,22 +328,25 @@ function lineLimitFromInput(
 const DIFF_TRUNCATION_HINT =
 	"Narrow large diffs with paths, or use mode=patch with context=0 to locate changed lines before reading surrounding code.";
 
-function registerGitTool<TInput extends object>(config: {
-	readonly name: string;
-	readonly label: string;
-	readonly description: string;
-	readonly parameters: Parameters<
-		typeof toolCatalog.register
-	>[0]["definition"]["parameters"];
-	readonly promptSnippet: string;
-	readonly buildArgs: (params: TInput) => string[];
-	readonly allowedExitCodes?: readonly number[];
-	readonly emptyMessage?: string;
-	readonly hint?: string;
-	readonly outputFileName?: string;
-	readonly extractSecretPaths?: (input: TInput) => readonly string[];
-}): void {
-	toolCatalog.register(
+function registerGitTool<TInput extends object>(
+	catalog: ToolCatalog,
+	config: {
+		readonly name: string;
+		readonly label: string;
+		readonly description: string;
+		readonly parameters: Parameters<
+			ToolCatalog["register"]
+		>[0]["definition"]["parameters"];
+		readonly promptSnippet: string;
+		readonly buildArgs: (params: TInput) => string[];
+		readonly allowedExitCodes?: readonly number[];
+		readonly emptyMessage?: string;
+		readonly hint?: string;
+		readonly outputFileName?: string;
+		readonly extractSecretPaths?: (input: TInput) => readonly string[];
+	},
+): void {
+	catalog.register(
 		defineToolContribution({
 			policy: {
 				name: config.name,
@@ -379,8 +382,8 @@ function registerGitTool<TInput extends object>(config: {
 	);
 }
 
-export function registerGitTools(): void {
-	registerGitTool<GitStatusInput>({
+export function registerGitTools(catalog: ToolCatalog): void {
+	registerGitTool<GitStatusInput>(catalog, {
 		name: "git_status",
 		label: "git status",
 		description: "Inspect repository status with git status --short --branch.",
@@ -391,7 +394,7 @@ export function registerGitTools(): void {
 		},
 	});
 
-	registerGitTool<GitDiffInput>({
+	registerGitTool<GitDiffInput>(catalog, {
 		name: "git_diff",
 		label: "git diff",
 		description:
@@ -420,7 +423,7 @@ export function registerGitTools(): void {
 		},
 	});
 
-	registerGitTool<GitLogInput>({
+	registerGitTool<GitLogInput>(catalog, {
 		name: "git_log",
 		label: "git log",
 		description: "Inspect commit history with bounded git log output.",
@@ -441,7 +444,7 @@ export function registerGitTools(): void {
 		},
 	});
 
-	registerGitTool<GitShowInput>({
+	registerGitTool<GitShowInput>(catalog, {
 		name: "git_show",
 		label: "git show",
 		description:
@@ -466,7 +469,7 @@ export function registerGitTools(): void {
 		},
 	});
 
-	registerGitTool<GitBranchInput>({
+	registerGitTool<GitBranchInput>(catalog, {
 		name: "git_branch",
 		label: "git branch",
 		description: "Inspect local and remote branches.",
@@ -482,7 +485,7 @@ export function registerGitTools(): void {
 		},
 	});
 
-	registerGitTool<GitLsFilesInput>({
+	registerGitTool<GitLsFilesInput>(catalog, {
 		name: "git_ls_files",
 		label: "git ls-files",
 		description: "List tracked or selected untracked files with git ls-files.",
@@ -499,7 +502,7 @@ export function registerGitTools(): void {
 		},
 	});
 
-	registerGitTool<GitGrepInput>({
+	registerGitTool<GitGrepInput>(catalog, {
 		name: "git_grep",
 		label: "git grep",
 		description: "Search tracked content with git grep.",
@@ -522,7 +525,7 @@ export function registerGitTools(): void {
 		},
 	});
 
-	registerGitTool<GitBlameInput>({
+	registerGitTool<GitBlameInput>(catalog, {
 		name: "git_blame",
 		label: "git blame",
 		description: "Inspect per-line history for a file with git blame.",
