@@ -159,7 +159,7 @@ function projectToolGroups(
 }
 
 function register(pi: ExtensionAPI, services: UserExtensionServices): void {
-	registerCoreUserTools();
+	registerCoreUserTools(services.tools);
 
 	for (const { definition } of services.tools.list()) {
 		pi.registerTool(definition);
@@ -167,7 +167,7 @@ function register(pi: ExtensionAPI, services: UserExtensionServices): void {
 
 	pi.on("session_start", async (_event: SessionStartEvent, ctx) => {
 		await ensureProjectUserSettingsTrusted(ctx);
-		const projectTools = registerProjectTools(pi, ctx);
+		const projectTools = registerProjectTools(pi, ctx, services.tools);
 		activateFocusTools(pi, services.focus.activeFocusDefinition);
 		if (ctx.hasUI) {
 			setTimeout(() => {

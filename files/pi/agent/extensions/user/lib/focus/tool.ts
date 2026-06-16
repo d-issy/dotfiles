@@ -20,7 +20,7 @@ import {
 } from "./definitions";
 import type { FocusController } from "./controller";
 import type { FocusRuntime } from "./runtime";
-import { defineToolContribution, toolCatalog } from "../tool/catalog";
+import { type ToolCatalog, defineToolContribution } from "../tool/catalog";
 
 type FocusToolDetails = Record<string, unknown>;
 
@@ -75,6 +75,7 @@ function renderEnterFocusResult(
 export function registerEnterFocusTool(
 	focus: FocusController,
 	runtime: FocusRuntime,
+	catalog: ToolCatalog,
 ): void {
 	const contribution = defineToolContribution({
 		source: "focus-management",
@@ -235,12 +236,12 @@ export function registerEnterFocusTool(
 					}
 				}
 
-				runtime.resetFocusAtAgentEndPending =
-					getFocusExitMode(definition) === "single-turn";
-				runtime.userSelectedFocus = false;
+				runtime.setResetFocusAtAgentEndPending(
+					getFocusExitMode(definition) === "single-turn",
+				);
+				runtime.setUserSelectedFocus(false);
 				const entered = focus.enter(ctx, definition.name);
-				runtime.autoContinueFocusName = entered.name;
-				runtime.focusReminderPending = true;
+				runtime.scheduleAutoContinue(entered.name);
 				const action =
 					previousFocusName === BASE_FOCUS
 						? `Entered focus '${entered.name}'.`
@@ -263,7 +264,7 @@ export function registerEnterFocusTool(
 			},
 		},
 	});
-	toolCatalog.register(contribution);
+	catalog.register(contribution);
 }
 
 function renderExitFocusCall(_args: { reason: string }, theme: Theme): Text {
@@ -300,6 +301,7 @@ function isFailedFocusToolDetails(details: unknown): boolean {
 export function registerExitFocusTool(
 	focus: FocusController,
 	runtime: FocusRuntime,
+	catalog: ToolCatalog,
 ): void {
 	const contribution = defineToolContribution({
 		source: "focus-management",
@@ -398,11 +400,10 @@ export function registerExitFocusTool(
 				const exitText = previous
 					? `Exited focus '${previous.name}'.`
 					: "Exited focus.";
-				runtime.restorePromptPending = false;
-				runtime.focusReminderPending = true;
-				runtime.resetFocusAtAgentEndPending = false;
-				runtime.userSelectedFocus = false;
-				runtime.autoContinueFocusName = BASE_FOCUS;
+				runtime.setRestorePromptPending(false);
+				runtime.setResetFocusAtAgentEndPending(false);
+				runtime.setUserSelectedFocus(false);
+				runtime.scheduleAutoContinue(BASE_FOCUS);
 				return {
 					content: [
 						{
@@ -420,5 +421,5 @@ export function registerExitFocusTool(
 			},
 		},
 	});
-	toolCatalog.register(contribution);
+	catalog.register(contribution);
 }

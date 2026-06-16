@@ -5,6 +5,6 @@ export {
 	type ToolContribution,
 	type ToolContributionSource,
 	type ToolCatalog,
+	createToolCatalog,
 	defineToolContribution,
-	toolCatalog,
 } from "./catalog";
