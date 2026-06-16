@@ -1,6 +1,8 @@
 {
   "scripts": {
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage"
   },
   "peerDependencies": {
     "@earendil-works/pi-ai": "*",
@@ -10,7 +12,9 @@
   },
   "devDependencies": {
     "@types/node": "^25.9.2",
-    "typescript": "^6.0.3"
+    "@vitest/coverage-v8": "^4.1.9",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.9"
   },
   "packageManager": "pnpm@11.7.0"
 }
