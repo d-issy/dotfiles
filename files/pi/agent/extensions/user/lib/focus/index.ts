@@ -10,7 +10,6 @@ export {
 export {
 	buildFocusRestorePrompt,
 	createFocusController,
-	isFocusReminderMessage,
 	type FocusController,
 	type FocusStateEntry,
 } from "./controller";

@@ -6,14 +6,11 @@ import type {
 	SessionStartEvent,
 } from "@earendil-works/pi-coding-agent";
 import { ensureProjectUserSettingsTrusted } from "../project-settings";
+import type { RegisteredSystemReminder } from "../system-reminder";
 import { clearFocusTransitionDecisions } from "./confirmation";
 import type { FocusController } from "./controller";
-import {
-	BASE_FOCUS,
-	FOCUS_REMINDER_TYPE,
-	FOCUS_STATE_TYPE,
-	getFocusExitMode,
-} from "./definitions";
+import { BASE_FOCUS, FOCUS_STATE_TYPE, getFocusExitMode } from "./definitions";
+import type { FocusReminderDetails } from "./prompt";
 import type { FocusRuntime } from "./runtime";
 import { findPersistedFocus } from "./startup";
 
@@ -70,6 +67,7 @@ export const autoContinueAfterFocusTransition =
 		pi: ExtensionAPI,
 		focus: FocusController,
 		runtime: FocusRuntime,
+		reminder: RegisteredSystemReminder<FocusReminderDetails>,
 	): ExtensionHandler<AgentEndEvent> =>
 	async () => {
 		const transition = runtime.consumeAutoContinue();
@@ -77,16 +75,14 @@ export const autoContinueAfterFocusTransition =
 		if (!runtime.isCurrentTransition(transition.id)) return;
 		if (focus.current !== transition.focusName) return;
 		if (transition.focusName !== BASE_FOCUS && !focus.active) return;
-		runtime.requestFocusReminder();
 		const isBase = transition.focusName === BASE_FOCUS;
 		// This message only wakes the agent up. Focus-specific guidance is rebuilt
-		// from current runtime state in the context hook. The transition id lets us
-		// drop older queued wakeups if a later focus change happens first.
-		pi.sendMessage(
+		// from current runtime state by the system reminder registry. The transition
+		// id lets the registry drop older queued wakeups if a later focus change wins.
+		reminder.sendWakeup(
+			pi,
 			{
-				customType: FOCUS_REMINDER_TYPE,
 				content: [
-					"<system-reminder>",
 					isBase
 						? "A focus exit completed. Continue from the latest focus state."
 						: "A focus transition completed. Continue from the latest focus state.",
@@ -94,9 +90,7 @@ export const autoContinueAfterFocusTransition =
 					isBase
 						? "Continue from the focus tool result and its exit handoff. If another focus is needed, use enter_focus."
 						: "Continue the user's request under the current focus. Follow the active focus instructions and available tools. Do not answer only with a focus status message.",
-					"</system-reminder>",
-				].join("\n"),
-				display: false,
+				],
 				details: {
 					queuedFocus: transition.focusName,
 					transitionId: transition.id,
