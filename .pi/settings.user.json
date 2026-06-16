@@ -77,16 +77,23 @@
       ]
     },
     "format": {
-      "description": "Format the project in place with treefmt.",
+      "description": "Format the project in place.",
       "executionMode": "sequential",
       "promptSnippet": "Format the project in place",
       "promptGuidelines": [
-        "Use format to auto-fix formatting, then run lint to verify."
+        "Use format to auto-fix formatting and supported lint issues, then run lint to verify."
       ],
       "commands": [
         {
           "label": "treefmt",
           "command": "treefmt"
+        },
+        {
+          "label": "oxlint --fix",
+          "command": "oxlint",
+          "arguments": [
+            "--fix"
+          ]
         }
       ]
     },
