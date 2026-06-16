@@ -46,7 +46,7 @@ export function createFocusRuntime(): FocusRuntime {
 	let latestTransition: FocusAutoContinue = { id: 0, focusName: BASE_FOCUS };
 	let pendingAutoContinue: FocusAutoContinue | undefined;
 
-	const recordFocusChange = (
+	const bumpTransition = (
 		focusName: FocusName | typeof BASE_FOCUS,
 	): FocusAutoContinue => {
 		latestTransition = { id: nextTransitionId++, focusName };
@@ -93,12 +93,12 @@ export function createFocusRuntime(): FocusRuntime {
 			userSelectedFocus = selected;
 		},
 		recordFocusChange(focusName) {
-			const transition = recordFocusChange(focusName);
+			const transition = bumpTransition(focusName);
 			focusReminderPending = true;
 			return transition;
 		},
 		scheduleAutoContinue(focusName) {
-			const transition = recordFocusChange(focusName);
+			const transition = bumpTransition(focusName);
 			pendingAutoContinue = transition;
 			focusReminderPending = true;
 			return transition;
