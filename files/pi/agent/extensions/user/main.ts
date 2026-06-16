@@ -5,6 +5,7 @@ import { createExitConfirmFeature } from "./features/exit-confirm";
 import { createFocusFeature } from "./features/focus";
 import { createQuickActionsFeature } from "./features/quick-actions";
 import { createStatusFeature } from "./features/status";
+import { createSystemRemindersFeature } from "./features/system-reminders";
 import { createThinkingFeature } from "./features/thinking";
 import { createTmuxNoticeFeature } from "./features/tmux-notice";
 import { createToolFeature } from "./features/tool";
@@ -15,6 +16,7 @@ function createFeatures(): readonly Feature[] {
 		createStatusFeature(),
 		createTurnMetricsFeature(),
 		createExitConfirmFeature(),
+		createSystemRemindersFeature(),
 		createFocusFeature(),
 		createQuickActionsFeature(),
 		createThinkingFeature(),

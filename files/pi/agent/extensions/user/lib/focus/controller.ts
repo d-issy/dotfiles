@@ -5,7 +5,6 @@ import type {
 import { isProjectUserSettingsTrusted } from "../project-settings";
 import {
 	BASE_FOCUS,
-	FOCUS_REMINDER_TYPE,
 	FOCUS_STATE_TYPE,
 	type FocusDefinition,
 	type FocusName,
@@ -47,15 +46,6 @@ export type FocusController = {
 
 export function buildFocusRestorePrompt(focus: FocusDefinition): string {
 	return `[FOCUS RESTORED: ${focus.name}]\n${focus.prompt}`;
-}
-
-export function isFocusReminderMessage(message: {
-	role: string;
-	customType?: string;
-}): boolean {
-	return (
-		message.role === "custom" && message.customType === FOCUS_REMINDER_TYPE
-	);
 }
 
 export function createFocusController(

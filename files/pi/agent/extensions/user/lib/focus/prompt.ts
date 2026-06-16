@@ -1,29 +1,28 @@
 import type {
 	BeforeAgentStartEvent,
 	BeforeAgentStartEventResult,
-	ContextEvent,
 	ExtensionAPI,
 	ExtensionHandler,
 } from "@earendil-works/pi-coding-agent";
-import {
-	type FocusController,
-	buildFocusRestorePrompt,
-	isFocusReminderMessage,
-} from "./controller";
+import { type FocusController, buildFocusRestorePrompt } from "./controller";
 import {
 	ENTER_FOCUS_TOOL,
 	EXIT_FOCUS_TOOL,
 	FOCUS_REMINDER_TYPE,
 } from "./definitions";
 import type { FocusRuntime } from "./runtime";
+import type {
+	RegisteredSystemReminder,
+	SystemReminderPayload,
+	SystemReminderRegistry,
+} from "../system-reminder";
 
-type ContextResult = { messages?: ContextEvent["messages"] };
 type ToolInfo = ReturnType<ExtensionAPI["getAllTools"]>[number];
-type FocusReminderWithTools = {
-	customType: typeof FOCUS_REMINDER_TYPE;
-	content: string;
-	display: false;
-	details: { focus: string; transitionId: number };
+export type FocusReminderDetails = {
+	readonly focus?: string;
+	readonly queuedFocus?: string;
+	readonly transitionId: number;
+	readonly reason?: string;
 };
 
 function formatFocusList(
@@ -157,41 +156,27 @@ function buildActiveFocusPrompt(focus: FocusController): string | undefined {
 		: undefined;
 }
 
-function buildStaleFocusReminderPayload(
-	focus: FocusController,
-	runtime: FocusRuntime,
-): FocusReminderWithTools {
-	return {
-		customType: FOCUS_REMINDER_TYPE,
-		content: [
-			"<system-reminder>",
-			"An obsolete focus-transition wakeup was removed.",
-			"Do not call tools or continue previous work solely because of that obsolete wakeup.",
-			"If the latest user message contains a separate request, answer that request under the current focus; otherwise respond briefly that there is no pending action.",
-			"</system-reminder>",
-		].join("\n"),
-		display: false,
-		details: {
-			focus: focus.current,
-			transitionId: runtime.latestTransition.id,
-		},
-	};
-}
-
 function buildFocusReminderPayloadWithTools(
 	pi: ExtensionAPI,
 	focus: FocusController,
 	runtime: FocusRuntime,
-): FocusReminderWithTools {
+): SystemReminderPayload<FocusReminderDetails> {
 	const tools = visibleToolDefinitions(pi, focus, runtime);
 	const activePrompt = buildActiveFocusPrompt(focus);
 	const focusInstructions = activePrompt
 		? `Focus instructions:\n${activePrompt}`
 		: `Focus routing instructions:\n${buildFocusSystemPrompt(focus)}`;
 	return {
-		customType: FOCUS_REMINDER_TYPE,
-		content: `<system-reminder>\nCurrent focus: ${focus.current}. Follow the focus instructions.\n\n${focusInstructions}\n\nAvailable tool definitions:\n\`\`\`json\n${formatToolDefinitions(tools)}\n\`\`\`\n</system-reminder>`,
-		display: false,
+		content: [
+			`Current focus: ${focus.current}. Follow the focus instructions.`,
+			"",
+			focusInstructions,
+			"",
+			"Available tool definitions:",
+			"```json",
+			formatToolDefinitions(tools),
+			"```",
+		].join("\n"),
 		details: {
 			focus: focus.current,
 			transitionId: runtime.latestTransition.id,
@@ -232,10 +217,7 @@ export const injectFocusRestorePrompt =
 				: { systemPrompt };
 	};
 
-function transitionIdFromMessage(message: unknown): number | undefined {
-	if (typeof message !== "object" || message === null) return undefined;
-	if (!("details" in message)) return undefined;
-	const details = message.details;
+function transitionIdFromDetails(details: unknown): number | undefined {
 	if (typeof details !== "object" || details === null) return undefined;
 	if (!("transitionId" in details)) return undefined;
 	return typeof details.transitionId === "number"
@@ -243,50 +225,17 @@ function transitionIdFromMessage(message: unknown): number | undefined {
 		: undefined;
 }
 
-export const injectFocusReminder =
-	(
-		pi: ExtensionAPI,
-		focus: FocusController,
-		runtime: FocusRuntime,
-	): ExtensionHandler<ContextEvent, ContextResult> =>
-	async (event) => {
-		const focusReminderMessages = event.messages.filter(isFocusReminderMessage);
-		const messagesWithoutFocusReminders = event.messages.filter(
-			(message) => !isFocusReminderMessage(message),
-		);
-		const removedStoredReminder = focusReminderMessages.length > 0;
-		const hasCurrentStoredReminder = focusReminderMessages.some((message) =>
-			runtime.isCurrentTransition(transitionIdFromMessage(message)),
-		);
-		const shouldInjectReminder =
-			runtime.consumeFocusReminderPending() || hasCurrentStoredReminder;
-		if (!shouldInjectReminder) {
-			if (!removedStoredReminder) return undefined;
-			const staleReminder = buildStaleFocusReminderPayload(focus, runtime);
-			return {
-				messages: [
-					...messagesWithoutFocusReminders,
-					{
-						role: "custom",
-						...staleReminder,
-						timestamp: Date.now(),
-					},
-				],
-			};
-		}
-
-		// Stored focus reminders can be delivered after a later focus transition.
-		// Treat current reminders as triggers only and regenerate the actual reminder
-		// from runtime state so the model never sees stale focus/tool guidance.
-		const reminder = buildFocusReminderPayloadWithTools(pi, focus, runtime);
-		return {
-			messages: [
-				...messagesWithoutFocusReminders,
-				{
-					role: "custom",
-					...reminder,
-					timestamp: Date.now(),
-				},
-			],
-		};
-	};
+export function registerFocusReminderSource(
+	pi: ExtensionAPI,
+	focus: FocusController,
+	runtime: FocusRuntime,
+	reminders: SystemReminderRegistry,
+): RegisteredSystemReminder<FocusReminderDetails> {
+	return reminders.register<FocusReminderDetails>({
+		customType: FOCUS_REMINDER_TYPE,
+		consumePending: () => runtime.consumeFocusReminderPending(),
+		isCurrent: (details) =>
+			runtime.isCurrentTransition(transitionIdFromDetails(details)),
+		buildReminder: () => buildFocusReminderPayloadWithTools(pi, focus, runtime),
+	});
+}
