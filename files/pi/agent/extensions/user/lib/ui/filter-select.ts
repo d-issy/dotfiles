@@ -21,7 +21,6 @@ import {
 import {
 	type SelectItem,
 	fuzzyFilter,
-	getKeybindings,
 	matchesKey,
 	truncateToWidth,
 	visibleWidth,
@@ -32,17 +31,23 @@ import { getVisibleRange } from "./scroll";
 
 export type FilterSelectItem = SelectItem;
 
+export type FilterSelectTab = {
+	readonly label: string;
+	readonly items: readonly FilterSelectItem[];
+};
+
 export type FilterSelectOptions = {
 	title: string;
 	items: readonly FilterSelectItem[];
+	tabs?: readonly FilterSelectTab[];
 	maxVisible?: number;
 	currentValue?: string;
 	filterPlaceholder?: string;
 	footer?: string;
 };
 
-const DEFAULT_FOOTER =
-	"type fuzzy filter • backspace edit • ↑↓ navigate • enter select • esc cancel";
+const DEFAULT_FOOTER = "↑↓ navigate • enter select • esc cancel";
+const DEFAULT_TABBED_FOOTER = `tab switch view • ${DEFAULT_FOOTER}`;
 const DEFAULT_MAX_VISIBLE = 10;
 const DESCRIPTION_COLUMN_START = 30;
 const MIN_DESCRIPTION_WIDTH = 10;
@@ -123,6 +128,22 @@ function createFilterState(
 
 function normalizeDescription(item: FilterSelectItem): string {
 	return item.description?.replace(/[\r\n]+/gu, " ").trim() ?? "";
+}
+
+function renderTabs(
+	theme: Theme,
+	tabs: readonly FilterSelectTab[],
+	activeIndex: number,
+	width: number,
+): string {
+	const line = tabs
+		.map((tab, index) =>
+			index === activeIndex
+				? theme.fg("accent", theme.bold(`[${tab.label}]`))
+				: theme.fg("muted", tab.label),
+		)
+		.join("  ");
+	return truncateToWidth(line, width, "");
 }
 
 function renderItem(
@@ -217,23 +238,37 @@ export async function showFilterSelect(
 	ctx: ExtensionContext,
 	options: FilterSelectOptions,
 ): Promise<string | undefined> {
-	return ctx.ui.custom<string | undefined>((tui, theme, _keybindings, done) => {
-		const keybindings = getKeybindings();
+	return ctx.ui.custom<string | undefined>((tui, theme, keybindings, done) => {
 		const border = new DynamicBorder((text) => theme.fg("accent", text));
-		const maxVisible = Math.max(
-			1,
-			options.maxVisible ?? Math.min(options.items.length, DEFAULT_MAX_VISIBLE),
-		);
-		const state = createFilterState(options.items, options.currentValue);
+		const tabs = options.tabs?.filter((tab) => tab.items.length > 0) ?? [];
+		let activeTabIndex = 0;
+		const getActiveItems = (): readonly FilterSelectItem[] =>
+			tabs[activeTabIndex]?.items ?? options.items;
+		const getMaxVisible = (): number =>
+			Math.max(
+				1,
+				options.maxVisible ??
+					Math.min(getActiveItems().length, DEFAULT_MAX_VISIBLE),
+			);
+		let state = createFilterState(getActiveItems(), options.currentValue);
 
 		const selectCurrent = (): void => {
 			if (state.selectedItem) done(state.selectedItem.value);
 		};
 		const cancel = (): void => done(undefined);
+		const cycleTab = (): void => {
+			if (tabs.length === 0) return;
+			activeTabIndex = (activeTabIndex + 1) % tabs.length;
+			state = createFilterState(getActiveItems(), options.currentValue);
+		};
 
 		// First binding whose `pressed` matches wins; input matching nothing is
 		// treated as text typed into the filter.
 		const keyActions: readonly KeyAction[] = [
+			{
+				pressed: (data) => tabs.length > 0 && matchesKey(data, "tab"),
+				run: cycleTab,
+			},
 			{
 				pressed: (data) => matchesKey(data, "backspace"),
 				run: () => state.setQuery(state.query.slice(0, -1)),
@@ -262,10 +297,17 @@ export async function showFilterSelect(
 				return [
 					...border.render(width),
 					truncateToWidth(theme.fg("accent", theme.bold(options.title)), width),
+					...(tabs.length > 0
+						? [renderTabs(theme, tabs, activeTabIndex, width)]
+						: []),
 					truncateToWidth(theme.fg("dim", filterLine), width),
-					...renderList(theme, options, state, width, maxVisible),
+					...renderList(theme, options, state, width, getMaxVisible()),
 					truncateToWidth(
-						theme.fg("dim", options.footer ?? DEFAULT_FOOTER),
+						theme.fg(
+							"dim",
+							options.footer ??
+								(tabs.length > 0 ? DEFAULT_TABBED_FOOTER : DEFAULT_FOOTER),
+						),
 						width,
 					),
 					...border.render(width),
