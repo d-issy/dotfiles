@@ -6,7 +6,7 @@ export default defineConfig({
 		coverage: {
 			provider: "v8",
 			reporter: ["text", "json-summary", "html"],
-			include: ["files/pi/agent/extensions/user/**/*.ts"],
+			include: ["files/pi/agent/extensions/user/lib/**/*.ts"],
 			exclude: [
 				"files/pi/agent/extensions/**/*.test.ts",
 				"files/pi/agent/extensions/**/test-support/**",
