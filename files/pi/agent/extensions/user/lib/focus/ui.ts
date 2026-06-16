@@ -27,10 +27,16 @@ export function applyFocusStatus(
 }
 
 function describeFocus(focus: FocusDefinition): string {
-	const tags = [
-		focus.transition === "manual" ? "manual" : undefined,
-		getFocusExitMode(focus) === "explicit" ? "explicit exit" : undefined,
-	].filter(Boolean);
+	const tags: string[] = [];
+
+	if (focus.transition === "manual") {
+		tags.push("manual");
+	}
+
+	if (getFocusExitMode(focus) === "explicit") {
+		tags.push("explicit exit");
+	}
+
 	return tags.length === 0
 		? focus.description
 		: `${focus.description} (${tags.join(", ")})`;
