@@ -55,6 +55,20 @@ describe("focus tool access", () => {
 		]);
 	});
 
+	it("can hide base focus management tools for locked focus mode", () => {
+		const api = pi(["read", "multi_tool_use.parallel", ENTER_FOCUS_TOOL]);
+
+		assert.deepEqual(
+			getBaseFocusTools(api, { includeManagementTools: false }),
+			["multi_tool_use.parallel"],
+		);
+		assert.deepEqual(
+			activateBaseFocusTools(api, { includeManagementTools: false }),
+			["multi_tool_use.parallel"],
+		);
+		assert.deepEqual(api.activeTools, ["multi_tool_use.parallel"]);
+	});
+
 	it("active single-turn focuses get declared tools plus enter_focus", () => {
 		const api = pi([
 			"read",
