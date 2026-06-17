@@ -31,7 +31,11 @@ export type FocusController = {
 	enter(
 		ctx: ExtensionContext,
 		focusName: FocusName,
-		options?: { persist?: boolean; force?: boolean },
+		options?: {
+			readonly persist?: boolean;
+			readonly force?: boolean;
+			readonly includeManagementTools?: boolean;
+		},
 	): FocusDefinition;
 	leave(
 		ctx: ExtensionContext,
@@ -41,7 +45,10 @@ export type FocusController = {
 		ctx: ExtensionContext,
 		focusName: FocusName | typeof BASE_FOCUS | undefined,
 	): void;
-	allowedToolNames(pi: ExtensionAPI): ReadonlySet<string>;
+	allowedToolNames(
+		pi: ExtensionAPI,
+		options?: { readonly includeManagementTools?: boolean },
+	): ReadonlySet<string>;
 };
 
 export function buildFocusRestorePrompt(focus: FocusDefinition): string {
@@ -66,12 +73,20 @@ export function createFocusController(
 		sharedState.setFocusState(currentFocusName, currentFocus, registry);
 	}
 
-	function apply(ctx: ExtensionContext, options?: { force?: boolean }): void {
+	function apply(
+		ctx: ExtensionContext,
+		options?: {
+			readonly force?: boolean;
+			readonly includeManagementTools?: boolean;
+		},
+	): void {
 		if (!options?.force && currentFocusName === sharedState.currentFocusName) {
 			return;
 		}
 		publish();
-		activateFocusTools(pi, currentFocus);
+		activateFocusTools(pi, currentFocus, {
+			includeManagementTools: options?.includeManagementTools,
+		});
 		applyFocusStatus(ctx, currentFocus);
 	}
 
@@ -116,7 +131,10 @@ export function createFocusController(
 			currentFocusName = focus.name;
 			currentFocus = focus;
 			if (options?.persist ?? true) persist(focus.name);
-			apply(ctx, { force: true });
+			apply(ctx, {
+				force: true,
+				includeManagementTools: options?.includeManagementTools,
+			});
 			return focus;
 		},
 		leave(ctx, options) {
@@ -143,10 +161,10 @@ export function createFocusController(
 			applyFocusStatus(ctx, focus);
 			publish();
 		},
-		allowedToolNames(focusPi) {
+		allowedToolNames(focusPi, options) {
 			return new Set(
 				currentFocus
-					? getActiveFocusTools(focusPi, currentFocus)
+					? getActiveFocusTools(focusPi, currentFocus, options)
 					: getBaseFocusTools(focusPi),
 			);
 		},

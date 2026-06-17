@@ -11,6 +11,7 @@ import {
 	registerBuiltInFocusPolicies,
 	showFocusSelector,
 } from "../lib/focus";
+import { getRequestedFocusName, registerFocusFlag } from "../lib/focus/cli";
 import { registerQuickActionHandler } from "../lib/quick-actions";
 import { guardToolCall } from "../lib/focus/guard";
 import { filterProviderTools } from "../lib/focus/provider-filter";
@@ -34,6 +35,13 @@ import {
 const openFocusQuickAction =
 	(focus: FocusController, runtime: FocusRuntime) =>
 	async (ctx: ExtensionContext): Promise<void> => {
+		if (runtime.lockedFocusName) {
+			ctx.ui.notify(
+				`Focus is locked to '${runtime.lockedFocusName}' by --focus.`,
+				"warning",
+			);
+			return;
+		}
 		const selected = await showFocusSelector(
 			ctx,
 			focus.registry,
@@ -56,6 +64,13 @@ const openFocusQuickAction =
 const toggleFocusSelector =
 	(focus: FocusController, runtime: FocusRuntime) =>
 	async (ctx: ExtensionContext): Promise<void> => {
+		if (runtime.lockedFocusName) {
+			ctx.ui.notify(
+				`Focus is locked to '${runtime.lockedFocusName}' by --focus.`,
+				"warning",
+			);
+			return;
+		}
 		runtime.setResetFocusAtAgentEndPending(false);
 		runtime.cancelAutoContinue();
 		if (focus.current !== BASE_FOCUS) {
@@ -68,6 +83,7 @@ const toggleFocusSelector =
 	};
 
 function register(pi: ExtensionAPI, services: UserExtensionServices): void {
+	registerFocusFlag(pi);
 	registerBuiltInFocusPolicies(services.tools);
 	const focus = createFocusController(pi, services.focus);
 	const runtime = createFocusRuntime();
@@ -85,16 +101,23 @@ function register(pi: ExtensionAPI, services: UserExtensionServices): void {
 		handler: toggleFocusSelector(focus, runtime),
 	});
 	pi.on("before_agent_start", injectFocusRestorePrompt(pi, focus, runtime));
-	pi.on("before_provider_request", filterProviderTools(pi, focus));
-	pi.on("session_before_switch", persistFocusBeforeNew(pi, focus));
+	pi.on("before_provider_request", filterProviderTools(pi, focus, runtime));
+	pi.on("session_before_switch", persistFocusBeforeNew(pi, focus, runtime));
 	pi.on("session_start", resetConfirmDecisions());
-	pi.on("session_start", restoreFocus(focus, runtime));
+	pi.on(
+		"session_start",
+		restoreFocus(focus, runtime, {
+			getLockedFocusName: () => getRequestedFocusName(pi),
+			onLockedFocusName: (focusName) =>
+				services.focus.setLockedFocusName(focusName),
+		}),
+	);
 	pi.on("agent_end", resetFocusAtAgentEnd(focus, runtime));
 	pi.on(
 		"agent_end",
 		autoContinueAfterFocusTransition(pi, focus, runtime, focusReminder),
 	);
-	pi.on("tool_call", guardToolCall(pi, focus, services.tools));
+	pi.on("tool_call", guardToolCall(pi, focus, services.tools, runtime));
 }
 
 export function createFocusFeature(): Feature {

@@ -9,7 +9,12 @@ import { ensureProjectUserSettingsTrusted } from "../project-settings";
 import type { RegisteredSystemReminder } from "../system-reminder";
 import { clearFocusTransitionDecisions } from "./confirmation";
 import type { FocusController } from "./controller";
-import { BASE_FOCUS, FOCUS_STATE_TYPE, getFocusExitMode } from "./definitions";
+import {
+	BASE_FOCUS,
+	FOCUS_STATE_TYPE,
+	type FocusName,
+	getFocusExitMode,
+} from "./definitions";
 import type { FocusReminderDetails } from "./prompt";
 import type { FocusRuntime } from "./runtime";
 import { findPersistedFocus } from "./startup";
@@ -20,28 +25,75 @@ export const persistFocusBeforeNew =
 	(
 		pi: ExtensionAPI,
 		focus: FocusController,
+		runtime: FocusRuntime,
 	): ExtensionHandler<SessionBeforeSwitchEvent, SessionBeforeSwitchResult> =>
 	async (event) => {
 		if (event.reason !== "new") return;
+		if (runtime.lockedFocusName) return;
 		pi.appendEntry(FOCUS_STATE_TYPE, { focus: focus.current });
 	};
+
+type RestoreFocusOptions = {
+	readonly getLockedFocusName?: () => FocusName | undefined;
+	readonly onLockedFocusName?: (focusName: FocusName | undefined) => void;
+};
+
+function formatUnknownLockedFocusMessage(
+	requested: FocusName,
+	available: readonly FocusName[],
+): string {
+	const availableText =
+		available.length > 0
+			? `Available focuses: ${available.map((name) => `'${name}'`).join(", ")}.`
+			: "No focuses are currently available.";
+	return `Unknown --focus '${requested}'. ${availableText}`;
+}
 
 export const restoreFocus =
 	(
 		focus: FocusController,
 		runtime: FocusRuntime,
+		options?: RestoreFocusOptions,
 	): ExtensionHandler<SessionStartEvent> =>
 	async (_event, ctx) => {
 		await ensureProjectUserSettingsTrusted(ctx);
 		focus.loadProjectFocuses(ctx);
+		const lockedFocusName = options?.getLockedFocusName?.();
+		runtime.setLockedFocusName(lockedFocusName);
+		options?.onLockedFocusName?.(lockedFocusName);
+		runtime.setResetFocusAtAgentEndPending(false);
+		runtime.setUserSelectedFocus(false);
+		runtime.cancelAutoContinue();
+
+		if (lockedFocusName) {
+			if (!focus.registry.get(lockedFocusName)) {
+				focus.restore(ctx, undefined);
+				const available = focus.registry
+					.list()
+					.map((definition) => definition.name);
+				const message = formatUnknownLockedFocusMessage(
+					lockedFocusName,
+					available,
+				);
+				if (ctx.hasUI) ctx.ui.notify(message, "error");
+				throw new Error(message);
+			}
+			focus.enter(ctx, lockedFocusName, {
+				persist: false,
+				force: true,
+				includeManagementTools: false,
+			});
+			runtime.recordFocusChange(focus.current);
+			runtime.setRestorePromptPending(true);
+			runtime.setFocusReminderPending(true);
+			return;
+		}
+
 		const persisted = findPersistedFocus(ctx);
 		focus.restore(ctx, persisted);
 		runtime.recordFocusChange(focus.current);
 		runtime.setRestorePromptPending(focus.active !== undefined);
 		runtime.setFocusReminderPending(focus.active !== undefined);
-		runtime.setResetFocusAtAgentEndPending(false);
-		runtime.setUserSelectedFocus(false);
-		runtime.cancelAutoContinue();
 	};
 
 export const resetFocusAtAgentEnd =
@@ -50,6 +102,7 @@ export const resetFocusAtAgentEnd =
 		runtime: FocusRuntime,
 	): ExtensionHandler<AgentEndEvent> =>
 	async (_event, ctx) => {
+		if (runtime.lockedFocusName) return;
 		if (runtime.pendingAutoContinue) return;
 		if (!focus.active || !runtime.resetFocusAtAgentEndPending) return;
 		if (getFocusExitMode(focus.active) !== "single-turn") {

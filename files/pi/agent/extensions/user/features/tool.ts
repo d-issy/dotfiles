@@ -168,7 +168,9 @@ function register(pi: ExtensionAPI, services: UserExtensionServices): void {
 	pi.on("session_start", async (_event: SessionStartEvent, ctx) => {
 		await ensureProjectUserSettingsTrusted(ctx);
 		const projectTools = registerProjectTools(pi, ctx, services.tools);
-		activateFocusTools(pi, services.focus.activeFocusDefinition);
+		activateFocusTools(pi, services.focus.activeFocusDefinition, {
+			includeManagementTools: services.focus.lockedFocusName === undefined,
+		});
 		if (ctx.hasUI) {
 			setTimeout(() => {
 				const { groups, unfocusedTools } = projectToolGroups(

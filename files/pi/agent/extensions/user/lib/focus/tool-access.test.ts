@@ -73,6 +73,25 @@ describe("focus tool access", () => {
 		]);
 	});
 
+	it("can hide focus management tools for locked focus mode", () => {
+		const api = pi([
+			"read",
+			"write",
+			"multi_tool_use.parallel",
+			ENTER_FOCUS_TOOL,
+			EXIT_FOCUS_TOOL,
+		]);
+
+		assert.deepEqual(
+			getActiveFocusTools(api, focus(), { includeManagementTools: false }),
+			["multi_tool_use.parallel", "read", "write"],
+		);
+		assert.deepEqual(
+			activateFocusTools(api, focus(), { includeManagementTools: false }),
+			["multi_tool_use.parallel", "read", "write"],
+		);
+	});
+
 	it("explicit-exit focuses expose exit_focus instead of enter_focus", () => {
 		const api = pi([
 			"read",

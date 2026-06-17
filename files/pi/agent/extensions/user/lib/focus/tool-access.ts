@@ -24,10 +24,16 @@ function filterAvailable(pi: ExtensionAPI, names: readonly string[]): string[] {
 	);
 }
 
-export function getBaseFocusTools(pi: ExtensionAPI): string[] {
+export function getBaseFocusTools(
+	pi: ExtensionAPI,
+	options?: FocusToolAccessOptions,
+): string[] {
 	return filterAvailable(
 		pi,
-		unique([...ALWAYS_ALLOWED_TOOL_NAMES, ENTER_FOCUS_TOOL]),
+		unique([
+			...ALWAYS_ALLOWED_TOOL_NAMES,
+			...(options?.includeManagementTools === false ? [] : [ENTER_FOCUS_TOOL]),
+		]),
 	);
 }
 
@@ -40,7 +46,15 @@ function declaredFocusToolNames(focus: FocusDefinition): string[] {
 	);
 }
 
-function activeFocusManagementToolNames(focus: FocusDefinition): string[] {
+type FocusToolAccessOptions = {
+	readonly includeManagementTools?: boolean;
+};
+
+function activeFocusManagementToolNames(
+	focus: FocusDefinition,
+	options?: FocusToolAccessOptions,
+): string[] {
+	if (options?.includeManagementTools === false) return [];
 	switch (getFocusExitMode(focus)) {
 		case "explicit":
 			return [EXIT_FOCUS_TOOL];
@@ -52,19 +66,23 @@ function activeFocusManagementToolNames(focus: FocusDefinition): string[] {
 export function getActiveFocusTools(
 	pi: ExtensionAPI,
 	focus: FocusDefinition,
+	options?: FocusToolAccessOptions,
 ): string[] {
 	return filterAvailable(
 		pi,
 		unique([
 			...ALWAYS_ALLOWED_TOOL_NAMES,
 			...declaredFocusToolNames(focus),
-			...activeFocusManagementToolNames(focus),
+			...activeFocusManagementToolNames(focus, options),
 		]),
 	);
 }
 
-export function activateBaseFocusTools(pi: ExtensionAPI): string[] {
-	const tools = getBaseFocusTools(pi);
+export function activateBaseFocusTools(
+	pi: ExtensionAPI,
+	options?: FocusToolAccessOptions,
+): string[] {
+	const tools = getBaseFocusTools(pi, options);
 	pi.setActiveTools(tools);
 	return tools;
 }
@@ -72,8 +90,11 @@ export function activateBaseFocusTools(pi: ExtensionAPI): string[] {
 export function activateFocusTools(
 	pi: ExtensionAPI,
 	focus: FocusDefinition | undefined,
+	options?: FocusToolAccessOptions,
 ): string[] {
-	const tools = focus ? getActiveFocusTools(pi, focus) : getBaseFocusTools(pi);
+	const tools = focus
+		? getActiveFocusTools(pi, focus, options)
+		: getBaseFocusTools(pi, options);
 	pi.setActiveTools(tools);
 	return tools;
 }

@@ -12,17 +12,20 @@ const emptyRegistry = loadFocusRegistry("/", {
 export type FocusSharedState = {
 	readonly currentFocusName: FocusName | typeof BASE_FOCUS;
 	readonly activeFocusDefinition: FocusDefinition | undefined;
+	readonly lockedFocusName: FocusName | undefined;
 	readonly registry: FocusRegistry;
 	setFocusState(
 		name: FocusName | typeof BASE_FOCUS,
 		definition: FocusDefinition | undefined,
 		registry: FocusRegistry,
 	): void;
+	setLockedFocusName(name: FocusName | undefined): void;
 };
 
 export function createFocusSharedState(): FocusSharedState {
 	let currentFocusName: FocusName | typeof BASE_FOCUS = BASE_FOCUS;
 	let activeFocusDefinition: FocusDefinition | undefined;
+	let lockedFocusName: FocusName | undefined;
 	let registry: FocusRegistry = emptyRegistry;
 
 	return {
@@ -32,6 +35,9 @@ export function createFocusSharedState(): FocusSharedState {
 		get activeFocusDefinition() {
 			return activeFocusDefinition;
 		},
+		get lockedFocusName() {
+			return lockedFocusName;
+		},
 		get registry() {
 			return registry;
 		},
@@ -39,6 +45,9 @@ export function createFocusSharedState(): FocusSharedState {
 			currentFocusName = nextName;
 			activeFocusDefinition = nextDefinition;
 			registry = nextRegistry;
+		},
+		setLockedFocusName(name) {
+			lockedFocusName = name;
 		},
 	};
 }

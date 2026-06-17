@@ -6,6 +6,7 @@ import type {
 } from "@earendil-works/pi-coding-agent";
 import type { ToolCatalog } from "../tool";
 import type { FocusController } from "./controller";
+import type { FocusRuntime } from "./runtime";
 
 type BlockedToolCall = { block: true; reason: string };
 
@@ -18,11 +19,14 @@ export const guardToolCall =
 		pi: ExtensionAPI,
 		focus: FocusController,
 		catalog: ToolCatalog,
+		runtime?: FocusRuntime,
 	): ExtensionHandler<ToolCallEvent, ToolCallEventResult> =>
 	async (event) => {
 		const notAllowed = catalog.checkToolAllowed(
 			focus.current,
-			focus.allowedToolNames(pi),
+			focus.allowedToolNames(pi, {
+				includeManagementTools: runtime?.lockedFocusName === undefined,
+			}),
 			event,
 		);
 		if (notAllowed) return block(notAllowed);
