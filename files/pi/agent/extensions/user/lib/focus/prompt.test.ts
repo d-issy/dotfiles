@@ -137,6 +137,26 @@ describe("focus prompt injection", () => {
 		assert.doesNotMatch(second?.systemPrompt ?? "", /\[FOCUS RESTORED/u);
 	});
 
+	it("hides focus management tools and adds lock guidance in locked focus mode", async () => {
+		const runtime = createFocusRuntime();
+		runtime.setLockedFocusName("edit");
+		const focus = focusController({
+			active: activeFocus(),
+			allowed: ["read", ENTER_FOCUS_TOOL, EXIT_FOCUS_TOOL],
+		});
+
+		const result = await injectFocusRestorePrompt(
+			pi(),
+			focus,
+			runtime,
+		)(beforeAgentEvent(baseSystemPrompt) as never, undefined as never);
+
+		assert.match(result?.systemPrompt ?? "", /\[FOCUS LOCKED: edit\]/u);
+		assert.match(result?.systemPrompt ?? "", /- read: Read files/u);
+		assert.doesNotMatch(result?.systemPrompt ?? "", /enter_focus/u);
+		assert.doesNotMatch(result?.systemPrompt ?? "", /exit_focus/u);
+	});
+
 	it("builds current reminder payloads and rejects stale reminder details", () => {
 		const runtime = createFocusRuntime();
 		const transition = runtime.recordFocusChange("edit");

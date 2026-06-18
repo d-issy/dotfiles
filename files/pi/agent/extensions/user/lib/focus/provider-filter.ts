@@ -4,6 +4,7 @@ import type {
 	ExtensionHandler,
 } from "@earendil-works/pi-coding-agent";
 import type { FocusController } from "./controller";
+import type { FocusRuntime } from "./runtime";
 
 type PayloadRecord = Record<string, unknown>;
 
@@ -78,6 +79,12 @@ export const filterProviderTools =
 	(
 		pi: ExtensionAPI,
 		focus: FocusController,
+		runtime?: FocusRuntime,
 	): ExtensionHandler<BeforeProviderRequestEvent, unknown> =>
 	async (event) =>
-		filterProviderPayloadTools(event.payload, focus.allowedToolNames(pi));
+		filterProviderPayloadTools(
+			event.payload,
+			focus.allowedToolNames(pi, {
+				includeManagementTools: runtime?.lockedFocusName === undefined,
+			}),
+		);

@@ -98,8 +98,12 @@ function visiblePromptToolNames(
 	focus: FocusController,
 	runtime: FocusRuntime,
 ): ReadonlySet<string> {
-	const allowedToolNames = focus.allowedToolNames(pi);
-	if (!runtime.userSelectedFocus) return allowedToolNames;
+	const allowedToolNames = focus.allowedToolNames(pi, {
+		includeManagementTools: runtime.lockedFocusName === undefined,
+	});
+	if (!runtime.userSelectedFocus && !runtime.lockedFocusName) {
+		return allowedToolNames;
+	}
 	const managementTools = focusManagementToolNames();
 	return new Set(
 		[...allowedToolNames].filter((name) => !managementTools.has(name)),
@@ -150,10 +154,25 @@ function formatToolDefinitions(tools: readonly ToolInfo[]): string {
 	);
 }
 
-function buildActiveFocusPrompt(focus: FocusController): string | undefined {
-	return focus.active
-		? `[ACTIVE FOCUS: ${focus.active.name}]\n${focus.active.prompt}`
+function buildActiveFocusPrompt(
+	focus: FocusController,
+	runtime: FocusRuntime,
+): string | undefined {
+	if (!focus.active) return undefined;
+	const lockedPrompt = runtime.lockedFocusName
+		? [
+				`[FOCUS LOCKED: ${runtime.lockedFocusName}]`,
+				"This pi process was started with --focus and is dedicated to this focus only.",
+				"Do not try to enter, switch, or exit focuses. Continue using only the visible tools for this focus.",
+			].join("\n")
 		: undefined;
+	return [
+		`[ACTIVE FOCUS: ${focus.active.name}]`,
+		focus.active.prompt,
+		lockedPrompt,
+	]
+		.filter(Boolean)
+		.join("\n");
 }
 
 function buildFocusReminderPayloadWithTools(
@@ -162,7 +181,7 @@ function buildFocusReminderPayloadWithTools(
 	runtime: FocusRuntime,
 ): SystemReminderPayload<FocusReminderDetails> {
 	const tools = visibleToolDefinitions(pi, focus, runtime);
-	const activePrompt = buildActiveFocusPrompt(focus);
+	const activePrompt = buildActiveFocusPrompt(focus, runtime);
 	const focusInstructions = activePrompt
 		? `Focus instructions:\n${activePrompt}`
 		: `Focus routing instructions:\n${buildFocusSystemPrompt(focus)}`;
@@ -209,7 +228,7 @@ export const injectFocusRestorePrompt =
 				systemPrompt: `${systemPrompt}\n\n${buildFocusRestorePrompt(focus.active)}`,
 			};
 		}
-		const activePrompt = buildActiveFocusPrompt(focus);
+		const activePrompt = buildActiveFocusPrompt(focus, runtime);
 		return activePrompt
 			? { systemPrompt: `${systemPrompt}\n\n${activePrompt}` }
 			: systemPrompt === event.systemPrompt

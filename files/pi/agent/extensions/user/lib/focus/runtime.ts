@@ -18,10 +18,12 @@ export type FocusRuntime = {
 	readonly focusReminderPending: boolean;
 	readonly resetFocusAtAgentEndPending: boolean;
 	readonly userSelectedFocus: boolean;
+	readonly lockedFocusName: FocusName | undefined;
 	readonly latestTransition: FocusAutoContinue;
 	readonly pendingAutoContinue: FocusAutoContinue | undefined;
 	setRestorePromptPending(pending: boolean): void;
 	setFocusReminderPending(pending: boolean): void;
+	setLockedFocusName(focusName: FocusName | undefined): void;
 	requestFocusReminder(): void;
 	consumeFocusReminderPending(): boolean;
 	setResetFocusAtAgentEndPending(pending: boolean): void;
@@ -42,6 +44,7 @@ export function createFocusRuntime(): FocusRuntime {
 	let focusReminderPending = false;
 	let resetFocusAtAgentEndPending = false;
 	let userSelectedFocus = false;
+	let lockedFocusName: FocusName | undefined;
 	let nextTransitionId = 1;
 	let latestTransition: FocusAutoContinue = { id: 0, focusName: BASE_FOCUS };
 	let pendingAutoContinue: FocusAutoContinue | undefined;
@@ -66,6 +69,9 @@ export function createFocusRuntime(): FocusRuntime {
 		get userSelectedFocus() {
 			return userSelectedFocus;
 		},
+		get lockedFocusName() {
+			return lockedFocusName;
+		},
 		get latestTransition() {
 			return latestTransition;
 		},
@@ -77,6 +83,9 @@ export function createFocusRuntime(): FocusRuntime {
 		},
 		setFocusReminderPending(pending) {
 			focusReminderPending = pending;
+		},
+		setLockedFocusName(focusName) {
+			lockedFocusName = focusName;
 		},
 		requestFocusReminder() {
 			focusReminderPending = true;
