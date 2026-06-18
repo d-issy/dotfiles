@@ -3,6 +3,7 @@ import type { Feature } from "../feature";
 import type { UserExtensionServices } from "../lib/services";
 
 function register(pi: ExtensionAPI, services: UserExtensionServices): void {
+	pi.on("before_agent_start", services.reminders.injectHandlingPrompt);
 	pi.on("context", services.reminders.inject);
 }
 

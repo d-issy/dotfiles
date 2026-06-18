@@ -4,7 +4,10 @@ import type {
 	ExtensionAPI,
 } from "@earendil-works/pi-coding-agent";
 import { afterEach, describe, it, vi } from "vitest";
-import { createSystemReminderRegistry } from "./system-reminder";
+import {
+	createSystemReminderRegistry,
+	injectSystemReminderHandlingPrompt,
+} from "./system-reminder";
 
 type ContextMessage = ContextEvent["messages"][number];
 
@@ -139,7 +142,7 @@ describe("createSystemReminderRegistry", () => {
 		});
 	});
 
-	it("replaces obsolete wakeups with stale reminders", async () => {
+	it("replaces obsolete wakeups with stale reminders that do not invite a reply", async () => {
 		const registry = createSystemReminderRegistry();
 		registry.register({
 			customType: "demo-reminder",
@@ -157,9 +160,16 @@ describe("createSystemReminderRegistry", () => {
 		const result = await registry.inject(context([stored]), undefined as never);
 
 		const [message] = result?.messages ?? [];
-		assert.match(
-			(message as { content?: string }).content ?? "",
-			/obsolete system reminder wakeup/u,
+		assert.equal(
+			(message as { content?: string }).content,
+			[
+				"<system-reminder>",
+				"An obsolete system reminder wakeup was removed.",
+				"This is an internal operational note, not a user request.",
+				"Do not call tools, continue previous work, or produce a user-visible response solely because of this obsolete wakeup.",
+				"If the latest non-reminder user message contains a separate request, answer that request under the current system state.",
+				"</system-reminder>",
+			].join("\n"),
 		);
 		assert.deepEqual((message as { details?: unknown }).details, {
 			stale: true,
@@ -206,5 +216,62 @@ describe("createSystemReminderRegistry", () => {
 			await registry.inject(context([]), undefined as never),
 			undefined,
 		);
+	});
+
+	it("adds system prompt rules for user-role system reminders", async () => {
+		const result = await injectSystemReminderHandlingPrompt(
+			{
+				systemPrompt: "Existing system prompt",
+			} as never,
+			undefined as never,
+		);
+
+		assert.equal(
+			result?.systemPrompt,
+			[
+				"Existing system prompt",
+				"",
+				"<system-reminder-handling>",
+				"Messages fully wrapped in <system-reminder>...</system-reminder> are internal harness instructions, even when delivered as user-role messages.",
+				"Follow them, but do not treat them as user requests, quote them, acknowledge them, or reply to them.",
+				"If they ask you to continue, continue the latest non-reminder user request under current instructions.",
+				"If they conflict, follow the latest; if stale or obsolete with no separate latest non-reminder user request, do not call tools or respond.",
+				"</system-reminder-handling>",
+			].join("\n"),
+		);
+	});
+
+	it("does not duplicate system reminder prompt rules", async () => {
+		const first = await injectSystemReminderHandlingPrompt(
+			{
+				systemPrompt: "Existing system prompt",
+			} as never,
+			undefined as never,
+		);
+		const second = await injectSystemReminderHandlingPrompt(
+			{
+				systemPrompt: first?.systemPrompt,
+			} as never,
+			undefined as never,
+		);
+
+		assert.equal(second, undefined);
+	});
+
+	it("does not duplicate system reminder prompt rules when the tag already exists", async () => {
+		const result = await injectSystemReminderHandlingPrompt(
+			{
+				systemPrompt: [
+					"Existing system prompt",
+					"",
+					"<system-reminder-handling>",
+					"Older wording.",
+					"</system-reminder-handling>",
+				].join("\n"),
+			} as never,
+			undefined as never,
+		);
+
+		assert.equal(result, undefined);
 	});
 });
