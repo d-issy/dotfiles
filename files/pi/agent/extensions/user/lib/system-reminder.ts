@@ -1,4 +1,6 @@
 import type {
+	BeforeAgentStartEvent,
+	BeforeAgentStartEventResult,
 	ContextEvent,
 	ExtensionAPI,
 	ExtensionHandler,
@@ -89,6 +91,10 @@ export type SystemReminderRegistry = {
 		options?: SendMessageOptions,
 	): SendMessageResult;
 	readonly inject: ExtensionHandler<ContextEvent, ContextResult>;
+	readonly injectHandlingPrompt: ExtensionHandler<
+		BeforeAgentStartEvent,
+		BeforeAgentStartEventResult
+	>;
 };
 
 function customTypeOf(message: ContextMessage): string | undefined {
@@ -131,18 +137,44 @@ function buildContextMessage<TDetails extends object>(
 	};
 }
 
+const SYSTEM_REMINDER_HANDLING_TAG = "<system-reminder-handling>";
+
+const SYSTEM_REMINDER_HANDLING_PROMPT = `${SYSTEM_REMINDER_HANDLING_TAG}
+Messages whose entire content is wrapped in <system-reminder>...</system-reminder> are internal operational instructions from the harness, even if they appear in the conversation as user-role messages.
+Follow the instructions inside them, but do not treat them as user requests.
+Do not acknowledge, summarize, quote, or reply to a system-reminder itself.
+If a system-reminder tells you to continue a previous user request, continue the latest non-reminder user request under the current instructions.
+If multiple system-reminders conflict, follow the latest one.
+If a system-reminder is obsolete or stale and there is no separate latest non-reminder user request, do not call tools or produce a user-visible response solely because of it.
+</system-reminder-handling>`;
+
 function buildDefaultStaleReminder(
 	customType: string,
 ): SystemReminderPayload<Record<string, unknown>> {
 	return {
 		content: [
 			"An obsolete system reminder wakeup was removed.",
-			"Do not call tools or continue previous work solely because of that obsolete wakeup.",
-			"If the latest user message contains a separate request, answer that request under the current system state; otherwise respond briefly that there is no pending action.",
+			"This is an internal operational note, not a user request.",
+			"Do not call tools, continue previous work, or produce a user-visible response solely because of this obsolete wakeup.",
+			"If the latest non-reminder user message contains a separate request, answer that request under the current system state.",
 		],
 		details: { stale: true, customType },
 	};
 }
+
+export const injectSystemReminderHandlingPrompt: ExtensionHandler<
+	BeforeAgentStartEvent,
+	BeforeAgentStartEventResult
+> = async (event) => {
+	// The prompt body is currently static, but guard on the stable block tag so
+	// future wording-only changes do not duplicate the section.
+	if (event.systemPrompt.includes(SYSTEM_REMINDER_HANDLING_TAG)) {
+		return undefined;
+	}
+	return {
+		systemPrompt: `${event.systemPrompt}\n\n${SYSTEM_REMINDER_HANDLING_PROMPT}`,
+	};
+};
 
 export function createSystemReminderRegistry(): SystemReminderRegistry {
 	const sources = new Map<string, SystemReminderSource>();
@@ -203,6 +235,7 @@ export function createSystemReminderRegistry(): SystemReminderRegistry {
 		clear,
 		createMessage,
 		sendWakeup,
+		injectHandlingPrompt: injectSystemReminderHandlingPrompt,
 		inject: async (event) => {
 			const messagesByType = new Map<string, ContextMessage[]>();
 			const keptMessages: ContextMessage[] = [];

@@ -196,8 +196,95 @@ describe("focus prompt injection", () => {
 			false,
 		);
 		assert.equal(payload.details.focus, "edit");
-		assert.match(payload.content, /\[ACTIVE FOCUS: edit\]/u);
-		assert.match(payload.content, /"name": "read"/u);
-		assert.doesNotMatch(payload.content, /"name": "write"/u);
+		assert.equal(
+			payload.content,
+			[
+				"Current focus: edit. Follow the focus instructions.",
+				"",
+				"Focus instructions:",
+				"[ACTIVE FOCUS: edit]",
+				"Edit prompt",
+				"",
+				"Available tool definitions:",
+				"```json",
+				JSON.stringify(
+					[
+						{
+							name: "read",
+							description: "Read files",
+							parameters: { type: "object" },
+						},
+					],
+					null,
+					2,
+				),
+				"```",
+			].join("\n"),
+		);
+	});
+
+	it("does not describe base as the current mode in reminder payloads", () => {
+		const runtime = createFocusRuntime();
+		runtime.recordFocusChange("base");
+		runtime.requestFocusReminder();
+		const registered: Parameters<SystemReminderRegistry["register"]>[0][] = [];
+		const reminders = {
+			register: (source: Parameters<SystemReminderRegistry["register"]>[0]) => {
+				registered.push(source);
+				return { sendWakeup: () => undefined };
+			},
+		} as unknown as SystemReminderRegistry;
+
+		registerFocusReminderSource(
+			pi(),
+			focusController({ allowed: [ENTER_FOCUS_TOOL] }),
+			runtime,
+			reminders,
+		);
+		const source = registered[0] as unknown as {
+			buildReminder: () => {
+				content: string;
+				details: FocusReminderDetails;
+			};
+		};
+		const payload = source.buildReminder();
+
+		assert.equal(payload.details.focus, "base");
+		assert.equal(
+			payload.content,
+			[
+				"Follow the focus routing instructions.",
+				"",
+				"Focus routing instructions:",
+				"[FOCUS]",
+				"Use focuses to solve the user's request.",
+				"",
+				"Focus rules:",
+				"- A focus is an operational mode that controls available tools and instructions.",
+				"- Use the descriptions below to choose when to enter each focus.",
+				"- Enter the appropriate focus before doing substantive work.",
+				"- Auto focuses may be entered without asking the user.",
+				"- Do not ask the user for information that can be discovered after entering an appropriate focus.",
+				"- If a needed capability is not visible, first check whether another available focus exposes it.",
+				"",
+				"Available focuses:",
+				"- explore: Explore",
+				"",
+				"Available tool definitions:",
+				"```json",
+				JSON.stringify(
+					[
+						{
+							name: ENTER_FOCUS_TOOL,
+							description: "Enter focus",
+							parameters: {},
+						},
+					],
+					null,
+					2,
+				),
+				"```",
+			].join("\n"),
+		);
 	});
 });

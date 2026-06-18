@@ -185,9 +185,12 @@ function buildFocusReminderPayloadWithTools(
 	const focusInstructions = activePrompt
 		? `Focus instructions:\n${activePrompt}`
 		: `Focus routing instructions:\n${buildFocusSystemPrompt(focus)}`;
+	const headline = activePrompt
+		? `Current focus: ${focus.current}. Follow the focus instructions.`
+		: "Follow the focus routing instructions.";
 	return {
 		content: [
-			`Current focus: ${focus.current}. Follow the focus instructions.`,
+			headline,
 			"",
 			focusInstructions,
 			"",
