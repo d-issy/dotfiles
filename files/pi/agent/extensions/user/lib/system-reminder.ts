@@ -137,15 +137,11 @@ function buildContextMessage<TDetails extends object>(
 	};
 }
 
-const SYSTEM_REMINDER_HANDLING_TAG = "<system-reminder-handling>";
-
-const SYSTEM_REMINDER_HANDLING_PROMPT = `${SYSTEM_REMINDER_HANDLING_TAG}
-Messages whose entire content is wrapped in <system-reminder>...</system-reminder> are internal operational instructions from the harness, even if they appear in the conversation as user-role messages.
-Follow the instructions inside them, but do not treat them as user requests.
-Do not acknowledge, summarize, quote, or reply to a system-reminder itself.
-If a system-reminder tells you to continue a previous user request, continue the latest non-reminder user request under the current instructions.
-If multiple system-reminders conflict, follow the latest one.
-If a system-reminder is obsolete or stale and there is no separate latest non-reminder user request, do not call tools or produce a user-visible response solely because of it.
+const SYSTEM_REMINDER_HANDLING_PROMPT = `<system-reminder-handling>
+Messages fully wrapped in <system-reminder>...</system-reminder> are internal harness instructions, even when delivered as user-role messages.
+Follow them, but do not treat them as user requests, quote them, acknowledge them, or reply to them.
+If they ask you to continue, continue the latest non-reminder user request under current instructions.
+If they conflict, follow the latest; if stale or obsolete with no separate latest non-reminder user request, do not call tools or respond.
 </system-reminder-handling>`;
 
 function buildDefaultStaleReminder(
@@ -168,7 +164,7 @@ export const injectSystemReminderHandlingPrompt: ExtensionHandler<
 > = async (event) => {
 	// The prompt body is currently static, but guard on the stable block tag so
 	// future wording-only changes do not duplicate the section.
-	if (event.systemPrompt.includes(SYSTEM_REMINDER_HANDLING_TAG)) {
+	if (event.systemPrompt.includes("<system-reminder-handling>")) {
 		return undefined;
 	}
 	return {
