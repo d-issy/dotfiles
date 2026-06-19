@@ -2,10 +2,7 @@ import { constants } from "node:fs";
 import { access, readFile, writeFile } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import type { AgentToolResult, Theme } from "@earendil-works/pi-coding-agent";
-import {
-	keyHint,
-	withFileMutationQueue,
-} from "@earendil-works/pi-coding-agent";
+import { withFileMutationQueue } from "@earendil-works/pi-coding-agent";
 import { type Component, Text } from "@earendil-works/pi-tui";
 import { type Static, Type } from "typebox";
 import { ToolError } from "./errors";
@@ -306,10 +303,14 @@ async function readAllowedTextFile(
 	};
 }
 
-function formatReadChunkLineRange(args: Record<string, unknown>, theme: Theme): string {
+function formatReadChunkLineRange(
+	args: Record<string, unknown>,
+	theme: Theme,
+): string {
 	if (args.offset === undefined && args.limit === undefined) return "";
 	const startLine = typeof args.offset === "number" ? args.offset : 1;
-	const limit = typeof args.limit === "number" ? args.limit : DEFAULT_READ_CHUNK_LIMIT;
+	const limit =
+		typeof args.limit === "number" ? args.limit : DEFAULT_READ_CHUNK_LIMIT;
 	const endLine = startLine + limit - 1;
 	return theme.fg("warning", `:${startLine}-${endLine}`);
 }
@@ -461,9 +462,21 @@ export async function executeReadChunk(
 		`Use edit_chunk with edits: [{ old_range: ["start", "end"], new_lines: [...] }]. Use the same anchor twice for one line.`,
 		`Showing ${lines.length} of ${document.lines.length} line(s).`,
 	];
+	const continuation =
+		endExclusive < document.lines.length
+			? [
+					"",
+					`[${document.lines.length - endExclusive} more lines in file. Use offset=${endExclusive + 1} to continue, or use grep to find the relevant lines first.]`,
+				]
+			: [];
 
 	return {
-		content: [{ type: "text", text: [...header, ...output].join("\n") }],
+		content: [
+			{
+				type: "text",
+				text: [...header, ...output, ...continuation].join("\n"),
+			},
+		],
 		details: {
 			operation: "read_chunk",
 			path: displayPath,

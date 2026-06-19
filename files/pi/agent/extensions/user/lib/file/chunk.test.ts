@@ -64,6 +64,30 @@ describe("chunk file tools", () => {
 		);
 	});
 
+	it("shows continuation offset when more lines remain", async () => {
+		const root = tempRepo();
+		writeFileSync(
+			join(root, "src", "long.txt"),
+			[
+				...Array.from({ length: 205 }, (_, index) => `line ${index + 1}`),
+				"",
+			].join("\n"),
+		);
+
+		const readResult = await executeReadChunk(
+			root,
+			{ path: "src/long.txt" },
+			undefined,
+		);
+		const output = resultText(readResult);
+
+		assert.match(output, /Showing 200 of 205 line\(s\)\./u);
+		assert.match(
+			output,
+			/\[5 more lines in file\. Use offset=201 to continue, or use grep to find the relevant lines first\.\]/u,
+		);
+	});
+
 	it("fails without modifying files when anchors are stale, reversed, or overlapping", async () => {
 		const root = tempRepo();
 		const readResult = await executeReadChunk(
