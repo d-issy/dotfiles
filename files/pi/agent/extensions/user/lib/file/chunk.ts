@@ -19,6 +19,7 @@ import {
 const READ_CHUNK_OPERATION = "Reading chunk from";
 const EDIT_CHUNK_OPERATION = "Editing chunk in";
 const ANCHOR_LENGTH = 3;
+const DEFAULT_READ_CHUNK_LIMIT = 200;
 const MAX_CONTEXT_RADIUS = 16;
 
 const anchorSchema = Type.String({
@@ -36,7 +37,9 @@ export const readChunkSchema = Type.Object({
 		}),
 	),
 	limit: Type.Optional(
-		Type.Number({ description: "Maximum number of lines to read." }),
+		Type.Number({
+			description: `Maximum number of lines to read. Defaults to ${DEFAULT_READ_CHUNK_LIMIT}; pass an explicit limit to read more.`,
+		}),
 	),
 });
 
@@ -389,10 +392,8 @@ export async function executeReadChunk(
 	const document = parseDocument(content);
 	const anchors = buildAnchorIndex(document.lines);
 	const start = Math.min((params.offset ?? 1) - 1, document.lines.length);
-	const endExclusive = Math.min(
-		document.lines.length,
-		params.limit === undefined ? document.lines.length : start + params.limit,
-	);
+	const limit = params.limit ?? DEFAULT_READ_CHUNK_LIMIT;
+	const endExclusive = Math.min(document.lines.length, start + limit);
 	const lines = document.lines.slice(start, endExclusive);
 	const lineNumberWidth = String(document.lines.length).length;
 	const output = lines.map((line, index) => {

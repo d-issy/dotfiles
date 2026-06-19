@@ -44,11 +44,12 @@ function registerFileTools(catalog: ToolCatalog): void {
 				name: "read_chunk",
 				label: "read_chunk",
 				description:
-					"Read a file with 3-character per-line anchors for later chunk edits. Ambiguous anchors are hidden as @--- and cannot be used for editing.",
+					"Read up to 200 file lines by default with 3-character per-line anchors for later chunk edits. Pass offset and limit explicitly for large files or other ranges. Ambiguous anchors are hidden as @--- and cannot be used for editing.",
 				promptSnippet:
 					"Read file lines with short unique anchors for edit_chunk",
 				promptGuidelines: [
 					"Use read_chunk before edit_chunk when exact oldText replacement would be ambiguous or wasteful.",
+					"read_chunk defaults to the first 200 lines. For large files, pass offset and limit to read only the relevant range.",
 					"read_chunk shows @--- for ambiguous lines; do not use @--- as an edit_chunk old_range endpoint.",
 				],
 				parameters: readChunkSchema,
