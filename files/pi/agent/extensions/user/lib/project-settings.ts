@@ -2,12 +2,16 @@ import { existsSync, readFileSync, realpathSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import {
+	CONFIG_DIR_NAME,
 	type ExtensionContext,
 	ProjectTrustStore,
 	getAgentDir,
 } from "@earendil-works/pi-coding-agent";
 
-export const PROJECT_USER_SETTINGS_RELATIVE_PATH = ".pi/settings.user.json";
+export const PROJECT_USER_SETTINGS_RELATIVE_PATH = join(
+	CONFIG_DIR_NAME,
+	"settings.user.json",
+);
 
 export type ProjectUserSettings = Record<string, unknown>;
 
@@ -73,7 +77,7 @@ function hasStandardTrustRequiringProjectResources(cwd: string): boolean {
 	const userAgentsSkillsDir = join(homeDir, ".agents", "skills");
 	let currentDir = canonicalize(cwd);
 
-	const configDir = join(currentDir, ".pi");
+	const configDir = join(currentDir, CONFIG_DIR_NAME);
 	if (
 		TRUST_REQUIRING_PROJECT_CONFIG_RESOURCES.some((entry) =>
 			existsSync(join(configDir, entry)),
@@ -179,7 +183,7 @@ export function isProjectUserSettingsTrusted(ctx: ExtensionContext): boolean {
 	if (cliTrustOverride !== undefined) return cliTrustOverride;
 
 	// When Pi's own trust gate fired for standard project resources, ctx captures
-	// saved, temporary, and UI decisions. `.pi/settings.user.json` is a user
+	// saved, temporary, and UI decisions. The project user settings file is a user
 	// extension convention, so a settings.user-only project needs an explicit
 	// saved or session trust decision (or --approve) instead of inheriting Pi's
 	// default true.
