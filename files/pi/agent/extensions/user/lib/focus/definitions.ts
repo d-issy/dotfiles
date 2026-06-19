@@ -41,8 +41,8 @@ export function getFocusExitMode(focus: FocusDefinition): FocusExitMode {
 
 export const BUILT_IN_TOOL_SETS: ReadonlyMap<string, readonly string[]> =
 	new Map([
-		["file_read", ["read", "grep", "find", "ls"]],
-		["file_write", ["write", "edit", "mv", "rm"]],
+		["file_read", ["read_chunk", "grep", "find", "ls"]],
+		["file_write", ["write", "edit_chunk", "mv", "rm"]],
 	]);
 
 export const BASE_FOCUS_DEFINITIONS: readonly FocusDefinition[] = [
@@ -62,7 +62,7 @@ export const BASE_FOCUS_DEFINITIONS: readonly FocusDefinition[] = [
 		description:
 			"Use when the user asks for repository file changes, or after investigation establishes that file changes are needed.",
 		prompt:
-			"You are in edit focus. Make focused file changes with read/write/edit/mv/rm. Keep changes minimal.",
+			"You are in edit focus. Make focused file changes with read_chunk/write/edit_chunk/mv/rm. Keep changes minimal.",
 		tools: [],
 		toolSets: ["file_read", "file_write"],
 		transition: FOCUS_TRANSITION.CONFIRM,
@@ -75,7 +75,7 @@ export const BASE_FOCUS_DEFINITIONS: readonly FocusDefinition[] = [
 		prompt: [
 			"You are in interview focus. Clarify the user's real requirements by understanding their goals, background, pain points, constraints, and success criteria before proceeding.",
 			"Do not enter edit focus while requirements are unclear. Treat implementation feasibility and requirement clarity as separate things.",
-			"Before asking, use read, grep, find, or ls when they can answer the question or make the next question sharper. Do not ask the user for information that can be inspected from code or repository state.",
+			"Before asking, use read_chunk, grep, find, or ls when they can answer the question or make the next question sharper. Do not ask the user for information that can be inspected from code or repository state.",
 			"When requirements remain unclear, send a brief normal message summarizing the current understanding, then in the same turn call ask_user_question. Do not stop after the message. Continue this short-message plus ask_user_question loop until the user's intent is clear.",
 			"Use ask_user_question for clarification instead of asking free-form questions in normal chat. Use normal chat only for the brief summary immediately before the structured question, or when the user explicitly asks for discussion instead of answering the question.",
 			"Keep ask_user_question question text focused on the question itself, put rationale in the reason field, and do not stuff long summaries into the question.",
