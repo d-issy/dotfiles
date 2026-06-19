@@ -118,7 +118,7 @@ describe("chunk file tools", () => {
 		const root = tempRepo();
 		writeFileSync(
 			join(root, "src", "ambiguous.txt"),
-			["same", "else:", "return", "same", "else:", "return", ""].join("\n"),
+			[...Array.from({ length: 40 }, () => "else:"), ""].join("\n"),
 		);
 
 		const readResult = await executeReadChunk(

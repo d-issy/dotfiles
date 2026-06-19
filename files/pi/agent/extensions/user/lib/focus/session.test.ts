@@ -25,11 +25,13 @@ function fakePi(): ExtensionAPI & {
 				"enter_focus",
 				"exit_focus",
 				"read",
+				"read_chunk",
 				"grep",
 				"find",
 				"ls",
 				"write",
 				"edit",
+				"edit_chunk",
 				"mv",
 				"rm",
 			].map((name) => ({ name })),
@@ -84,7 +86,7 @@ describe("focus session lifecycle", () => {
 		assert.deepEqual(pi.entries, []);
 		assert.deepEqual(pi.activeTools, [
 			"multi_tool_use.parallel",
-			"read",
+			"read_chunk",
 			"grep",
 			"find",
 			"ls",
