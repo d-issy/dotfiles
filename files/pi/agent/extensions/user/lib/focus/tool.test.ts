@@ -6,7 +6,12 @@ import type {
 import { describe, it } from "vitest";
 import { createToolCatalog } from "../tool/catalog";
 import type { FocusController } from "./controller";
-import { BASE_FOCUS, type FocusDefinition } from "./definitions";
+import {
+	BASE_FOCUS,
+	FOCUS_EXIT_MODE,
+	FOCUS_TRANSITION,
+	type FocusDefinition,
+} from "./definitions";
 import { rememberFocusTransitionDecision } from "./confirmation";
 import { createFocusRuntime } from "./runtime";
 import { registerEnterFocusTool, registerExitFocusTool } from "./tool";
@@ -27,7 +32,7 @@ function definition(overrides: Partial<FocusDefinition> = {}): FocusDefinition {
 		description: "Explore files",
 		prompt: "Explore prompt",
 		tools: ["read"],
-		transition: "auto",
+		transition: FOCUS_TRANSITION.AUTO,
 		...overrides,
 	};
 }
@@ -112,8 +117,11 @@ describe("focus management tools", () => {
 		const tool = registerEnter(
 			focusController({
 				definitions: [
-					definition({ name: "explore", transition: "auto" }),
-					definition({ name: "yolo", transition: "manual" }),
+					definition({ name: "explore", transition: FOCUS_TRANSITION.AUTO }),
+					definition({
+						name: "yolo",
+						transition: FOCUS_TRANSITION.MANUAL,
+					}),
 				],
 			}),
 		);
@@ -135,7 +143,12 @@ describe("focus management tools", () => {
 	it("blocks manual focuses and explicit-exit focus switches", async () => {
 		const manualTool = registerEnter(
 			focusController({
-				definitions: [definition({ name: "yolo", transition: "manual" })],
+				definitions: [
+					definition({
+						name: "yolo",
+						transition: FOCUS_TRANSITION.MANUAL,
+					}),
+				],
 			}),
 		);
 		const manual = await manualTool.execute(
@@ -149,8 +162,8 @@ describe("focus management tools", () => {
 
 		const active = definition({
 			name: "interview",
-			exitMode: "explicit",
-			transition: "auto",
+			exitMode: FOCUS_EXIT_MODE.EXPLICIT,
+			transition: FOCUS_TRANSITION.AUTO,
 		});
 		const switchTool = registerEnter(
 			focusController({
@@ -170,7 +183,10 @@ describe("focus management tools", () => {
 	});
 
 	it("requires reasons and UI for confirm focuses unless session-allowed", async () => {
-		const confirm = definition({ name: "edit", transition: "confirm" });
+		const confirm = definition({
+			name: "edit",
+			transition: FOCUS_TRANSITION.CONFIRM,
+		});
 		const focus = focusController({ definitions: [confirm] });
 		const tool = registerEnter(focus);
 
@@ -262,7 +278,7 @@ describe("focus management tools", () => {
 	it("blocks explicit focus exits when UI confirmation is unavailable", async () => {
 		const active = definition({
 			name: "interview",
-			exitMode: "explicit",
+			exitMode: FOCUS_EXIT_MODE.EXPLICIT,
 		});
 		const tool = registerExit(
 			focusController({ current: "interview", active, definitions: [active] }),

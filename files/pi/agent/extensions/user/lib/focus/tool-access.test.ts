@@ -4,6 +4,8 @@ import { describe, it } from "vitest";
 import {
 	ENTER_FOCUS_TOOL,
 	EXIT_FOCUS_TOOL,
+	FOCUS_EXIT_MODE,
+	FOCUS_TRANSITION,
 	type FocusDefinition,
 } from "./definitions";
 import {
@@ -32,7 +34,7 @@ function focus(overrides: Partial<FocusDefinition> = {}): FocusDefinition {
 		description: "Edit files",
 		prompt: "Edit files",
 		tools: ["read", "write", ENTER_FOCUS_TOOL, EXIT_FOCUS_TOOL],
-		transition: "confirm",
+		transition: FOCUS_TRANSITION.CONFIRM,
 		...overrides,
 	};
 }
@@ -87,6 +89,30 @@ describe("focus tool access", () => {
 		]);
 	});
 
+	it("active manual focuses do not expose focus management tools", () => {
+		const api = pi([
+			"read",
+			"write",
+			"multi_tool_use.parallel",
+			ENTER_FOCUS_TOOL,
+			EXIT_FOCUS_TOOL,
+		]);
+
+		assert.deepEqual(
+			getActiveFocusTools(api, focus({ transition: FOCUS_TRANSITION.MANUAL })),
+			["multi_tool_use.parallel", "read", "write"],
+		);
+		assert.deepEqual(
+			activateFocusTools(api, focus({ transition: FOCUS_TRANSITION.MANUAL })),
+			["multi_tool_use.parallel", "read", "write"],
+		);
+		assert.deepEqual(api.activeTools, [
+			"multi_tool_use.parallel",
+			"read",
+			"write",
+		]);
+	});
+
 	it("can hide focus management tools for locked focus mode", () => {
 		const api = pi([
 			"read",
@@ -115,7 +141,10 @@ describe("focus tool access", () => {
 		]);
 
 		assert.deepEqual(
-			activateFocusTools(api, focus({ exitMode: "explicit", tools: ["read"] })),
+			activateFocusTools(
+				api,
+				focus({ exitMode: FOCUS_EXIT_MODE.EXPLICIT, tools: ["read"] }),
+			),
 			["multi_tool_use.parallel", "read", EXIT_FOCUS_TOOL],
 		);
 		assert.deepEqual(api.activeTools, [

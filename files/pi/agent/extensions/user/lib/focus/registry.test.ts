@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "vitest";
 import { createTestPiProject } from "../test-support/pi-project";
+import { FOCUS_EXIT_MODE, FOCUS_TRANSITION } from "./definitions";
 import { loadFocusRegistry } from "./registry";
 
 function testProjectCwd(settings: Record<string, unknown>): string {
@@ -21,7 +22,7 @@ describe("loadFocusRegistry", () => {
 					exitPrompt: "Project exit instructions.",
 					tools: ["format", "lint"],
 					toolSets: ["all_verify"],
-					transition: "auto",
+					transition: FOCUS_TRANSITION.AUTO,
 					color: "caution",
 				},
 			},
@@ -35,7 +36,7 @@ describe("loadFocusRegistry", () => {
 		assert.match(edit?.prompt ?? "", /Make focused file changes/u);
 		assert.match(edit?.prompt ?? "", /Project-specific edit instructions/u);
 		assert.equal(edit?.exitPrompt, "Project exit instructions.");
-		assert.equal(edit?.transition, "confirm");
+		assert.equal(edit?.transition, FOCUS_TRANSITION.CONFIRM);
 		assert.equal(edit?.color, "caution");
 		assert.deepEqual(edit?.settingsTools, [
 			"lint",
@@ -64,7 +65,7 @@ describe("loadFocusRegistry", () => {
 					description: "Run CI checks",
 					prompt: "Use CI tools only.",
 					toolSets: ["verify"],
-					exitMode: "explicit",
+					exitMode: FOCUS_EXIT_MODE.EXPLICIT,
 					color: "positive",
 				},
 			},
@@ -74,8 +75,8 @@ describe("loadFocusRegistry", () => {
 		const ci = registry.get("ci");
 
 		assert.deepEqual(warnings, []);
-		assert.equal(ci?.transition, "confirm");
-		assert.equal(ci?.exitMode, "explicit");
+		assert.equal(ci?.transition, FOCUS_TRANSITION.CONFIRM);
+		assert.equal(ci?.exitMode, FOCUS_EXIT_MODE.EXPLICIT);
 		assert.equal(ci?.color, "positive");
 		assert.deepEqual(ci?.tools, ["lint", "test"]);
 		assert.deepEqual(ci?.settingsTools, ["lint", "test"]);
