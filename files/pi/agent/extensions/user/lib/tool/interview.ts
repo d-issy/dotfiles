@@ -104,8 +104,11 @@ type QuestionRow = {
 	readonly selected?: boolean;
 	readonly recommended?: boolean;
 	readonly section?: "choice" | "action";
+	readonly maxDescriptionLines?: number;
 };
 
+const PROMPT_PADDING_X = 2;
+const OTHER_PREVIEW_MAX_LINES = 3;
 const OTHER_LABEL = "Other";
 const OTHER_INPUT_TITLE = "Provide Other Answer";
 const CHAT_LABEL = "Ask about this question";
@@ -263,14 +266,10 @@ function otherDescription(
 	multiple: boolean,
 	otherText: string | undefined,
 ): string {
-	if (!multiple) {
-		return otherText
-			? `${otherText} (Tab to edit)`
-			: "Press Tab or Enter to write a custom answer";
-	}
-	return otherText
-		? `${otherText} (Tab to edit)`
-		: "Press Tab to write a custom answer";
+	if (otherText) return `Answer (Tab to edit): ${otherText}`;
+	return multiple
+		? "Press Tab to write a custom answer"
+		: "Press Tab or Enter to write a custom answer";
 }
 
 function makeRows(
@@ -297,6 +296,7 @@ function makeRows(
 			description: otherDescription(multiple, otherText),
 			selected: otherSelected,
 			section: "choice",
+			maxDescriptionLines: otherText ? OTHER_PREVIEW_MAX_LINES : undefined,
 		},
 		{
 			action: { type: "chat" },
@@ -329,13 +329,28 @@ function wrapText(text: string, width: number): string[] {
 	return text.split("\n").flatMap((line) => wrapLine(line, width));
 }
 
+function promptWidth(width: number): number {
+	return Math.max(1, width - PROMPT_PADDING_X * 2);
+}
+
+function padPromptLine(line: string, width: number): string {
+	return truncateToWidth(`${" ".repeat(PROMPT_PADDING_X)}${line}`, width, "");
+}
+
 function renderQuestionLines(
 	theme: Theme,
 	line: string,
 	width: number,
 ): string[] {
-	return wrapLine(line, width).map((wrapped) =>
-		truncateToWidth(theme.fg("accent", theme.bold(wrapped)), width, ""),
+	return wrapLine(line, promptWidth(width)).map((wrapped) =>
+		padPromptLine(
+			truncateToWidth(
+				theme.fg("accent", theme.bold(wrapped)),
+				promptWidth(width),
+				"",
+			),
+			width,
+		),
 	);
 }
 
@@ -348,8 +363,28 @@ function renderReasonLines(
 	if (!trimmed) return [];
 	return trimmed
 		.split("\n")
-		.flatMap((line) => wrapText(line, width))
-		.map((line) => truncateToWidth(theme.fg("dim", line), width, ""));
+		.flatMap((line) => wrapText(line, promptWidth(width)))
+		.map((line) =>
+			padPromptLine(
+				truncateToWidth(theme.fg("dim", line), promptWidth(width), ""),
+				width,
+			),
+		);
+}
+
+function limitLines(
+	lines: readonly string[],
+	maxLines: number | undefined,
+	width: number,
+): string[] {
+	if (maxLines === undefined || lines.length <= maxLines) return [...lines];
+	const limited = lines.slice(0, maxLines);
+	limited[limited.length - 1] = truncateToWidth(
+		limited[limited.length - 1] ?? "",
+		width,
+		"…",
+	);
+	return limited;
 }
 
 function styledLabel(theme: Theme, row: QuestionRow, label: string): string {
@@ -386,7 +421,12 @@ function renderRow(
 			1,
 			options.width - descriptionPrefix.length,
 		);
-		for (const description of wrapText(row.description, descriptionWidth)) {
+		const descriptions = limitLines(
+			wrapText(row.description, descriptionWidth),
+			row.maxDescriptionLines,
+			descriptionWidth,
+		);
+		for (const description of descriptions) {
 			lines.push(
 				truncateToWidth(
 					theme.fg("muted", `${descriptionPrefix}${description}`),
@@ -438,10 +478,7 @@ async function showQuestion(
 						...params.question
 							.split("\n")
 							.flatMap((line) => renderQuestionLines(theme, line, width)),
-						...(reasonLines.length > 0 ? ["", ...reasonLines] : []),
-						...wrapText(help, width).map((line) =>
-							truncateToWidth(theme.fg("dim", line), width, ""),
-						),
+						...reasonLines,
 						"",
 					];
 					for (const [index, row] of rows.entries()) {
@@ -462,7 +499,13 @@ async function showQuestion(
 							}),
 						);
 					}
-					lines.push(...border.render(width));
+					lines.push(
+						"",
+						...wrapText(help, width).map((line) =>
+							truncateToWidth(theme.fg("dim", line), width, ""),
+						),
+						...border.render(width),
+					);
 					return lines;
 				},
 				invalidate: () => border.invalidate(),
