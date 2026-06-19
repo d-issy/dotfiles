@@ -120,10 +120,10 @@ export const BASE_FOCUS_DEFINITIONS: readonly FocusDefinition[] = [
 	{
 		name: "yolo",
 		description:
-			"Shell-enabled focus for manual use only. Can read, write, edit, and run shell commands.",
+			"Shell-enabled focus for manual use only. Can read chunks, write, edit chunks, and run shell commands.",
 		prompt:
-			"You are in yolo focus. Use read, write, edit, and bash to inspect and modify files and run shell commands. Avoid exposing secrets or credentials. If a command may print secrets, use a safer command or mask sensitive output. Ask for confirmation for gray-area destructive or privacy-sensitive actions.",
-		tools: ["read", "write", "edit", "bash"],
+			"You are in yolo focus. Use read_chunk, write, edit_chunk, and bash to inspect and modify files and run shell commands. Avoid exposing secrets or credentials. If a command may print secrets, use a safer command or mask sensitive output. Ask for confirmation for gray-area destructive or privacy-sensitive actions.",
+		tools: ["read_chunk", "write", "edit_chunk", "bash"],
 		transition: FOCUS_TRANSITION.MANUAL,
 		color: "alert",
 	},
