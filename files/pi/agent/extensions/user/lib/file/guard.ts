@@ -3,7 +3,6 @@ import { lstat, readdir } from "node:fs/promises";
 import { dirname, relative, resolve, sep } from "node:path";
 import { promisify } from "node:util";
 import { ToolError, isErrnoCode } from "./errors";
-
 type IgnoreCache = Map<string, boolean>;
 
 export type FsGuardContext = {
@@ -42,6 +41,10 @@ export function displayRepoPath(cwd: string, absolutePath: string): string {
 	const rel = relative(cwd, absolutePath);
 	if (!rel) return ".";
 	return isRelativeOutside(rel) ? absolutePath : rel;
+}
+
+export function isRepoPath(ctx: FsGuardContext, absolutePath: string): boolean {
+	return isInside(ctx.repoRoot, absolutePath);
 }
 
 export async function assertRepoPathAllowed(

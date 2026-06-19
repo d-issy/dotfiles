@@ -6,6 +6,7 @@ export type ToolErrorCode =
 	| "not_found"
 	| "destination_exists"
 	| "destination_not_directory"
+	| "secret"
 	| "aborted"
 	| "missing_input";
 
@@ -40,6 +41,8 @@ function formatToolError(
 			return `Destination already exists: ${context}. Remove it with rm, or move it aside with mv, before retrying.`;
 		case "destination_not_directory":
 			return `Destination must be an existing directory when moving multiple sources: ${context}`;
+		case "secret":
+			return `${operation} secret files is not allowed: ${context}`;
 		case "aborted":
 			return "Tool execution was aborted.";
 		case "missing_input":

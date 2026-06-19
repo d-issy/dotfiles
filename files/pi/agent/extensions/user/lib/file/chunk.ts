@@ -9,10 +9,12 @@ import {
 import { type Component, Text } from "@earendil-works/pi-tui";
 import { type Static, Type } from "typebox";
 import { ToolError } from "./errors";
+import { isSecretPath } from "../secrets";
 import {
 	assertRepoPathAllowed,
 	createFsGuardContext,
 	displayRepoPath,
+	isRepoPath,
 	resolveRepoPath,
 } from "./guard";
 
@@ -277,15 +279,30 @@ async function readAllowedTextFile(
 	path: string,
 	operation: string,
 	mode: number,
-): Promise<{ absolutePath: string; displayPath: string; content: string }> {
+	options?: { readonly allowOutsideRepoWithoutAnchors?: boolean },
+): Promise<{
+	absolutePath: string;
+	displayPath: string;
+	content: string;
+	anchorsEnabled: boolean;
+}> {
 	const absolutePath = resolveRepoPath(cwd, path, operation);
 	const guardContext = await createFsGuardContext(cwd);
-	await assertRepoPathAllowed(guardContext, absolutePath, operation);
+	const displayPath = displayRepoPath(cwd, absolutePath);
+	if (isSecretPath(displayPath) || isSecretPath(absolutePath)) {
+		throw new ToolError("secret", operation, displayPath);
+	}
+
+	const insideRepo = isRepoPath(guardContext, absolutePath);
+	if (insideRepo || options?.allowOutsideRepoWithoutAnchors !== true) {
+		await assertRepoPathAllowed(guardContext, absolutePath, operation);
+	}
 	await access(absolutePath, mode);
 	return {
 		absolutePath,
-		displayPath: displayRepoPath(cwd, absolutePath),
+		displayPath,
 		content: await readFile(absolutePath, "utf8"),
+		anchorsEnabled: insideRepo,
 	};
 }
 
@@ -313,27 +330,40 @@ export function renderReadChunk(args: unknown, theme: Theme): Component {
 	return renderChunkHeader("read_chunk", args, theme);
 }
 
+function renderToolResultText(
+	result: AgentToolResult<ReadChunkDetails>,
+	theme: Theme,
+): Component {
+	const text = result.content
+		.filter((content) => content.type === "text")
+		.map((content) => content.text)
+		.join("\n");
+	return new Text(theme.fg("toolOutput", text || "(no output)"), 0, 0);
+}
+
+function isReadChunkDetails(details: unknown): details is ReadChunkDetails {
+	if (typeof details !== "object" || details === null) return false;
+	const value = details as Record<string, unknown>;
+	return (
+		value.operation === "read_chunk" &&
+		typeof value.path === "string" &&
+		typeof value.startLine === "number" &&
+		typeof value.endLine === "number" &&
+		typeof value.totalLines === "number" &&
+		typeof value.visibleAnchors === "number" &&
+		typeof value.ambiguousLines === "number"
+	);
+}
+
 export function renderReadChunkResult(
 	result: AgentToolResult<ReadChunkDetails>,
 	options: { expanded: boolean; isPartial: boolean },
 	theme: Theme,
 ): Component {
-	if (options.expanded) {
-		const text = result.content
-			.filter((content) => content.type === "text")
-			.map((content) => content.text)
-			.join("\n");
-		return new Text(theme.fg("toolOutput", text || "(no output)"), 0, 0);
-	}
+	if (options.expanded) return renderToolResultText(result, theme);
 
 	const details = result.details;
-	if (!details) {
-		return new Text(
-			theme.fg("muted", keyHint("app.tools.expand", "expand to view lines")),
-			0,
-			0,
-		);
-	}
+	if (!isReadChunkDetails(details)) return renderToolResultText(result, theme);
 
 	const summaryParts = [
 		`${details.path}: lines ${details.startLine}-${details.endLine} of ${details.totalLines}`,
@@ -381,16 +411,17 @@ export async function executeReadChunk(
 ): Promise<AgentToolResult<ReadChunkDetails>> {
 	checkAbort(signal, READ_CHUNK_OPERATION);
 	validateRange(params.offset, params.limit);
-	const { displayPath, content } = await readAllowedTextFile(
+	const { displayPath, content, anchorsEnabled } = await readAllowedTextFile(
 		cwd,
 		params.path,
 		READ_CHUNK_OPERATION,
 		constants.R_OK,
+		{ allowOutsideRepoWithoutAnchors: true },
 	);
 	checkAbort(signal, READ_CHUNK_OPERATION);
 
 	const document = parseDocument(content);
-	const anchors = buildAnchorIndex(document.lines);
+	const anchors = anchorsEnabled ? buildAnchorIndex(document.lines) : undefined;
 	const start = Math.min((params.offset ?? 1) - 1, document.lines.length);
 	const limit = params.limit ?? DEFAULT_READ_CHUNK_LIMIT;
 	const endExclusive = Math.min(document.lines.length, start + limit);
@@ -398,15 +429,19 @@ export async function executeReadChunk(
 	const lineNumberWidth = String(document.lines.length).length;
 	const output = lines.map((line, index) => {
 		const lineNumber = String(start + index + 1).padStart(lineNumberWidth);
-		const anchor = anchors.perLine[start + index] ?? "---";
+		if (!anchorsEnabled) return `${lineNumber} | ${line}`;
+		const anchor = anchors?.perLine[start + index] ?? "---";
 		return `${lineNumber} @${anchor} | ${line}`;
 	});
-	const visibleAnchors = lines.filter(
-		(_, index) => anchors.perLine[start + index] !== undefined,
-	).length;
+	const visibleAnchors = anchorsEnabled
+		? lines.filter((_, index) => anchors?.perLine[start + index] !== undefined)
+				.length
+		: 0;
 	const header = [
 		`${displayPath}`,
-		`Anchors are ${ANCHOR_LENGTH}-character tokens shown after line numbers. Only file-wide unique anchors are shown; @--- lines cannot be used as old_range endpoints.`,
+		anchorsEnabled
+			? `Anchors are ${ANCHOR_LENGTH}-character tokens shown after line numbers. Only file-wide unique anchors are shown; @--- lines cannot be used as old_range endpoints.`
+			: "Anchors are disabled for files outside the repository; edit_chunk cannot use this output.",
 		`Use edit_chunk with edits: [{ old_range: ["start", "end"], new_lines: [...] }]. Use the same anchor twice for one line.`,
 		`Showing ${lines.length} of ${document.lines.length} line(s).`,
 	];
@@ -420,7 +455,7 @@ export async function executeReadChunk(
 			endLine: endExclusive,
 			totalLines: document.lines.length,
 			visibleAnchors,
-			ambiguousLines: anchors.ambiguousCount,
+			ambiguousLines: anchors?.ambiguousCount ?? 0,
 		} satisfies ReadChunkDetails,
 	};
 }

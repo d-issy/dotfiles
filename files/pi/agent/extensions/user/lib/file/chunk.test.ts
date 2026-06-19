@@ -134,6 +134,25 @@ describe("chunk file tools", () => {
 			executeReadChunk(root, { path: "ignored.txt" }, undefined),
 			/Reading chunk from ignored files is not allowed/u,
 		);
+		writeFileSync(join(root, ".envrc"), "SECRET=value\n");
+		await assert.rejects(
+			executeReadChunk(root, { path: ".envrc" }, undefined),
+			/Reading chunk from secret files is not allowed/u,
+		);
+		const outsideDir = mkdtempSync(join(tmpdir(), "pi-file-chunk-outside-"));
+		const outsidePath = join(outsideDir, "outside.txt");
+		writeFileSync(outsidePath, ["outside", "file", ""].join("\n"));
+		const outsideResult = await executeReadChunk(
+			root,
+			{ path: outsidePath },
+			undefined,
+		);
+		const outsideOutput = resultText(outsideResult);
+		assert.equal(outsideResult.details.visibleAnchors, 0);
+		assert.match(outsideOutput, /Anchors are disabled/u);
+		assert.match(outsideOutput, /1 \| outside/u);
+		assert.doesNotMatch(outsideOutput, /@[A-Za-z0-9]{3} \|/u);
+		assert.doesNotMatch(outsideOutput, /@--- \|/u);
 		await assert.rejects(
 			executeEditChunk(
 				root,
