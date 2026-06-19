@@ -12,7 +12,7 @@ Use this skill only for:
 - Pi agent user settings
 - `.pi/settings.user.json`
 - project user settings for Pi
-- adding, editing, renaming, removing, reviewing, or explaining `tools`, `toolSets`, or `focuses` in `.pi/settings.user.json`
+- adding, editing, renaming, removing, reviewing, or explaining `enabled`, `tools`, `toolSets`, or `focuses` in `.pi/settings.user.json`
 
 Do not use this skill for ordinary shell commands, lint/test/format requests, Pi's native settings files, or non-Pi configuration.
 
@@ -82,6 +82,7 @@ Do not use this skill for ordinary shell commands, lint/test/format requests, Pi
 
 Currently supported project user settings include:
 
+- `enabled`: set to `false` to make this user extension a no-op for the project; omitted or any other value keeps it enabled.
 - `tools`: repository-defined tool definitions callable only for that project.
 - `toolSets`: reusable groups of tool names for focus tool lists.
 - `focuses`: project-local focus additions or overrides for user-extension focuses.
