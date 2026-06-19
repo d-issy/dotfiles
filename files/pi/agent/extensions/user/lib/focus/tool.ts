@@ -216,7 +216,6 @@ export function registerEnterFocusTool(
 						const decision = await confirmFocusTransition(
 							ctx,
 							definition.name,
-							definition.description,
 							confirmationReason,
 						);
 						if (!decision || decision.startsWith("deny")) {
