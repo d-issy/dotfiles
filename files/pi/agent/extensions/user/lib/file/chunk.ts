@@ -324,14 +324,23 @@ export function renderReadChunkResult(
 	}
 
 	const details = result.details;
-	const summary = details
-		? [
-				`${details.path}: lines ${details.startLine}-${details.endLine} of ${details.totalLines}`,
-				`${details.visibleAnchors} visible anchor(s), ${details.ambiguousLines} ambiguous line(s)`,
-				keyHint("app.tools.expand", "expand to view lines"),
-			].join(". ")
-		: keyHint("app.tools.expand", "expand to view lines");
-	return new Text(theme.fg("muted", summary), 0, 0);
+	if (!details) {
+		return new Text(
+			theme.fg("muted", keyHint("app.tools.expand", "expand to view lines")),
+			0,
+			0,
+		);
+	}
+
+	const summaryParts = [
+		`${details.path}: lines ${details.startLine}-${details.endLine} of ${details.totalLines}`,
+		`${details.visibleAnchors} visible anchor(s)`,
+	];
+	if (details.ambiguousLines > 0) {
+		summaryParts.push(`${details.ambiguousLines} ambiguous line(s)`);
+	}
+	summaryParts.push(keyHint("app.tools.expand", "expand to view lines"));
+	return new Text(theme.fg("muted", summaryParts.join(". ")), 0, 0);
 }
 
 function renderEditChunkParams(args: unknown, theme: Theme): string[] {
