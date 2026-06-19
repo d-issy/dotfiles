@@ -8,10 +8,12 @@ import {
 	BASE_FOCUS,
 	BASE_FOCUS_DEFINITIONS,
 	BUILT_IN_TOOL_SETS,
+	FOCUS_TRANSITION,
 	type FocusDefinition,
 	type FocusExitMode,
 	type FocusName,
 	type FocusTransition,
+	isFocusExitMode,
 	isFocusTransition,
 } from "./definitions";
 
@@ -101,7 +103,7 @@ function normalizeExitMode(
 	path: string,
 ): FocusExitMode | undefined {
 	if (value === undefined) return undefined;
-	if (value !== "single-turn" && value !== "explicit") {
+	if (!isFocusExitMode(value)) {
 		throw new Error(`${path} must be single-turn or explicit.`);
 	}
 	return value;
@@ -285,7 +287,7 @@ function createProjectFocus(
 		exitPrompt: project.exitPrompt,
 		tools: unique(projectTools),
 		settingsTools: unique(projectTools),
-		transition: project.transition ?? "confirm",
+		transition: project.transition ?? FOCUS_TRANSITION.CONFIRM,
 		exitMode: project.exitMode,
 		color: project.color,
 	};
@@ -308,7 +310,7 @@ function createRegistry(
 		list: () => [...byName.values()],
 		search(query) {
 			const searchable = [...byName.values()].filter(
-				(focus) => focus.transition !== "manual",
+				(focus) => focus.transition !== FOCUS_TRANSITION.MANUAL,
 			);
 			const normalized = query?.trim().toLowerCase();
 			if (!normalized) return searchable;

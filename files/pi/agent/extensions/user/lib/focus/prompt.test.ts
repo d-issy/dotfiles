@@ -6,6 +6,7 @@ import type { FocusController } from "./controller";
 import {
 	ENTER_FOCUS_TOOL,
 	EXIT_FOCUS_TOOL,
+	FOCUS_TRANSITION,
 	type FocusDefinition,
 } from "./definitions";
 import {
@@ -23,7 +24,7 @@ function activeFocus(
 		description: "Edit files",
 		prompt: "Edit prompt",
 		tools: ["read", "write"],
-		transition: "confirm",
+		transition: FOCUS_TRANSITION.CONFIRM,
 		...overrides,
 	};
 }
@@ -51,6 +52,7 @@ function focusController(options: {
 	readonly current?: string;
 	readonly active?: FocusDefinition;
 	readonly allowed?: readonly string[];
+	readonly searchable?: readonly FocusDefinition[];
 }): FocusController {
 	const active = options.active;
 	return {
@@ -59,7 +61,14 @@ function focusController(options: {
 		allowedToolNames: () =>
 			new Set(options.allowed ?? ["read", ENTER_FOCUS_TOOL]),
 		registry: {
-			search: () => [activeFocus({ name: "explore", description: "Explore" })],
+			search: () =>
+				options.searchable ?? [
+					activeFocus({
+						name: "explore",
+						description: "Explore",
+						transition: FOCUS_TRANSITION.AUTO,
+					}),
+				],
 		},
 	} as unknown as FocusController;
 }
@@ -114,6 +123,35 @@ describe("focus prompt injection", () => {
 		assert.doesNotMatch(result?.systemPrompt ?? "", /<available_skills>/u);
 		assert.match(result?.systemPrompt ?? "", /\[FOCUS\]/u);
 		assert.match(result?.systemPrompt ?? "", /explore: Explore/u);
+	});
+
+	it("marks confirmation-required focuses in routing instructions", async () => {
+		const runtime = createFocusRuntime();
+		const result = await injectFocusRestorePrompt(
+			pi(),
+			focusController({
+				allowed: [ENTER_FOCUS_TOOL],
+				searchable: [
+					activeFocus({
+						name: "explore",
+						description: "Explore",
+						transition: FOCUS_TRANSITION.AUTO,
+					}),
+					activeFocus({
+						name: "edit",
+						description: "Edit files",
+						transition: FOCUS_TRANSITION.CONFIRM,
+					}),
+				],
+			}),
+			runtime,
+		)(beforeAgentEvent(baseSystemPrompt) as never, undefined as never);
+
+		assert.match(result?.systemPrompt ?? "", /- explore: Explore/u);
+		assert.match(
+			result?.systemPrompt ?? "",
+			/- edit \(reason required\): Edit files/u,
+		);
 	});
 
 	it("injects restore prompts once for restored active focuses", async () => {

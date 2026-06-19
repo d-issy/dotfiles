@@ -9,6 +9,8 @@ import {
 	ENTER_FOCUS_TOOL,
 	EXIT_FOCUS_TOOL,
 	FOCUS_REMINDER_TYPE,
+	FOCUS_TRANSITION,
+	type FocusTransition,
 } from "./definitions";
 import type { FocusRuntime } from "./runtime";
 import type {
@@ -26,10 +28,20 @@ export type FocusReminderDetails = {
 };
 
 function formatFocusList(
-	focuses: readonly { name: string; description: string }[],
+	focuses: readonly {
+		name: string;
+		description: string;
+		transition: FocusTransition;
+	}[],
 ): string {
 	return focuses
-		.map((focus) => `- ${focus.name}: ${focus.description}`)
+		.map((focus) => {
+			const label =
+				focus.transition === FOCUS_TRANSITION.CONFIRM
+					? `${focus.name} (reason required)`
+					: focus.name;
+			return `- ${label}: ${focus.description}`;
+		})
 		.join("\n");
 }
 
@@ -37,6 +49,7 @@ function buildFocusSystemPrompt(focus: FocusController): string {
 	const focuses = focus.registry.search().map((definition) => ({
 		name: definition.name,
 		description: definition.description,
+		transition: definition.transition,
 	}));
 	return `[FOCUS]\nUse focuses to solve the user's request.\n\nFocus rules:\n- A focus is an operational mode that controls available tools and instructions.\n- Use the descriptions below to choose when to enter each focus.\n- Enter the appropriate focus before doing substantive work.\n- Auto focuses may be entered without asking the user.\n- Do not ask the user for information that can be discovered after entering an appropriate focus.\n- If a needed capability is not visible, first check whether another available focus exposes it.\n\nAvailable focuses:\n${formatFocusList(focuses)}`;
 }

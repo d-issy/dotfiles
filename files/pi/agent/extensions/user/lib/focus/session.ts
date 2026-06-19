@@ -11,6 +11,7 @@ import { clearFocusTransitionDecisions } from "./confirmation";
 import type { FocusController } from "./controller";
 import {
 	BASE_FOCUS,
+	FOCUS_EXIT_MODE,
 	FOCUS_STATE_TYPE,
 	type FocusName,
 	getFocusExitMode,
@@ -105,7 +106,7 @@ export const resetFocusAtAgentEnd =
 		if (runtime.lockedFocusName) return;
 		if (runtime.pendingAutoContinue) return;
 		if (!focus.active || !runtime.resetFocusAtAgentEndPending) return;
-		if (getFocusExitMode(focus.active) !== "single-turn") {
+		if (getFocusExitMode(focus.active) !== FOCUS_EXIT_MODE.SINGLE_TURN) {
 			runtime.setResetFocusAtAgentEndPending(false);
 			return;
 		}

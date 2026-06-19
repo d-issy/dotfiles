@@ -3,11 +3,33 @@ import { isProjectToolAvailable } from "../tool/project";
 import {
 	ENTER_FOCUS_TOOL,
 	EXIT_FOCUS_TOOL,
+	FOCUS_EXIT_MODE,
+	FOCUS_TRANSITION,
 	type FocusDefinition,
+	type FocusExitMode,
+	type FocusTransition,
 	getFocusExitMode,
 } from "./definitions";
 
 const ALWAYS_ALLOWED_TOOL_NAMES = ["multi_tool_use.parallel"] as const;
+const NO_FOCUS_MANAGEMENT_TOOLS: readonly string[] = [];
+const FOCUS_MANAGEMENT_TOOLS_BY_TRANSITION_AND_EXIT_MODE: Record<
+	FocusTransition,
+	Record<FocusExitMode, readonly string[]>
+> = {
+	[FOCUS_TRANSITION.AUTO]: {
+		[FOCUS_EXIT_MODE.SINGLE_TURN]: [ENTER_FOCUS_TOOL],
+		[FOCUS_EXIT_MODE.EXPLICIT]: [EXIT_FOCUS_TOOL],
+	},
+	[FOCUS_TRANSITION.CONFIRM]: {
+		[FOCUS_EXIT_MODE.SINGLE_TURN]: [ENTER_FOCUS_TOOL],
+		[FOCUS_EXIT_MODE.EXPLICIT]: [EXIT_FOCUS_TOOL],
+	},
+	[FOCUS_TRANSITION.MANUAL]: {
+		[FOCUS_EXIT_MODE.SINGLE_TURN]: NO_FOCUS_MANAGEMENT_TOOLS,
+		[FOCUS_EXIT_MODE.EXPLICIT]: NO_FOCUS_MANAGEMENT_TOOLS,
+	},
+};
 
 function unique(names: readonly string[]): string[] {
 	return [...new Set(names)];
@@ -53,14 +75,12 @@ type FocusToolAccessOptions = {
 function activeFocusManagementToolNames(
 	focus: FocusDefinition,
 	options?: FocusToolAccessOptions,
-): string[] {
-	if (options?.includeManagementTools === false) return [];
-	switch (getFocusExitMode(focus)) {
-		case "explicit":
-			return [EXIT_FOCUS_TOOL];
-		case "single-turn":
-			return [ENTER_FOCUS_TOOL];
-	}
+): readonly string[] {
+	return options?.includeManagementTools === false
+		? NO_FOCUS_MANAGEMENT_TOOLS
+		: FOCUS_MANAGEMENT_TOOLS_BY_TRANSITION_AND_EXIT_MODE[focus.transition][
+				getFocusExitMode(focus)
+			];
 }
 
 export function getActiveFocusTools(

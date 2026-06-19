@@ -16,6 +16,8 @@ import {
 	BASE_FOCUS,
 	ENTER_FOCUS_TOOL,
 	EXIT_FOCUS_TOOL,
+	FOCUS_EXIT_MODE,
+	FOCUS_TRANSITION,
 	getFocusExitMode,
 } from "./definitions";
 import type { FocusController } from "./controller";
@@ -47,7 +49,7 @@ function isOkResult(result: AgentToolResult<FocusToolDetails>): boolean {
 function getEnterableFocusNames(focus: FocusController): readonly string[] {
 	return focus.registry
 		.list()
-		.filter((definition) => definition.transition !== "manual")
+		.filter((definition) => definition.transition !== FOCUS_TRANSITION.MANUAL)
 		.map((definition) => definition.name);
 }
 
@@ -122,7 +124,7 @@ export function registerEnterFocusTool(
 				if (
 					activeFocus &&
 					activeFocus.name !== definition.name &&
-					getFocusExitMode(activeFocus) === "explicit"
+					getFocusExitMode(activeFocus) === FOCUS_EXIT_MODE.EXPLICIT
 				) {
 					return {
 						content: [
@@ -156,7 +158,7 @@ export function registerEnterFocusTool(
 					};
 				}
 
-				if (definition.transition === "manual") {
+				if (definition.transition === FOCUS_TRANSITION.MANUAL) {
 					return {
 						content: [
 							{
@@ -168,7 +170,7 @@ export function registerEnterFocusTool(
 					};
 				}
 
-				if (definition.transition === "confirm") {
+				if (definition.transition === FOCUS_TRANSITION.CONFIRM) {
 					const confirmationReason = params.reason?.trim();
 					if (isFocusDeniedForSession(definition.name)) {
 						return {
@@ -236,7 +238,7 @@ export function registerEnterFocusTool(
 				}
 
 				runtime.setResetFocusAtAgentEndPending(
-					getFocusExitMode(definition) === "single-turn",
+					getFocusExitMode(definition) === FOCUS_EXIT_MODE.SINGLE_TURN,
 				);
 				runtime.setUserSelectedFocus(false);
 				const entered = focus.enter(ctx, definition.name);
@@ -333,7 +335,7 @@ export function registerExitFocusTool(
 					};
 				}
 
-				if (getFocusExitMode(active) === "explicit") {
+				if (getFocusExitMode(active) === FOCUS_EXIT_MODE.EXPLICIT) {
 					if (!ctx.hasUI) {
 						return {
 							content: [
