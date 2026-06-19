@@ -6,6 +6,7 @@ import {
 	ensureProjectUserSettingsTrusted,
 	hasProjectUserSettings,
 	isProjectUserSettingsTrusted,
+	isUserExtensionEnabled,
 	loadProjectUserSettings,
 } from "./project-settings";
 
@@ -58,6 +59,35 @@ describe("project user settings", () => {
 		assert.throws(
 			() => loadProjectUserSettings(invalid),
 			/settings\.user\.json must contain a JSON object/u,
+		);
+	});
+
+	it("disables the user extension only when enabled is false", () => {
+		assert.equal(
+			isUserExtensionEnabled(
+				createTestPiProject({ includeUserSettings: false }).cwd,
+			),
+			true,
+		);
+		assert.equal(
+			isUserExtensionEnabled(createTestPiProject({ settings: {} }).cwd),
+			true,
+		);
+		assert.equal(
+			isUserExtensionEnabled(
+				createTestPiProject({ settings: { enabled: true } }).cwd,
+			),
+			true,
+		);
+		assert.equal(
+			isUserExtensionEnabled(
+				createTestPiProject({ settings: { enabled: false } }).cwd,
+			),
+			false,
+		);
+		assert.equal(
+			isUserExtensionEnabled(createTestPiProject({ rawSettings: "[]" }).cwd),
+			true,
 		);
 	});
 

@@ -1,5 +1,6 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import type { Feature } from "./feature";
+import { isUserExtensionEnabled } from "./lib/project-settings";
 import { createUserExtensionServices } from "./lib/services";
 import { createExitConfirmFeature } from "./features/exit-confirm";
 import { createFocusFeature } from "./features/focus";
@@ -42,6 +43,8 @@ function assertFeatureDependencies(features: readonly Feature[]): void {
 }
 
 export default function user(pi: ExtensionAPI): void {
+	if (!isUserExtensionEnabled(process.cwd())) return;
+
 	const services = createUserExtensionServices();
 	const features = createFeatures();
 	assertFeatureDependencies(features);
