@@ -306,15 +306,30 @@ async function readAllowedTextFile(
 	};
 }
 
+function formatReadChunkLineRange(args: Record<string, unknown>, theme: Theme): string {
+	if (args.offset === undefined && args.limit === undefined) return "";
+	const startLine = typeof args.offset === "number" ? args.offset : 1;
+	const limit = typeof args.limit === "number" ? args.limit : DEFAULT_READ_CHUNK_LIMIT;
+	const endLine = startLine + limit - 1;
+	return theme.fg("warning", `:${startLine}-${endLine}`);
+}
+
 function renderChunkHeaderText(
 	name: string,
 	args: unknown,
 	theme: Theme,
+	context?: { readonly expanded?: boolean },
 ): string {
 	const input = (args ?? {}) as Record<string, unknown>;
 	const path = typeof input.path === "string" ? input.path : "";
 	let text = theme.fg("toolTitle", theme.bold(name));
 	if (path) text += ` ${theme.fg("accent", path)}`;
+	if (name === "read_chunk") {
+		text += formatReadChunkLineRange(input, theme);
+		if (!(context?.expanded ?? false)) {
+			text += theme.fg("dim", " (ctrl+o to expand)");
+		}
+	}
 	return text;
 }
 
@@ -322,12 +337,17 @@ function renderChunkHeader(
 	name: string,
 	args: unknown,
 	theme: Theme,
+	context?: { readonly expanded?: boolean },
 ): Component {
-	return new Text(renderChunkHeaderText(name, args, theme), 0, 0);
+	return new Text(renderChunkHeaderText(name, args, theme, context), 0, 0);
 }
 
-export function renderReadChunk(args: unknown, theme: Theme): Component {
-	return renderChunkHeader("read_chunk", args, theme);
+export function renderReadChunk(
+	args: unknown,
+	theme: Theme,
+	context?: { readonly expanded?: boolean },
+): Component {
+	return renderChunkHeader("read_chunk", args, theme, context);
 }
 
 function renderToolResultText(
@@ -365,14 +385,10 @@ export function renderReadChunkResult(
 	const details = result.details;
 	if (!isReadChunkDetails(details)) return renderToolResultText(result, theme);
 
-	const summaryParts = [
-		`${details.path}: lines ${details.startLine}-${details.endLine} of ${details.totalLines}`,
-		`${details.visibleAnchors} visible anchor(s)`,
-	];
+	const summaryParts = [`${details.visibleAnchors} visible anchor(s)`];
 	if (details.ambiguousLines > 0) {
 		summaryParts.push(`${details.ambiguousLines} ambiguous line(s)`);
 	}
-	summaryParts.push(keyHint("app.tools.expand", "expand to view lines"));
 	return new Text(theme.fg("muted", summaryParts.join(". ")), 0, 0);
 }
 
@@ -396,7 +412,7 @@ export function renderEditChunk(
 	theme: Theme,
 	context?: { readonly expanded?: boolean },
 ): Component {
-	const header = renderChunkHeaderText("edit_chunk", args, theme);
+	const header = renderChunkHeaderText("edit_chunk", args, theme, context);
 	if (!(context?.expanded ?? false)) return new Text(header, 0, 0);
 
 	const params = renderEditChunkParams(args, theme);
