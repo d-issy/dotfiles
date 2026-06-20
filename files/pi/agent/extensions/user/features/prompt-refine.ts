@@ -12,6 +12,8 @@ Rewrite the user's draft prompt so it is clearer, more actionable, and easier fo
 
 Rules:
 - Preserve the user's intent and language.
+- Correct obvious typos, dictation mistakes, speech-recognition errors, and wrong homophones from voice input when the intended wording is clear.
+- Do not over-correct domain terms, code identifiers, file paths, commands, URLs, or proper nouns unless they are clearly mistaken.
 - Do not add requirements that are not implied by the draft.
 - Make ambiguity explicit only when helpful.
 - Prefer concise structure with bullets when it improves readability.
@@ -25,14 +27,6 @@ function extractText(response: Awaited<ReturnType<typeof complete>>): string {
 		.map((part) => part.text)
 		.join("\n")
 		.trim();
-}
-
-function escapeHtmlComment(text: string): string {
-	return text.replaceAll("--", "- -");
-}
-
-function formatRefinedPrompt(refined: string, original: string): string {
-	return `${refined.trim()}\n\n<!-- original prompt\n${escapeHtmlComment(original.trim())}\n-->`;
 }
 
 async function generateRefinedPrompt(
@@ -104,7 +98,7 @@ async function refineEditorPrompt(ctx: ExtensionContext): Promise<void> {
 		return;
 	}
 
-	ctx.ui.setEditorText(formatRefinedPrompt(refined, original));
+	ctx.ui.setEditorText(refined);
 	ctx.ui.notify("Prompt refined", "info");
 }
 
