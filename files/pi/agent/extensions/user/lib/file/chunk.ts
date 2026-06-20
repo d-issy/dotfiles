@@ -1,8 +1,15 @@
 import { constants } from "node:fs";
 import { access, readFile, writeFile } from "node:fs/promises";
 import { createHash } from "node:crypto";
-import type { AgentToolResult, Theme } from "@earendil-works/pi-coding-agent";
-import { withFileMutationQueue } from "@earendil-works/pi-coding-agent";
+import {
+	type AgentToolResult,
+	type EditDiffResult,
+	type Theme,
+	generateDiffString,
+	generateUnifiedPatch,
+	renderDiff,
+	withFileMutationQueue,
+} from "@earendil-works/pi-coding-agent";
 import { type Component, Text } from "@earendil-works/pi-tui";
 import { type Static, Type } from "typebox";
 import { ToolError } from "./errors";
@@ -20,6 +27,7 @@ const EDIT_CHUNK_OPERATION = "Editing chunk in";
 const ANCHOR_LENGTH = 3;
 const DEFAULT_READ_CHUNK_LIMIT = 200;
 const MAX_CONTEXT_RADIUS = 16;
+const LLM_DIFF_OMIT_LINE_THRESHOLD = 50;
 
 const anchorSchema = Type.String({
 	description:
@@ -85,8 +93,10 @@ type EditChunkDetails = {
 	operation: "edit_chunk";
 	path: string;
 	replacements: number;
+	diff: string;
+	patch: string;
+	firstChangedLine: number | undefined;
 };
-
 type TextDocument = {
 	readonly lines: readonly string[];
 	readonly lineEnding: "\n" | "\r\n";
@@ -352,7 +362,7 @@ export function renderReadChunk(
 }
 
 function renderToolResultText(
-	result: AgentToolResult<ReadChunkDetails>,
+	result: AgentToolResult<unknown>,
 	theme: Theme,
 ): Component {
 	const text = result.content
@@ -419,6 +429,41 @@ export function renderEditChunk(
 	const params = renderEditChunkParams(args, theme);
 	if (params.length === 0) return new Text(header, 0, 0);
 	return new Text(`${header}\n${params.join("\n")}`, 0, 0);
+}
+
+function isEditChunkDetails(details: unknown): details is EditChunkDetails {
+	if (typeof details !== "object" || details === null) return false;
+	const value = details as Record<string, unknown>;
+	return (
+		value.operation === "edit_chunk" &&
+		typeof value.path === "string" &&
+		typeof value.replacements === "number" &&
+		typeof value.diff === "string" &&
+		typeof value.patch === "string" &&
+		(value.firstChangedLine === undefined ||
+			typeof value.firstChangedLine === "number")
+	);
+}
+
+export function renderEditChunkResult(
+	result: AgentToolResult<EditChunkDetails>,
+	options: { expanded: boolean; isPartial: boolean },
+	theme: Theme,
+): Component {
+	if (options.isPartial) {
+		return new Text(theme.fg("warning", "Applying chunk edit..."), 0, 0);
+	}
+
+	const details = result.details;
+	if (!isEditChunkDetails(details)) return renderToolResultText(result, theme);
+
+	const summary = theme.fg(
+		"success",
+		`Applied ${details.replacements} chunk edits.`,
+	);
+	if (details.diff.length === 0) return new Text(summary, 0, 0);
+
+	return new Text(`${renderDiff(details.diff)}\n${summary}`, 0, 0);
 }
 
 export async function executeReadChunk(
@@ -518,6 +563,21 @@ export async function executeEditChunk(
 		checkAbort(signal, EDIT_CHUNK_OPERATION);
 
 		const nextLines = applyResolvedEdits(document.lines, resolved);
+		const baseContent = serializeDocument(
+			document.lines,
+			"\n",
+			document.finalNewline,
+		);
+		const diffContent = serializeDocument(
+			nextLines,
+			"\n",
+			document.finalNewline,
+		);
+		const diffResult: EditDiffResult = generateDiffString(
+			baseContent,
+			diffContent,
+		);
+		const patch = generateUnifiedPatch(displayPath, baseContent, diffContent);
 		const nextContent = serializeDocument(
 			nextLines,
 			document.lineEnding,
@@ -526,17 +586,29 @@ export async function executeEditChunk(
 		await writeFile(absolutePath, nextContent, "utf8");
 		checkAbort(signal, EDIT_CHUNK_OPERATION);
 
+		const resultSummary = `Applied ${resolved.length} chunk edits.`;
+		const diffLineCount =
+			diffResult.diff === "" ? 0 : diffResult.diff.split("\n").length;
+		const resultMessage = !diffResult.diff
+			? resultSummary
+			: diffLineCount >= LLM_DIFF_OMIT_LINE_THRESHOLD
+				? `Diff omitted from tool result because it is ${diffLineCount} lines (>= ${LLM_DIFF_OMIT_LINE_THRESHOLD}). Use read_chunk only if you need to inspect the changed content.\n${resultSummary}`
+				: `Diff:\n${diffResult.diff}\n${resultSummary}`;
+
 		return {
 			content: [
 				{
 					type: "text",
-					text: `Successfully applied ${resolved.length} chunk edit(s) to ${displayPath}.`,
+					text: resultMessage,
 				},
 			],
 			details: {
 				operation: "edit_chunk",
 				path: displayPath,
 				replacements: resolved.length,
+				diff: diffResult.diff,
+				patch,
+				firstChangedLine: diffResult.firstChangedLine,
 			} satisfies EditChunkDetails,
 		};
 	});

@@ -6,6 +6,7 @@ export {
 	executeReadChunk,
 	readChunkSchema,
 	renderEditChunk,
+	renderEditChunkResult,
 	renderReadChunk,
 	renderReadChunkResult,
 } from "./chunk";

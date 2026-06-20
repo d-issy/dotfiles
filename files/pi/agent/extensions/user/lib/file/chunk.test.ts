@@ -46,7 +46,7 @@ describe("chunk file tools", () => {
 		assert.equal(anchors.length, 5);
 		assert.ok(anchors.every((anchor) => anchor !== "---"));
 
-		await executeEditChunk(
+		const editResult = await executeEditChunk(
 			root,
 			{
 				path: "src/demo.txt",
@@ -62,6 +62,62 @@ describe("chunk file tools", () => {
 			readFileSync(join(root, "src", "demo.txt"), "utf8"),
 			["alpha", "BETA", "gamma", "tail", ""].join("\n"),
 		);
+		const editContent = editResult.content[0];
+		assert.equal(editContent?.type, "text");
+		assert.match(editContent.text, /^Diff:\n/u);
+		assert.match(editContent.text, /-2 beta/u);
+		assert.match(editContent.text, /\+2 BETA/u);
+		assert.match(editContent.text, /Applied 2 chunk edits\.$/u);
+		assert.equal(editResult.details.path, "src/demo.txt");
+		assert.equal(editResult.details.replacements, 2);
+		assert.equal(editResult.details.firstChangedLine, 2);
+		assert.match(editResult.details.diff, /-2 beta/u);
+		assert.match(editResult.details.diff, /\+2 BETA/u);
+		assert.match(editResult.details.diff, /-5 epsilon/u);
+		assert.match(editResult.details.diff, /\+4 tail/u);
+		assert.match(editResult.details.patch, /--- src\/demo\.txt/u);
+	});
+
+	it("omits large diffs from the LLM-facing edit result content", async () => {
+		const root = tempRepo();
+		writeFileSync(
+			join(root, "src", "large.txt"),
+			[
+				...Array.from({ length: 60 }, (_, index) => `old ${index + 1}`),
+				"",
+			].join("\n"),
+		);
+
+		const readResult = await executeReadChunk(
+			root,
+			{ path: "src/large.txt" },
+			undefined,
+		);
+		const anchors = anchorsByLine(resultText(readResult));
+		const editResult = await executeEditChunk(
+			root,
+			{
+				path: "src/large.txt",
+				edits: [
+					{
+						old_range: [anchors[0], anchors[59]],
+						new_lines: Array.from(
+							{ length: 60 },
+							(_, index) => `new ${index + 1}`,
+						),
+					},
+				],
+			},
+			undefined,
+		);
+
+		const editContent = editResult.content[0];
+		assert.equal(editContent?.type, "text");
+		assert.match(editContent.text, /^Diff omitted from tool result/u);
+		assert.doesNotMatch(editContent.text, /Diff:\n/u);
+		assert.match(editContent.text, /Applied 1 chunk edits\.$/u);
+		assert.match(editResult.details.diff, /- 1 old 1/u);
+		assert.match(editResult.details.diff, /\+ 1 new 1/u);
 	});
 
 	it("shows continuation offset when more lines remain", async () => {

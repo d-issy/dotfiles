@@ -8,6 +8,7 @@ import {
 	normalizeStringOrArray,
 	readChunkSchema,
 	renderEditChunk,
+	renderEditChunkResult,
 	renderMv,
 	renderReadChunk,
 	renderReadChunkResult,
@@ -86,6 +87,7 @@ function registerFileTools(catalog: ToolCatalog): void {
 				parameters: editChunkSchema,
 				executionMode: "sequential",
 				renderCall: renderEditChunk,
+				renderResult: renderEditChunkResult,
 				execute: (_toolCallId, params, signal, _onUpdate, ctx) =>
 					executeEditChunk(ctx.cwd, params, signal),
 			},
