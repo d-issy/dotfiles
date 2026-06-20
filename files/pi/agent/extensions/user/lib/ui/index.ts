@@ -2,6 +2,12 @@
 // single feature's domain). See the individual modules for details.
 export { filterCompletionsByPrefix } from "./completions";
 export {
+	EDITOR_PADDING_X,
+	createExtensionEditorComponent,
+	createRefinableExtensionEditorComponent,
+	defaultEditorOptions,
+} from "./editor";
+export {
 	type FilterSelectItem,
 	type FilterSelectOptions,
 	showFilterSelect,

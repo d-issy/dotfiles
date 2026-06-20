@@ -7,7 +7,10 @@ import {
 	truncateToWidth,
 	visibleWidth,
 } from "@earendil-works/pi-tui";
-import { decodePrintableInput } from "../ui";
+import {
+	createRefinableExtensionEditorComponent,
+	decodePrintableInput,
+} from "../ui";
 import { type KeyedPanelItem, renderKeyedPanelItem } from "../ui/keyed-panel";
 
 export type FocusConfirmDecision =
@@ -244,7 +247,19 @@ async function editExitRejectReason(
 	]
 		.filter((line): line is string => line !== undefined)
 		.join("\n");
-	return ctx.ui.editor(title, initialValue ?? "");
+	return ctx.ui.custom<string | undefined>((tui, _theme, keybindings, done) =>
+		createRefinableExtensionEditorComponent(
+			ctx,
+			tui,
+			keybindings,
+			title,
+			initialValue ?? "",
+			(value) => done(value),
+			() => done(undefined),
+			{},
+			{ notifyLabel: "a reject reason" },
+		),
+	);
 }
 
 async function chooseExitFocusAction(

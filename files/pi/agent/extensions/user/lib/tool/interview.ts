@@ -4,10 +4,7 @@ import type {
 	Theme,
 	ThemeColor,
 } from "@earendil-works/pi-coding-agent";
-import {
-	DynamicBorder,
-	ExtensionEditorComponent,
-} from "@earendil-works/pi-coding-agent";
+import { DynamicBorder } from "@earendil-works/pi-coding-agent";
 import {
 	Text,
 	matchesKey,
@@ -16,7 +13,10 @@ import {
 } from "@earendil-works/pi-tui";
 import { type Static, Type } from "typebox";
 import type { ToolPolicy } from "../policy";
-import { decodePrintableInput } from "../ui";
+import {
+	createRefinableExtensionEditorComponent,
+	decodePrintableInput,
+} from "../ui";
 import { type ToolCatalog, defineToolContribution } from "./catalog";
 
 const choiceSchema = Type.Object({
@@ -111,7 +111,6 @@ type QuestionRow = {
 };
 
 const PROMPT_PADDING_X = 2;
-const OTHER_INPUT_PADDING_X = 1;
 const OTHER_PREVIEW_MAX_LINES = 3;
 const OTHER_LABEL = "Other";
 const OTHER_INPUT_TITLE = "Provide Other Answer";
@@ -563,17 +562,18 @@ async function showOtherInput(
 	]
 		.filter((line): line is string => line !== undefined)
 		.join("\n");
-	return ctx.ui.custom<string | undefined>(
-		(tui, _theme, keybindings, done) =>
-			new ExtensionEditorComponent(
-				tui,
-				keybindings,
-				title,
-				initialValue ?? "",
-				(value) => done(value),
-				() => done(undefined),
-				{ paddingX: OTHER_INPUT_PADDING_X },
-			),
+	return ctx.ui.custom<string | undefined>((tui, _theme, keybindings, done) =>
+		createRefinableExtensionEditorComponent(
+			ctx,
+			tui,
+			keybindings,
+			title,
+			initialValue ?? "",
+			(value) => done(value),
+			() => done(undefined),
+			{},
+			{ notifyLabel: "an answer" },
+		),
 	);
 }
 
