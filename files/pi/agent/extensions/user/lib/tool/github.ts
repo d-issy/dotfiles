@@ -863,7 +863,7 @@ function registerGithubTool<TInput extends object>(
 
 export function registerGithubTools(catalog: ToolCatalog): void {
 	registerGithubTool<GithubPrViewInput>(catalog, {
-		name: "github_pr_view",
+		name: "github_pull_request_view",
 		label: "github pr view",
 		description:
 			"Inspect GitHub PR metadata, with optional body, file, and CI summaries.",
@@ -873,7 +873,7 @@ export function registerGithubTools(catalog: ToolCatalog): void {
 	});
 
 	registerGithubTool<GithubPrFilesInput>(catalog, {
-		name: "github_pr_files",
+		name: "github_pull_request_files",
 		label: "github pr files",
 		description:
 			"List GitHub PR changed files with optional path and status filters.",
@@ -884,7 +884,7 @@ export function registerGithubTools(catalog: ToolCatalog): void {
 	});
 
 	registerGithubTool<GithubPrDiffInput>(catalog, {
-		name: "github_pr_diff",
+		name: "github_pull_request_diff",
 		label: "github pr diff",
 		description: "Inspect GitHub PR diff summaries, names, or bounded patches.",
 		parameters: githubPrDiffSchema,
@@ -904,7 +904,7 @@ export function registerGithubTools(catalog: ToolCatalog): void {
 	});
 
 	registerGithubTool<GithubPrChecksInput>(catalog, {
-		name: "github_pr_checks",
+		name: "github_pull_request_checks",
 		label: "github pr checks",
 		description: "Inspect GitHub PR CI/check status with optional filters.",
 		parameters: githubPrChecksSchema,

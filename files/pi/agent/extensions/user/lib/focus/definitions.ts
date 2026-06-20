@@ -43,6 +43,24 @@ export const BUILT_IN_TOOL_SETS: ReadonlyMap<string, readonly string[]> =
 	new Map([
 		["file_read", ["read_chunk", "grep", "find", "ls"]],
 		["file_write", ["write", "edit_chunk", "mv", "rm"]],
+		[
+			"git_read",
+			[
+				"git_status",
+				"git_diff",
+				"git_log",
+				"git_show",
+				"git_branch",
+				"git_ls_files",
+				"git_grep",
+				"git_blame",
+				"github_pull_request_view",
+				"github_pull_request_files",
+				"github_pull_request_diff",
+				"github_compare",
+				"github_pull_request_checks",
+			],
+		],
 	]);
 
 export const BASE_FOCUS_DEFINITIONS: readonly FocusDefinition[] = [
@@ -99,21 +117,8 @@ export const BASE_FOCUS_DEFINITIONS: readonly FocusDefinition[] = [
 			"Use when the task requires read-only git/GitHub inspection such as status, diffs, history, branches, tracked files, grep matches, blame, pull requests, GitHub compares, or CI checks.",
 		prompt:
 			"You are in git-read focus. Use only read-only git and GitHub tools to inspect repository state, diffs, history, branches, tracked files, grep matches, blame, pull requests, GitHub compares, and CI checks. Prefer narrow parameters such as paths, mode, maxFiles, maxPatchBytes, include* flags, and check state filters to keep context small. Do not modify the worktree, index, branches, remotes, GitHub state, or git configuration. Do not use checkout, switch, reset, restore, add, commit, push, pull, fetch, merge, rebase, stash, clean, tag, branch creation/deletion, gh edit/merge/close/comment, or config-changing commands.",
-		tools: [
-			"git_status",
-			"git_diff",
-			"git_log",
-			"git_show",
-			"git_branch",
-			"git_ls_files",
-			"git_grep",
-			"git_blame",
-			"github_pr_view",
-			"github_pr_files",
-			"github_pr_diff",
-			"github_compare",
-			"github_pr_checks",
-		],
+		tools: [],
+		toolSets: ["git_read"],
 		transition: FOCUS_TRANSITION.AUTO,
 		color: "accent",
 	},
@@ -126,6 +131,19 @@ export const BASE_FOCUS_DEFINITIONS: readonly FocusDefinition[] = [
 		tools: ["read_chunk", "write", "edit_chunk", "bash"],
 		transition: FOCUS_TRANSITION.MANUAL,
 		color: "alert",
+	},
+	{
+		name: "pull-request",
+		description:
+			"Use when creating or updating a pull request. Stages explicit files on a dedicated branch, pushes, and opens or updates a draft PR via gh without low-level git/gh commands.",
+		prompt: [
+			"You are in pull-request focus. At the start of each turn, inspect the current diff (e.g. with git_diff or github_pull_request_diff) before doing any work, so you act on the real state of changes.",
+			"Keep PR body concise: do not include a Changes section (the changed files are visible) or a Verify section (CI checks handle verification). Prefer this focus over the runbook skill for PR creation and updates.",
+		].join(" "),
+		tools: ["create_pull_request", "update_pull_request"],
+		toolSets: ["file_read", "git_read"],
+		transition: FOCUS_TRANSITION.MANUAL,
+		color: "accent",
 	},
 ];
 

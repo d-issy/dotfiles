@@ -20,6 +20,7 @@ import { type ToolCatalog, defineToolContribution } from "./catalog";
 import { registerGitTools } from "./git";
 import { registerGithubTools } from "./github";
 import { registerInterviewTools } from "./interview";
+import { registerPullRequestTools } from "./pull-request";
 
 /**
  * Register every core user-extension tool into the provided catalog. Grouped by
@@ -31,8 +32,8 @@ export function registerCoreUserTools(catalog: ToolCatalog): void {
 	registerGitTools(catalog);
 	registerGithubTools(catalog);
 	registerInterviewTools(catalog);
+	registerPullRequestTools(catalog);
 }
-
 function registerFileTools(catalog: ToolCatalog): void {
 	catalog.register(
 		defineToolContribution({
