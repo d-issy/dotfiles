@@ -12,6 +12,10 @@
         enable = true;
         agents.pi = true;
       };
+      pi-customization = {
+        enable = true;
+        agents.pi = true;
+      };
       runbook.enable = true;
     };
   };
