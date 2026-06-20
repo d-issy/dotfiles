@@ -295,7 +295,7 @@ async function createPullRequest(
 		);
 	}
 
-	await runBin("git", cwd, ["checkout", "-b", branchName], signal, commands);
+	await runBin("git", cwd, ["switch", "-c", branchName], signal, commands);
 	// Stage the listed files first so untracked new files become committable,
 	// then commit only those pathspecs with `git commit --only` to preserve
 	// unrelated staged changes.
@@ -349,6 +349,13 @@ async function updatePullRequest(
 		);
 	}
 
+	if (hasCommit) {
+		if ((params.commitFiles ?? []).length === 0) {
+			throw new Error("commitFiles must not be empty.");
+		}
+		nonEmpty(params.commitMessage, "commitMessage");
+	}
+
 	const commands: string[] = [];
 	const lines: string[] = [];
 
@@ -362,9 +369,6 @@ async function updatePullRequest(
 
 	if (hasCommit) {
 		const files = params.commitFiles ?? [];
-		if (files.length === 0) {
-			throw new Error("commitFiles must not be empty.");
-		}
 		const commitMessage = nonEmpty(params.commitMessage, "commitMessage");
 		// Stage the listed files first so untracked new files become
 		// committable, then commit only those pathspecs with `git commit
