@@ -4,6 +4,9 @@
     "test": "vitest run",
     "test:coverage": "vitest run --coverage"
   },
+  "imports": {
+    "#pi-user/*": "./files/pi/agent/extensions/user/*.ts"
+  },
   "peerDependencies": {
     "@earendil-works/pi-ai": "*",
     "@earendil-works/pi-coding-agent": "*",
