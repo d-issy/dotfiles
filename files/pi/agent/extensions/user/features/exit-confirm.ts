@@ -8,6 +8,7 @@ import {
 import type { EditorTheme, TUI } from "@earendil-works/pi-tui";
 import type { Feature } from "../feature";
 import { FOOTER_NOTICE_DEFAULT_MS, FOOTER_NOTICE_EVENT } from "../lib/status";
+import { defaultEditorOptions } from "../lib/ui";
 
 const CONFIRM_WINDOW_MS = FOOTER_NOTICE_DEFAULT_MS;
 const EXIT_PROMPTS = {
@@ -30,7 +31,7 @@ class ConfirmExitEditor extends CustomEditor {
 			clear(): void;
 		},
 	) {
-		super(tui, theme, keybindingsForExit);
+		super(tui, theme, keybindingsForExit, defaultEditorOptions());
 	}
 
 	private confirmOrArm(action: ExitConfirmAction): boolean {
