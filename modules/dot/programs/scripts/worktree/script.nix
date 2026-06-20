@@ -1440,9 +1440,10 @@ in
   }
 
   prune_records() {
-  	local targets="$1" branch path dirty _window remove_args=()
-  	while IFS=$'\t' read -r branch path dirty _window; do
+  	local targets="$1" branch path dirty window cleaned remove_args=()
+  	while IFS=$'\t' read -r branch path dirty window; do
   		[[ -n "$branch" ]] || continue
+  		cleaned="branch"
   		if [[ "$path" != - ]]; then
   			remove_args=()
   			if [[ "$dirty" == yes ]]; then
@@ -1451,10 +1452,14 @@ in
   			${pkgs.git}/bin/git worktree remove "''${remove_args[@]}" "$path"
   			remove_pending_state_for_path "$path"
   			close_tmux_window_for_deleted_path "$path" "$(managed_repo_root)"
+  			cleaned="''${cleaned}, worktree: $path"
   		fi
-  		${pkgs.git}/bin/git branch -D "$branch"
+  		${pkgs.git}/bin/git branch -D "$branch" >/dev/null
   		unset_saved_window_for_branch "$branch"
-  		printf '%sPruned:%s %s\n' "$GREEN" "$RESET" "$branch"
+  		if [[ "$window" != - ]]; then
+  			cleaned="''${cleaned}, window: $window"
+  		fi
+  		printf '%sPruned:%s %s (%s)\n' "$GREEN" "$RESET" "$branch" "$cleaned"
   	done <"$targets"
   }
 

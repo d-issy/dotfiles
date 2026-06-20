@@ -2,7 +2,11 @@ import {
 	DynamicBorder,
 	type ExtensionContext,
 } from "@earendil-works/pi-coding-agent";
-import { matchesKey, truncateToWidth } from "@earendil-works/pi-tui";
+import {
+	matchesKey,
+	truncateToWidth,
+	visibleWidth,
+} from "@earendil-works/pi-tui";
 import { decodePrintableInput } from "../ui";
 import { type KeyedPanelItem, renderKeyedPanelItem } from "../ui/keyed-panel";
 
@@ -28,14 +32,84 @@ type ExitFocusItem = KeyedPanelItem & {
 
 const sessionAllowedConfirmFocuses = new Set<string>();
 const sessionDeniedConfirmFocuses = new Set<string>();
+const DIALOG_HORIZONTAL_PADDING = 1;
 
-function focusConfirmItems(description: string): readonly FocusConfirmItem[] {
+function dialogContentWidth(width: number): number {
+	return Math.max(1, width - DIALOG_HORIZONTAL_PADDING * 2);
+}
+
+function padDialogLine(line: string, width: number): string {
+	const contentWidth = width - DIALOG_HORIZONTAL_PADDING * 2;
+	if (contentWidth < 1) return truncateToWidth(line, width, "");
+	const content = truncateToWidth(line, contentWidth, "");
+	return `${" ".repeat(DIALOG_HORIZONTAL_PADDING)}${content}${" ".repeat(
+		Math.max(0, contentWidth - visibleWidth(content)) +
+			DIALOG_HORIZONTAL_PADDING,
+	)}`;
+}
+
+function wrapLine(line: string, width: number): string[] {
+	const maxWidth = Math.max(1, width);
+	if (!line) return [""];
+	const lines: string[] = [];
+	let current = "";
+	for (const char of line) {
+		const next = current + char;
+		if (visibleWidth(next) <= maxWidth) {
+			current = next;
+			continue;
+		}
+
+		const breakIndex = current.search(/\s+\S*$/u);
+		if (breakIndex > 0) {
+			lines.push(current.slice(0, breakIndex).trimEnd());
+			current = `${current.slice(breakIndex).trimStart()}${char}`;
+			continue;
+		}
+
+		if (current) lines.push(current.trimEnd());
+		current = char.trimStart();
+	}
+	if (current || lines.length === 0) lines.push(current);
+	return lines;
+}
+
+function wrapPrefixedText(
+	prefix: string,
+	text: string,
+	width: number,
+): string[] {
+	const continuationPrefix = " ".repeat(visibleWidth(prefix));
+	return text
+		.trim()
+		.split("\n")
+		.flatMap((line, index) => {
+			const linePrefix = index === 0 ? prefix : continuationPrefix;
+			const lineWidth = Math.max(1, width - visibleWidth(linePrefix));
+			return wrapLine(line, lineWidth).map(
+				(wrapped, wrappedIndex) =>
+					`${wrappedIndex === 0 ? linePrefix : continuationPrefix}${wrapped}`,
+			);
+		});
+}
+
+function renderReasonLines(
+	theme: { fg(role: string, text: string): string },
+	reason: string,
+	width: number,
+): string[] {
+	return wrapPrefixedText("Reason: ", reason, dialogContentWidth(width)).map(
+		(line) => padDialogLine(theme.fg("dim", line), width),
+	);
+}
+
+function focusConfirmItems(): readonly FocusConfirmItem[] {
 	return [
 		{
 			key: "y",
 			value: "allow-once",
 			label: "Allow once",
-			description,
+			description: "Enter this focus once.",
 		},
 		{
 			key: "n",
@@ -84,10 +158,9 @@ function exitFocusItems(): readonly ExitFocusItem[] {
 export async function confirmFocusTransition(
 	ctx: ExtensionContext,
 	name: string,
-	description: string,
 	reason: string,
 ): Promise<FocusConfirmDecision | undefined> {
-	const items = focusConfirmItems(description);
+	const items = focusConfirmItems();
 	return ctx.ui.custom<FocusConfirmDecision | undefined>(
 		(tui, theme, keybindings, done) => {
 			const border = new DynamicBorder((text) => theme.fg("accent", text));
@@ -98,28 +171,30 @@ export async function confirmFocusTransition(
 			const select = (item: FocusConfirmItem): void => done(item.value);
 			return {
 				render(width: number) {
+					const contentWidth = dialogContentWidth(width);
 					return [
 						...border.render(width),
-						truncateToWidth(
+						padDialogLine(
 							theme.fg("accent", theme.bold(`Enter focus: ${name}`)),
 							width,
-							"",
 						),
-						truncateToWidth(theme.fg("dim", `Reason: ${reason}`), width, ""),
+						...renderReasonLines(theme, reason, width),
 						...items.map((item, index) =>
-							renderKeyedPanelItem(theme, item, {
+							padDialogLine(
+								renderKeyedPanelItem(theme, item, {
+									width: contentWidth,
+									selected: index === selectedIndex,
+									labelWidth: 30,
+								}),
 								width,
-								selected: index === selectedIndex,
-								labelWidth: 30,
-							}),
+							),
 						),
-						truncateToWidth(
+						padDialogLine(
 							theme.fg(
 								"dim",
 								"y/n/a/d select • ↑↓ navigate • enter select • esc cancel",
 							),
 							width,
-							"",
 						),
 						...border.render(width),
 					];
@@ -192,28 +267,30 @@ async function chooseExitFocusAction(
 			const select = (item: ExitFocusItem): void => finish(item.value);
 			return {
 				render(width: number) {
+					const contentWidth = dialogContentWidth(width);
 					return [
 						...border.render(width),
-						truncateToWidth(
+						padDialogLine(
 							theme.fg("accent", theme.bold(`Exit focus: ${name}`)),
 							width,
-							"",
 						),
-						truncateToWidth(theme.fg("dim", `Reason: ${reason}`), width, ""),
+						...renderReasonLines(theme, reason, width),
 						...items.map((item, index) =>
-							renderKeyedPanelItem(theme, item, {
+							padDialogLine(
+								renderKeyedPanelItem(theme, item, {
+									width: contentWidth,
+									selected: index === selectedIndex,
+									labelWidth: 26,
+								}),
 								width,
-								selected: index === selectedIndex,
-								labelWidth: 26,
-							}),
+							),
 						),
-						truncateToWidth(
+						padDialogLine(
 							theme.fg(
 								"dim",
 								"y/n/r select • ↑↓ navigate • Enter select • Tab write reject reason • Esc cancel",
 							),
 							width,
-							"",
 						),
 						...border.render(width),
 					];

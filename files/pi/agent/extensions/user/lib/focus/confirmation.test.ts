@@ -37,6 +37,8 @@ function keybindings(): Record<string, unknown> {
 function context(options: {
 	readonly inputs: readonly string[];
 	readonly editorResults?: readonly (string | undefined)[];
+	readonly renderWidth?: number;
+	readonly onRender?: (lines: readonly string[]) => void;
 }): ExtensionContext {
 	const inputs = [...options.inputs];
 	const editorResults = [...(options.editorResults ?? [])];
@@ -58,7 +60,7 @@ function context(options: {
 						keybindings(),
 						resolve,
 					);
-					component.render(80);
+					options.onRender?.(component.render(options.renderWidth ?? 80));
 					component.invalidate();
 					component.handleInput(inputs.shift() ?? "esc");
 				}),
@@ -92,7 +94,6 @@ describe("focus confirmation", () => {
 			await confirmFocusTransition(
 				context({ inputs: ["a"] }),
 				"edit",
-				"Edit files",
 				"Need changes",
 			),
 			"allow-session",
@@ -101,7 +102,6 @@ describe("focus confirmation", () => {
 			await confirmFocusTransition(
 				context({ inputs: ["esc"] }),
 				"edit",
-				"Edit files",
 				"Need changes",
 			),
 			undefined,
@@ -128,5 +128,44 @@ describe("focus confirmation", () => {
 			),
 			{ confirmed: true },
 		);
+	});
+
+	it("wraps and pads focus transition reasons", async () => {
+		const exitLines: Array<readonly string[]> = [];
+		assert.deepEqual(
+			await confirmExitFocusTransition(
+				context({
+					inputs: ["y"],
+					renderWidth: 32,
+					onRender: (lines) => exitLines.push(lines),
+				}),
+				"interview",
+				"requirements are now complete and the user approved proceeding",
+			),
+			{ confirmed: true },
+		);
+		assert.deepEqual(exitLines[0]?.slice(2, 5), [
+			" Reason: requirements are now   ",
+			"         complete and the user  ",
+			"         approved proceeding    ",
+		]);
+
+		const enterLines: Array<readonly string[]> = [];
+		assert.equal(
+			await confirmFocusTransition(
+				context({
+					inputs: ["a"],
+					renderWidth: 32,
+					onRender: (lines) => enterLines.push(lines),
+				}),
+				"edit",
+				"need focused edits before running checks",
+			),
+			"allow-session",
+		);
+		assert.deepEqual(enterLines[0]?.slice(2, 4), [
+			" Reason: need focused edits     ",
+			"         before running checks  ",
+		]);
 	});
 });

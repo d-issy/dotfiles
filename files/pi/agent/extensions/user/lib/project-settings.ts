@@ -118,6 +118,14 @@ export function loadProjectUserSettings(cwd: string): ProjectUserSettings {
 	return parsed as ProjectUserSettings;
 }
 
+export function isUserExtensionEnabled(cwd: string): boolean {
+	try {
+		return loadProjectUserSettings(cwd).enabled !== false;
+	} catch {
+		return true;
+	}
+}
+
 function formatProjectUserSettingsTrustPrompt(cwd: string): string {
 	return `Trust project user settings?\n${cwd}\n\nThis allows the user extension to load ${PROJECT_USER_SETTINGS_RELATIVE_PATH} and enable project-defined tools. Project tools are repository-controlled commands.`;
 }

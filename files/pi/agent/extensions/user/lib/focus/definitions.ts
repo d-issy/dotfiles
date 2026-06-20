@@ -1,7 +1,18 @@
 import type { ColorRole } from "../theme";
 
-export type FocusTransition = "auto" | "confirm" | "manual";
-export type FocusExitMode = "single-turn" | "explicit";
+export const FOCUS_TRANSITION = {
+	AUTO: "auto",
+	CONFIRM: "confirm",
+	MANUAL: "manual",
+} as const;
+export type FocusTransition =
+	(typeof FOCUS_TRANSITION)[keyof typeof FOCUS_TRANSITION];
+export const FOCUS_EXIT_MODE = {
+	SINGLE_TURN: "single-turn",
+	EXPLICIT: "explicit",
+} as const;
+export type FocusExitMode =
+	(typeof FOCUS_EXIT_MODE)[keyof typeof FOCUS_EXIT_MODE];
 export type FocusName = string;
 
 export type FocusDefinition = {
@@ -25,7 +36,7 @@ export const ENTER_FOCUS_TOOL = "enter_focus";
 export const EXIT_FOCUS_TOOL = "exit_focus";
 
 export function getFocusExitMode(focus: FocusDefinition): FocusExitMode {
-	return focus.exitMode ?? "single-turn";
+	return focus.exitMode ?? FOCUS_EXIT_MODE.SINGLE_TURN;
 }
 
 export const BUILT_IN_TOOL_SETS: ReadonlyMap<string, readonly string[]> =
@@ -43,7 +54,7 @@ export const BASE_FOCUS_DEFINITIONS: readonly FocusDefinition[] = [
 			"You are in explore focus. Read and search the repository to understand the task.",
 		tools: [],
 		toolSets: ["file_read"],
-		transition: "auto",
+		transition: FOCUS_TRANSITION.AUTO,
 		color: "accent",
 	},
 	{
@@ -54,7 +65,7 @@ export const BASE_FOCUS_DEFINITIONS: readonly FocusDefinition[] = [
 			"You are in edit focus. Make focused file changes with read/write/edit/mv/rm. Keep changes minimal.",
 		tools: [],
 		toolSets: ["file_read", "file_write"],
-		transition: "confirm",
+		transition: FOCUS_TRANSITION.CONFIRM,
 		color: "positive",
 	},
 	{
@@ -77,8 +88,8 @@ export const BASE_FOCUS_DEFINITIONS: readonly FocusDefinition[] = [
 			"Interview focus has ended. Continue from the agreed requirements instead of stopping. If the user approved implementation, enter the appropriate implementation focus and proceed; otherwise follow the agreed next action.",
 		tools: ["ask_user_question"],
 		toolSets: ["file_read"],
-		transition: "auto",
-		exitMode: "explicit",
+		transition: FOCUS_TRANSITION.AUTO,
+		exitMode: FOCUS_EXIT_MODE.EXPLICIT,
 		interactiveOnly: true,
 		color: "accent",
 	},
@@ -103,7 +114,7 @@ export const BASE_FOCUS_DEFINITIONS: readonly FocusDefinition[] = [
 			"github_compare",
 			"github_pr_checks",
 		],
-		transition: "auto",
+		transition: FOCUS_TRANSITION.AUTO,
 		color: "accent",
 	},
 	{
@@ -113,11 +124,21 @@ export const BASE_FOCUS_DEFINITIONS: readonly FocusDefinition[] = [
 		prompt:
 			"You are in yolo focus. Use read, write, edit, and bash to inspect and modify files and run shell commands. Avoid exposing secrets or credentials. If a command may print secrets, use a safer command or mask sensitive output. Ask for confirmation for gray-area destructive or privacy-sensitive actions.",
 		tools: ["read", "write", "edit", "bash"],
-		transition: "manual",
+		transition: FOCUS_TRANSITION.MANUAL,
 		color: "alert",
 	},
 ];
 
 export function isFocusTransition(value: unknown): value is FocusTransition {
-	return value === "auto" || value === "confirm" || value === "manual";
+	return (
+		value === FOCUS_TRANSITION.AUTO ||
+		value === FOCUS_TRANSITION.CONFIRM ||
+		value === FOCUS_TRANSITION.MANUAL
+	);
+}
+
+export function isFocusExitMode(value: unknown): value is FocusExitMode {
+	return (
+		value === FOCUS_EXIT_MODE.SINGLE_TURN || value === FOCUS_EXIT_MODE.EXPLICIT
+	);
 }

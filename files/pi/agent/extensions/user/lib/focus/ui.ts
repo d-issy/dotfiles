@@ -3,6 +3,8 @@ import { colors, fg } from "../theme";
 import { type FilterSelectItem, showFilterSelect } from "../ui";
 import {
 	BASE_FOCUS,
+	FOCUS_EXIT_MODE,
+	FOCUS_TRANSITION,
 	type FocusDefinition,
 	type FocusName,
 	getFocusExitMode,
@@ -29,11 +31,11 @@ export function applyFocusStatus(
 function describeFocus(focus: FocusDefinition): string {
 	const tags: string[] = [];
 
-	if (focus.transition === "manual") {
+	if (focus.transition === FOCUS_TRANSITION.MANUAL) {
 		tags.push("manual");
 	}
 
-	if (getFocusExitMode(focus) === "explicit") {
+	if (getFocusExitMode(focus) === FOCUS_EXIT_MODE.EXPLICIT) {
 		tags.push("explicit exit");
 	}
 
@@ -57,11 +59,12 @@ export async function showFocusSelector(
 ): Promise<FocusName | typeof BASE_FOCUS | undefined> {
 	const focuses = registry.list();
 	const manualFocuses = focuses.filter(
-		(focus) => focus.transition === "manual",
+		(focus) => focus.transition === FOCUS_TRANSITION.MANUAL,
 	);
 	const explicitFocuses = focuses.filter(
 		(focus) =>
-			focus.transition !== "manual" && getFocusExitMode(focus) === "explicit",
+			focus.transition !== FOCUS_TRANSITION.MANUAL &&
+			getFocusExitMode(focus) === FOCUS_EXIT_MODE.EXPLICIT,
 	);
 	const recommendedItems = [
 		...manualFocuses.map((focus) => focusItem(focus)),

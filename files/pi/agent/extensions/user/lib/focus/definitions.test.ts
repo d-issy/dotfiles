@@ -3,7 +3,10 @@ import { describe, it } from "vitest";
 import {
 	BASE_FOCUS_DEFINITIONS,
 	BUILT_IN_TOOL_SETS,
+	FOCUS_EXIT_MODE,
+	FOCUS_TRANSITION,
 	getFocusExitMode,
+	isFocusExitMode,
 	isFocusTransition,
 } from "./definitions";
 
@@ -31,9 +34,9 @@ describe("focus definitions", () => {
 				description: "demo",
 				prompt: "demo",
 				tools: [],
-				transition: "auto",
+				transition: FOCUS_TRANSITION.AUTO,
 			}),
-			"single-turn",
+			FOCUS_EXIT_MODE.SINGLE_TURN,
 		);
 		assert.equal(
 			getFocusExitMode({
@@ -41,17 +44,24 @@ describe("focus definitions", () => {
 				description: "demo",
 				prompt: "demo",
 				tools: [],
-				transition: "auto",
-				exitMode: "explicit",
+				transition: FOCUS_TRANSITION.AUTO,
+				exitMode: FOCUS_EXIT_MODE.EXPLICIT,
 			}),
-			"explicit",
+			FOCUS_EXIT_MODE.EXPLICIT,
 		);
 	});
 
+	it("recognizes focus exit mode values", () => {
+		assert.equal(isFocusExitMode(FOCUS_EXIT_MODE.SINGLE_TURN), true);
+		assert.equal(isFocusExitMode(FOCUS_EXIT_MODE.EXPLICIT), true);
+		assert.equal(isFocusExitMode("other"), false);
+		assert.equal(isFocusExitMode(undefined), false);
+	});
+
 	it("recognizes focus transition values", () => {
-		assert.equal(isFocusTransition("auto"), true);
-		assert.equal(isFocusTransition("confirm"), true);
-		assert.equal(isFocusTransition("manual"), true);
+		assert.equal(isFocusTransition(FOCUS_TRANSITION.AUTO), true);
+		assert.equal(isFocusTransition(FOCUS_TRANSITION.CONFIRM), true);
+		assert.equal(isFocusTransition(FOCUS_TRANSITION.MANUAL), true);
 		assert.equal(isFocusTransition("other"), false);
 		assert.equal(isFocusTransition(undefined), false);
 	});
