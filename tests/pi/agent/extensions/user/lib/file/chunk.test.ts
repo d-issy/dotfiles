@@ -78,6 +78,41 @@ describe("chunk file tools", () => {
 		assert.match(editResult.details.patch, /--- src\/demo\.txt/u);
 	});
 
+	it("accepts anchors copied with a leading @ and warns", async () => {
+		const root = tempRepo();
+		const readResult = await executeReadChunk(
+			root,
+			{ path: "src/demo.txt" },
+			undefined,
+		);
+		const anchors = anchorsByLine(resultText(readResult));
+
+		const editResult = await executeEditChunk(
+			root,
+			{
+				path: "src/demo.txt",
+				edits: [
+					{
+						old_range: [`@${anchors[1]}`, `@${anchors[1]}`],
+						new_lines: ["BETA"],
+					},
+				],
+			},
+			undefined,
+		);
+
+		assert.equal(
+			readFileSync(join(root, "src", "demo.txt"), "utf8"),
+			["alpha", "BETA", "gamma", "delta", "epsilon", ""].join("\n"),
+		);
+		const editContent = editResult.content[0];
+		assert.equal(editContent?.type, "text");
+		assert.match(editContent.text, /^Warning: Removed leading @/u);
+		assert.deepEqual(editResult.details.warnings, [
+			`Removed leading @ from edit_chunk anchor '@${anchors[1]}'. Use '${anchors[1]}' in old_range next time.`,
+		]);
+	});
+
 	it("omits large diffs from the LLM-facing edit result content", async () => {
 		const root = tempRepo();
 		writeFileSync(

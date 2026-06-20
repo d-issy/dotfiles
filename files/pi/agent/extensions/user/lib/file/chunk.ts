@@ -31,9 +31,9 @@ const LLM_DIFF_OMIT_LINE_THRESHOLD = 50;
 
 const anchorSchema = Type.String({
 	description:
-		"Three-character anchor shown by read_chunk. Anchors are only emitted when unique in the file.",
+		"Three-character anchor shown by read_chunk. A leading @ copied from read_chunk output is accepted with a warning.",
 	minLength: ANCHOR_LENGTH,
-	maxLength: ANCHOR_LENGTH,
+	maxLength: ANCHOR_LENGTH + 1,
 });
 
 export const readChunkSchema = Type.Object({
@@ -95,6 +95,7 @@ type EditChunkDetails = {
 	replacements: number;
 	diff: string;
 	patch: string;
+	warnings: readonly string[];
 	firstChangedLine: number | undefined;
 };
 type TextDocument = {
@@ -236,11 +237,22 @@ function resolveAnchor(anchorIndex: AnchorIndex, anchor: string): number {
 	return line;
 }
 
+function normalizeAnchor(anchor: string, warnings: string[]): string {
+	if (!anchor.startsWith("@")) return anchor;
+	const normalized = anchor.slice(1);
+	const warning = `Removed leading @ from edit_chunk anchor '${anchor}'. Use '${normalized}' in old_range next time.`;
+	if (!warnings.includes(warning)) warnings.push(warning);
+	return normalized;
+}
+
 function resolveEdit(
 	anchorIndex: AnchorIndex,
 	edit: EditChunkToolInput["edits"][number],
+	warnings: string[],
 ): ResolvedEdit {
-	const [startAnchor, endAnchor] = edit.old_range;
+	const [rawStartAnchor, rawEndAnchor] = edit.old_range;
+	const startAnchor = normalizeAnchor(rawStartAnchor, warnings);
+	const endAnchor = normalizeAnchor(rawEndAnchor, warnings);
 	const start = resolveAnchor(anchorIndex, startAnchor);
 	const end = resolveAnchor(anchorIndex, endAnchor);
 	if (start > end) {
@@ -438,6 +450,9 @@ function isEditChunkDetails(details: unknown): details is EditChunkDetails {
 		value.operation === "edit_chunk" &&
 		typeof value.path === "string" &&
 		typeof value.replacements === "number" &&
+		typeof value.warnings === "object" &&
+		Array.isArray(value.warnings) &&
+		value.warnings.every((warning) => typeof warning === "string") &&
 		typeof value.diff === "string" &&
 		typeof value.patch === "string" &&
 		(value.firstChangedLine === undefined ||
@@ -461,9 +476,15 @@ export function renderEditChunkResult(
 		"success",
 		`Applied ${details.replacements} chunk edits.`,
 	);
-	if (details.diff.length === 0) return new Text(summary, 0, 0);
-
-	return new Text(`${renderDiff(details.diff)}\n${summary}`, 0, 0);
+	const warnings = details.warnings.map((warning) =>
+		theme.fg("warning", `Warning: ${warning}`),
+	);
+	const resultParts = [
+		...(details.diff.length === 0 ? [] : [renderDiff(details.diff)]),
+		...warnings,
+		summary,
+	];
+	return new Text(resultParts.join("\n"), 0, 0);
 }
 
 export async function executeReadChunk(
@@ -555,8 +576,9 @@ export async function executeEditChunk(
 		const latestContent = await readFile(absolutePath, "utf8");
 		const document = parseDocument(latestContent);
 		const anchors = buildAnchorIndex(document.lines);
+		const warnings: string[] = [];
 		const resolved = Array.from(params.edits, (edit) =>
-			resolveEdit(anchors, edit),
+			resolveEdit(anchors, edit, warnings),
 		);
 		resolved.sort((a, b) => a.start - b.start);
 		assertNonOverlapping(resolved);
@@ -587,13 +609,19 @@ export async function executeEditChunk(
 		checkAbort(signal, EDIT_CHUNK_OPERATION);
 
 		const resultSummary = `Applied ${resolved.length} chunk edits.`;
+		const warningText = warnings
+			.map((warning) => `Warning: ${warning}`)
+			.join("\n");
 		const diffLineCount =
 			diffResult.diff === "" ? 0 : diffResult.diff.split("\n").length;
-		const resultMessage = !diffResult.diff
+		const resultBody = !diffResult.diff
 			? resultSummary
 			: diffLineCount >= LLM_DIFF_OMIT_LINE_THRESHOLD
 				? `Diff omitted from tool result because it is ${diffLineCount} lines (>= ${LLM_DIFF_OMIT_LINE_THRESHOLD}). Use read_chunk only if you need to inspect the changed content.\n${resultSummary}`
 				: `Diff:\n${diffResult.diff}\n${resultSummary}`;
+		const resultMessage = warningText
+			? `${warningText}\n${resultBody}`
+			: resultBody;
 
 		return {
 			content: [
@@ -608,6 +636,7 @@ export async function executeEditChunk(
 				replacements: resolved.length,
 				diff: diffResult.diff,
 				patch,
+				warnings,
 				firstChangedLine: diffResult.firstChangedLine,
 			} satisfies EditChunkDetails,
 		};
