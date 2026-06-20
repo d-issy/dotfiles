@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
+import { CONFIG_DIR_NAME } from "@earendil-works/pi-coding-agent";
 import { PROJECT_USER_SETTINGS_RELATIVE_PATH } from "../project-settings";
 
 export type TestPiProject = {
@@ -22,7 +23,7 @@ export function createTestPiProject(options?: {
 	mkdirSync(cwd, { recursive: true });
 
 	if (options?.includeStandardPiConfig) {
-		writeProjectFile(cwd, ".pi/settings.json", "{}\n");
+		writeProjectFile(cwd, join(CONFIG_DIR_NAME, "settings.json"), "{}\n");
 	}
 
 	const shouldWriteUserSettings = options?.includeUserSettings ?? true;
