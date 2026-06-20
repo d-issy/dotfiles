@@ -4,6 +4,7 @@ import { isUserExtensionEnabled } from "./lib/project-settings";
 import { createUserExtensionServices } from "./lib/services";
 import { createExitConfirmFeature } from "./features/exit-confirm";
 import { createFocusFeature } from "./features/focus";
+import { createPromptRefineFeature } from "./features/prompt-refine";
 import { createQuickActionsFeature } from "./features/quick-actions";
 import { createStatusFeature } from "./features/status";
 import { createSystemRemindersFeature } from "./features/system-reminders";
@@ -20,6 +21,7 @@ function createFeatures(): readonly Feature[] {
 		createSystemRemindersFeature(),
 		createFocusFeature(),
 		createQuickActionsFeature(),
+		createPromptRefineFeature(),
 		createThinkingFeature(),
 		createTmuxNoticeFeature(),
 		createToolFeature(),

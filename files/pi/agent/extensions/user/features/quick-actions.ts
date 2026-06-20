@@ -21,6 +21,9 @@ const openQuickActions =
 			case "model":
 				await showModelSelector(pi, ctx);
 				break;
+			case "refinePrompt":
+				await runQuickAction("refinePrompt", ctx);
+				break;
 		}
 	};
 
