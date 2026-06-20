@@ -137,11 +137,8 @@ export const BASE_FOCUS_DEFINITIONS: readonly FocusDefinition[] = [
 		description:
 			"Use when creating or updating a pull request. Stages explicit files on a dedicated branch, pushes, and opens or updates a draft PR via gh without low-level git/gh commands.",
 		prompt: [
-			"You are in pull-request focus. Use create_pull_request to open a new draft PR from an explicit list of files on a new branch, and update_pull_request to push additional commits or edit the PR for the current branch.",
-			"Always pass an explicit commitFiles list so unrelated work is not committed. create_pull_request creates a new branch and fails if branchName is the repository default branch; it never commits directly to the default branch.",
-			"update_pull_request operates on the PR for the current branch and fails on the repository default branch. It requires commitMessage when commitFiles is provided, and fails when no update inputs are provided.",
-			"Read-only git/GitHub inspection tools (git_read tool set) may be used to check status, diffs, history, and the PR before committing. Do not use low-level mutating git or gh command tools (add, commit, push, switch, reset, etc.) directly; use create_pull_request/update_pull_request instead. Do not force-push, amend, rebase, or rewrite history. Do not add interactive confirmation prompts; execute from explicit inputs.",
-			"Default to draft PRs. Prefer this focus over the runbook skill for PR creation and updates.",
+			"You are in pull-request focus. At the start of each turn, inspect the current diff (e.g. with git_diff or github_pull_request_diff) before doing any work, so you act on the real state of changes.",
+			"Keep PR body concise: do not include a Changes section (the changed files are visible) or a Verify section (CI checks handle verification). Prefer this focus over the runbook skill for PR creation and updates.",
 		].join(" "),
 		tools: ["create_pull_request", "update_pull_request"],
 		toolSets: ["file_read", "git_read"],
