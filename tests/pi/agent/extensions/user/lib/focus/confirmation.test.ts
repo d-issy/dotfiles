@@ -42,6 +42,7 @@ function context(options: {
 }): ExtensionContext {
 	const inputs = [...options.inputs];
 	const editorResults = [...(options.editorResults ?? [])];
+	let customCalls = 0;
 	return {
 		hasUI: true,
 		ui: {
@@ -54,6 +55,11 @@ function context(options: {
 				) => CustomComponent,
 			): Promise<T> =>
 				new Promise((resolve) => {
+					customCalls += 1;
+					if (customCalls > 1 && editorResults.length > 0) {
+						resolve(editorResults.shift() as T);
+						return;
+					}
 					const component = build(
 						{ requestRender: () => undefined },
 						theme(),

@@ -29,7 +29,6 @@ type TextEditorLike = {
 	getText(): string;
 	setText(text: string): void;
 };
-const EDITOR_HINT_INDEX = 6;
 
 type EditorHintOptions = {
 	readonly refine?: boolean;
@@ -47,6 +46,15 @@ function keyHintFromKeys(
 ): string {
 	const keys = keybindings.getKeys(keybinding);
 	return rawKeyHint(keys.length > 0 ? keys.join("/") : fallback, description);
+}
+
+function findExtensionEditorHintIndex(
+	component: ExtensionEditorComponent,
+): number | undefined {
+	for (let index = component.children.length - 1; index >= 0; index -= 1) {
+		if (component.children[index] instanceof Text) return index;
+	}
+	return undefined;
 }
 
 function setExtensionEditorHint(
@@ -71,7 +79,13 @@ function setExtensionEditorHint(
 			"ctrl+g",
 		),
 	];
-	component.children[EDITOR_HINT_INDEX] = new Text(hints.join("  "), 1, 0);
+	const hint = new Text(hints.join("  "), 1, 0);
+	const hintIndex = findExtensionEditorHintIndex(component);
+	if (hintIndex === undefined) {
+		component.addChild(hint);
+		return;
+	}
+	component.children[hintIndex] = hint;
 }
 
 async function refineExtensionEditorPrompt(
