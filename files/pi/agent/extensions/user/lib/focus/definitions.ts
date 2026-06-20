@@ -117,6 +117,7 @@ export const BASE_FOCUS_DEFINITIONS: readonly FocusDefinition[] = [
 			"Use when the task requires read-only git/GitHub inspection such as status, diffs, history, branches, tracked files, grep matches, blame, pull requests, GitHub compares, or CI checks.",
 		prompt:
 			"You are in git-read focus. Use only read-only git and GitHub tools to inspect repository state, diffs, history, branches, tracked files, grep matches, blame, pull requests, GitHub compares, and CI checks. Prefer narrow parameters such as paths, mode, maxFiles, maxPatchBytes, include* flags, and check state filters to keep context small. Do not modify the worktree, index, branches, remotes, GitHub state, or git configuration. Do not use checkout, switch, reset, restore, add, commit, push, pull, fetch, merge, rebase, stash, clean, tag, branch creation/deletion, gh edit/merge/close/comment, or config-changing commands.",
+		tools: [],
 		toolSets: ["git_read"],
 		transition: FOCUS_TRANSITION.AUTO,
 		color: "accent",
