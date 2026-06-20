@@ -102,11 +102,7 @@ function renderPullRequestCall(
 			: {};
 	const params = Object.entries(record)
 		.filter(([, value]) => value !== undefined)
-		.map(([key, value]) => {
-			if (Array.isArray(value))
-				return `${key}=[${value.length} item${value.length === 1 ? "" : "s"}]`;
-			return `${key}=${formatParam(value)}`;
-		})
+		.map(([key, value]) => `${key}=${formatParam(value)}`)
 		.join(", ");
 	const suffix = params ? theme.fg("dim", ` (${params})`) : "";
 	return new Text(`${theme.fg("toolTitle", theme.bold(name))}${suffix}`, 0, 0);
@@ -114,8 +110,6 @@ function renderPullRequestCall(
 
 function formatParam(value: unknown): string {
 	if (Array.isArray(value)) return `[${value.join(", ")}]`;
-	if (typeof value === "string" && value.length > 40)
-		return `${value.slice(0, 37)}...`;
 	return String(value);
 }
 
