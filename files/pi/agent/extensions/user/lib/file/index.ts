@@ -13,6 +13,7 @@ export {
 export { ToolError, type ToolErrorCode, isErrnoCode } from "./errors";
 export {
 	type FsGuardContext,
+	type FsGuardOptions,
 	assertNoIgnoredDescendants,
 	assertRepoPathAllowed,
 	createFsGuardContext,

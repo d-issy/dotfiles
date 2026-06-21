@@ -79,7 +79,7 @@ function registerFileTools(catalog: ToolCatalog): void {
 				promptSnippet: "Replace line chunks using anchors from read_chunk",
 				promptGuidelines: [
 					"Use edit_chunk with anchors copied from read_chunk when normal edit oldText matching is likely ambiguous.",
-					"For edit_chunk, pass edits: [{ old_range: [startAnchor, endAnchor], new_lines: [...] }]. Use the same anchor twice for a single-line edit.",
+					"For edit_chunk, pass read_chunk anchors in old_range, not line numbers: from a line like '12 @abc | text', use 'abc'. Use the same anchor twice for a single-line edit.",
 					"Whitespace and blank lines are part of the edit. Choose old_range and new_lines so the final file has correct spacing in the same edit.",
 					"When deleting a whole block such as a function, type, const/var block, import group, or test case, include the adjacent blank line in old_range when needed so the remaining code keeps normal spacing.",
 					"Do not leave doubled blank lines, and do not remove all separation between adjacent top-level declarations. Prefer deleting the trailing blank line after the removed block; if the block is at the end of a section/file, delete the preceding blank line instead.",
