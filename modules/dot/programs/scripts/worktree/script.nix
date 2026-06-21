@@ -171,10 +171,10 @@ in
     - Never deletes the default branch.
     - Skips the current worktree.
     - Skips dirty worktrees unless -f/--force is used.
-    - Shows targets and asks Prune? [y/N] unless -f/--force is used.
+    - Shows targets before pruning.
 
   Options:
-    -f, --force  Also delete dirty merged worktrees, without confirmation.
+    -f, --force  Also delete dirty merged worktrees.
     -h, --help   Show this help.
   EOF
   }
@@ -301,6 +301,10 @@ in
   }
 
   branch_window_config_key() {
+  	printf 'branch.%s.worktree-window\n' "$1"
+  }
+
+  legacy_branch_window_config_key() {
   	printf 'branch."%s".worktree-window\n' "$1"
   }
 
@@ -308,6 +312,9 @@ in
   	local branch="$1" window
   	[[ -n "$branch" && "$branch" != detached ]] || return 1
   	window="$(${pkgs.git}/bin/git config --get "$(branch_window_config_key "$branch")" 2>/dev/null || true)"
+  	if [[ -z "$window" ]]; then
+  		window="$(${pkgs.git}/bin/git config --get "$(legacy_branch_window_config_key "$branch")" 2>/dev/null || true)"
+  	fi
   	[[ -n "$window" ]] || return 1
   	printf '%s\n' "$window"
   }
@@ -316,12 +323,37 @@ in
   	local branch="$1" window="$2"
   	[[ -n "$branch" && -n "$window" ]] || return 0
   	${pkgs.git}/bin/git config "$(branch_window_config_key "$branch")" "$window"
+  	${pkgs.git}/bin/git config --unset-all "$(legacy_branch_window_config_key "$branch")" >/dev/null 2>&1 || true
   }
 
   unset_saved_window_for_branch() {
   	local branch="$1"
   	[[ -n "$branch" ]] || return 0
   	${pkgs.git}/bin/git config --unset-all "$(branch_window_config_key "$branch")" >/dev/null 2>&1 || true
+  	${pkgs.git}/bin/git config --unset-all "$(legacy_branch_window_config_key "$branch")" >/dev/null 2>&1 || true
+  }
+
+  branch_from_window_config_key() {
+  	local key="$1" branch
+  	branch="''${key#branch.}"
+  	branch="''${branch%.worktree-window}"
+  	branch="''${branch#\"}"
+  	branch="''${branch%\"}"
+  	printf '%s\n' "$branch"
+  }
+
+  cleanup_stale_saved_windows() {
+  	local key branch
+  	while IFS= read -r key; do
+  		[[ -n "$key" ]] || continue
+  		branch="$(branch_from_window_config_key "$key")"
+  		if ! branch_exists "$branch"; then
+  			${pkgs.git}/bin/git config --remove-section "branch.$branch" >/dev/null 2>&1 || true
+  			${pkgs.git}/bin/git config --remove-section "branch.\"$branch\"" >/dev/null 2>&1 || true
+  			${pkgs.git}/bin/git config --unset-all "$key" >/dev/null 2>&1 || true
+  			printf '%sCleaned:%s stale window config: %s\n' "$GREEN" "$RESET" "$key"
+  		fi
+  	done < <(${pkgs.git}/bin/git config --get-regexp 'worktree-window$' 2>/dev/null | ${pkgs.gawk}/bin/awk '$1 ~ /^branch\..*\.worktree-window$/ { print $1 }' || true)
   }
 
   desired_window_for_worktree() {
@@ -1427,18 +1459,6 @@ in
   	done < <(list_prune_branches "$base")
   }
 
-  confirm_prune_records() {
-  	local response
-  	response=""
-  	if ! read -r -p "Prune? [y/N] " response </dev/tty; then
-  		die "Cancelled"
-  	fi
-  	case "$response" in
-  	[Yy] | [Yy][Ee][Ss]) return 0 ;;
-  	*) die "Cancelled" ;;
-  	esac
-  }
-
   prune_records() {
   	local targets="$1" branch path dirty window cleaned remove_args=()
   	while IFS=$'\t' read -r branch path dirty window; do
@@ -1501,17 +1521,12 @@ in
   		printf '\nSkipped:\n'
   		print_prune_skipped_table <"$skipped"
   	fi
+  	cleanup_stale_saved_windows
   	if [[ "$target_count" -eq 0 ]]; then
   		printf '\nNothing to prune.\n'
   		${pkgs.coreutils}/bin/rm -rf "$tmpdir"
   		return 0
   	fi
-
-  	if [[ "$force" == false ]]; then
-  		printf '\n'
-  		confirm_prune_records
-  	fi
-
   	prune_records "$targets"
   	${pkgs.coreutils}/bin/rm -rf "$tmpdir"
   }
