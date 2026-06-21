@@ -47,12 +47,17 @@ export function isRepoPath(ctx: FsGuardContext, absolutePath: string): boolean {
 	return isInside(ctx.repoRoot, absolutePath);
 }
 
+export type FsGuardOptions = {
+	readonly allowIgnoredDependencies?: boolean;
+};
+
 export async function assertRepoPathAllowed(
 	ctx: FsGuardContext,
 	absolutePath: string,
 	operation: string,
+	options?: FsGuardOptions,
 ): Promise<void> {
-	await assertRepoPathAllowedInRoot(ctx, absolutePath, operation);
+	await assertRepoPathAllowedInRoot(ctx, absolutePath, operation, options);
 }
 
 export async function assertNoIgnoredDescendants(
@@ -67,6 +72,7 @@ async function assertRepoPathAllowedInRoot(
 	ctx: FsGuardContext,
 	absolutePath: string,
 	operation: string,
+	options?: FsGuardOptions,
 ): Promise<void> {
 	const displayPath = displayRepoPath(ctx.cwd, absolutePath);
 
@@ -79,7 +85,10 @@ async function assertRepoPathAllowedInRoot(
 		throw new ToolError("inside_git", operation, relPath);
 	}
 
-	if (await isIgnoredByGitignore(ctx, absolutePath)) {
+	if (
+		!(options?.allowIgnoredDependencies && isDependencyPath(relPath)) &&
+		(await isIgnoredByGitignore(ctx, absolutePath))
+	) {
 		throw new ToolError("ignored", operation, displayPath);
 	}
 }
@@ -148,6 +157,27 @@ function isRelativeOutside(rel: string): boolean {
 
 function toPosix(path: string): string {
 	return path.split(sep).join("/");
+}
+const DEPENDENCY_PATH_PREFIXES = [
+	"node_modules",
+	"bower_components",
+	"Pods",
+	"Carthage/Checkouts",
+	"vendor/bundle",
+	"vendor/ruby",
+] as const;
+
+function isDependencyPath(relPath: string): boolean {
+	if (
+		DEPENDENCY_PATH_PREFIXES.some(
+			(p) => relPath === p || relPath.startsWith(`${p}/`),
+		)
+	) {
+		return true;
+	}
+	return /^(?:\.venv|venv)\/lib\/python[^/]+\/site-packages(?:\/|$)/u.test(
+		relPath,
+	);
 }
 
 async function isIgnoredByGitignore(

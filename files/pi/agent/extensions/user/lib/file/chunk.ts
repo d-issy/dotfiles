@@ -29,11 +29,11 @@ const DEFAULT_READ_CHUNK_LIMIT = 200;
 const MAX_CONTEXT_RADIUS = 16;
 const LLM_DIFF_OMIT_LINE_THRESHOLD = 50;
 
-const anchorSchema = Type.String({
-	description:
-		"Three-character anchor shown by read_chunk. A leading @ copied from read_chunk output is accepted with a warning.",
-	minLength: ANCHOR_LENGTH,
-	maxLength: ANCHOR_LENGTH + 1,
+const OLD_RANGE_ANCHOR_GUIDANCE =
+	'Use read_chunk anchors, not line numbers: from a read_chunk line like "12 @abc | text", pass "abc" in old_range.';
+
+const anchorSchema = Type.Union([Type.String(), Type.Number()], {
+	description: OLD_RANGE_ANCHOR_GUIDANCE,
 });
 
 export const readChunkSchema = Type.Object({
@@ -56,7 +56,7 @@ const chunkEditSchema = Type.Object(
 	{
 		old_range: Type.Array(anchorSchema, {
 			description:
-				"Inclusive [start_anchor, end_anchor] range from read_chunk output. Use the same anchor twice for a single-line edit.",
+				"Inclusive [start_anchor, end_anchor] range using read_chunk anchors, not line numbers. Copy the 3-character value after @ from read_chunk output (for example, from '12 @abc | text', use 'abc'). Use the same anchor twice for a single-line edit.",
 			minItems: 2,
 			maxItems: 2,
 		}),
@@ -237,9 +237,22 @@ function resolveAnchor(anchorIndex: AnchorIndex, anchor: string): number {
 	return line;
 }
 
-function normalizeAnchor(anchor: string, warnings: string[]): string {
-	if (!anchor.startsWith("@")) return anchor;
+function formatInvalidOldRangeAnchorError(anchor: string | number): string {
+	return `Invalid old_range anchor '${anchor}'. ${OLD_RANGE_ANCHOR_GUIDANCE}`;
+}
+
+function normalizeAnchor(anchor: string | number, warnings: string[]): string {
+	if (typeof anchor === "number") {
+		throw new Error(formatInvalidOldRangeAnchorError(anchor));
+	}
+	if (!anchor.startsWith("@")) {
+		if (anchor.length === ANCHOR_LENGTH) return anchor;
+		throw new Error(formatInvalidOldRangeAnchorError(anchor));
+	}
 	const normalized = anchor.slice(1);
+	if (normalized.length !== ANCHOR_LENGTH) {
+		throw new Error(formatInvalidOldRangeAnchorError(anchor));
+	}
 	const warning = `Removed leading @ from edit_chunk anchor '${anchor}'. Use '${normalized}' in old_range next time.`;
 	if (!warnings.includes(warning)) warnings.push(warning);
 	return normalized;
@@ -298,7 +311,10 @@ async function readAllowedTextFile(
 	path: string,
 	operation: string,
 	mode: number,
-	options?: { readonly allowOutsideRepoWithoutAnchors?: boolean },
+	options?: {
+		readonly allowOutsideRepoWithoutAnchors?: boolean;
+		readonly allowIgnoredDependencies?: boolean;
+	},
 ): Promise<{
 	absolutePath: string;
 	displayPath: string;
@@ -314,7 +330,7 @@ async function readAllowedTextFile(
 
 	const insideRepo = isRepoPath(guardContext, absolutePath);
 	if (insideRepo || options?.allowOutsideRepoWithoutAnchors !== true) {
-		await assertRepoPathAllowed(guardContext, absolutePath, operation);
+		await assertRepoPathAllowed(guardContext, absolutePath, operation, options);
 	}
 	await access(absolutePath, mode);
 	return {
@@ -499,7 +515,7 @@ export async function executeReadChunk(
 		params.path,
 		READ_CHUNK_OPERATION,
 		constants.R_OK,
-		{ allowOutsideRepoWithoutAnchors: true },
+		{ allowOutsideRepoWithoutAnchors: true, allowIgnoredDependencies: true },
 	);
 	checkAbort(signal, READ_CHUNK_OPERATION);
 
@@ -525,7 +541,7 @@ export async function executeReadChunk(
 		anchorsEnabled
 			? `Anchors are ${ANCHOR_LENGTH}-character tokens shown after line numbers. Only file-wide unique anchors are shown; @--- lines cannot be used as old_range endpoints.`
 			: "Anchors are disabled for files outside the repository; edit_chunk cannot use this output.",
-		`Use edit_chunk with edits: [{ old_range: ["start", "end"], new_lines: [...] }]. Use the same anchor twice for one line.`,
+		`Use edit_chunk with edits: [{ old_range: ["abc", "def"], new_lines: [...] }]. Copy anchors from the @ column, not line numbers; use the same anchor twice for one line.`,
 		`Showing ${lines.length} of ${document.lines.length} line(s).`,
 	];
 	const continuation =

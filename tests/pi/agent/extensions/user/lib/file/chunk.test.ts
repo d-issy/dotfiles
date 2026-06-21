@@ -194,6 +194,28 @@ describe("chunk file tools", () => {
 				root,
 				{
 					path: "src/demo.txt",
+					edits: [{ old_range: [12, 12], new_lines: ["nope"] }],
+				},
+				undefined,
+			),
+			/Use read_chunk anchors, not line numbers/u,
+		);
+		await assert.rejects(
+			executeEditChunk(
+				root,
+				{
+					path: "src/demo.txt",
+					edits: [{ old_range: ["12", "12"], new_lines: ["nope"] }],
+				},
+				undefined,
+			),
+			/Use read_chunk anchors, not line numbers/u,
+		);
+		await assert.rejects(
+			executeEditChunk(
+				root,
+				{
+					path: "src/demo.txt",
 					edits: [{ old_range: ["zzz", "zzz"], new_lines: ["nope"] }],
 				},
 				undefined,
