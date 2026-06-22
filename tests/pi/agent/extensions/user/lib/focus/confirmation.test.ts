@@ -39,6 +39,7 @@ function context(options: {
 	readonly editorResults?: readonly (string | undefined)[];
 	readonly renderWidth?: number;
 	readonly onRender?: (lines: readonly string[]) => void;
+	readonly onCustomCall?: (index: number) => void;
 }): ExtensionContext {
 	const inputs = [...options.inputs];
 	const editorResults = [...(options.editorResults ?? [])];
@@ -56,6 +57,7 @@ function context(options: {
 			): Promise<T> =>
 				new Promise((resolve) => {
 					customCalls += 1;
+					options.onCustomCall?.(customCalls);
 					if (customCalls > 1 && editorResults.length > 0) {
 						resolve(editorResults.shift() as T);
 						return;
@@ -175,6 +177,39 @@ describe("focus confirmation", () => {
 		assert.equal(isFocusAllowedForSession("edit"), false);
 	});
 
+	it("does not interleave another subagent confirmation before reject reason input", async () => {
+		const events: string[] = [];
+		const [first, second] = await Promise.all([
+			confirmFocusTransition(
+				context({
+					inputs: ["r"],
+					editorResults: ["needs details"],
+					onCustomCall: (index) => events.push(`first:${index}`),
+				}),
+				"subagent",
+				"edit",
+				"first request",
+				"first prompt",
+			),
+			confirmFocusTransition(
+				context({
+					inputs: ["y"],
+					onCustomCall: (index) => events.push(`second:${index}`),
+				}),
+				"subagent",
+				"edit",
+				"second request",
+				"second prompt",
+			),
+		]);
+
+		assert.deepEqual(first, {
+			choice: "deny-once",
+			rejectReason: "needs details",
+		});
+		assert.deepEqual(second, { choice: "allow-once" });
+		assert.deepEqual(events, ["first:1", "first:2", "second:1"]);
+	});
 	it("supports exit denial with an edited reject reason", async () => {
 		assert.deepEqual(
 			await confirmExitFocusTransition(

@@ -216,109 +216,107 @@ async function chooseFocusTransitionAction(
 	| undefined
 > {
 	const items = focusConfirmItems();
-	return withUiLock(async () => {
-		// Parallel subagents can race on the same confirm focus. While we waited
-		// for the UI lock, a sibling may already have been granted or denied "for
-		// this session", so re-check inside the lock and honour that decision
-		// instead of prompting again.
-		if (sessionAware) {
-			if (isFocusAllowedForSession(name)) {
-				return { sessionShortCircuit: "allow-session" as const };
-			}
-			if (isFocusDeniedForSession(name)) {
-				return { sessionShortCircuit: "deny-session" as const };
-			}
+	// Parallel subagents can race on the same confirm focus. While we waited
+	// for the UI lock held by confirmFocusTransition, a sibling may already have
+	// been granted or denied "for this session", so re-check inside the lock and
+	// honour that decision instead of prompting again.
+	if (sessionAware) {
+		if (isFocusAllowedForSession(name)) {
+			return { sessionShortCircuit: "allow-session" as const };
 		}
-		void notifyUserInputNeeded();
-		const result = await ctx.ui.custom<
-			{ action: FocusConfirmAction; index: number } | undefined
-		>((tui, theme, keybindings, done) => {
-			const border = new DynamicBorder((text) => theme.fg("accent", text));
-			let selectedIndex = Math.min(initialIndex, items.length - 1);
-			const move = (delta: -1 | 1): void => {
-				selectedIndex = (selectedIndex + delta + items.length) % items.length;
-			};
-			const finish = (action: FocusConfirmAction): void => {
-				done({ action, index: selectedIndex });
-			};
-			const select = (item: FocusConfirmItem): void => finish(item.value);
-			const titleLine =
-				caller === "subagent"
-					? `Subagent requesting focus: ${name}`
-					: `Enter focus: ${name}`;
-			return {
-				render(width: number) {
-					const contentWidth = dialogContentWidth(width);
-					return [
-						...border.render(width),
-						padDialogLine(theme.fg("accent", theme.bold(titleLine)), width),
-						...renderReasonLines(theme, reason, width),
-						...(caller === "subagent" && prompt
-							? renderSubagentPromptLines(theme, prompt, width)
-							: []),
-						...items.map((item, index) =>
-							padDialogLine(
-								renderKeyedPanelItem(theme, item, {
-									width: contentWidth,
-									selected: index === selectedIndex,
-									labelWidth: 26,
-								}),
-								width,
-							),
-						),
+		if (isFocusDeniedForSession(name)) {
+			return { sessionShortCircuit: "deny-session" as const };
+		}
+	}
+	void notifyUserInputNeeded();
+	const result = await ctx.ui.custom<
+		{ action: FocusConfirmAction; index: number } | undefined
+	>((tui, theme, keybindings, done) => {
+		const border = new DynamicBorder((text) => theme.fg("accent", text));
+		let selectedIndex = Math.min(initialIndex, items.length - 1);
+		const move = (delta: -1 | 1): void => {
+			selectedIndex = (selectedIndex + delta + items.length) % items.length;
+		};
+		const finish = (action: FocusConfirmAction): void => {
+			done({ action, index: selectedIndex });
+		};
+		const select = (item: FocusConfirmItem): void => finish(item.value);
+		const titleLine =
+			caller === "subagent"
+				? `Subagent requesting focus: ${name}`
+				: `Enter focus: ${name}`;
+		return {
+			render(width: number) {
+				const contentWidth = dialogContentWidth(width);
+				return [
+					...border.render(width),
+					padDialogLine(theme.fg("accent", theme.bold(titleLine)), width),
+					...renderReasonLines(theme, reason, width),
+					...(caller === "subagent" && prompt
+						? renderSubagentPromptLines(theme, prompt, width)
+						: []),
+					...items.map((item, index) =>
 						padDialogLine(
-							theme.fg(
-								"dim",
-								"y/n/r/a/d select • ↑↓ navigate • Enter select • Tab write reject reason • Esc cancel",
-							),
+							renderKeyedPanelItem(theme, item, {
+								width: contentWidth,
+								selected: index === selectedIndex,
+								labelWidth: 26,
+							}),
 							width,
 						),
-						...border.render(width),
-					];
-				},
-				invalidate: () => border.invalidate(),
-				handleInput(data: string) {
-					if (keybindings.matches(data, "tui.select.up")) {
-						move(-1);
-						tui.requestRender();
-						return;
-					}
-					if (keybindings.matches(data, "tui.select.down")) {
-						move(1);
-						tui.requestRender();
-						return;
-					}
-					if (keybindings.matches(data, "tui.select.confirm")) {
-						select(items[selectedIndex]);
-						return;
-					}
-					if (keybindings.matches(data, "tui.select.cancel")) {
-						done(undefined);
-						return;
-					}
-					if (matchesKey(data, "tab")) {
-						finish("reason-input");
-						return;
-					}
-					const input = decodePrintableInput(data);
-					if (!input) return;
-					const key = input.toLowerCase();
-					const item = items.find((entry) => entry.key === key);
-					if (item) select(item);
-				},
-			};
-		});
-		// Persist a session-level subagent decision while still holding the UI
-		// lock so a racing sibling observes it on its own re-check above.
-		if (
-			caller === "subagent" &&
-			result &&
-			(result.action === "allow-session" || result.action === "deny-session")
-		) {
-			rememberFocusTransitionDecision(name, { choice: result.action });
-		}
-		return result;
+					),
+					padDialogLine(
+						theme.fg(
+							"dim",
+							"y/n/r/a/d select • ↑↓ navigate • Enter select • Tab write reject reason • Esc cancel",
+						),
+						width,
+					),
+					...border.render(width),
+				];
+			},
+			invalidate: () => border.invalidate(),
+			handleInput(data: string) {
+				if (keybindings.matches(data, "tui.select.up")) {
+					move(-1);
+					tui.requestRender();
+					return;
+				}
+				if (keybindings.matches(data, "tui.select.down")) {
+					move(1);
+					tui.requestRender();
+					return;
+				}
+				if (keybindings.matches(data, "tui.select.confirm")) {
+					select(items[selectedIndex]);
+					return;
+				}
+				if (keybindings.matches(data, "tui.select.cancel")) {
+					done(undefined);
+					return;
+				}
+				if (matchesKey(data, "tab")) {
+					finish("reason-input");
+					return;
+				}
+				const input = decodePrintableInput(data);
+				if (!input) return;
+				const key = input.toLowerCase();
+				const item = items.find((entry) => entry.key === key);
+				if (item) select(item);
+			},
+		};
 	});
+	// Persist a session-level subagent decision while still holding the UI
+	// lock so a racing sibling observes it on its own re-check above.
+	if (
+		caller === "subagent" &&
+		result &&
+		(result.action === "allow-session" || result.action === "deny-session")
+	) {
+		rememberFocusTransitionDecision(name, { choice: result.action });
+	}
+	return result;
 }
 
 async function editEnterRejectReason(
@@ -358,40 +356,45 @@ export async function confirmFocusTransition(
 	reason: string,
 	prompt?: string,
 ): Promise<FocusConfirmDecision | undefined> {
-	let selectedIndex = 0;
-	let rejectReason: string | undefined;
-	let firstPrompt = true;
-	while (true) {
-		// oxlint-disable-next-line no-await-in-loop -- reason editing may return to the same confirmation.
-		const result = await chooseFocusTransitionAction(
-			ctx,
-			caller,
-			name,
-			reason,
-			selectedIndex,
-			firstPrompt && caller === "subagent",
-			prompt,
-		);
-		firstPrompt = false;
-		if (!result) return undefined;
-		if ("sessionShortCircuit" in result) {
-			return { choice: result.sessionShortCircuit };
+	return withUiLock(async () => {
+		let selectedIndex = 0;
+		let rejectReason: string | undefined;
+		let firstPrompt = true;
+		while (true) {
+			// oxlint-disable-next-line no-await-in-loop -- reason editing may return to the same confirmation.
+			const result = await chooseFocusTransitionAction(
+				ctx,
+				caller,
+				name,
+				reason,
+				selectedIndex,
+				firstPrompt && caller === "subagent",
+				prompt,
+			);
+			firstPrompt = false;
+			if (!result) return undefined;
+			if ("sessionShortCircuit" in result) {
+				return { choice: result.sessionShortCircuit };
+			}
+			selectedIndex = result.index;
+			if (
+				result.action !== "deny-with-reason" &&
+				result.action !== "reason-input"
+			) {
+				return { choice: result.action };
+			}
+			// oxlint-disable-next-line no-await-in-loop -- reason editing is part of the confirmation flow.
+			const input = await editEnterRejectReason(
+				ctx,
+				name,
+				reason,
+				rejectReason,
+			);
+			if (input === undefined) continue;
+			rejectReason = input.trim() || undefined;
+			if (rejectReason) return { choice: "deny-once", rejectReason };
 		}
-		selectedIndex = result.index;
-		if (
-			result.action !== "deny-with-reason" &&
-			result.action !== "reason-input"
-		) {
-			return { choice: result.action };
-		}
-		// oxlint-disable-next-line no-await-in-loop -- reason editing is part of the confirmation flow.
-		const input = await withUiLock(() =>
-			editEnterRejectReason(ctx, name, reason, rejectReason),
-		);
-		if (input === undefined) continue;
-		rejectReason = input.trim() || undefined;
-		if (rejectReason) return { choice: "deny-once", rejectReason };
-	}
+	});
 }
 
 async function editExitRejectReason(
