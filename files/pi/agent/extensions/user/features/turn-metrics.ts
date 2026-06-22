@@ -3,6 +3,7 @@ import type {
 	ExtensionContext,
 } from "@earendil-works/pi-coding-agent";
 import type { Feature } from "../feature";
+import { ENTER_FOCUS_TOOL, isTerminatingFocusResult } from "../lib/focus";
 
 const WIDGET_KEY = "turn-metrics";
 const TICK_MS = 1000;
@@ -19,7 +20,6 @@ const DEFAULT_INDICATOR_FRAMES = [
 	"⠏",
 ] as const;
 const DEFAULT_INDICATOR_INTERVAL_MS = 80;
-const ENTER_FOCUS_TOOL = "enter_focus";
 
 type WorkPhase = "Thinking" | "Working";
 type PhaseColor = "accent" | "warning";
@@ -103,14 +103,6 @@ function formatWorkingMessage(
 		metrics,
 		ctx.ui.theme.fg("dim", ")"),
 	].join("");
-}
-function isTerminatingFocusResult(result: unknown): boolean {
-	return (
-		typeof result === "object" &&
-		result !== null &&
-		"terminate" in result &&
-		result.terminate === true
-	);
 }
 
 function register(pi: ExtensionAPI): void {

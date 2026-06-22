@@ -46,6 +46,20 @@ function isOkResult(result: AgentToolResult<FocusToolDetails>): boolean {
 	return result.details.ok !== false;
 }
 
+function resultDisplayText(
+	result: AgentToolResult<FocusToolDetails>,
+	options: ToolRenderResultOptions,
+): string {
+	if (options.expanded) return resultText(result);
+	const rejectReason =
+		typeof result.details.rejectReason === "string"
+			? result.details.rejectReason
+			: undefined;
+	return rejectReason
+		? `${firstResultLine(result)}\nReject reason: ${rejectReason}`
+		: firstResultLine(result);
+}
+
 function getEnterableFocusNames(focus: FocusController): readonly string[] {
 	return focus.registry
 		.list()
@@ -69,15 +83,7 @@ function renderEnterFocusResult(
 	options: ToolRenderResultOptions,
 	theme: Theme,
 ): Text {
-	const rejectReason =
-		typeof result.details.rejectReason === "string"
-			? result.details.rejectReason
-			: undefined;
-	const text = options.expanded
-		? resultText(result)
-		: rejectReason
-			? `${firstResultLine(result)}\nReject reason: ${rejectReason}`
-			: firstResultLine(result);
+	const text = resultDisplayText(result, options);
 	const color = isOkResult(result) ? "success" : "error";
 	return new Text(theme.fg(color, text), 0, 0);
 }
@@ -232,12 +238,10 @@ export function registerEnterFocusTool(
 							if (decision)
 								rememberFocusTransitionDecision(definition.name, decision);
 							const rejectReason = decision?.rejectReason;
+							const baseText = `User rejected entering focus '${definition.name}' for this request. Do not request this focus again or route through another focus to request it. Use currently available tools if they can satisfy the request. If not, ask the user how to proceed.`;
 							const text = rejectReason
-								? [
-										`User rejected entering focus '${definition.name}' for this request. Do not request this focus again or route through another focus to request it. Use currently available tools if they can satisfy the request. If not, ask the user how to proceed.`,
-										`Reject reason: ${rejectReason}`,
-									].join("\n\n")
-								: `User rejected entering focus '${definition.name}' for this request. Do not request this focus again or route through another focus to request it. Use currently available tools if they can satisfy the request. If not, ask the user how to proceed.`;
+								? `${baseText}\n\nReject reason: ${rejectReason}`
+								: baseText;
 							return {
 								content: [
 									{
@@ -296,15 +300,7 @@ function renderExitFocusResult(
 	options: ToolRenderResultOptions,
 	theme: Theme,
 ): Text {
-	const rejectReason =
-		typeof result.details.rejectReason === "string"
-			? result.details.rejectReason
-			: undefined;
-	const text = options.expanded
-		? resultText(result)
-		: rejectReason
-			? `${firstResultLine(result)}\nReject reason: ${rejectReason}`
-			: firstResultLine(result);
+	const text = resultDisplayText(result, options);
 	const color = isOkResult(result) ? "muted" : "error";
 	return new Text(theme.fg(color, text), 0, 0);
 }

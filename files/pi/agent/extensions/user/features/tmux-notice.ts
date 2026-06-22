@@ -1,21 +1,13 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import type { Feature } from "../feature";
+import { ENTER_FOCUS_TOOL, isTerminatingFocusResult } from "../lib/focus";
 import { notifyUserInputNeeded } from "../lib/tmux-notice";
-
-function isTerminatingFocusResult(result: unknown): boolean {
-	return (
-		typeof result === "object" &&
-		result !== null &&
-		"terminate" in result &&
-		result.terminate === true
-	);
-}
 
 function register(pi: ExtensionAPI): void {
 	let suppressNextAgentEndNotice = false;
 
 	pi.on("tool_execution_end", async (event) => {
-		if (event.toolName !== "enter_focus") return;
+		if (event.toolName !== ENTER_FOCUS_TOOL) return;
 		suppressNextAgentEndNotice = isTerminatingFocusResult(event.result);
 	});
 
