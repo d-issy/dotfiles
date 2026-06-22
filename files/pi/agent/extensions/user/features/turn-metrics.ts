@@ -3,6 +3,7 @@ import type {
 	ExtensionContext,
 } from "@earendil-works/pi-coding-agent";
 import type { Feature } from "../feature";
+import { ENTER_FOCUS_TOOL, isTerminatingFocusResult } from "../lib/focus";
 
 const WIDGET_KEY = "turn-metrics";
 const TICK_MS = 1000;
@@ -114,6 +115,7 @@ function register(pi: ExtensionAPI): void {
 	let currentInputTokens = 0;
 	let currentOutputTokens = 0;
 	let toolCalls = 0;
+	let preserveWorkingAfterAgentEnd = false;
 
 	function stopTickTimer(): void {
 		if (!tickTimer) return;
@@ -234,6 +236,10 @@ function register(pi: ExtensionAPI): void {
 		toolCalls++;
 		updateWorkingMessage(ctx);
 	});
+	pi.on("tool_execution_end", async (event) => {
+		if (event.toolName !== ENTER_FOCUS_TOOL) return;
+		preserveWorkingAfterAgentEnd = isTerminatingFocusResult(event.result);
+	});
 
 	pi.on("message_end", async (event, ctx) => {
 		if (event.message.role !== "assistant" || startedAt === undefined) return;
@@ -248,8 +254,13 @@ function register(pi: ExtensionAPI): void {
 		setWidgetLine(ctx, buildLine(ctx, true));
 		startedAt = undefined;
 	});
-
 	pi.on("agent_end", async (_event, ctx) => {
+		if (preserveWorkingAfterAgentEnd) {
+			preserveWorkingAfterAgentEnd = false;
+			updateWorkingMessage(ctx);
+			return;
+		}
+
 		stopTickTimer();
 		startedAt = undefined;
 		clearWorking(ctx);

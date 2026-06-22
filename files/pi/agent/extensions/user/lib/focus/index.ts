@@ -6,6 +6,7 @@ export {
 	type FocusDefinition,
 	type FocusName,
 	type FocusTransition,
+	isTerminatingFocusResult,
 } from "./definitions";
 export {
 	buildFocusRestorePrompt,

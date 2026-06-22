@@ -207,7 +207,7 @@ describe("focus management tools", () => {
 			undefined,
 			context(false),
 		);
-		rememberFocusTransitionDecision("edit", "allow-session");
+		rememberFocusTransitionDecision("edit", { choice: "allow-session" });
 		const allowed = await tool.execute(
 			"call",
 			{ name: "edit" },

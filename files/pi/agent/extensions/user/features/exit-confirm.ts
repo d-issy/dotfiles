@@ -8,6 +8,7 @@ import {
 import type { EditorTheme, TUI } from "@earendil-works/pi-tui";
 import type { Feature } from "../feature";
 import { FOOTER_NOTICE_DEFAULT_MS, FOOTER_NOTICE_EVENT } from "../lib/status";
+import { notifyUserInputNeeded } from "../lib/tmux-notice";
 import { defaultEditorOptions } from "../lib/ui";
 
 const CONFIRM_WINDOW_MS = FOOTER_NOTICE_DEFAULT_MS;
@@ -85,11 +86,13 @@ const installConfirmExitEditor =
 		ctx.ui.setEditorComponent(
 			(tui, theme, keybindings) =>
 				new ConfirmExitEditor(tui, theme, keybindings, {
-					show: (message) =>
+					show: (message) => {
+						void notifyUserInputNeeded();
 						pi.events.emit(FOOTER_NOTICE_EVENT, {
 							message,
 							durationMs: CONFIRM_WINDOW_MS,
-						}),
+						});
+					},
 					clear: () => pi.events.emit(FOOTER_NOTICE_EVENT, {}),
 				}),
 		);

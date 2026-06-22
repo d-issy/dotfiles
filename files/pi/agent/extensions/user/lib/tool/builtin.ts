@@ -75,11 +75,12 @@ function registerFileTools(catalog: ToolCatalog): void {
 				name: "edit_chunk",
 				label: "edit_chunk",
 				description:
-					"Edit a file by replacing anchor-delimited line chunks produced by read_chunk. Whitespace and blank lines are part of the edit: choose old_range and new_lines so the file has correct spacing after this single edit, without requiring a follow-up cleanup edit. Fails without modifying files when anchors are missing, ambiguous, reversed, or overlapping.",
+					"Edit a file by replacing anchor-delimited whole-line ranges produced by read_chunk. Each old_range endpoint is included: the complete start-anchor line, complete end-anchor line, and every line between them are replaced by new_lines. Anchors are not insertion points; to insert before or after a line, replace an adjacent line and include that original line plus the inserted lines in new_lines. Whitespace and blank lines are part of the edit: choose old_range and new_lines so the file has correct spacing after this single edit, without requiring a follow-up cleanup edit. Fails without modifying files when anchors are missing, ambiguous, reversed, or overlapping.",
 				promptSnippet: "Replace line chunks using anchors from read_chunk",
 				promptGuidelines: [
-					"Use anchors copied from read_chunk; use the same anchor twice for a single-line edit.",
-					"old_range is inclusive, and new_lines is its exact replacement. For deletions, use []; include only the lines intended for removal in old_range.",
+					"Use anchors copied from read_chunk; use the same anchor twice to replace that one entire line.",
+					"old_range is an inclusive whole-line range, and new_lines is its exact replacement. Nothing inside old_range is preserved unless you copy it into new_lines. For deletions, use []; include only the lines intended for removal in old_range.",
+					"To insert new lines, replace a nearby existing line and include that original line plus the inserted lines in new_lines.",
 					"Use only visible unique anchors. If needed anchors are hidden as @--- or stale, run read_chunk again on a smaller relevant area.",
 				],
 				parameters: editChunkSchema,

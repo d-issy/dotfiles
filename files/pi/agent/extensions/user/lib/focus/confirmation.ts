@@ -12,15 +12,26 @@ import {
 	decodePrintableInput,
 } from "../ui";
 import { type KeyedPanelItem, renderKeyedPanelItem } from "../ui/keyed-panel";
+import { notifyUserInputNeeded } from "../tmux-notice";
 
-export type FocusConfirmDecision =
+type FocusConfirmChoice =
 	| "allow-once"
 	| "deny-once"
 	| "allow-session"
 	| "deny-session";
 
+export type FocusConfirmDecision = {
+	choice: FocusConfirmChoice;
+	rejectReason?: string;
+};
+
+type FocusConfirmAction =
+	| FocusConfirmChoice
+	| "deny-with-reason"
+	| "reason-input";
+
 type FocusConfirmItem = KeyedPanelItem & {
-	value: FocusConfirmDecision;
+	value: Exclude<FocusConfirmAction, "reason-input">;
 };
 
 export type ExitFocusDecision =
@@ -121,6 +132,12 @@ function focusConfirmItems(): readonly FocusConfirmItem[] {
 			description: "Decline this request only.",
 		},
 		{
+			key: "r",
+			value: "deny-with-reason",
+			label: "Deny with reason",
+			description: "Decline this request and write a reject reason.",
+		},
+		{
 			key: "a",
 			value: "allow-session",
 			label: "Allow this session only",
@@ -158,79 +175,149 @@ function exitFocusItems(): readonly ExitFocusItem[] {
 	];
 }
 
+async function chooseFocusTransitionAction(
+	ctx: ExtensionContext,
+	name: string,
+	reason: string,
+	initialIndex: number,
+): Promise<{ action: FocusConfirmAction; index: number } | undefined> {
+	const items = focusConfirmItems();
+	void notifyUserInputNeeded();
+	return ctx.ui.custom<
+		{ action: FocusConfirmAction; index: number } | undefined
+	>((tui, theme, keybindings, done) => {
+		const border = new DynamicBorder((text) => theme.fg("accent", text));
+		let selectedIndex = Math.min(initialIndex, items.length - 1);
+		const move = (delta: -1 | 1): void => {
+			selectedIndex = (selectedIndex + delta + items.length) % items.length;
+		};
+		const finish = (action: FocusConfirmAction): void => {
+			done({ action, index: selectedIndex });
+		};
+		const select = (item: FocusConfirmItem): void => finish(item.value);
+		return {
+			render(width: number) {
+				const contentWidth = dialogContentWidth(width);
+				return [
+					...border.render(width),
+					padDialogLine(
+						theme.fg("accent", theme.bold(`Enter focus: ${name}`)),
+						width,
+					),
+					...renderReasonLines(theme, reason, width),
+					...items.map((item, index) =>
+						padDialogLine(
+							renderKeyedPanelItem(theme, item, {
+								width: contentWidth,
+								selected: index === selectedIndex,
+								labelWidth: 26,
+							}),
+							width,
+						),
+					),
+					padDialogLine(
+						theme.fg(
+							"dim",
+							"y/n/r/a/d select • ↑↓ navigate • Enter select • Tab write reject reason • Esc cancel",
+						),
+						width,
+					),
+					...border.render(width),
+				];
+			},
+			invalidate: () => border.invalidate(),
+			handleInput(data: string) {
+				if (keybindings.matches(data, "tui.select.up")) {
+					move(-1);
+					tui.requestRender();
+					return;
+				}
+				if (keybindings.matches(data, "tui.select.down")) {
+					move(1);
+					tui.requestRender();
+					return;
+				}
+				if (keybindings.matches(data, "tui.select.confirm")) {
+					select(items[selectedIndex]);
+					return;
+				}
+				if (keybindings.matches(data, "tui.select.cancel")) {
+					done(undefined);
+					return;
+				}
+				if (matchesKey(data, "tab")) {
+					finish("reason-input");
+					return;
+				}
+				const input = decodePrintableInput(data);
+				if (!input) return;
+				const key = input.toLowerCase();
+				const item = items.find((entry) => entry.key === key);
+				if (item) select(item);
+			},
+		};
+	});
+}
+
+async function editEnterRejectReason(
+	ctx: ExtensionContext,
+	name: string,
+	reason: string,
+	initialValue: string | undefined,
+): Promise<string | undefined> {
+	const title = [
+		"Provide Reject Reason",
+		"",
+		`Focus: ${name}`,
+		reason.trim() ? `Enter reason: ${reason.trim()}` : undefined,
+	]
+		.filter((line): line is string => line !== undefined)
+		.join("\n");
+	void notifyUserInputNeeded();
+	return ctx.ui.custom<string | undefined>((tui, _theme, keybindings, done) =>
+		createRefinableExtensionEditorComponent(
+			ctx,
+			tui,
+			keybindings,
+			title,
+			initialValue ?? "",
+			(value) => done(value),
+			() => done(undefined),
+			{},
+			{ notifyLabel: "a reject reason" },
+		),
+	);
+}
+
 export async function confirmFocusTransition(
 	ctx: ExtensionContext,
 	name: string,
 	reason: string,
 ): Promise<FocusConfirmDecision | undefined> {
-	const items = focusConfirmItems();
-	return ctx.ui.custom<FocusConfirmDecision | undefined>(
-		(tui, theme, keybindings, done) => {
-			const border = new DynamicBorder((text) => theme.fg("accent", text));
-			let selectedIndex = 0;
-			const move = (delta: -1 | 1): void => {
-				selectedIndex = (selectedIndex + delta + items.length) % items.length;
-			};
-			const select = (item: FocusConfirmItem): void => done(item.value);
-			return {
-				render(width: number) {
-					const contentWidth = dialogContentWidth(width);
-					return [
-						...border.render(width),
-						padDialogLine(
-							theme.fg("accent", theme.bold(`Enter focus: ${name}`)),
-							width,
-						),
-						...renderReasonLines(theme, reason, width),
-						...items.map((item, index) =>
-							padDialogLine(
-								renderKeyedPanelItem(theme, item, {
-									width: contentWidth,
-									selected: index === selectedIndex,
-									labelWidth: 30,
-								}),
-								width,
-							),
-						),
-						padDialogLine(
-							theme.fg(
-								"dim",
-								"y/n/a/d select • ↑↓ navigate • enter select • esc cancel",
-							),
-							width,
-						),
-						...border.render(width),
-					];
-				},
-				invalidate: () => border.invalidate(),
-				handleInput(data: string) {
-					if (keybindings.matches(data, "tui.select.up")) {
-						move(-1);
-						tui.requestRender();
-						return;
-					}
-					if (keybindings.matches(data, "tui.select.down")) {
-						move(1);
-						tui.requestRender();
-						return;
-					}
-					if (keybindings.matches(data, "tui.select.confirm")) {
-						select(items[selectedIndex]);
-						return;
-					}
-					if (keybindings.matches(data, "tui.select.cancel")) {
-						done(undefined);
-						return;
-					}
-					const input = decodePrintableInput(data);
-					if (!input) return;
-					const key = input.toLowerCase();
-					const item = items.find((entry) => entry.key === key);
-					if (item) select(item);
-				},
-			};
-		},
-	);
+	let selectedIndex = 0;
+	let rejectReason: string | undefined;
+	while (true) {
+		// oxlint-disable-next-line no-await-in-loop -- reason editing may return to the same confirmation.
+		const result = await chooseFocusTransitionAction(
+			ctx,
+			name,
+			reason,
+			selectedIndex,
+		);
+		if (!result) return undefined;
+		selectedIndex = result.index;
+		if (
+			result.action !== "deny-with-reason" &&
+			result.action !== "reason-input"
+		) {
+			return { choice: result.action };
+		}
+		// oxlint-disable-next-line no-await-in-loop -- reason editing is part of the confirmation flow.
+		const input = await editEnterRejectReason(ctx, name, reason, rejectReason);
+		if (input === undefined) continue;
+		rejectReason = input.trim() || undefined;
+		if (rejectReason) return { choice: "deny-once", rejectReason };
+	}
 }
 
 async function editExitRejectReason(
@@ -247,6 +334,7 @@ async function editExitRejectReason(
 	]
 		.filter((line): line is string => line !== undefined)
 		.join("\n");
+	void notifyUserInputNeeded();
 	return ctx.ui.custom<string | undefined>((tui, _theme, keybindings, done) =>
 		createRefinableExtensionEditorComponent(
 			ctx,
@@ -269,6 +357,7 @@ async function chooseExitFocusAction(
 	initialIndex: number,
 ): Promise<{ action: ExitFocusAction; index: number } | undefined> {
 	const items = exitFocusItems();
+	void notifyUserInputNeeded();
 	return ctx.ui.custom<{ action: ExitFocusAction; index: number } | undefined>(
 		(tui, theme, keybindings, done) => {
 			const border = new DynamicBorder((text) => theme.fg("accent", text));
@@ -376,11 +465,11 @@ export function rememberFocusTransitionDecision(
 	name: string,
 	decision: FocusConfirmDecision,
 ): void {
-	if (decision === "allow-session") {
+	if (decision.choice === "allow-session") {
 		sessionDeniedConfirmFocuses.delete(name);
 		sessionAllowedConfirmFocuses.add(name);
 	}
-	if (decision === "deny-session") {
+	if (decision.choice === "deny-session") {
 		sessionAllowedConfirmFocuses.delete(name);
 		sessionDeniedConfirmFocuses.add(name);
 	}

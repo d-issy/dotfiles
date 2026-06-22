@@ -160,3 +160,12 @@ export function isFocusExitMode(value: unknown): value is FocusExitMode {
 		value === FOCUS_EXIT_MODE.SINGLE_TURN || value === FOCUS_EXIT_MODE.EXPLICIT
 	);
 }
+
+export function isTerminatingFocusResult(result: unknown): boolean {
+	return (
+		typeof result === "object" &&
+		result !== null &&
+		"terminate" in result &&
+		result.terminate === true
+	);
+}
