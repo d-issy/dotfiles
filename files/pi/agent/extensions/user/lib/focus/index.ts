@@ -6,6 +6,7 @@ export {
 	type FocusDefinition,
 	type FocusName,
 	type FocusTransition,
+	isFocusSpawnable,
 	isTerminatingFocusResult,
 } from "./definitions";
 export {

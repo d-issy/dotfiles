@@ -21,19 +21,30 @@ import { registerGitTools } from "./git";
 import { registerGithubTools } from "./github";
 import { registerInterviewTools } from "./interview";
 import { registerPullRequestTools } from "./pull-request";
+import { type SpawnableFocus, registerSubagentTool } from "./subagent";
+
+export type RegisterCoreUserToolsOptions = {
+	/** Focuses the subagent tool may launch (used to build the `focus` enum). */
+	readonly spawnableFocuses?: readonly SpawnableFocus[];
+};
 
 /**
  * Register every core user-extension tool into the provided catalog. Grouped by
  * domain so non-file tools (git, …) can be added here without touching the
  * `tool` feature.
  */
-export function registerCoreUserTools(catalog: ToolCatalog): void {
+export function registerCoreUserTools(
+	catalog: ToolCatalog,
+	options?: RegisterCoreUserToolsOptions,
+): void {
 	registerFileTools(catalog);
 	registerGitTools(catalog);
 	registerGithubTools(catalog);
 	registerInterviewTools(catalog);
 	registerPullRequestTools(catalog);
+	registerSubagentTool(catalog, options?.spawnableFocuses);
 }
+
 function registerFileTools(catalog: ToolCatalog): void {
 	catalog.register(
 		defineToolContribution({

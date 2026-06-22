@@ -1,4 +1,5 @@
 export { registerCoreUserTools } from "./builtin";
+export { registerSubagentTool, SUBAGENT_TOOL } from "./subagent";
 export { type ProjectToolSummary, registerProjectTools } from "./project";
 export {
 	type Tool,

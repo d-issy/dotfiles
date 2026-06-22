@@ -11,7 +11,10 @@ import {
 	getFocusExitMode,
 } from "./definitions";
 
-const ALWAYS_ALLOWED_TOOL_NAMES = ["multi_tool_use.parallel"] as const;
+const ALWAYS_ALLOWED_TOOL_NAMES = [
+	"multi_tool_use.parallel",
+	"subagent",
+] as const;
 const NO_FOCUS_MANAGEMENT_TOOLS: readonly string[] = [];
 const FOCUS_MANAGEMENT_TOOLS_BY_TRANSITION_AND_EXIT_MODE: Record<
 	FocusTransition,

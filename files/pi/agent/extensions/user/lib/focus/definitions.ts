@@ -26,6 +26,7 @@ export type FocusDefinition = {
 	readonly transition: FocusTransition;
 	readonly exitMode?: FocusExitMode;
 	readonly interactiveOnly?: boolean;
+	readonly spawnable?: boolean;
 	readonly color?: ColorRole;
 };
 
@@ -37,6 +38,15 @@ export const EXIT_FOCUS_TOOL = "exit_focus";
 
 export function getFocusExitMode(focus: FocusDefinition): FocusExitMode {
 	return focus.exitMode ?? FOCUS_EXIT_MODE.SINGLE_TURN;
+}
+
+/**
+ * Whether a focus may be launched as a subagent. Interactive focuses (e.g.
+ * `interview`) cannot run headless, so they are excluded unless `spawnable` is
+ * explicitly set. Derivation: `spawnable ?? !interactiveOnly` (SPEC §6).
+ */
+export function isFocusSpawnable(focus: FocusDefinition): boolean {
+	return focus.spawnable ?? !focus.interactiveOnly;
 }
 
 export const BUILT_IN_TOOL_SETS: ReadonlyMap<string, readonly string[]> =

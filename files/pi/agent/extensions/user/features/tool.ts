@@ -4,6 +4,7 @@ import type {
 	Theme,
 } from "@earendil-works/pi-coding-agent";
 import type { Feature } from "../feature";
+import { isFocusSpawnable } from "../lib/focus";
 import { activateFocusTools } from "../lib/focus/tool-access";
 import { ensureProjectUserSettingsTrusted } from "../lib/project-settings";
 import type { UserExtensionServices } from "../lib/services";
@@ -159,7 +160,11 @@ function projectToolGroups(
 }
 
 function register(pi: ExtensionAPI, services: UserExtensionServices): void {
-	registerCoreUserTools(services.tools);
+	const spawnableFocuses = services.focus.registry
+		.list()
+		.filter(isFocusSpawnable)
+		.map((focus) => ({ name: focus.name, description: focus.description }));
+	registerCoreUserTools(services.tools, { spawnableFocuses });
 
 	for (const { definition } of services.tools.list()) {
 		pi.registerTool(definition);
