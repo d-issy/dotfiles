@@ -9,7 +9,7 @@ import {
 import { type Component, Text } from "@earendil-works/pi-tui";
 import { type TSchema, Type } from "typebox";
 import { type ToolCatalog, defineToolContribution } from "./catalog";
-import { colors, fg } from "../theme";
+import { type Color, colors, fg } from "../theme";
 import {
 	confirmFocusTransition,
 	isFocusAllowedForSession,
@@ -267,7 +267,7 @@ class SubagentProgress {
 	start(): void {
 		if (!this.onUpdate) return;
 		this.emitStarting();
-		this.timer = setInterval(() => this.emitStarting(), 1000);
+		this.timer = setInterval(() => this.emitStarting(), 120);
 	}
 
 	/** Record a `tool_execution_start` event and refresh the live display. */
@@ -311,8 +311,44 @@ class SubagentProgress {
 			: "";
 	}
 
+	private get runningIcon(): string {
+		return Math.floor(this.elapsedMs() / 600) % 2 === 0 ? "◉" : "○";
+	}
+
+	private get glossyRunningLabel(): string {
+		// A brightness wave flows left-to-right across "Running", wrapping around.
+		// Position is derived from elapsed time so it advances smoothly between
+		// timer ticks; a Gaussian profile gives each character a soft gradient
+		// between the positive (green) colour and a bright green.
+		const text = "Running";
+		const len = text.length;
+		const speedMs = 220; // ms per character (~1.5s per full sweep)
+		const pos = (this.elapsedMs() / speedMs) % len;
+		const sigma = 1.3;
+		return text
+			.split("")
+			.map((char, i) => {
+				let dist = Math.abs(i - pos);
+				dist = Math.min(dist, len - dist);
+				const brightness = Math.exp(-(dist * dist) / (2 * sigma * sigma));
+				return fg(this.shineColor(brightness), char);
+			})
+			.join("");
+	}
+
+	private shineColor(brightness: number): Color {
+		const [r, g, b] = colors.positive;
+		const t = Math.max(0, Math.min(1, brightness));
+		// Peak at a bright green (200, 255, 200) instead of pure white
+		return [
+			Math.round(r + (200 - r) * t),
+			Math.round(g + (255 - g) * t),
+			Math.round(b + (200 - b) * t),
+		] as Color;
+	}
+
 	private runningLine(): string {
-		return `${fg(colors.positive, "◉ Running")}  ${this.elapsedLabel()}s${this.toolUsageSuffix()}`;
+		return `${fg(colors.positive, this.runningIcon)} ${this.glossyRunningLabel}  ${this.elapsedLabel()}s${this.toolUsageSuffix()}`;
 	}
 
 	private emitStarting(): void {
@@ -320,7 +356,7 @@ class SubagentProgress {
 			content: [
 				{
 					type: "text",
-					text: `${fg(colors.muted, "(starting...)")}\n${fg(colors.positive, "◉ Running")}  ${this.elapsedLabel()}s`,
+					text: `${fg(colors.muted, "(starting...)")}\n${fg(colors.positive, this.runningIcon)} ${this.glossyRunningLabel}  ${this.elapsedLabel()}s`,
 				},
 			],
 			details: {
@@ -349,7 +385,7 @@ class SubagentProgress {
 					focus: this.focus,
 				},
 			});
-		}, 1000);
+		}, 120);
 	}
 
 	/**
