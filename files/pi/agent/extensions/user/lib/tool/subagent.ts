@@ -329,7 +329,9 @@ class SubagentProgress {
 	private ownDurationMs(index: number): number | undefined {
 		const lastIndex = this.toolCalls.length - 1;
 		if (index >= lastIndex) return undefined;
-		return this.toolCalls[index + 1].startTime - this.toolCalls[index].startTime;
+		return (
+			this.toolCalls[index + 1].startTime - this.toolCalls[index].startTime
+		);
 	}
 
 	/** Build the rolling tail: latest 3 tools shown, older ones summarized. */
