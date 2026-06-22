@@ -23,6 +23,22 @@ format_tokens() {
   }'
 }
 
+# Render a usage-limit segment as "<label><remaining>%", colored by remaining.
+# Prints nothing when the percentage is absent (non-subscribers / pre-first-call).
+usage_seg() {
+	local used="$1" label="$2" remain color
+	[[ -z "$used" ]] && return
+	remain=$(awk -v u="$used" 'BEGIN { printf "%.0f", 100 - u }')
+	if awk -v r="$remain" 'BEGIN { exit !(r >= 50) }'; then
+		color="$GREEN"
+	elif awk -v r="$remain" 'BEGIN { exit !(r >= 20) }'; then
+		color="$YELLOW"
+	else
+		color="$RED"
+	fi
+	printf '%b' "${DIM}${label}${RESET}${color}${remain}%${RESET}"
+}
+
 MODEL=$(echo "$input" | jq -r '.model.display_name // "Unknown"')
 EFFORT=$(echo "$input" | jq -r '.effort.level // empty')
 CWD=$(echo "$input" | jq -r '.workspace.current_dir // "."')
@@ -45,6 +61,10 @@ OUTPUT_K=$(format_k "$TOTAL_OUTPUT_TOKENS")
 
 LINES_ADDED=$(echo "$input" | jq -r '.cost.total_lines_added // 0')
 LINES_REMOVED=$(echo "$input" | jq -r '.cost.total_lines_removed // 0')
+
+# Usage limits (Pro/Max subscribers only, after the first API response)
+FIVE_HOUR_USED=$(echo "$input" | jq -r '.rate_limits.five_hour.used_percentage // empty')
+SEVEN_DAY_USED=$(echo "$input" | jq -r '.rate_limits.seven_day.used_percentage // empty')
 
 # Git branch
 GIT_BRANCH=""
@@ -82,6 +102,14 @@ fi
 
 if [[ "$LINES_ADDED" != "0" || "$LINES_REMOVED" != "0" ]]; then
 	OUTPUT+=" ${DIM}|${RESET} ${GREEN}+${LINES_ADDED}${RESET} ${RED}-${LINES_REMOVED}${RESET}"
+fi
+
+FIVE_SEG=$(usage_seg "$FIVE_HOUR_USED" "5h ")
+SEVEN_SEG=$(usage_seg "$SEVEN_DAY_USED" "7d ")
+if [[ -n "$FIVE_SEG" || -n "$SEVEN_SEG" ]]; then
+	OUTPUT+=" ${DIM}|${RESET}"
+	[[ -n "$FIVE_SEG" ]] && OUTPUT+=" ${FIVE_SEG}"
+	[[ -n "$SEVEN_SEG" ]] && OUTPUT+=" ${SEVEN_SEG}"
 fi
 
 echo -e "$OUTPUT"
