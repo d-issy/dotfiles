@@ -251,6 +251,60 @@ describe("chunk file tools", () => {
 		assert.equal(readFileSync(join(root, "src", "demo.txt"), "utf8"), original);
 	});
 
+	it("changes all anchors after editing a distant line", async () => {
+		const root = tempRepo();
+		// 40 lines so lines 1 and 40 are far apart (> MAX_CONTEXT_RADIUS)
+		writeFileSync(
+			join(root, "src", "distant.txt"),
+			[
+				...Array.from({ length: 40 }, (_, index) => `line ${index + 1}`),
+				"",
+			].join("\n"),
+		);
+
+		// Read anchors before edit
+		const readBefore = await executeReadChunk(
+			root,
+			{ path: "src/distant.txt" },
+			undefined,
+		);
+		const anchorsBefore = anchorsByLine(resultText(readBefore));
+		assert.equal(anchorsBefore.length, 40);
+
+		const line1AnchorBefore = anchorsBefore[0];
+		const line40AnchorBefore = anchorsBefore[39];
+		// Sanity: line 1 and line 40 should have different anchors
+		assert.notEqual(line1AnchorBefore, line40AnchorBefore);
+
+		// Edit line 1 (far away from line 40 — distance 39 > MAX_CONTEXT_RADIUS)
+		await executeEditChunk(
+			root,
+			{
+				path: "src/distant.txt",
+				edits: [
+					{
+						old_range: [line1AnchorBefore, line1AnchorBefore],
+						new_lines: ["line 1 modified"],
+					},
+				],
+			},
+			undefined,
+		);
+
+		// Read anchors after edit
+		const readAfter = await executeReadChunk(
+			root,
+			{ path: "src/distant.txt" },
+			undefined,
+		);
+		const anchorsAfter = anchorsByLine(resultText(readAfter));
+		assert.equal(anchorsAfter.length, 40);
+
+		// Line 40's anchor must have changed despite being far from line 1,
+		// because the file-wide fingerprint changed
+		assert.notEqual(anchorsAfter[39], line40AnchorBefore);
+	});
+
 	it("hides ambiguous anchors and rejects unsafe paths", async () => {
 		const root = tempRepo();
 		writeFileSync(

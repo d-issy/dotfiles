@@ -146,10 +146,11 @@ function lineAnchorInput(
 	lines: readonly string[],
 	index: number,
 	radius: number,
+	fileFingerprint: string,
 ): string {
 	const start = Math.max(0, index - radius);
 	const end = Math.min(lines.length, index + radius + 1);
-	const parts = [`radius:${radius}`];
+	const parts = [`radius:${radius}`, `file:${fileFingerprint}`];
 	for (let lineIndex = start; lineIndex < end; lineIndex += 1) {
 		if (lineIndex === index) parts.push("current-line");
 		parts.push(lines[lineIndex] ?? "");
@@ -161,13 +162,14 @@ function anchorForLine(
 	lines: readonly string[],
 	index: number,
 	radius: number,
+	fileFingerprint: string,
 ): string {
 	const alphabet =
 		"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 	const space = alphabet.length ** ANCHOR_LENGTH;
 	let value =
 		createHash("sha256")
-			.update(lineAnchorInput(lines, index, radius))
+			.update(lineAnchorInput(lines, index, radius, fileFingerprint))
 			.digest()
 			.readUInt32BE(0) % space;
 	let anchor = "";
@@ -179,6 +181,12 @@ function anchorForLine(
 }
 
 function buildAnchorIndex(lines: readonly string[]): AnchorIndex {
+	// File-wide fingerprint so any edit changes all anchors, forcing re-read_chunk
+	const fileFingerprint = createHash("sha256")
+		.update(lines.join("\n"))
+		.digest("hex")
+		.slice(0, 8);
+
 	const perLine = Array<string | undefined>(lines.length).fill(undefined);
 	const unique = new Map<string, number>();
 	const usedAnchors = new Set<string>();
@@ -189,7 +197,7 @@ function buildAnchorIndex(lines: readonly string[]): AnchorIndex {
 		const candidates = new Map<number, string>();
 		const counts = new Map<string, number>();
 		for (const index of unresolved) {
-			const anchor = anchorForLine(lines, index, radius);
+			const anchor = anchorForLine(lines, index, radius, fileFingerprint);
 			candidates.set(index, anchor);
 			counts.set(anchor, (counts.get(anchor) ?? 0) + 1);
 		}
