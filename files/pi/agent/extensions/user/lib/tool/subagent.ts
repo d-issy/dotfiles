@@ -205,6 +205,8 @@ export function registerSubagentTool(
 		defineToolContribution({
 			policy: {
 				name: SUBAGENT_TOOL,
+				notAllowedReason: (focus) =>
+					`subagent can only be used when no focus is active. Current focus: ${focus}. Use enter_focus to exit the current focus first.`,
 			},
 			definition: {
 				name: SUBAGENT_TOOL,
