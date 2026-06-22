@@ -59,9 +59,6 @@ REMAINING=$(awk -v used="$TOTAL_USED" -v size="$CONTEXT_SIZE" 'BEGIN { printf "%
 INPUT_K=$(format_k "$TOTAL_INPUT_TOKENS")
 OUTPUT_K=$(format_k "$TOTAL_OUTPUT_TOKENS")
 
-LINES_ADDED=$(echo "$input" | jq -r '.cost.total_lines_added // 0')
-LINES_REMOVED=$(echo "$input" | jq -r '.cost.total_lines_removed // 0')
-
 # Usage limits (Pro/Max subscribers only, after the first API response)
 FIVE_HOUR_USED=$(echo "$input" | jq -r '.rate_limits.five_hour.used_percentage // empty')
 SEVEN_DAY_USED=$(echo "$input" | jq -r '.rate_limits.seven_day.used_percentage // empty')
@@ -98,10 +95,6 @@ if [[ "$TOTAL_USED" != "0" ]]; then
 		CTX_COLOR="$RED"
 	fi
 	OUTPUT+=" ${CTX_COLOR}${USED_FMT}/${SIZE_FMT} (${REMAINING}%)${RESET}"
-fi
-
-if [[ "$LINES_ADDED" != "0" || "$LINES_REMOVED" != "0" ]]; then
-	OUTPUT+=" ${DIM}|${RESET} ${GREEN}+${LINES_ADDED}${RESET} ${RED}-${LINES_REMOVED}${RESET}"
 fi
 
 FIVE_SEG=$(usage_seg "$FIVE_HOUR_USED" "5h ")
