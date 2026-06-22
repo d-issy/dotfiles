@@ -85,7 +85,6 @@ fi
 
 if [[ "$TOTAL_USED" != "0" ]]; then
 	USED_FMT=$(format_tokens "$TOTAL_USED")
-	SIZE_FMT=$(format_tokens "$CONTEXT_SIZE")
 	# Color based on remaining context percentage
 	if awk -v r="$REMAINING" 'BEGIN { exit !(r >= 50) }'; then
 		CTX_COLOR="$GREEN"
@@ -94,7 +93,7 @@ if [[ "$TOTAL_USED" != "0" ]]; then
 	else
 		CTX_COLOR="$RED"
 	fi
-	OUTPUT+=" ${CTX_COLOR}${USED_FMT}/${SIZE_FMT} (${REMAINING}%)${RESET}"
+	OUTPUT+=" ${CTX_COLOR}${USED_FMT} (${REMAINING}%)${RESET}"
 fi
 
 FIVE_SEG=$(usage_seg "$FIVE_HOUR_USED" "5h ")
