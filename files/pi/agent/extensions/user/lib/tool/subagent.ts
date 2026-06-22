@@ -1,6 +1,8 @@
 import { fileURLToPath } from "node:url";
 import {
 	type AgentToolResult,
+	type AgentToolUpdateCallback,
+	type ExtensionContext,
 	RpcClient,
 	type Theme,
 } from "@earendil-works/pi-coding-agent";
@@ -92,16 +94,23 @@ export type SubagentDetails = {
 	readonly focus?: string;
 };
 
+type SubagentResult = AgentToolResult<SubagentDetails>;
+/** A result flagged as an error (the `isError` flag is an extension of the base shape). */
+type SubagentErrorResult = SubagentResult & { isError: true };
+
 const MAX_TITLE_LEN = 30;
+
+/** Truncate a label to `MAX_TITLE_LEN`, appending an ellipsis when clipped. */
+function truncateTitle(label: string): string {
+	return label.length > MAX_TITLE_LEN
+		? `${label.slice(0, MAX_TITLE_LEN)}…`
+		: label;
+}
 
 /** Format the one-line call display: `subagent <title> in <focus>`. */
 function renderSubagentCall(rawArgs: unknown, theme: Theme): Component {
 	const args = rawArgs as SubagentInput;
-	const titlePart = args.title
-		? args.title.length > MAX_TITLE_LEN
-			? `${args.title.slice(0, MAX_TITLE_LEN)}…`
-			: args.title
-		: null;
+	const titlePart = args.title ? truncateTitle(args.title) : null;
 	const titleDisplay = titlePart ?? theme.fg("dim", "...");
 	const inPart = theme.fg("dim", " in ");
 	const focusDisplay = args.focus
@@ -192,6 +201,383 @@ function resolvePiCliPath(): string {
 	return cliPath;
 }
 
+type ToolCallRecord = {
+	readonly name: string;
+	readonly args: Record<string, unknown>;
+	readonly startTime: number;
+};
+
+/**
+ * Owns the live progress UI for a running subagent: the initial "starting"
+ * frame, the rolling tool tail (latest 3 tools, older ones summarized), and the
+ * 1s heartbeat timer. Keeping all `onUpdate` emission here lets `execute` deal
+ * only with lifecycle and final results.
+ */
+class SubagentProgress {
+	private readonly toolCalls: ToolCallRecord[] = [];
+	private lastTail = "";
+	private timer: ReturnType<typeof setInterval> | undefined;
+
+	constructor(
+		private readonly startedAt: number,
+		private readonly title: string | undefined,
+		private readonly focus: string,
+		private readonly onUpdate:
+			| AgentToolUpdateCallback<SubagentDetails>
+			| undefined,
+	) {}
+
+	/** Number of tool calls observed so far. */
+	get count(): number {
+		return this.toolCalls.length;
+	}
+
+	/** Emit the initial "starting" frame and begin the heartbeat. */
+	start(): void {
+		if (!this.onUpdate) return;
+		this.emitStarting();
+		this.timer = setInterval(() => this.emitStarting(), 1000);
+	}
+
+	/** Record a `tool_execution_start` event and refresh the live display. */
+	recordToolStart(toolName: string, args: Record<string, unknown>): void {
+		this.toolCalls.push({ name: toolName, args, startTime: Date.now() });
+		this.lastTail = this.buildTail();
+		if (this.onUpdate) {
+			this.onUpdate({
+				content: [
+					{ type: "text", text: `${this.lastTail}\n${this.runningLine()}` },
+				],
+				details: {
+					_status: "running",
+					currentTool: toolName,
+					toolCallCount: this.count,
+					durationMs: this.elapsedMs(),
+					title: this.title,
+					focus: this.focus,
+				},
+			});
+		}
+		this.restartRunningTimer();
+	}
+
+	/** Stop the heartbeat timer (idempotent). */
+	stop(): void {
+		clearInterval(this.timer);
+	}
+
+	private elapsedMs(): number {
+		return Date.now() - this.startedAt;
+	}
+
+	private elapsedLabel(): string {
+		return (this.elapsedMs() / 1000).toFixed(1);
+	}
+
+	private toolUsageSuffix(): string {
+		return this.count > 0
+			? ` (${this.count} tool${this.count !== 1 ? "s" : ""} used)`
+			: "";
+	}
+
+	private runningLine(): string {
+		return `${fg(colors.positive, "◉ Running")}  ${this.elapsedLabel()}s${this.toolUsageSuffix()}`;
+	}
+
+	private emitStarting(): void {
+		this.onUpdate?.({
+			content: [
+				{
+					type: "text",
+					text: `${fg(colors.muted, "(starting...)")}\n${fg(colors.positive, "◉ Running")}  ${this.elapsedLabel()}s`,
+				},
+			],
+			details: {
+				_status: "starting",
+				toolCallCount: 0,
+				durationMs: this.elapsedMs(),
+				title: this.title,
+				focus: this.focus,
+			},
+		});
+	}
+
+	private restartRunningTimer(): void {
+		clearInterval(this.timer);
+		if (!this.onUpdate) return;
+		this.timer = setInterval(() => {
+			this.onUpdate?.({
+				content: [
+					{ type: "text", text: `${this.lastTail}\n${this.runningLine()}` },
+				],
+				details: {
+					_status: "running",
+					toolCallCount: this.count,
+					durationMs: this.elapsedMs(),
+					title: this.title,
+					focus: this.focus,
+				},
+			});
+		}, 1000);
+	}
+
+	/** Build the rolling tail: latest 3 tools shown, older ones summarized. */
+	private buildTail(): string {
+		const maxVisible = 3;
+		const shown = this.toolCalls.slice(-maxVisible);
+		const hidden = this.toolCalls.length - shown.length;
+		const lines: string[] = [];
+		if (hidden > 0) {
+			const tailPart = `── (other ${hidden} tool${hidden !== 1 ? "s" : ""}...) ──`;
+			lines.push(fg(colors.muted, tailPart));
+		}
+		const offset = this.toolCalls.length - shown.length;
+		for (let i = 0; i < shown.length; i++) {
+			const tc = shown[i];
+			const isRunning = i === shown.length - 1;
+			const tcIndex = offset + i + 1;
+			const p = Object.entries(tc.args)
+				.filter(([, v]) => v !== undefined)
+				.map(([k, v]) => `${k}=${formatArg(v)}`)
+				.join(", ");
+			const argsStr = p ? ` (${p})` : "";
+			const durationStr =
+				!isRunning && i + 1 < shown.length
+					? `  ${((shown[i + 1].startTime - tc.startTime) / 1000).toFixed(1)}s`
+					: "";
+			const runningMarker = isRunning
+				? `  ${fg(colors.muted, "← running")}`
+				: "";
+			lines.push(
+				fg(
+					colors.muted,
+					`${String(tcIndex).padStart(2)}. ${tc.name}${argsStr}${durationStr}${runningMarker}`,
+				),
+			);
+		}
+		return lines.join("\n");
+	}
+}
+
+/**
+ * Wire abort propagation from `signal` to the running RpcClient. Returns a
+ * cleanup function (or undefined when there is nothing to clean up), and invokes
+ * `markAborted` so the caller can branch on cancellation after `waitForIdle`.
+ */
+function wireAbort(
+	signal: AbortSignal | undefined,
+	client: RpcClient,
+	markAborted: () => void,
+): (() => void) | undefined {
+	if (!signal) return undefined;
+	const onAbort = (): void => {
+		markAborted();
+		client.abort().catch(() => {});
+	};
+	if (signal.aborted) {
+		onAbort();
+		return undefined;
+	}
+	signal.addEventListener("abort", onAbort, { once: true });
+	return () => signal.removeEventListener("abort", onAbort);
+}
+
+/** Map RpcClient session stats into the `usage` shape of `SubagentDetails`. */
+function buildUsage(
+	stats: Awaited<ReturnType<RpcClient["getSessionStats"]>> | undefined,
+): SubagentDetails["usage"] {
+	if (!stats) return undefined;
+	return {
+		inputTokens: stats.tokens.input,
+		outputTokens: stats.tokens.output,
+		cacheReadTokens: stats.tokens.cacheRead,
+		cacheWriteTokens: stats.tokens.cacheWrite,
+		totalTokens: stats.tokens.total,
+		cost: stats.cost,
+	};
+}
+
+/**
+ * Reject a focus that is not in the spawnable set before any process is spawned.
+ * Returns the error result, or undefined when the focus is allowed (or when no
+ * allow-list is configured, e.g. standalone unit tests).
+ */
+function rejectNonSpawnableFocus(
+	allowedFocusNames: ReadonlySet<string>,
+	input: SubagentInput,
+): SubagentErrorResult | undefined {
+	if (allowedFocusNames.size === 0 || allowedFocusNames.has(input.focus)) {
+		return undefined;
+	}
+	const available = [...allowedFocusNames].join(", ");
+	return {
+		content: [
+			{
+				type: "text" as const,
+				text: `Cannot spawn subagent: focus "${input.focus}" is not spawnable. Available focuses: ${available}.`,
+			},
+		],
+		details: {
+			focus: input.focus,
+			title: input.title,
+			prompt: input.prompt,
+			toolCallCount: 0,
+			durationMs: 0,
+			stderr: `unknown spawnable focus: ${input.focus}`,
+		} satisfies SubagentDetails,
+		isError: true,
+	};
+}
+
+/**
+ * Build the subagent `execute` handler, capturing the resolved CLI path and the
+ * spawnable allow-list. Kept out of the tool definition object so the (long)
+ * lifecycle logic reads as a standalone unit: validate → spawn → stream
+ * progress → return the terminal result.
+ */
+const createSubagentExecute =
+	(cliPath: string, allowedFocusNames: ReadonlySet<string>) =>
+	async (
+		_toolCallId: string,
+		params: unknown,
+		signal: AbortSignal | undefined,
+		onUpdate: AgentToolUpdateCallback<SubagentDetails> | undefined,
+		ctx: ExtensionContext,
+	): Promise<SubagentResult> => {
+		const input = params as SubagentInput;
+		const rejection = rejectNonSpawnableFocus(allowedFocusNames, input);
+		if (rejection) return rejection;
+
+		const { focus, prompt, title } = input;
+		const header = `${truncateTitle(title ?? focus)} (focus=${focus})`;
+		const startedAt = Date.now();
+		const progress = new SubagentProgress(startedAt, title, focus, onUpdate);
+
+		const client = new RpcClient({
+			cliPath,
+			cwd: ctx.cwd,
+			env: { PI_SUBAGENT: "1" },
+			args: [
+				"--focus",
+				focus,
+				"--no-session",
+				"--exclude-tools",
+				SUBAGENT_TOOL,
+			],
+		});
+
+		// Build the terminal result for a cancelled run (also notifies the UI).
+		const cancelledResult = (durationMs: number): SubagentErrorResult => {
+			const details: SubagentDetails = {
+				toolCallCount: progress.count,
+				durationMs,
+				prompt,
+				title,
+				focus,
+				_status: "aborted",
+			};
+			onUpdate?.({
+				content: [{ type: "text", text: `${header} was cancelled` }],
+				details,
+			});
+			return {
+				content: [{ type: "text" as const, text: `${header} was cancelled` }],
+				details,
+				isError: true,
+			};
+		};
+
+		// Build the terminal result for a successful run.
+		const completedResult = (
+			text: string | null | undefined,
+			durationMs: number,
+			stats: Awaited<ReturnType<RpcClient["getSessionStats"]>> | undefined,
+		): SubagentResult => ({
+			content: [
+				{
+					type: "text" as const,
+					text: `\n${text ?? "(subagent produced no output)"}`,
+				},
+			],
+			details: {
+				toolCallCount: progress.count,
+				durationMs,
+				prompt,
+				title,
+				focus,
+				usage: buildUsage(stats),
+			},
+		});
+
+		// Build the terminal result for a failed run (also notifies the UI).
+		const failedResult = (error: unknown): SubagentErrorResult => {
+			const message = error instanceof Error ? error.message : String(error);
+			const stderr = client.getStderr();
+			const durationMs = Date.now() - startedAt;
+			onUpdate?.({
+				content: [{ type: "text", text: `${header} failed: ${message}` }],
+				details: {
+					_status: "error",
+					stderr: stderr || undefined,
+					toolCallCount: progress.count,
+					durationMs,
+				},
+			});
+			return {
+				content: [
+					{ type: "text" as const, text: `${header} failed: ${message}` },
+				],
+				details: {
+					toolCallCount: progress.count,
+					durationMs,
+					prompt,
+					title,
+					focus,
+					stderr: stderr || undefined,
+				},
+				isError: true,
+			};
+		};
+
+		let aborted = false;
+		progress.start();
+		const signalCleanup = wireAbort(signal, client, () => {
+			aborted = true;
+		});
+		let unsubscribe: (() => void) | undefined;
+
+		try {
+			await client.start();
+
+			unsubscribe = client.onEvent((event) => {
+				if (event.type !== "tool_execution_start") return;
+				const ev = event as {
+					toolName: string;
+					args: Record<string, unknown>;
+				};
+				progress.recordToolStart(ev.toolName, ev.args ?? {});
+			});
+
+			await client.prompt(prompt);
+			await client.waitForIdle(SUBAGENT_TIMEOUT_MS);
+
+			const text = await client.getLastAssistantText();
+			const durationMs = Date.now() - startedAt;
+			const stats = await client.getSessionStats().catch(() => undefined);
+
+			return aborted
+				? cancelledResult(durationMs)
+				: completedResult(text, durationMs, stats);
+		} catch (error) {
+			return failedResult(error);
+		} finally {
+			progress.stop();
+			unsubscribe?.();
+			signalCleanup?.();
+			await client.stop().catch(() => {});
+		}
+	};
+
 export function registerSubagentTool(
 	catalog: ToolCatalog,
 	spawnableFocuses: readonly SpawnableFocus[] = [],
@@ -225,308 +611,7 @@ export function registerSubagentTool(
 				executionMode: "parallel",
 				renderCall: renderSubagentCall,
 				renderResult: renderSubagentResult,
-				execute: async (_toolCallId, params, signal, onUpdate, ctx) => {
-					const { focus, prompt, title } = params as SubagentInput;
-					if (allowedFocusNames.size > 0 && !allowedFocusNames.has(focus)) {
-						const available = [...allowedFocusNames].join(", ");
-						return {
-							content: [
-								{
-									type: "text" as const,
-									text: `Cannot spawn subagent: focus "${focus}" is not spawnable. Available focuses: ${available}.`,
-								},
-							],
-							details: {
-								focus,
-								title,
-								prompt,
-								toolCallCount: 0,
-								durationMs: 0,
-								stderr: `unknown spawnable focus: ${focus}`,
-							} satisfies SubagentDetails,
-							isError: true,
-						};
-					}
-					const headerTitle = title ?? focus;
-					const t =
-						headerTitle.length > MAX_TITLE_LEN
-							? `${headerTitle.slice(0, MAX_TITLE_LEN)}…`
-							: headerTitle;
-					const header = `${t} (focus=${focus})`;
-					const startedAt = Date.now();
-					let toolCallCount = 0;
-					const allToolCalls: Array<{
-						name: string;
-						args: Record<string, unknown>;
-						startTime: number;
-					}> = [];
-
-					const client = new RpcClient({
-						cliPath,
-						cwd: ctx.cwd,
-						env: { PI_SUBAGENT: "1" },
-						args: [
-							"--focus",
-							focus,
-							"--no-session",
-							"--exclude-tools",
-							SUBAGENT_TOOL,
-						],
-					});
-					let signalCleanup: (() => void) | undefined;
-					let unsubscribe: (() => void) | undefined;
-					let aborted = false;
-					let lastTail = "";
-					let runningTimer: ReturnType<typeof setInterval> | undefined;
-					if (onUpdate) {
-						onUpdate({
-							content: [
-								{
-									type: "text" as const,
-									text: `${fg(colors.muted, "(starting...)")}\n${fg(colors.positive, "◉ Running")}  0.0s`,
-								},
-							],
-							details: {
-								_status: "starting",
-								toolCallCount: 0,
-								durationMs: 0,
-								title,
-								focus,
-							},
-						});
-						runningTimer = setInterval(() => {
-							const elapsed = ((Date.now() - startedAt) / 1000).toFixed(1);
-							const text = `${fg(colors.muted, "(starting...)")}\n${fg(colors.positive, "◉ Running")}  ${elapsed}s`;
-							onUpdate({
-								content: [{ type: "text" as const, text }],
-								details: {
-									_status: "starting",
-									toolCallCount: 0,
-									durationMs: Date.now() - startedAt,
-									title,
-									focus,
-								},
-							});
-						}, 1000);
-					}
-
-					if (signal) {
-						const onAbort = (): void => {
-							aborted = true;
-							client.abort().catch(() => {});
-						};
-						if (signal.aborted) {
-							onAbort();
-						} else {
-							signal.addEventListener("abort", onAbort, { once: true });
-							signalCleanup = () =>
-								signal.removeEventListener("abort", onAbort);
-						}
-					}
-
-					try {
-						await client.start();
-
-						unsubscribe = client.onEvent((event) => {
-							if (event.type === "tool_execution_start") {
-								toolCallCount++;
-								const ev = event as {
-									toolName: string;
-									args: Record<string, unknown>;
-								};
-								const toolName = ev.toolName;
-								allToolCalls.push({
-									name: toolName,
-									args: ev.args ?? {},
-									startTime: Date.now(),
-								});
-								// Build tail display: latest 3 tools, older ones summarized
-								const maxVisible = 3;
-								const shown = allToolCalls.slice(-maxVisible);
-								const hidden = allToolCalls.length - shown.length;
-								const lines: string[] = [];
-								if (hidden > 0) {
-									const tailPart = `── (other ${hidden} tool${hidden !== 1 ? "s" : ""}...) ──`;
-									lines.push(fg(colors.muted, tailPart));
-								}
-								const offset = allToolCalls.length - shown.length;
-								for (let i = 0; i < shown.length; i++) {
-									const tc = shown[i];
-									const isRunning = i === shown.length - 1;
-									const tcIndex = offset + i + 1;
-									const p = Object.entries(tc.args)
-										.filter(([, v]) => v !== undefined)
-										.map(([k, v]) => `${k}=${formatArg(v)}`)
-										.join(", ");
-									const argsStr = p ? ` (${p})` : "";
-									const durationStr =
-										!isRunning && i + 1 < shown.length
-											? `  ${((shown[i + 1].startTime - tc.startTime) / 1000).toFixed(1)}s`
-											: "";
-									const runningMarker = isRunning
-										? `  ${fg(colors.muted, "← running")}`
-										: "";
-									lines.push(
-										fg(
-											colors.muted,
-											`${String(tcIndex).padStart(2)}. ${tc.name}${argsStr}${durationStr}${runningMarker}`,
-										),
-									);
-								}
-								lastTail = lines.join("\n");
-								const toolUsage =
-									toolCallCount > 0
-										? ` (${toolCallCount} tool${toolCallCount !== 1 ? "s" : ""} used)`
-										: "";
-								lines.push(
-									`${fg(colors.positive, "◉ Running")}  ${((Date.now() - startedAt) / 1000).toFixed(1)}s${toolUsage}`,
-								);
-								if (onUpdate) {
-									onUpdate({
-										content: [{ type: "text", text: lines.join("\n") }],
-										details: {
-											_status: "running",
-											currentTool: toolName,
-											toolCallCount,
-											durationMs: Date.now() - startedAt,
-											title,
-											focus,
-										},
-									});
-								}
-								clearInterval(runningTimer);
-								runningTimer = setInterval(() => {
-									const elapsed = ((Date.now() - startedAt) / 1000).toFixed(1);
-									const u =
-										toolCallCount > 0
-											? ` (${toolCallCount} tool${toolCallCount !== 1 ? "s" : ""} used)`
-											: "";
-									const text = `${lastTail}\n${fg(colors.positive, "◉ Running")}  ${elapsed}s${u}`;
-									if (onUpdate) {
-										onUpdate({
-											content: [{ type: "text", text }],
-											details: {
-												_status: "running",
-												toolCallCount,
-												durationMs: Date.now() - startedAt,
-												title,
-												focus,
-											},
-										});
-									}
-								}, 1000);
-							}
-						});
-
-						await client.prompt(prompt);
-
-						await client.waitForIdle(SUBAGENT_TIMEOUT_MS);
-
-						const result = await client.getLastAssistantText();
-						const durationMs = Date.now() - startedAt;
-						const stats = await client.getSessionStats().catch(() => undefined);
-
-						if (aborted) {
-							const details: SubagentDetails = {
-								toolCallCount,
-								durationMs,
-								prompt,
-								title,
-								focus,
-								_status: "aborted",
-							};
-							if (onUpdate) {
-								onUpdate({
-									content: [{ type: "text", text: `${header} was cancelled` }],
-									details: {
-										...details,
-										_status: "aborted",
-									},
-								});
-							}
-							return {
-								content: [
-									{
-										type: "text" as const,
-										text: `${header} was cancelled`,
-									},
-								],
-								details,
-								isError: true,
-							};
-						}
-						const details: SubagentDetails = {
-							toolCallCount,
-							durationMs,
-							prompt,
-							title,
-							focus,
-							usage: stats
-								? {
-										inputTokens: stats.tokens.input,
-										outputTokens: stats.tokens.output,
-										cacheReadTokens: stats.tokens.cacheRead,
-										cacheWriteTokens: stats.tokens.cacheWrite,
-										totalTokens: stats.tokens.total,
-										cost: stats.cost,
-									}
-								: undefined,
-						};
-
-						return {
-							content: [
-								{
-									type: "text" as const,
-									text: `\n${result ?? "(subagent produced no output)"}`,
-								},
-							],
-							details,
-						};
-					} catch (error) {
-						const message =
-							error instanceof Error ? error.message : String(error);
-						const stderr = client.getStderr();
-
-						const details: SubagentDetails = {
-							toolCallCount,
-							durationMs: Date.now() - startedAt,
-							prompt,
-							title,
-							focus,
-							stderr: stderr || undefined,
-						};
-
-						if (onUpdate) {
-							onUpdate({
-								content: [
-									{ type: "text", text: `${header} failed: ${message}` },
-								],
-								details: {
-									_status: "error",
-									stderr: stderr || undefined,
-									toolCallCount,
-									durationMs: Date.now() - startedAt,
-								},
-							});
-						}
-
-						return {
-							content: [
-								{
-									type: "text" as const,
-									text: `${header} failed: ${message}`,
-								},
-							],
-							details,
-							isError: true,
-						};
-					} finally {
-						clearInterval(runningTimer);
-						unsubscribe?.();
-						signalCleanup?.();
-						await client.stop().catch(() => {});
-					}
-				},
+				execute: createSubagentExecute(cliPath, allowedFocusNames),
 			},
 			isErrorResult: (details) => {
 				if (!details) return false;
