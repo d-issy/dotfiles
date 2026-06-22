@@ -10,20 +10,46 @@ import { type Component, Text } from "@earendil-works/pi-tui";
 import { type TSchema, Type } from "typebox";
 import { type ToolCatalog, defineToolContribution } from "./catalog";
 import { colors, fg } from "../theme";
+import {
+	confirmFocusTransition,
+	isFocusAllowedForSession,
+} from "../focus/confirmation";
 export const SUBAGENT_TOOL = "subagent";
 
 /** A focus that may be launched as a subagent (name + human description). */
 export type SpawnableFocus = {
 	readonly name: string;
 	readonly description?: string;
+	/** The focus transition type (e.g. "auto", "confirm", "manual"). */
+	readonly transition?: string;
 };
 
 type SubagentInput = {
 	readonly focus: string;
 	readonly prompt: string;
-	readonly title?: string;
+	readonly title: string;
 };
 
+/** Mutable set of spawnable focus names, initialised at tool registration time
+ * and extendable later (e.g. with project-defined focuses after session start).
+ * The subagent execute handler closes over this same Set reference, so updates
+ * are visible to all future invocations. */
+const spawnableFocusNames = new Set<string>();
+
+/** Mutable set of focus names that require user confirmation before spawning. */
+const confirmFocusNames = new Set<string>();
+
+/** Extend the spawnable focus set with additional focuses at runtime. */
+export function extendSpawnableFocuses(
+	focuses: readonly SpawnableFocus[],
+): void {
+	for (const f of focuses) spawnableFocusNames.add(f.name);
+}
+
+/** Extend the confirm-transition focus set at runtime. */
+export function extendConfirmFocuses(names: readonly string[]): void {
+	for (const n of names) confirmFocusNames.add(n);
+}
 /**
  * Build the parameter schema. When the set of spawnable focuses is known, the
  * `focus` field is constrained to those names (enum) and each is enumerated in
@@ -38,25 +64,16 @@ function buildSubagentSchema(focuses: readonly SpawnableFocus[]): TSchema {
 		focuses.length > 0
 			? `Name of the focus the subagent should use. Available: ${focusList}.`
 			: "Name of the focus the subagent should use.";
-	const focusSchema =
-		focuses.length > 0
-			? Type.Union(
-					focuses.map((f) => Type.Literal(f.name)),
-					{ description: focusDescription },
-				)
-			: Type.String({ description: focusDescription });
 	return Type.Object({
-		focus: focusSchema,
+		focus: Type.String({ description: focusDescription }),
 		prompt: Type.String({
 			description:
 				"Task instruction to pass to the subagent. Be specific and self-contained.",
 		}),
-		title: Type.Optional(
-			Type.String({
-				description:
-					"Short label for the subagent task (3–5 words). Defaults to focus name.",
-			}),
-		),
+		title: Type.String({
+			description:
+				"Short label for the subagent task (3–5 words). Defaults to focus name.",
+		}),
 	});
 }
 
@@ -132,6 +149,9 @@ function getStateDisplay(
 	if (details?.["_status"] === "aborted") {
 		return `${theme.fg("error", "✗")} ${theme.fg("dim", "Cancelled")}`;
 	}
+	if (details?.stderr) {
+		return `${theme.fg("error", "✗")} ${theme.fg("dim", "Error")}`;
+	}
 	return `${fg(colors.positive, "✓")} ${theme.fg("dim", "Completed")}`;
 }
 
@@ -162,6 +182,17 @@ function renderSubagentResult(
 	if (!options.expanded) {
 		// Collapsed – state + stats
 		const stateDisplay = getStateDisplay(result.details, theme);
+		if (result.details?.stderr && !isAborted) {
+			const errorText = result.content
+				.filter((c) => c.type === "text")
+				.map((c) => c.text)
+				.join("\n");
+			return new Text(
+				`${stateDisplay} ${theme.fg("error", errorText)} ${theme.fg("dim", stats)}`,
+				0,
+				0,
+			);
+		}
 		return new Text(`${stateDisplay} ${theme.fg("dim", stats)}`, 0, 0);
 	}
 
@@ -431,12 +462,11 @@ function rejectNonSpawnableFocus(
 	if (allowedFocusNames.size === 0 || allowedFocusNames.has(input.focus)) {
 		return undefined;
 	}
-	const available = [...allowedFocusNames].join(", ");
 	return {
 		content: [
 			{
 				type: "text" as const,
-				text: `Cannot spawn subagent: focus "${input.focus}" is not spawnable. Available focuses: ${available}.`,
+				text: `Subagent focus "${input.focus}" does not exist.`,
 			},
 		],
 		details: {
@@ -470,6 +500,64 @@ const createSubagentExecute =
 		const rejection = rejectNonSpawnableFocus(allowedFocusNames, input);
 		if (rejection) return rejection;
 
+		/* Confirm-transition focuses require user permission before spawning */
+		if (confirmFocusNames.has(input.focus)) {
+			if (!ctx.hasUI) {
+				const err: SubagentErrorResult = {
+					content: [
+						{
+							type: "text" as const,
+							text: `Cannot spawn subagent: focus "${input.focus}" requires interactive confirmation.`,
+						},
+					],
+					details: {
+						focus: input.focus,
+						title: input.title,
+						prompt: input.prompt,
+						toolCallCount: 0,
+						durationMs: 0,
+						stderr: `denied: no interactive confirmation available for focus "${input.focus}"`,
+					} satisfies SubagentDetails,
+					isError: true,
+				};
+				return err;
+			}
+
+			/* Re-check session state in case a parallel subagent already obtained permission */
+			if (isFocusAllowedForSession(input.focus)) {
+				/* Already allowed this session — skip dialog */
+			} else {
+				const decision = await confirmFocusTransition(
+					ctx,
+					"subagent",
+					input.focus,
+					input.title,
+				);
+				if (!decision || decision.choice.startsWith("deny")) {
+					const reason = decision?.rejectReason;
+					const text = reason
+						? `Subagent in focus "${input.focus}" was denied: ${reason}`
+						: `Subagent in focus "${input.focus}" was denied.`;
+					const err: SubagentErrorResult = {
+						content: [{ type: "text" as const, text }],
+						details: {
+							focus: input.focus,
+							title: input.title,
+							prompt: input.prompt,
+							toolCallCount: 0,
+							durationMs: 0,
+							stderr: reason ?? `denied: focus "${input.focus}"`,
+						} satisfies SubagentDetails,
+						isError: true,
+					};
+					return err;
+				}
+				// A session-level decision (allow/deny "for this session") is
+				// persisted inside confirmFocusTransition while it holds the UI
+				// lock, so parallel subagents racing on the same focus observe it
+				// without prompting again. Nothing to remember here.
+			}
+		}
 		const { focus, prompt, title } = input;
 		const header = `${truncateTitle(title ?? focus)} (focus=${focus})`;
 		const startedAt = Date.now();
@@ -606,9 +694,12 @@ export function registerSubagentTool(
 ): void {
 	if (process.env.PI_SUBAGENT === "1") return;
 
+	confirmFocusNames.clear();
+	for (const f of spawnableFocuses) {
+		spawnableFocusNames.add(f.name);
+		if (f.transition === "confirm") confirmFocusNames.add(f.name);
+	}
 	const cliPath = resolvePiCliPath();
-	const allowedFocusNames = new Set(spawnableFocuses.map((f) => f.name));
-
 	catalog.register(
 		defineToolContribution({
 			policy: {
@@ -633,7 +724,7 @@ export function registerSubagentTool(
 				executionMode: "parallel",
 				renderCall: renderSubagentCall,
 				renderResult: renderSubagentResult,
-				execute: createSubagentExecute(cliPath, allowedFocusNames),
+				execute: createSubagentExecute(cliPath, spawnableFocusNames),
 			},
 			isErrorResult: (details) => {
 				if (!details) return false;

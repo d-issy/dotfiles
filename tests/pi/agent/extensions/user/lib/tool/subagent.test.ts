@@ -67,7 +67,7 @@ describe("subagent tool registration", () => {
 		assert.ok(params, "parameters schema is defined");
 	});
 
-	it("constrains the focus param to the spawnable focuses (enum)", () => {
+	it("describes the focus param as a free-form string with available focuses", () => {
 		const catalog = createToolCatalog();
 		registerSubagentTool(catalog, [
 			{ name: "explore", description: "investigate the codebase" },
@@ -79,10 +79,12 @@ describe("subagent tool registration", () => {
 		assert.ok(subagent);
 
 		const params = subagent.definition.parameters as {
-			properties: { focus: { anyOf?: Array<{ const: string }> } };
+			properties: { focus: { type?: string; description?: string } };
 		};
-		const focusEnum = params.properties.focus.anyOf?.map((m) => m.const);
-		assert.deepEqual(focusEnum, ["explore", "edit"]);
+		const focus = params.properties.focus;
+		assert.equal(focus.type, "string");
+		assert.ok(focus.description?.includes("explore"));
+		assert.ok(focus.description?.includes("edit"));
 	});
 
 	it("rejects a non-spawnable focus before spawning a process", async () => {
@@ -103,7 +105,7 @@ describe("subagent tool registration", () => {
 		assert.equal((result as { isError?: boolean }).isError, true);
 		assert.match(
 			result.content.find((c) => c.type === "text")?.text ?? "",
-			/not spawnable/u,
+			/does not exist/u,
 		);
 	});
 

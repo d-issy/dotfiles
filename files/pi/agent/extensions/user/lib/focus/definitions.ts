@@ -46,7 +46,10 @@ export function getFocusExitMode(focus: FocusDefinition): FocusExitMode {
  * explicitly set. Derivation: `spawnable ?? !interactiveOnly` (SPEC §6).
  */
 export function isFocusSpawnable(focus: FocusDefinition): boolean {
-	return focus.spawnable ?? !focus.interactiveOnly;
+	return (
+		focus.spawnable ??
+		(!focus.interactiveOnly && focus.transition !== FOCUS_TRANSITION.MANUAL)
+	);
 }
 
 export const BUILT_IN_TOOL_SETS: ReadonlyMap<string, readonly string[]> =
@@ -152,7 +155,7 @@ export const BASE_FOCUS_DEFINITIONS: readonly FocusDefinition[] = [
 		].join(" "),
 		tools: ["create_pull_request", "update_pull_request"],
 		toolSets: ["file_read", "git_read"],
-		transition: FOCUS_TRANSITION.MANUAL,
+		transition: FOCUS_TRANSITION.CONFIRM,
 		color: "accent",
 	},
 ];
