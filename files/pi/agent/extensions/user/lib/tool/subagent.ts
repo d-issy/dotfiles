@@ -321,37 +321,57 @@ class SubagentProgress {
 		}, 1000);
 	}
 
+	/**
+	 * Per-tool own run time: the time until the next tool started. The running
+	 * (latest) tool has no successor yet, so it has no duration. This is always a
+	 * single tool's elapsed time, never a cumulative total across tools.
+	 */
+	private ownDurationMs(index: number): number | undefined {
+		const lastIndex = this.toolCalls.length - 1;
+		if (index >= lastIndex) return undefined;
+		return this.toolCalls[index + 1].startTime - this.toolCalls[index].startTime;
+	}
+
 	/** Build the rolling tail: latest 3 tools shown, older ones summarized. */
 	private buildTail(): string {
 		const maxVisible = 3;
-		const shown = this.toolCalls.slice(-maxVisible);
-		const hidden = this.toolCalls.length - shown.length;
+		// Durations shorter than this are too quick to be meaningful (e.g. they
+		// would render as 0.0s), so the tool is still shown but its seconds are
+		// omitted.
+		const minDurationMs = 1000;
 		const lines: string[] = [];
+		const lastIndex = this.toolCalls.length - 1;
+		const firstVisible = Math.max(0, this.toolCalls.length - maxVisible);
+
+		const hidden = firstVisible;
 		if (hidden > 0) {
-			const tailPart = `── (other ${hidden} tool${hidden !== 1 ? "s" : ""}...) ──`;
-			lines.push(fg(colors.muted, tailPart));
+			lines.push(
+				fg(
+					colors.muted,
+					`── (other ${hidden} tool${hidden !== 1 ? "s" : ""}...) ──`,
+				),
+			);
 		}
-		const offset = this.toolCalls.length - shown.length;
-		for (let i = 0; i < shown.length; i++) {
-			const tc = shown[i];
-			const isRunning = i === shown.length - 1;
-			const tcIndex = offset + i + 1;
+
+		for (let index = firstVisible; index <= lastIndex; index++) {
+			const tc = this.toolCalls[index];
+			const duration = this.ownDurationMs(index);
 			const p = Object.entries(tc.args)
 				.filter(([, v]) => v !== undefined)
 				.map(([k, v]) => `${k}=${formatArg(v)}`)
 				.join(", ");
 			const argsStr = p ? ` (${p})` : "";
+			// Show the tool regardless; only hide the seconds when too short.
 			const durationStr =
-				!isRunning && i + 1 < shown.length
-					? `  ${((shown[i + 1].startTime - tc.startTime) / 1000).toFixed(1)}s`
+				duration !== undefined && duration >= minDurationMs
+					? `  ${(duration / 1000).toFixed(1)}s`
 					: "";
-			const runningMarker = isRunning
-				? `  ${fg(colors.muted, "← running")}`
-				: "";
+			const runningMarker =
+				index === lastIndex ? `  ${fg(colors.muted, "← running")}` : "";
 			lines.push(
 				fg(
 					colors.muted,
-					`${String(tcIndex).padStart(2)}. ${tc.name}${argsStr}${durationStr}${runningMarker}`,
+					`${String(index + 1).padStart(2)}. ${tc.name}${argsStr}${durationStr}${runningMarker}`,
 				),
 			);
 		}
