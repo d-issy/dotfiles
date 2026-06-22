@@ -69,7 +69,7 @@ describe("focus definitions", () => {
 	it("defines the pull-request focus as manual with PR workflow tools", () => {
 		const focus = BASE_FOCUS_DEFINITIONS.find((f) => f.name === "pull-request");
 		assert.ok(focus, "pull-request focus should be defined");
-		assert.equal(focus?.transition, FOCUS_TRANSITION.MANUAL);
+		assert.equal(focus?.transition, FOCUS_TRANSITION.CONFIRM);
 		assert.deepEqual(focus?.tools, [
 			"create_pull_request",
 			"update_pull_request",

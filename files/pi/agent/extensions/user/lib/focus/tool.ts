@@ -231,6 +231,7 @@ export function registerEnterFocusTool(
 						}
 						const decision = await confirmFocusTransition(
 							ctx,
+							"enter_focus",
 							definition.name,
 							confirmationReason,
 						);

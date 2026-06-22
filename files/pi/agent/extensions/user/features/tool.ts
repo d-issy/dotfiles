@@ -4,11 +4,14 @@ import type {
 	Theme,
 } from "@earendil-works/pi-coding-agent";
 import type { Feature } from "../feature";
+import { isFocusSpawnable } from "../lib/focus";
 import { activateFocusTools } from "../lib/focus/tool-access";
 import { ensureProjectUserSettingsTrusted } from "../lib/project-settings";
 import type { UserExtensionServices } from "../lib/services";
 import {
 	type ProjectToolSummary,
+	extendConfirmFocuses,
+	extendSpawnableFocuses,
 	registerCoreUserTools,
 	registerProjectTools,
 } from "../lib/tool";
@@ -159,7 +162,11 @@ function projectToolGroups(
 }
 
 function register(pi: ExtensionAPI, services: UserExtensionServices): void {
-	registerCoreUserTools(services.tools);
+	const spawnableFocuses = services.focus.registry
+		.list()
+		.filter(isFocusSpawnable)
+		.map((focus) => ({ name: focus.name, description: focus.description }));
+	registerCoreUserTools(services.tools, { spawnableFocuses });
 
 	for (const { definition } of services.tools.list()) {
 		pi.registerTool(definition);
@@ -171,6 +178,21 @@ function register(pi: ExtensionAPI, services: UserExtensionServices): void {
 		activateFocusTools(pi, services.focus.activeFocusDefinition, {
 			includeManagementTools: services.focus.lockedFocusName === undefined,
 		});
+
+		/* Extend the subagent spawnable set with project-defined focuses */
+		const projectSpawnable = services.focus.registry
+			.list()
+			.filter(isFocusSpawnable)
+			.map((focus) => ({ name: focus.name, description: focus.description }));
+		extendSpawnableFocuses(projectSpawnable);
+
+		/* Also register confirm-transition project focuses for subagent confirmation */
+		const projectConfirm = services.focus.registry
+			.list()
+			.filter(isFocusSpawnable)
+			.filter((f) => f.transition === "confirm")
+			.map((f) => f.name);
+		extendConfirmFocuses(projectConfirm);
 		if (ctx.hasUI) {
 			setTimeout(() => {
 				const { groups, unfocusedTools } = projectToolGroups(

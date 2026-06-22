@@ -54,6 +54,7 @@ export function getBaseFocusTools(
 		pi,
 		unique([
 			...ALWAYS_ALLOWED_TOOL_NAMES,
+			"subagent",
 			...(options?.includeManagementTools === false ? [] : [ENTER_FOCUS_TOOL]),
 		]),
 	);

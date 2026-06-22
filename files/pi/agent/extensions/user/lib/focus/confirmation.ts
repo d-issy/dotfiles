@@ -24,6 +24,7 @@ export type FocusConfirmDecision = {
 	choice: FocusConfirmChoice;
 	rejectReason?: string;
 };
+export type ConfirmCaller = "enter_focus" | "subagent";
 
 type FocusConfirmAction =
 	| FocusConfirmChoice
@@ -48,6 +49,22 @@ const sessionAllowedConfirmFocuses = new Set<string>();
 const sessionDeniedConfirmFocuses = new Set<string>();
 const DIALOG_HORIZONTAL_PADDING = 1;
 
+/** Mutex to serialize ctx.ui.custom() calls so concurrent confirmations don't block each other */
+let uiMutex: Promise<void> = Promise.resolve();
+
+async function withUiLock<T>(fn: () => Promise<T>): Promise<T> {
+	const prev = uiMutex;
+	let release: () => void;
+	uiMutex = new Promise<void>((resolve) => {
+		release = resolve;
+	});
+	await prev;
+	try {
+		return await fn();
+	} finally {
+		release!();
+	}
+}
 function dialogContentWidth(width: number): number {
 	return Math.max(1, width - DIALOG_HORIZONTAL_PADDING * 2);
 }
@@ -117,6 +134,16 @@ function renderReasonLines(
 	);
 }
 
+function renderSubagentPromptLines(
+	theme: { fg(role: string, text: string): string },
+	prompt: string,
+	width: number,
+): string[] {
+	return wrapPrefixedText("Prompt: ", prompt, dialogContentWidth(width)).map(
+		(line) => padDialogLine(theme.fg("dim", line), width),
+	);
+}
+
 function focusConfirmItems(): readonly FocusConfirmItem[] {
 	return [
 		{
@@ -177,13 +204,32 @@ function exitFocusItems(): readonly ExitFocusItem[] {
 
 async function chooseFocusTransitionAction(
 	ctx: ExtensionContext,
+	caller: ConfirmCaller,
 	name: string,
 	reason: string,
 	initialIndex: number,
-): Promise<{ action: FocusConfirmAction; index: number } | undefined> {
+	sessionAware: boolean,
+	prompt?: string,
+): Promise<
+	| { action: FocusConfirmAction; index: number }
+	| { sessionShortCircuit: FocusConfirmChoice }
+	| undefined
+> {
 	const items = focusConfirmItems();
+	// Parallel subagents can race on the same confirm focus. While we waited
+	// for the UI lock held by confirmFocusTransition, a sibling may already have
+	// been granted or denied "for this session", so re-check inside the lock and
+	// honour that decision instead of prompting again.
+	if (sessionAware) {
+		if (isFocusAllowedForSession(name)) {
+			return { sessionShortCircuit: "allow-session" as const };
+		}
+		if (isFocusDeniedForSession(name)) {
+			return { sessionShortCircuit: "deny-session" as const };
+		}
+	}
 	void notifyUserInputNeeded();
-	return ctx.ui.custom<
+	const result = await ctx.ui.custom<
 		{ action: FocusConfirmAction; index: number } | undefined
 	>((tui, theme, keybindings, done) => {
 		const border = new DynamicBorder((text) => theme.fg("accent", text));
@@ -195,16 +241,20 @@ async function chooseFocusTransitionAction(
 			done({ action, index: selectedIndex });
 		};
 		const select = (item: FocusConfirmItem): void => finish(item.value);
+		const titleLine =
+			caller === "subagent"
+				? `Subagent requesting focus: ${name}`
+				: `Enter focus: ${name}`;
 		return {
 			render(width: number) {
 				const contentWidth = dialogContentWidth(width);
 				return [
 					...border.render(width),
-					padDialogLine(
-						theme.fg("accent", theme.bold(`Enter focus: ${name}`)),
-						width,
-					),
+					padDialogLine(theme.fg("accent", theme.bold(titleLine)), width),
 					...renderReasonLines(theme, reason, width),
+					...(caller === "subagent" && prompt
+						? renderSubagentPromptLines(theme, prompt, width)
+						: []),
 					...items.map((item, index) =>
 						padDialogLine(
 							renderKeyedPanelItem(theme, item, {
@@ -257,6 +307,16 @@ async function chooseFocusTransitionAction(
 			},
 		};
 	});
+	// Persist a session-level subagent decision while still holding the UI
+	// lock so a racing sibling observes it on its own re-check above.
+	if (
+		caller === "subagent" &&
+		result &&
+		(result.action === "allow-session" || result.action === "deny-session")
+	) {
+		rememberFocusTransitionDecision(name, { choice: result.action });
+	}
+	return result;
 }
 
 async function editEnterRejectReason(
@@ -291,33 +351,50 @@ async function editEnterRejectReason(
 
 export async function confirmFocusTransition(
 	ctx: ExtensionContext,
+	caller: ConfirmCaller,
 	name: string,
 	reason: string,
+	prompt?: string,
 ): Promise<FocusConfirmDecision | undefined> {
-	let selectedIndex = 0;
-	let rejectReason: string | undefined;
-	while (true) {
-		// oxlint-disable-next-line no-await-in-loop -- reason editing may return to the same confirmation.
-		const result = await chooseFocusTransitionAction(
-			ctx,
-			name,
-			reason,
-			selectedIndex,
-		);
-		if (!result) return undefined;
-		selectedIndex = result.index;
-		if (
-			result.action !== "deny-with-reason" &&
-			result.action !== "reason-input"
-		) {
-			return { choice: result.action };
+	return withUiLock(async () => {
+		let selectedIndex = 0;
+		let rejectReason: string | undefined;
+		let firstPrompt = true;
+		while (true) {
+			// oxlint-disable-next-line no-await-in-loop -- reason editing may return to the same confirmation.
+			const result = await chooseFocusTransitionAction(
+				ctx,
+				caller,
+				name,
+				reason,
+				selectedIndex,
+				firstPrompt && caller === "subagent",
+				prompt,
+			);
+			firstPrompt = false;
+			if (!result) return undefined;
+			if ("sessionShortCircuit" in result) {
+				return { choice: result.sessionShortCircuit };
+			}
+			selectedIndex = result.index;
+			if (
+				result.action !== "deny-with-reason" &&
+				result.action !== "reason-input"
+			) {
+				return { choice: result.action };
+			}
+			// oxlint-disable-next-line no-await-in-loop -- reason editing is part of the confirmation flow.
+			const input = await editEnterRejectReason(
+				ctx,
+				name,
+				reason,
+				rejectReason,
+			);
+			if (input === undefined) continue;
+			rejectReason = input.trim() || undefined;
+			if (rejectReason) return { choice: "deny-once", rejectReason };
 		}
-		// oxlint-disable-next-line no-await-in-loop -- reason editing is part of the confirmation flow.
-		const input = await editEnterRejectReason(ctx, name, reason, rejectReason);
-		if (input === undefined) continue;
-		rejectReason = input.trim() || undefined;
-		if (rejectReason) return { choice: "deny-once", rejectReason };
-	}
+	});
 }
 
 async function editExitRejectReason(
@@ -335,17 +412,19 @@ async function editExitRejectReason(
 		.filter((line): line is string => line !== undefined)
 		.join("\n");
 	void notifyUserInputNeeded();
-	return ctx.ui.custom<string | undefined>((tui, _theme, keybindings, done) =>
-		createRefinableExtensionEditorComponent(
-			ctx,
-			tui,
-			keybindings,
-			title,
-			initialValue ?? "",
-			(value) => done(value),
-			() => done(undefined),
-			{},
-			{ notifyLabel: "a reject reason" },
+	return withUiLock(() =>
+		ctx.ui.custom<string | undefined>((tui, _theme, keybindings, done) =>
+			createRefinableExtensionEditorComponent(
+				ctx,
+				tui,
+				keybindings,
+				title,
+				initialValue ?? "",
+				(value) => done(value),
+				() => done(undefined),
+				{},
+				{ notifyLabel: "a reject reason" },
+			),
 		),
 	);
 }
@@ -358,79 +437,81 @@ async function chooseExitFocusAction(
 ): Promise<{ action: ExitFocusAction; index: number } | undefined> {
 	const items = exitFocusItems();
 	void notifyUserInputNeeded();
-	return ctx.ui.custom<{ action: ExitFocusAction; index: number } | undefined>(
-		(tui, theme, keybindings, done) => {
-			const border = new DynamicBorder((text) => theme.fg("accent", text));
-			let selectedIndex = Math.min(initialIndex, items.length - 1);
-			const move = (delta: -1 | 1): void => {
-				selectedIndex = (selectedIndex + delta + items.length) % items.length;
-			};
-			const finish = (action: ExitFocusAction): void => {
-				done({ action, index: selectedIndex });
-			};
-			const select = (item: ExitFocusItem): void => finish(item.value);
-			return {
-				render(width: number) {
-					const contentWidth = dialogContentWidth(width);
-					return [
-						...border.render(width),
-						padDialogLine(
-							theme.fg("accent", theme.bold(`Exit focus: ${name}`)),
-							width,
-						),
-						...renderReasonLines(theme, reason, width),
-						...items.map((item, index) =>
+	return withUiLock(() =>
+		ctx.ui.custom<{ action: ExitFocusAction; index: number } | undefined>(
+			(tui, theme, keybindings, done) => {
+				const border = new DynamicBorder((text) => theme.fg("accent", text));
+				let selectedIndex = Math.min(initialIndex, items.length - 1);
+				const move = (delta: -1 | 1): void => {
+					selectedIndex = (selectedIndex + delta + items.length) % items.length;
+				};
+				const finish = (action: ExitFocusAction): void => {
+					done({ action, index: selectedIndex });
+				};
+				const select = (item: ExitFocusItem): void => finish(item.value);
+				return {
+					render(width: number) {
+						const contentWidth = dialogContentWidth(width);
+						return [
+							...border.render(width),
 							padDialogLine(
-								renderKeyedPanelItem(theme, item, {
-									width: contentWidth,
-									selected: index === selectedIndex,
-									labelWidth: 26,
-								}),
+								theme.fg("accent", theme.bold(`Exit focus: ${name}`)),
 								width,
 							),
-						),
-						padDialogLine(
-							theme.fg(
-								"dim",
-								"y/n/r select • ↑↓ navigate • Enter select • Tab write reject reason • Esc cancel",
+							...renderReasonLines(theme, reason, width),
+							...items.map((item, index) =>
+								padDialogLine(
+									renderKeyedPanelItem(theme, item, {
+										width: contentWidth,
+										selected: index === selectedIndex,
+										labelWidth: 26,
+									}),
+									width,
+								),
 							),
-							width,
-						),
-						...border.render(width),
-					];
-				},
-				invalidate: () => border.invalidate(),
-				handleInput(data: string) {
-					if (keybindings.matches(data, "tui.select.up")) {
-						move(-1);
-						tui.requestRender();
-						return;
-					}
-					if (keybindings.matches(data, "tui.select.down")) {
-						move(1);
-						tui.requestRender();
-						return;
-					}
-					if (keybindings.matches(data, "tui.select.confirm")) {
-						select(items[selectedIndex]);
-						return;
-					}
-					if (keybindings.matches(data, "tui.select.cancel")) {
-						done(undefined);
-						return;
-					}
-					if (matchesKey(data, "tab")) {
-						finish("reason-input");
-						return;
-					}
-					const input = decodePrintableInput(data);
-					if (!input) return;
-					const key = input.toLowerCase();
-					const item = items.find((entry) => entry.key === key);
-					if (item) select(item);
-				},
-			};
-		},
+							padDialogLine(
+								theme.fg(
+									"dim",
+									"y/n/r select • ↑↓ navigate • Enter select • Tab write reject reason • Esc cancel",
+								),
+								width,
+							),
+							...border.render(width),
+						];
+					},
+					invalidate: () => border.invalidate(),
+					handleInput(data: string) {
+						if (keybindings.matches(data, "tui.select.up")) {
+							move(-1);
+							tui.requestRender();
+							return;
+						}
+						if (keybindings.matches(data, "tui.select.down")) {
+							move(1);
+							tui.requestRender();
+							return;
+						}
+						if (keybindings.matches(data, "tui.select.confirm")) {
+							select(items[selectedIndex]);
+							return;
+						}
+						if (keybindings.matches(data, "tui.select.cancel")) {
+							done(undefined);
+							return;
+						}
+						if (matchesKey(data, "tab")) {
+							finish("reason-input");
+							return;
+						}
+						const input = decodePrintableInput(data);
+						if (!input) return;
+						const key = input.toLowerCase();
+						const item = items.find((entry) => entry.key === key);
+						if (item) select(item);
+					},
+				};
+			},
+		),
 	);
 }
 

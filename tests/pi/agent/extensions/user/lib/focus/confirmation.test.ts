@@ -39,6 +39,7 @@ function context(options: {
 	readonly editorResults?: readonly (string | undefined)[];
 	readonly renderWidth?: number;
 	readonly onRender?: (lines: readonly string[]) => void;
+	readonly onCustomCall?: (index: number) => void;
 }): ExtensionContext {
 	const inputs = [...options.inputs];
 	const editorResults = [...(options.editorResults ?? [])];
@@ -56,6 +57,7 @@ function context(options: {
 			): Promise<T> =>
 				new Promise((resolve) => {
 					customCalls += 1;
+					options.onCustomCall?.(customCalls);
 					if (customCalls > 1 && editorResults.length > 0) {
 						resolve(editorResults.shift() as T);
 						return;
@@ -99,6 +101,7 @@ describe("focus confirmation", () => {
 		assert.deepEqual(
 			await confirmFocusTransition(
 				context({ inputs: ["a"] }),
+				"enter_focus",
 				"edit",
 				"Need changes",
 			),
@@ -107,6 +110,7 @@ describe("focus confirmation", () => {
 		assert.equal(
 			await confirmFocusTransition(
 				context({ inputs: ["esc"] }),
+				"enter_focus",
 				"edit",
 				"Need changes",
 			),
@@ -114,6 +118,98 @@ describe("focus confirmation", () => {
 		);
 	});
 
+	it("does not re-prompt parallel subagents once one is allowed for the session", async () => {
+		let secondRenders = 0;
+		const [first, second] = await Promise.all([
+			confirmFocusTransition(
+				context({ inputs: ["a"] }),
+				"subagent",
+				"edit",
+				"first request",
+			),
+			confirmFocusTransition(
+				context({
+					inputs: ["d"],
+					onRender: () => {
+						secondRenders += 1;
+					},
+				}),
+				"subagent",
+				"edit",
+				"second request",
+			),
+		]);
+
+		assert.deepEqual(first, { choice: "allow-session" });
+		// The second subagent short-circuits to the first decision without showing
+		// its own dialog, so its "deny-session" input is never read.
+		assert.deepEqual(second, { choice: "allow-session" });
+		assert.equal(secondRenders, 0);
+		assert.equal(isFocusAllowedForSession("edit"), true);
+	});
+
+	it("still prompts each subagent when the decision is only allow-once", async () => {
+		let secondRenders = 0;
+		const [first, second] = await Promise.all([
+			confirmFocusTransition(
+				context({ inputs: ["y"] }),
+				"subagent",
+				"edit",
+				"first request",
+			),
+			confirmFocusTransition(
+				context({
+					inputs: ["y"],
+					onRender: () => {
+						secondRenders += 1;
+					},
+				}),
+				"subagent",
+				"edit",
+				"second request",
+			),
+		]);
+
+		assert.deepEqual(first, { choice: "allow-once" });
+		assert.deepEqual(second, { choice: "allow-once" });
+		// "Allow once" is not remembered, so the second subagent still prompts.
+		assert.ok(secondRenders > 0);
+		assert.equal(isFocusAllowedForSession("edit"), false);
+	});
+
+	it("does not interleave another subagent confirmation before reject reason input", async () => {
+		const events: string[] = [];
+		const [first, second] = await Promise.all([
+			confirmFocusTransition(
+				context({
+					inputs: ["r"],
+					editorResults: ["needs details"],
+					onCustomCall: (index) => events.push(`first:${index}`),
+				}),
+				"subagent",
+				"edit",
+				"first request",
+				"first prompt",
+			),
+			confirmFocusTransition(
+				context({
+					inputs: ["y"],
+					onCustomCall: (index) => events.push(`second:${index}`),
+				}),
+				"subagent",
+				"edit",
+				"second request",
+				"second prompt",
+			),
+		]);
+
+		assert.deepEqual(first, {
+			choice: "deny-once",
+			rejectReason: "needs details",
+		});
+		assert.deepEqual(second, { choice: "allow-once" });
+		assert.deepEqual(events, ["first:1", "first:2", "second:1"]);
+	});
 	it("supports exit denial with an edited reject reason", async () => {
 		assert.deepEqual(
 			await confirmExitFocusTransition(
@@ -164,6 +260,7 @@ describe("focus confirmation", () => {
 					renderWidth: 32,
 					onRender: (lines) => enterLines.push(lines),
 				}),
+				"enter_focus",
 				"edit",
 				"need focused edits before running checks",
 			),
