@@ -200,7 +200,12 @@ function buildFocusReminderPayloadWithTools(
 		: `Focus routing instructions:\n${buildFocusSystemPrompt(focus)}`;
 	const headline = activePrompt
 		? `Current focus: ${focus.current}. Follow the focus instructions.`
-		: "Follow the focus routing instructions.";
+		: [
+				"No focus is active.",
+				"Previous focus instructions and tool definitions are no longer active.",
+				"Use only the tool definitions in this latest reminder.",
+				"If focus-scoped tools are needed, call enter_focus to enter an appropriate focus first.",
+			].join("\n");
 	return {
 		content: [
 			headline,

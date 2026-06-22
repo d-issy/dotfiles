@@ -62,7 +62,7 @@ const chunkEditSchema = Type.Object(
 		}),
 		new_lines: Type.Array(Type.String(), {
 			description:
-				"Replacement lines for the range. Pass an empty array to delete the range. Blank lines are significant: use empty strings for intentional blank lines, and include adjacent blank lines in old_range when deleting or replacing a block so the final spacing is correct in the same edit. Do not include trailing newline characters.",
+				"Replacement lines for the inclusive old_range. Use [] to delete exactly that range. Blank lines are significant; use empty strings for intentional blank lines. Do not include trailing newline characters.",
 		}),
 	},
 	{ additionalProperties: false },

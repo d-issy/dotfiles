@@ -9,7 +9,13 @@ import { BASE_FOCUS, FOCUS_STATE_TYPE } from "#pi-user/lib/focus/definitions";
 import { createFocusController } from "#pi-user/lib/focus/controller";
 import { createFocusRuntime } from "#pi-user/lib/focus/runtime";
 import { createFocusSharedState } from "#pi-user/lib/focus/state";
+import type {
+	RegisteredSystemReminder,
+	SystemReminderPayload,
+} from "#pi-user/lib/system-reminder";
+import type { FocusReminderDetails } from "#pi-user/lib/focus/prompt";
 import {
+	autoContinueAfterFocusTransition,
 	persistFocusBeforeNew,
 	restoreFocus,
 } from "#pi-user/lib/focus/session";
@@ -139,5 +145,45 @@ describe("focus session lifecycle", () => {
 			runtime,
 		)({ reason: "new" } as never, ctx);
 		assert.equal(pi.entries.length, entryCount + 1);
+	});
+	it("sends no-focus auto-continue message after focus exit", async () => {
+		const pi = fakePi();
+		const runtime = createFocusRuntime();
+		runtime.scheduleAutoContinue(BASE_FOCUS);
+
+		const focus = {
+			current: BASE_FOCUS,
+			active: undefined,
+		};
+
+		let capturedContent: readonly string[] | undefined;
+		const reminder: RegisteredSystemReminder<FocusReminderDetails> = {
+			sendWakeup: (
+				_pi: never,
+				payload: SystemReminderPayload<FocusReminderDetails>,
+			) => {
+				capturedContent = Array.isArray(payload.content)
+					? payload.content
+					: [payload.content];
+				return { message: undefined, delivered: true };
+			},
+		} as unknown as RegisteredSystemReminder<FocusReminderDetails>;
+
+		await autoContinueAfterFocusTransition(
+			pi as unknown as ExtensionAPI,
+			focus as never,
+			runtime,
+			reminder,
+		)(undefined as never, undefined as never);
+
+		assert.ok(capturedContent, "sendWakeup should have been called");
+		assert.equal(
+			capturedContent[0],
+			"No focus is active. Previous focus instructions and tool definitions are no longer active.",
+		);
+		assert.equal(
+			capturedContent[2],
+			"Use only the tool definitions in the latest reminder. If focus-scoped tools are needed, call enter_focus to enter an appropriate focus first.",
+		);
 	});
 });

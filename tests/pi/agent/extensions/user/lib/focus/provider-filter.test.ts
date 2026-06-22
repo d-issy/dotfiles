@@ -89,4 +89,24 @@ describe("filterProviderTools", () => {
 			},
 		);
 	});
+
+	it("removes edit_chunk and other focus-scoped tools when no focus is active", async () => {
+		const payload = {
+			tools: [
+				{ name: "read" },
+				{ name: "edit_chunk" },
+				{ name: "enter_focus" },
+			],
+		};
+		const runtime = { lockedFocusName: undefined } as FocusRuntime;
+
+		assert.deepEqual(
+			await filterProviderTools(
+				{} as ExtensionAPI,
+				focus(["read", ENTER_FOCUS_TOOL]),
+				runtime,
+			)(event(payload), undefined as never),
+			{ tools: [{ name: "read" }, { name: ENTER_FOCUS_TOOL }] },
+		);
+	});
 });

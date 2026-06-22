@@ -44,6 +44,11 @@ function pi(): ExtensionAPI {
 			},
 			{ name: ENTER_FOCUS_TOOL, description: "Enter focus", parameters: {} },
 			{ name: EXIT_FOCUS_TOOL, description: "Exit focus", parameters: {} },
+			{
+				name: "edit_chunk",
+				description: "Edit chunks",
+				parameters: { type: "object" },
+			},
 		],
 	} as unknown as ExtensionAPI;
 }
@@ -291,7 +296,10 @@ describe("focus prompt injection", () => {
 		assert.equal(
 			payload.content,
 			[
-				"Follow the focus routing instructions.",
+				"No focus is active.",
+				"Previous focus instructions and tool definitions are no longer active.",
+				"Use only the tool definitions in this latest reminder.",
+				"If focus-scoped tools are needed, call enter_focus to enter an appropriate focus first.",
 				"",
 				"Focus routing instructions:",
 				"[FOCUS]",
@@ -324,5 +332,6 @@ describe("focus prompt injection", () => {
 				"```",
 			].join("\n"),
 		);
+		assert.doesNotMatch(payload.content, /edit_chunk/u);
 	});
 });

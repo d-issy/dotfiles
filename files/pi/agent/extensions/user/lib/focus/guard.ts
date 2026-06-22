@@ -22,8 +22,9 @@ export const guardToolCall =
 		runtime?: FocusRuntime,
 	): ExtensionHandler<ToolCallEvent, ToolCallEventResult> =>
 	async (event) => {
+		const focusName = focus.active ? focus.current : undefined;
 		const notAllowed = catalog.checkToolAllowed(
-			focus.current,
+			focusName,
 			focus.allowedToolNames(pi, {
 				includeManagementTools: runtime?.lockedFocusName === undefined,
 			}),
@@ -31,6 +32,6 @@ export const guardToolCall =
 		);
 		if (notAllowed) return block(notAllowed);
 
-		const secret = catalog.checkSecretBlock(focus.current, event);
+		const secret = catalog.checkSecretBlock(focusName, event);
 		if (secret) return block(secret);
 	};

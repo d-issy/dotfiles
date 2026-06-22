@@ -138,11 +138,11 @@ export const autoContinueAfterFocusTransition =
 			{
 				content: [
 					isBase
-						? "A focus exit completed. Continue from the latest focus state."
+						? "No focus is active. Previous focus instructions and tool definitions are no longer active."
 						: "A focus transition completed. Continue from the latest focus state.",
 					"Use the current focus reminder injected for this turn as authoritative; ignore older focus reminders if they conflict.",
 					isBase
-						? "Continue from the focus tool result and its exit handoff. If another focus is needed, use enter_focus."
+						? "Use only the tool definitions in the latest reminder. If focus-scoped tools are needed, call enter_focus to enter an appropriate focus first."
 						: "Continue the user's request under the current focus. Follow the active focus instructions and available tools. Do not answer only with a focus status message.",
 				],
 				details: {
