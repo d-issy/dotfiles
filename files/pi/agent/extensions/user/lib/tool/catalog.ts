@@ -50,11 +50,14 @@ export type ToolCatalog = {
 	list(): readonly ToolContribution[];
 	toolResultError(event: ToolResultEvent): { isError: true } | undefined;
 	checkToolAllowed(
-		focusName: string,
+		focusName: string | undefined,
 		allowedToolNames: ReadonlySet<string>,
 		event: ToolCallEvent,
 	): string | undefined;
-	checkSecretBlock(focusName: string, event: ToolCallEvent): string | undefined;
+	checkSecretBlock(
+		focusName: string | undefined,
+		event: ToolCallEvent,
+	): string | undefined;
 };
 
 export function createToolCatalog(): ToolCatalog {
@@ -91,6 +94,9 @@ export function createToolCatalog(): ToolCatalog {
 		},
 		checkToolAllowed(focusName, allowedToolNames, event) {
 			if (allowedToolNames.has(event.toolName)) return undefined;
+			if (!focusName) {
+				return `${event.toolName} is not available because no focus is active. Use enter_focus to enter an appropriate focus first.`;
+			}
 			const policy = policies.get(event.toolName);
 			return (
 				policy?.notAllowedReason?.(focusName) ??
@@ -102,6 +108,9 @@ export function createToolCatalog(): ToolCatalog {
 			if (!policy?.extractSecretPaths) return undefined;
 			const paths = policy.extractSecretPaths(event.input as never);
 			if (!paths.some(isSecretPath)) return undefined;
+			if (!focusName) {
+				return `${policy.name} on secret files is disabled because no focus is active. Use enter_focus to enter an appropriate focus first.`;
+			}
 			return (
 				policy.secretBlockReason?.(focusName) ??
 				`${policy.name} on secret files is disabled in ${focusName} focus.`
