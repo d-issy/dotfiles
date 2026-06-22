@@ -150,7 +150,7 @@ function getStateDisplay(
 		return `${theme.fg("error", "✗")} ${theme.fg("dim", "Cancelled")}`;
 	}
 	if (details?.stderr) {
-		return `${theme.fg("error", "✗")} ${theme.fg("dim", "Error")}`;
+		return `${theme.fg("error", "✗")} ${theme.fg("error", "Error")}`;
 	}
 	return `${fg(colors.positive, "✓")} ${theme.fg("dim", "Completed")}`;
 }
@@ -532,12 +532,13 @@ const createSubagentExecute =
 					"subagent",
 					input.focus,
 					input.title,
+					input.prompt,
 				);
 				if (!decision || decision.choice.startsWith("deny")) {
 					const reason = decision?.rejectReason;
 					const text = reason
-						? `Subagent in focus "${input.focus}" was denied: ${reason}`
-						: `Subagent in focus "${input.focus}" was denied.`;
+						? `User denied subagent in focus "${input.focus}": ${reason}`
+						: `User denied subagent in focus "${input.focus}".`;
 					const err: SubagentErrorResult = {
 						content: [{ type: "text" as const, text }],
 						details: {
@@ -546,7 +547,7 @@ const createSubagentExecute =
 							prompt: input.prompt,
 							toolCallCount: 0,
 							durationMs: 0,
-							stderr: reason ?? `denied: focus "${input.focus}"`,
+							stderr: reason ?? `denied by user: "${input.focus}"`,
 						} satisfies SubagentDetails,
 						isError: true,
 					};

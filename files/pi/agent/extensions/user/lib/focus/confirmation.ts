@@ -134,6 +134,16 @@ function renderReasonLines(
 	);
 }
 
+function renderSubagentPromptLines(
+	theme: { fg(role: string, text: string): string },
+	prompt: string,
+	width: number,
+): string[] {
+	return wrapPrefixedText("Prompt: ", prompt, dialogContentWidth(width)).map(
+		(line) => padDialogLine(theme.fg("dim", line), width),
+	);
+}
+
 function focusConfirmItems(): readonly FocusConfirmItem[] {
 	return [
 		{
@@ -199,6 +209,7 @@ async function chooseFocusTransitionAction(
 	reason: string,
 	initialIndex: number,
 	sessionAware: boolean,
+	prompt?: string,
 ): Promise<
 	| { action: FocusConfirmAction; index: number }
 	| { sessionShortCircuit: FocusConfirmChoice }
@@ -242,6 +253,9 @@ async function chooseFocusTransitionAction(
 						...border.render(width),
 						padDialogLine(theme.fg("accent", theme.bold(titleLine)), width),
 						...renderReasonLines(theme, reason, width),
+						...(caller === "subagent" && prompt
+							? renderSubagentPromptLines(theme, prompt, width)
+							: []),
 						...items.map((item, index) =>
 							padDialogLine(
 								renderKeyedPanelItem(theme, item, {
@@ -342,6 +356,7 @@ export async function confirmFocusTransition(
 	caller: ConfirmCaller,
 	name: string,
 	reason: string,
+	prompt?: string,
 ): Promise<FocusConfirmDecision | undefined> {
 	let selectedIndex = 0;
 	let rejectReason: string | undefined;
@@ -355,6 +370,7 @@ export async function confirmFocusTransition(
 			reason,
 			selectedIndex,
 			firstPrompt && caller === "subagent",
+			prompt,
 		);
 		firstPrompt = false;
 		if (!result) return undefined;
