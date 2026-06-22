@@ -51,7 +51,7 @@ function buildFocusSystemPrompt(focus: FocusController): string {
 		description: definition.description,
 		transition: definition.transition,
 	}));
-	return `[FOCUS]\nUse focuses to solve the user's request.\n\nFocus rules:\n- A focus is an operational mode that controls available tools and instructions.\n- Use the descriptions below to choose when to enter each focus.\n- Enter the appropriate focus before doing substantive work.\n- Auto focuses may be entered without asking the user.\n- Do not ask the user for information that can be discovered after entering an appropriate focus.\n- If a needed capability is not visible, first check whether another available focus exposes it.\n\nAvailable focuses:\n${formatFocusList(focuses)}`;
+	return `[FOCUS]\nUse focuses to solve the user's request.\n\nFocus rules:\n- A focus is an operational mode that controls available tools and instructions.\n- Use the descriptions below to choose which focus a task needs.\n- Before substantive work, choose how to run that focus: enter_focus to do the work yourself in the current context, or subagent to delegate it to a child agent that runs in the focus and returns only its final message.\n- Prefer subagent when you only need the result, want to keep this context clean, or want to run work in parallel; pass the focus as the subagent focus parameter instead of entering it yourself. Prefer enter_focus when you want to work step by step in that focus.\n- Auto focuses may be entered without asking the user.\n- Do not ask the user for information that can be discovered after entering an appropriate focus.\n- If a needed capability is not visible, first check whether another available focus exposes it.\n\nAvailable focuses:\n${formatFocusList(focuses)}`;
 }
 
 function formatVisibleToolsList(
@@ -204,7 +204,7 @@ function buildFocusReminderPayloadWithTools(
 				"No focus is active.",
 				"Previous focus instructions and tool definitions are no longer active.",
 				"Use only the tool definitions in this latest reminder.",
-				"If focus-scoped tools are needed, call enter_focus to enter an appropriate focus first.",
+				"If focus-scoped tools are needed, either call enter_focus to do the work yourself, or call subagent with the target focus to delegate it without entering (keeping this context clean).",
 			].join("\n");
 	return {
 		content: [
