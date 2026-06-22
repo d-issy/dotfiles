@@ -139,9 +139,21 @@ function renderSubagentPromptLines(
 	prompt: string,
 	width: number,
 ): string[] {
-	return wrapPrefixedText("Prompt: ", prompt, dialogContentWidth(width)).map(
-		(line) => padDialogLine(theme.fg("dim", line), width),
+	const maxLines = 10;
+	const contentWidth = dialogContentWidth(width);
+	const lines = wrapPrefixedText("Prompt: ", prompt, contentWidth);
+	const truncated = lines.length > maxLines;
+	const shown = truncated ? lines.slice(0, maxLines) : lines;
+	const result = shown.map((line) =>
+		padDialogLine(theme.fg("dim", line), width),
 	);
+	if (truncated) {
+		const remaining = lines.length - maxLines;
+		result.push(
+			padDialogLine(theme.fg("dim", `… (${remaining} more lines)`), width),
+		);
+	}
+	return result;
 }
 
 function focusConfirmItems(): readonly FocusConfirmItem[] {
