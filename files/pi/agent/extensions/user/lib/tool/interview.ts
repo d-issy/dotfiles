@@ -13,6 +13,7 @@ import {
 } from "@earendil-works/pi-tui";
 import { type Static, Type } from "typebox";
 import type { ToolPolicy } from "../policy";
+import { notifyUserInputNeeded } from "../tmux-notice";
 import {
 	createRefinableExtensionEditorComponent,
 	decodePrintableInput,
@@ -462,6 +463,7 @@ async function showQuestion(
 		options.otherText,
 		options.otherSelected ?? Boolean(options.otherText),
 	);
+	void notifyUserInputNeeded();
 	const action = await ctx.ui.custom<QuestionResult>(
 		(tui, theme, keybindings, done) => {
 			const border = new DynamicBorder((value) => theme.fg("accent", value));
@@ -562,6 +564,7 @@ async function showOtherInput(
 	]
 		.filter((line): line is string => line !== undefined)
 		.join("\n");
+	void notifyUserInputNeeded();
 	return ctx.ui.custom<string | undefined>((tui, _theme, keybindings, done) =>
 		createRefinableExtensionEditorComponent(
 			ctx,

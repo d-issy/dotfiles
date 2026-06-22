@@ -56,13 +56,13 @@ const chunkEditSchema = Type.Object(
 	{
 		old_range: Type.Array(anchorSchema, {
 			description:
-				"Inclusive [start_anchor, end_anchor] range using read_chunk anchors, not line numbers. Copy the 3-character value after @ from read_chunk output (for example, from '12 @abc | text', use 'abc'). Use the same anchor twice for a single-line edit.",
+				"Inclusive whole-line [start_anchor, end_anchor] range using read_chunk anchors, not line numbers. The complete start-anchor line, complete end-anchor line, and every line between them are replaced by new_lines. Copy the 3-character value after @ from read_chunk output (for example, from '12 @abc | text', use 'abc'). Use the same anchor twice to replace one entire line.",
 			minItems: 2,
 			maxItems: 2,
 		}),
 		new_lines: Type.Array(Type.String(), {
 			description:
-				"Replacement lines for the inclusive old_range. Use [] to delete exactly that range. Blank lines are significant; use empty strings for intentional blank lines. Do not include trailing newline characters.",
+				"Exact replacement lines for the inclusive old_range. Nothing inside old_range is preserved unless you copy it into new_lines. To insert before or after a line, replace a nearby existing line and include that original line plus inserted lines here. Use [] to delete exactly old_range. Blank lines are significant; use empty strings for intentional blank lines. Do not include trailing newline characters.",
 		}),
 	},
 	{ additionalProperties: false },

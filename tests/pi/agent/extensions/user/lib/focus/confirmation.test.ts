@@ -82,11 +82,11 @@ describe("focus confirmation", () => {
 		assert.equal(isFocusAllowedForSession("edit"), false);
 		assert.equal(isFocusDeniedForSession("edit"), false);
 
-		rememberFocusTransitionDecision("edit", "allow-session");
+		rememberFocusTransitionDecision("edit", { choice: "allow-session" });
 		assert.equal(isFocusAllowedForSession("edit"), true);
 		assert.equal(isFocusDeniedForSession("edit"), false);
 
-		rememberFocusTransitionDecision("edit", "deny-session");
+		rememberFocusTransitionDecision("edit", { choice: "deny-session" });
 		assert.equal(isFocusAllowedForSession("edit"), false);
 		assert.equal(isFocusDeniedForSession("edit"), true);
 
@@ -96,13 +96,13 @@ describe("focus confirmation", () => {
 	});
 
 	it("selects enter-focus decisions from printable shortcuts and cancel keys", async () => {
-		assert.equal(
+		assert.deepEqual(
 			await confirmFocusTransition(
 				context({ inputs: ["a"] }),
 				"edit",
 				"Need changes",
 			),
-			"allow-session",
+			{ choice: "allow-session" },
 		);
 		assert.equal(
 			await confirmFocusTransition(
@@ -157,7 +157,7 @@ describe("focus confirmation", () => {
 		]);
 
 		const enterLines: Array<readonly string[]> = [];
-		assert.equal(
+		assert.deepEqual(
 			await confirmFocusTransition(
 				context({
 					inputs: ["a"],
@@ -167,7 +167,7 @@ describe("focus confirmation", () => {
 				"edit",
 				"need focused edits before running checks",
 			),
-			"allow-session",
+			{ choice: "allow-session" },
 		);
 		assert.deepEqual(enterLines[0]?.slice(2, 4), [
 			" Reason: need focused edits     ",

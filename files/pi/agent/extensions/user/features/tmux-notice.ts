@@ -1,22 +1,31 @@
-import { execFile } from "node:child_process";
-import { promisify } from "node:util";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import type { Feature } from "../feature";
+import { notifyUserInputNeeded } from "../lib/tmux-notice";
 
-const execFileAsync = promisify(execFile);
-const TMUX_NOTICE = process.env.TMUX_NOTICE ?? "tmux-notice";
-
-async function tmuxNotice(args: readonly string[]): Promise<void> {
-	try {
-		await execFileAsync(TMUX_NOTICE, [...args]);
-	} catch {
-		// Ignore: tmux-notice is best-effort and may be unavailable outside tmux.
-	}
+function isTerminatingFocusResult(result: unknown): boolean {
+	return (
+		typeof result === "object" &&
+		result !== null &&
+		"terminate" in result &&
+		result.terminate === true
+	);
 }
 
 function register(pi: ExtensionAPI): void {
+	let suppressNextAgentEndNotice = false;
+
+	pi.on("tool_execution_end", async (event) => {
+		if (event.toolName !== "enter_focus") return;
+		suppressNextAgentEndNotice = isTerminatingFocusResult(event.result);
+	});
+
 	pi.on("agent_end", async () => {
-		await tmuxNotice(["on", "pi-wait"]);
+		if (suppressNextAgentEndNotice) {
+			suppressNextAgentEndNotice = false;
+			return;
+		}
+
+		await notifyUserInputNeeded();
 	});
 }
 

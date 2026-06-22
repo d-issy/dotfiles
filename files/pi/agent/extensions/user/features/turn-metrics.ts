@@ -19,6 +19,7 @@ const DEFAULT_INDICATOR_FRAMES = [
 	"⠏",
 ] as const;
 const DEFAULT_INDICATOR_INTERVAL_MS = 80;
+const ENTER_FOCUS_TOOL = "enter_focus";
 
 type WorkPhase = "Thinking" | "Working";
 type PhaseColor = "accent" | "warning";
@@ -103,6 +104,14 @@ function formatWorkingMessage(
 		ctx.ui.theme.fg("dim", ")"),
 	].join("");
 }
+function isTerminatingFocusResult(result: unknown): boolean {
+	return (
+		typeof result === "object" &&
+		result !== null &&
+		"terminate" in result &&
+		result.terminate === true
+	);
+}
 
 function register(pi: ExtensionAPI): void {
 	let startedAt: number | undefined;
@@ -114,6 +123,7 @@ function register(pi: ExtensionAPI): void {
 	let currentInputTokens = 0;
 	let currentOutputTokens = 0;
 	let toolCalls = 0;
+	let preserveWorkingAfterAgentEnd = false;
 
 	function stopTickTimer(): void {
 		if (!tickTimer) return;
@@ -234,6 +244,10 @@ function register(pi: ExtensionAPI): void {
 		toolCalls++;
 		updateWorkingMessage(ctx);
 	});
+	pi.on("tool_execution_end", async (event) => {
+		if (event.toolName !== ENTER_FOCUS_TOOL) return;
+		preserveWorkingAfterAgentEnd = isTerminatingFocusResult(event.result);
+	});
 
 	pi.on("message_end", async (event, ctx) => {
 		if (event.message.role !== "assistant" || startedAt === undefined) return;
@@ -248,8 +262,13 @@ function register(pi: ExtensionAPI): void {
 		setWidgetLine(ctx, buildLine(ctx, true));
 		startedAt = undefined;
 	});
-
 	pi.on("agent_end", async (_event, ctx) => {
+		if (preserveWorkingAfterAgentEnd) {
+			preserveWorkingAfterAgentEnd = false;
+			updateWorkingMessage(ctx);
+			return;
+		}
+
 		stopTickTimer();
 		startedAt = undefined;
 		clearWorking(ctx);

@@ -69,7 +69,15 @@ function renderEnterFocusResult(
 	options: ToolRenderResultOptions,
 	theme: Theme,
 ): Text {
-	const text = options.expanded ? resultText(result) : firstResultLine(result);
+	const rejectReason =
+		typeof result.details.rejectReason === "string"
+			? result.details.rejectReason
+			: undefined;
+	const text = options.expanded
+		? resultText(result)
+		: rejectReason
+			? `${firstResultLine(result)}\nReject reason: ${rejectReason}`
+			: firstResultLine(result);
 	const color = isOkResult(result) ? "success" : "error";
 	return new Text(theme.fg(color, text), 0, 0);
 }
@@ -220,17 +228,28 @@ export function registerEnterFocusTool(
 							definition.name,
 							confirmationReason,
 						);
-						if (!decision || decision.startsWith("deny")) {
+						if (!decision || decision.choice.startsWith("deny")) {
 							if (decision)
 								rememberFocusTransitionDecision(definition.name, decision);
+							const rejectReason = decision?.rejectReason;
+							const text = rejectReason
+								? [
+										`User rejected entering focus '${definition.name}' for this request. Do not request this focus again or route through another focus to request it. Use currently available tools if they can satisfy the request. If not, ask the user how to proceed.`,
+										`Reject reason: ${rejectReason}`,
+									].join("\n\n")
+								: `User rejected entering focus '${definition.name}' for this request. Do not request this focus again or route through another focus to request it. Use currently available tools if they can satisfy the request. If not, ask the user how to proceed.`;
 							return {
 								content: [
 									{
 										type: "text" as const,
-										text: `User rejected entering focus '${definition.name}' for this request. Do not request this focus again or route through another focus to request it. Use currently available tools if they can satisfy the request. If not, ask the user how to proceed.`,
+										text,
 									},
 								],
-								details: { ok: false, reason: "declined" } as FocusToolDetails,
+								details: {
+									ok: false,
+									reason: "declined",
+									...(rejectReason ? { rejectReason } : {}),
+								} as FocusToolDetails,
 							};
 						}
 						rememberFocusTransitionDecision(definition.name, decision);
