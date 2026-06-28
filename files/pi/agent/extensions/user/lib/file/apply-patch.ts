@@ -57,7 +57,7 @@ const replaceSchema = Type.Object({
 	targetLineNoRanges: Type.Optional(
 		Type.Array(targetLineNoRangeSchema, {
 			description:
-				"Optional target 1-based line number ranges where oldText may match and be replaced. When omitted, the whole file is searched.",
+				"Optional safe 1-based line number ranges that contain only intended oldText replacements. When omitted, the whole file is searched.",
 		}),
 	),
 });
@@ -72,7 +72,7 @@ export const applyPatchSchema = Type.Object({
 	replaces: Type.Optional(
 		Type.Array(replaceSchema, {
 			description:
-				"Replace oldText with newText. If oldText matches multiple locations, startLineNo/endLineNo or targetLineNoRanges must disambiguate where replacements are allowed.",
+				"Replace oldText with newText. If oldText matches multiple locations, use startLineNo/endLineNo or targetLineNoRanges to specify a safe range that contains only intended replacements.",
 		}),
 	),
 	removeLineRanges: Type.Optional(
@@ -96,6 +96,7 @@ export const applyPatchSchema = Type.Object({
 });
 
 export type ApplyPatchToolInput = Static<typeof applyPatchSchema>;
+type ReplaceOperation = NonNullable<ApplyPatchToolInput["replaces"]>[number];
 
 function checkAbort(signal: AbortSignal | undefined): void {
 	if (signal?.aborted)
@@ -240,24 +241,34 @@ function assertTargetLineNoRange(
 	}
 }
 
-function targetLineNoRangeCandidate(
-	index: LineIndex,
-	position: number,
-	length: number,
-): string {
-	const start = lineNoAtOffset(index, position);
-	const end = lineNoAtOffset(index, position + length);
-	return `{ start: ${start}, end: ${end} }`;
-}
-
-function candidateTargetLineNoRanges(
+function matchedLineCounts(
 	index: LineIndex,
 	positions: readonly number[],
-	length: number,
+): Map<number, number> {
+	const counts = new Map<number, number>();
+	for (const position of positions) {
+		const lineNo = lineNoAtOffset(index, position);
+		counts.set(lineNo, (counts.get(lineNo) ?? 0) + 1);
+	}
+	return counts;
+}
+
+function matchedLinesSummary(
+	index: LineIndex,
+	positions: readonly number[],
 ): string {
-	return `[${positions
-		.map((position) => targetLineNoRangeCandidate(index, position, length))
-		.join(", ")}]`;
+	return `[${Array.from(matchedLineCounts(index, positions).keys()).join(", ")}]`;
+}
+
+function multipleMatchesOnSameLineWarning(
+	index: LineIndex,
+	positions: readonly number[],
+): string {
+	const lines = Array.from(
+		matchedLineCounts(index, positions).entries(),
+	).filter(([, count]) => count > 1);
+	if (lines.length === 0) return "";
+	return `\nWarning: oldText matched multiple times on the same line.\nUse a wider oldText, such as the full line or surrounding phrase, so the intended replacement is unambiguous.\nLines with multiple matches:\n${lines.map(([lineNo, count]) => `- line ${lineNo}: ${count} matches`).join("\n")}`;
 }
 
 function assertNoSameLineMatches(
@@ -265,18 +276,105 @@ function assertNoSameLineMatches(
 	positions: readonly number[],
 	label: string,
 ): void {
-	const counts = new Map<number, number>();
-	for (const position of positions) {
-		const lineNo = lineNoAtOffset(index, position);
-		counts.set(lineNo, (counts.get(lineNo) ?? 0) + 1);
-	}
-	for (const [lineNo, count] of counts) {
+	for (const [lineNo, count] of matchedLineCounts(index, positions)) {
 		if (count > 1) {
 			throw new Error(
-				`${label} oldText matched multiple locations on line ${lineNo}. Line ranges cannot disambiguate multiple matches on the same line. Use a more specific oldText.`,
+				`${label} oldText matched multiple locations on line ${lineNo}.\nLine ranges cannot disambiguate multiple matches on the same line.\nUse a wider oldText, such as the full line or surrounding phrase, so the intended replacement is unambiguous.`,
 			);
 		}
 	}
+}
+
+function createSequentialReplaceEdits(
+	text: string,
+	replace: ReplaceOperation,
+	replaceIndex: number,
+): TextEdit[] {
+	const index = createLineIndex(text);
+	const edits: TextEdit[] = [];
+	const hasStart = replace.startLineNo !== undefined;
+	const hasEnd = replace.endLineNo !== undefined;
+	if (hasStart !== hasEnd) {
+		throw new Error(
+			`replaces[${replaceIndex}] must specify both startLineNo and endLineNo, or neither.`,
+		);
+	}
+	if ((replace.targetLineNoRanges?.length ?? 0) > 0) {
+		if (hasStart || hasEnd) {
+			throw new Error(
+				`replaces[${replaceIndex}] must specify either startLineNo/endLineNo or targetLineNoRanges, not both.`,
+			);
+		}
+		for (const [rangeIndex, range] of (
+			replace.targetLineNoRanges ?? []
+		).entries()) {
+			const label = `replaces[${replaceIndex}].targetLineNoRanges[${rangeIndex}]`;
+			assertTargetLineNoRange(index, range.start, range.end, label);
+			const chars = rangeContentChars(index, range.start, range.end);
+			const positions = findOccurrences(
+				text.slice(chars.start, chars.end),
+				replace.oldText,
+				chars.start,
+			);
+			if (positions.length === 0) {
+				throw new Error(
+					`${label} oldText did not match within the target line range.`,
+				);
+			}
+			assertNoSameLineMatches(index, positions, label);
+			for (const start of positions) {
+				edits.push({
+					start,
+					end: start + replace.oldText.length,
+					replacement: replace.newText,
+					label,
+				});
+			}
+		}
+		return edits;
+	}
+
+	let searchText = text;
+	let baseOffset = 0;
+	if (hasStart && hasEnd) {
+		const startLineNo = replace.startLineNo ?? 1;
+		const endLineNo = replace.endLineNo ?? 1;
+		assertLineRange(index, startLineNo, endLineNo, `replaces[${replaceIndex}]`);
+		const chars = rangeContentChars(index, startLineNo, endLineNo);
+		searchText = text.slice(chars.start, chars.end);
+		baseOffset = chars.start;
+	}
+	const positions = findOccurrences(searchText, replace.oldText, baseOffset);
+	if (positions.length === 0)
+		throw new Error(`replaces[${replaceIndex}] oldText was not found.`);
+	if (positions.length > 1) {
+		throw new Error(
+			`replaces[${replaceIndex}] oldText matched multiple locations.\nSpecify targetLineNoRanges for a safe range that contains only intended replacements.\nMatched lines: ${matchedLinesSummary(index, positions)}.${multipleMatchesOnSameLineWarning(index, positions)}`,
+		);
+	}
+	const start = positions[0] ?? 0;
+	return [
+		{
+			start,
+			end: start + replace.oldText.length,
+			replacement: replace.newText,
+			label: `replaces[${replaceIndex}]`,
+		},
+	];
+}
+
+function applySequentialReplaces(
+	text: string,
+	replaces: readonly ReplaceOperation[],
+): { text: string; edits: number } {
+	let nextText = text;
+	let editCount = 0;
+	for (const [i, replace] of replaces.entries()) {
+		const edits = createSequentialReplaceEdits(nextText, replace, i);
+		nextText = applyTextEdits(nextText, edits);
+		editCount += edits.length;
+	}
+	return { text: nextText, edits: editCount };
 }
 
 function createEdits(text: string, params: ApplyPatchToolInput): TextEdit[] {
@@ -385,7 +483,7 @@ function createEdits(text: string, params: ApplyPatchToolInput): TextEdit[] {
 			throw new Error(`replaces[${i}] oldText was not found.`);
 		if (positions.length > 1) {
 			throw new Error(
-				`replaces[${i}] oldText matched multiple locations. Specify targetLineNoRanges. Candidate targetLineNoRanges: ${candidateTargetLineNoRanges(index, positions, replace.oldText.length)}.`,
+				`replaces[${i}] oldText matched multiple locations.\nSpecify targetLineNoRanges for a safe range that contains only intended replacements.\nMatched lines: ${matchedLinesSummary(index, positions)}.${multipleMatchesOnSameLineWarning(index, positions)}`,
 			);
 		}
 		const start = positions[0] ?? 0;
@@ -507,8 +605,17 @@ export async function executeApplyPatch(
 	await assertRepoPathAllowed(guardContext, absolute, APPLY_PATCH_OPERATION);
 	const displayPath = displayRepoPath(cwd, absolute);
 	const text = await readFile(absolute, "utf8");
-	const edits = createEdits(text, params);
-	const nextText = applyTextEdits(text, edits);
+	const replaceOnly =
+		(params.replaces?.length ?? 0) > 0 &&
+		(params.removeLineRanges?.length ?? 0) === 0 &&
+		(params.insertLines?.length ?? 0) === 0;
+	const result = replaceOnly
+		? applySequentialReplaces(text, params.replaces ?? [])
+		: (() => {
+				const edits = createEdits(text, params);
+				return { text: applyTextEdits(text, edits), edits: edits.length };
+			})();
+	const nextText = result.text;
 	checkAbort(signal);
 	await writeFile(absolute, nextText, "utf8");
 
@@ -516,7 +623,7 @@ export async function executeApplyPatch(
 	const patch = generateUnifiedPatch(displayPath, text, nextText);
 	const diffLineCount =
 		diffResult.diff === "" ? 0 : diffResult.diff.split("\n").length;
-	const resultSummary = `Applied ${edits.length} edit(s) to ${displayPath}.`;
+	const resultSummary = `Applied ${result.edits} edit(s) to ${displayPath}.`;
 	const resultBody = !diffResult.diff
 		? resultSummary
 		: diffLineCount >= LLM_DIFF_OMIT_LINE_THRESHOLD
@@ -533,7 +640,7 @@ export async function executeApplyPatch(
 		details: {
 			operation: "apply_patch",
 			path: displayPath,
-			edits: edits.length,
+			edits: result.edits,
 			diff: diffResult.diff,
 			patch,
 		} satisfies ApplyPatchDetails,

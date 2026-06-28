@@ -78,9 +78,9 @@ describe("apply_patch", () => {
 		assert.ok(typeof result.details.patch === "string");
 	});
 
-	it("reports candidate target line number ranges when text replacement is ambiguous", async () => {
+	it("reports matched lines when text replacement is ambiguous", async () => {
 		const root = tempRepo();
-		writeFileSync(join(root, "src", "example.txt"), "same\nother\nsame\n");
+		writeFileSync(join(root, "src", "example.txt"), "same same\nother\nsame\n");
 
 		await expectApplyPatchError(
 			root,
@@ -89,9 +89,15 @@ describe("apply_patch", () => {
 				replaces: [{ oldText: "same", newText: "changed" }],
 			},
 			[
-				"replaces[0] oldText matched multiple locations",
-				"Specify targetLineNoRanges",
-				"Candidate targetLineNoRanges: [{ start: 1, end: 1 }, { start: 3, end: 3 }]",
+				[
+					"replaces[0] oldText matched multiple locations.",
+					"Specify targetLineNoRanges for a safe range that contains only intended replacements.",
+					"Matched lines: [1, 3].",
+					"Warning: oldText matched multiple times on the same line.",
+					"Use a wider oldText, such as the full line or surrounding phrase, so the intended replacement is unambiguous.",
+					"Lines with multiple matches:",
+					"- line 1: 2 matches",
+				].join("\n"),
 			],
 		);
 	});
@@ -155,6 +161,54 @@ describe("apply_patch", () => {
 		);
 	});
 
+	it("applies replace operations sequentially on a temporary copy", async () => {
+		const root = tempRepo();
+		const path = join(root, "src", "example.txt");
+		writeFileSync(path, "one two\n");
+
+		const result = await executeApplyPatch(
+			root,
+			{
+				path: "src/example.txt",
+				replaces: [
+					{
+						oldText: "one",
+						newText: "two",
+						targetLineNoRanges: [{ start: 1, end: 1 }],
+					},
+					{
+						oldText: "two two",
+						newText: "done",
+						targetLineNoRanges: [{ start: 1, end: 1 }],
+					},
+				],
+			},
+			undefined,
+		);
+
+		assert.equal(readFileSync(path, "utf8"), "done\n");
+		assert.equal(result.details.edits, 2);
+	});
+
+	it("does not mutate the file when a later sequential replace fails", async () => {
+		const root = tempRepo();
+		const path = join(root, "src", "example.txt");
+		writeFileSync(path, "one\n");
+
+		await expectApplyPatchError(
+			root,
+			{
+				path: "src/example.txt",
+				replaces: [
+					{ oldText: "one", newText: "two" },
+					{ oldText: "missing", newText: "done" },
+				],
+			},
+			["replaces[1] oldText was not found."],
+		);
+		assert.equal(readFileSync(path, "utf8"), "one\n");
+	});
+
 	it("rejects multiple matches on the same line within a target line number range", async () => {
 		const root = tempRepo();
 		const path = join(root, "src", "example.txt");
@@ -173,8 +227,11 @@ describe("apply_patch", () => {
 				],
 			},
 			[
-				"replaces[0].targetLineNoRanges[0] oldText matched multiple locations on line 1",
-				"Use a more specific oldText",
+				[
+					"replaces[0].targetLineNoRanges[0] oldText matched multiple locations on line 1.",
+					"Line ranges cannot disambiguate multiple matches on the same line.",
+					"Use a wider oldText, such as the full line or surrounding phrase, so the intended replacement is unambiguous.",
+				].join("\n"),
 			],
 		);
 		assert.equal(readFileSync(path, "utf8"), "same same\n");
