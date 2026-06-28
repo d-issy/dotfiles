@@ -4,6 +4,7 @@ import type {
 	Theme,
 	ToolDefinition,
 } from "@earendil-works/pi-coding-agent";
+import { visibleWidth } from "@earendil-works/pi-tui";
 import { describe, it } from "vitest";
 import {
 	type FocusDefinition,
@@ -17,9 +18,12 @@ const plainTheme = {
 	bold: (text: string) => text,
 } as Theme;
 
-function renderText(component: { render(width: number): string[] }): string {
+function renderText(
+	component: { render(width: number): string[] },
+	width = 200,
+): string {
 	return component
-		.render(200)
+		.render(width)
 		.map((line) => line.replace(/[ \t]+$/u, ""))
 		.join("\n");
 }
@@ -237,10 +241,50 @@ describe("agent tool registration", () => {
 		assert.doesNotMatch(output, /\[object Object\]/u);
 	});
 
+	it("keeps collapsed running tool rows to one rendered line each", () => {
+		const definition = getAgentDefinition();
+		assert.ok(definition.renderResult);
+
+		const result = {
+			content: [
+				{
+					type: "text" as const,
+					text: [
+						' 1. grep (pattern="this is a very long pattern that used to wrap in narrow terminals")  2.3s  ← running',
+						"◉ Running  1.2s (1 tool used)",
+					].join("\n"),
+				},
+			],
+			details: {
+				_status: "running",
+				_runningLine: "◉ Running  1.2s (1 tool used)",
+				toolCallCount: 1,
+				durationMs: 1200,
+			},
+		} satisfies AgentToolResult<Record<string, unknown>>;
+
+		const lines = (
+			definition.renderResult(
+				result,
+				{ expanded: false, isPartial: true },
+				plainTheme,
+				renderResultContext(),
+			) as { render(width: number): string[] }
+		).render(30);
+
+		assert.equal(lines.length, 2);
+		assert.match(lines[0] ?? "", /1\. grep/u);
+		assert.match(lines[0] ?? "", /…\).*2\.3s.*← running/u);
+		assert.match(lines[1] ?? "", /Running/u);
+		assert.ok(lines.every((line) => visibleWidth(line) <= 30));
+	});
+
 	it("renders expanded running updates with prompt and all tools", () => {
 		const definition = getAgentDefinition();
 		assert.ok(definition.renderResult);
 
+		const longPattern =
+			"this is a very long grep pattern that should remain fully visible in expanded running updates";
 		const result = {
 			content: [{ type: "text" as const, text: "latest tail only" }],
 			details: {
@@ -254,7 +298,7 @@ describe("agent tool registration", () => {
 					{ name: "find", args: { pattern: "*.ts" }, startTime: 500 },
 					{
 						name: "grep",
-						args: { pattern: { raw: "TODO" } },
+						args: { pattern: { raw: longPattern } },
 						startTime: 1000,
 					},
 					{ name: "read", args: { path: "src/b.ts" }, startTime: 1500 },
@@ -276,7 +320,7 @@ describe("agent tool registration", () => {
 		assert.match(output, /tools:\s*\n[\s\S]*1\. read(?!_chunk)/u);
 		assert.match(output, /2\. find/u);
 		assert.match(output, /5\. lint/u);
-		assert.match(output, /pattern=\{"raw":"TODO"\}/u);
+		assert.match(output, new RegExp(longPattern, "u"));
 		assert.match(output, /◉ Running\s+1\.2s/u);
 		assert.doesNotMatch(output, /\[object Object\]/u);
 	});
