@@ -263,9 +263,9 @@ function multipleMatchesOnSameLineWarning(
 	index: LineIndex,
 	positions: readonly number[],
 ): string {
-	const lines = Array.from(matchedLineCounts(index, positions).entries()).filter(
-		([, count]) => count > 1,
-	);
+	const lines = Array.from(
+		matchedLineCounts(index, positions).entries(),
+	).filter(([, count]) => count > 1);
 	if (lines.length === 0) return "";
 	return `\nWarning: oldText matched multiple times on the same line.\nUse a wider oldText, such as the full line or surrounding phrase, so the intended replacement is unambiguous.\nLines with multiple matches:\n${lines.map(([lineNo, count]) => `- line ${lineNo}: ${count} matches`).join("\n")}`;
 }
