@@ -63,20 +63,17 @@ describe("apply_patch", () => {
 				],
 				removeLineRanges: [{ startLineNo: 4, endLineNo: 4 }],
 				insertLines: [{ insertAfterLineNo: 5, contentLines: ["inserted"] }],
-				replaceLineRanges: [
-					{ startLineNo: 6, endLineNo: 6, contentLines: ["SIX"] },
-				],
 			},
 			undefined,
 		);
 
 		assert.equal(
 			readFileSync(join(root, "src", "example.txt"), "utf8"),
-			["one", "TWO", "three", "five", "inserted", "SIX", ""].join("\n"),
+			["one", "TWO", "three", "five", "inserted", "six", ""].join("\n"),
 		);
 		assert.equal(result.details.operation, "apply_patch");
 		assert.equal(result.details.path, "src/example.txt");
-		assert.equal(result.details.edits, 4);
+		assert.equal(result.details.edits, 3);
 		assert.ok(typeof result.details.diff === "string");
 		assert.ok(typeof result.details.patch === "string");
 	});
@@ -293,9 +290,7 @@ describe("apply_patch", () => {
 				{
 					path: "src/example.txt",
 					removeLineRanges: [{ startLineNo: 2, endLineNo: 2 }],
-					replaceLineRanges: [
-						{ startLineNo: 2, endLineNo: 3, contentLines: ["changed"] },
-					],
+					insertLines: [{ insertBeforeLineNo: 2, contentLines: ["changed"] }],
 				},
 				undefined,
 			),

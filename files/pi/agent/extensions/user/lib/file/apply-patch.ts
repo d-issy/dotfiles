@@ -93,18 +93,6 @@ export const applyPatchSchema = Type.Object({
 			},
 		),
 	),
-	replaceLineRanges: Type.Optional(
-		Type.Array(
-			Type.Object({
-				startLineNo: lineNoSchema,
-				endLineNo: lineNoSchema,
-				contentLines: Type.Array(Type.String()),
-			}),
-			{
-				description: "Replace inclusive 1-based line ranges with contentLines.",
-			},
-		),
-	),
 });
 
 export type ApplyPatchToolInput = Static<typeof applyPatchSchema>;
@@ -118,8 +106,7 @@ function operationCount(params: ApplyPatchToolInput): number {
 	return (
 		(params.replaces?.length ?? 0) +
 		(params.removeLineRanges?.length ?? 0) +
-		(params.insertLines?.length ?? 0) +
-		(params.replaceLineRanges?.length ?? 0)
+		(params.insertLines?.length ?? 0)
 	);
 }
 
@@ -309,22 +296,6 @@ function createEdits(text: string, params: ApplyPatchToolInput): TextEdit[] {
 		edits.push({ ...chars, replacement: "", label: `removeLineRanges[${i}]` });
 	}
 
-	for (const [i, range] of (params.replaceLineRanges ?? []).entries()) {
-		assertLineRange(
-			index,
-			range.startLineNo,
-			range.endLineNo,
-			`replaceLineRanges[${i}]`,
-		);
-		collectLineRangeUsage(usedLines, range.startLineNo, range.endLineNo);
-		const chars = lineRangeToChars(index, range.startLineNo, range.endLineNo);
-		edits.push({
-			...chars,
-			replacement: lineText(range.contentLines),
-			label: `replaceLineRanges[${i}]`,
-		});
-	}
-
 	for (const [i, insert] of (params.insertLines ?? []).entries()) {
 		const hasAfter = insert.insertAfterLineNo !== undefined;
 		const hasBefore = insert.insertBeforeLineNo !== undefined;
@@ -453,12 +424,7 @@ function renderApplyPatchParams(args: unknown, theme: Theme): string[] {
 	if (typeof input.path === "string") {
 		lines.push(theme.fg("toolOutput", `path: ${JSON.stringify(input.path)}`));
 	}
-	for (const key of [
-		"replaces",
-		"removeLineRanges",
-		"insertLines",
-		"replaceLineRanges",
-	] as const) {
+	for (const key of ["replaces", "removeLineRanges", "insertLines"] as const) {
 		if (!Array.isArray(input[key]) || input[key].length === 0) continue;
 		lines.push(theme.fg("toolOutput", `${key}: ${JSON.stringify(input[key])}`));
 	}
