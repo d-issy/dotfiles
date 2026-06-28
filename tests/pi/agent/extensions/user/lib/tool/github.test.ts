@@ -174,6 +174,45 @@ describe("create_pull_request", () => {
 		assert.ok(!calls.some((c) => c.bin === "git" && c.args[0] === "switch"));
 	});
 
+	it("reuses the current branch when it matches branchName", async () => {
+		const cwd = tempRepo(["src/a.ts", "src/b.ts"]);
+		try {
+			const calls: Call[] = [];
+			setupExec({
+				calls,
+				stdout: {
+					...defaultArgs("git", [
+						"symbolic-ref",
+						"--short",
+						"refs/remotes/origin/HEAD",
+					]),
+					"git branch --show-current": "feature/test\n",
+					"gh pr create --draft --title Add a and b --body ## Summary\n- adds a and b":
+						"https://github.com/owner/repo/pull/1\n",
+				},
+			});
+			const create = findTool("create_pull_request");
+			const result = (await invoke(create, validCreateInput, cwd)) as {
+				readonly content: readonly { readonly text: string }[];
+			};
+			assert.match(result.content[0]?.text ?? "", /pull\/1/u);
+
+			const commands = new Set(
+				calls.map((call) => `${call.bin} ${call.args.join(" ")}`),
+			);
+			assert.ok(commands.has("git branch --show-current"));
+			assert.ok(!commands.has("git switch -c feature/test"));
+			assert.ok(
+				commands.has(
+					"git commit --only -m feat: add a and b -- src/a.ts src/b.ts",
+				),
+			);
+			assert.ok(commands.has("git push -u origin feature/test"));
+		} finally {
+			rmSync(cwd, { recursive: true, force: true });
+		}
+	});
+
 	it("stages existing files, then commits only listed files", async () => {
 		const cwd = tempRepo(["src/a.ts", "src/b.ts"]);
 		try {
