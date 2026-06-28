@@ -80,6 +80,7 @@ describe("apply_patch", () => {
 			/Candidate ranges: 1-1, 3-3/u,
 		);
 	});
+
 	it("inserts after the last line when the file ends with a newline", async () => {
 		const root = tempRepo();
 		const path = join(root, "src", "example.txt");
@@ -96,6 +97,7 @@ describe("apply_patch", () => {
 
 		assert.equal(readFileSync(path, "utf8"), "line 1\nline 2\nline 3\n");
 	});
+
 	it("edits an existing untracked file created by write", async () => {
 		const root = tempRepo();
 		const path = join(root, "src", "created.txt");
