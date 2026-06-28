@@ -4,6 +4,7 @@ import type {
 } from "@earendil-works/pi-coding-agent";
 import type { Feature } from "../feature";
 import { ENTER_FOCUS_TOOL, isTerminatingFocusResult } from "../lib/focus";
+import { formatHumanElapsed, formatLiveElapsed } from "../lib/time";
 
 const WIDGET_KEY = "turn-metrics";
 const TICK_MS = 1000;
@@ -24,65 +25,12 @@ const DEFAULT_INDICATOR_INTERVAL_MS = 80;
 type WorkPhase = "Thinking" | "Working";
 type PhaseColor = "accent" | "warning";
 
-function formatElapsed(ms: number): string {
-	const totalSeconds = Math.max(0, Math.floor(ms / 1000));
-	const seconds = totalSeconds % 60;
-	const minutes = Math.floor(totalSeconds / 60) % 60;
-	const hours = Math.floor(totalSeconds / 3600);
-
-	if (hours > 0) {
-		return minutes > 0 ? `${hours}h ${minutes}m` : `${hours}h`;
-	}
-
-	if (minutes > 0) {
-		return `${minutes}m ${seconds}s`;
-	}
-
-	return `${seconds}s`;
-}
-
-function formatTokenCount(tokens: number): string {
-	if (tokens >= 1_000_000) return `${(tokens / 1_000_000).toFixed(1)}m`;
-	if (tokens >= 10_000) return `${Math.round(tokens / 1000)}k`;
-	if (tokens >= 1000) return `${(tokens / 1000).toFixed(1)}k`;
-	return tokens.toString();
-}
-
-function formatTokenMetrics(inputTokens: number, outputTokens: number): string {
-	const parts: string[] = [];
-	if (inputTokens > 0) parts.push(`↑ ${formatTokenCount(inputTokens)}`);
-	if (outputTokens > 0) parts.push(`↓ ${formatTokenCount(outputTokens)}`);
-	return parts.join(" ");
-}
-
-function formatTurnMetrics(
-	elapsed: string,
-	inputTokens: number,
-	outputTokens: number,
-	toolCalls: number,
-): string {
-	const parts = [elapsed];
-	const tokenMetrics = formatTokenMetrics(inputTokens, outputTokens);
-	if (tokenMetrics) parts.push(tokenMetrics);
-	if (toolCalls > 0) parts.push(`${toolCalls} tool uses`);
-	return parts.join(" · ");
-}
-
 function formatMetricsLine(
 	ctx: ExtensionContext,
 	completed: boolean,
 	elapsed: string,
-	inputTokens: number,
-	outputTokens: number,
-	toolCalls: number,
 ): string {
-	const metrics = formatTurnMetrics(
-		elapsed,
-		inputTokens,
-		outputTokens,
-		toolCalls,
-	);
-	const line = completed ? `Worked for ${metrics}` : metrics;
+	const line = completed ? `Worked for ${elapsed}` : elapsed;
 	return ctx.ui.theme.fg("dim", line);
 }
 
@@ -110,11 +58,9 @@ function register(pi: ExtensionAPI): void {
 	let phase: WorkPhase = "Working";
 	let workingIndicatorPhase: WorkPhase | undefined;
 	let tickTimer: ReturnType<typeof setInterval> | undefined;
-	let completedInputTokens = 0;
-	let completedOutputTokens = 0;
-	let currentInputTokens = 0;
-	let currentOutputTokens = 0;
-	let toolCalls = 0;
+	let thinkingStartedAt: number | undefined;
+	let completedThinkingMs = 0;
+	let thoughtDisplayUntil: number | undefined;
 	let preserveWorkingAfterAgentEnd = false;
 
 	function stopTickTimer(): void {
@@ -134,27 +80,47 @@ function register(pi: ExtensionAPI): void {
 	}
 
 	function resetTurnMetrics(): void {
-		completedInputTokens = 0;
-		completedOutputTokens = 0;
-		currentInputTokens = 0;
-		currentOutputTokens = 0;
-		toolCalls = 0;
+		thinkingStartedAt = undefined;
+		completedThinkingMs = 0;
+		thoughtDisplayUntil = undefined;
 	}
 
-	function setCurrentUsage(inputTokens: number, outputTokens: number): void {
-		currentInputTokens = inputTokens;
-		currentOutputTokens = outputTokens;
-	}
-
-	function commitCurrentUsage(): void {
-		completedInputTokens += currentInputTokens;
-		completedOutputTokens += currentOutputTokens;
-		currentInputTokens = 0;
-		currentOutputTokens = 0;
+	function getElapsedMs(now = Date.now()): number {
+		return startedAt === undefined ? 0 : now - startedAt;
 	}
 
 	function getElapsed(now = Date.now()): string {
-		return formatElapsed(startedAt === undefined ? 0 : now - startedAt);
+		return formatHumanElapsed(getElapsedMs(now));
+	}
+
+	function getLiveElapsed(now = Date.now()): string {
+		return formatLiveElapsed(getElapsedMs(now));
+	}
+
+	function getThinkingElapsedMs(now = Date.now()): number {
+		return (
+			completedThinkingMs +
+			(phase === "Thinking" && thinkingStartedAt !== undefined
+				? now - thinkingStartedAt
+				: 0)
+		);
+	}
+
+	function setPhase(nextPhase: WorkPhase, now = Date.now()): void {
+		if (phase === nextPhase) return;
+
+		if (phase === "Thinking" && thinkingStartedAt !== undefined) {
+			completedThinkingMs += now - thinkingStartedAt;
+			thinkingStartedAt = undefined;
+		}
+
+		phase = nextPhase;
+		if (phase === "Thinking") {
+			thinkingStartedAt = now;
+			thoughtDisplayUntil = undefined;
+		} else {
+			thoughtDisplayUntil = now + 1000;
+		}
 	}
 
 	function buildLine(
@@ -162,14 +128,19 @@ function register(pi: ExtensionAPI): void {
 		completed: boolean,
 		now = Date.now(),
 	): string {
-		return formatMetricsLine(
-			ctx,
-			completed,
-			getElapsed(now),
-			completedInputTokens + currentInputTokens,
-			completedOutputTokens + currentOutputTokens,
-			toolCalls,
-		);
+		return formatMetricsLine(ctx, completed, getElapsed(now));
+	}
+
+	function buildLiveMetrics(now = Date.now()): string {
+		if (phase === "Thinking") {
+			return `${getLiveElapsed(now)} total · ${formatLiveElapsed(
+				getThinkingElapsedMs(now),
+			)} thinking`;
+		}
+		if (thoughtDisplayUntil !== undefined && now < thoughtDisplayUntil) {
+			return `${getLiveElapsed(now)} total · ${formatLiveElapsed(completedThinkingMs)} thought`;
+		}
+		return getLiveElapsed(now);
 	}
 
 	function updateWorkingIndicator(ctx: ExtensionContext): void {
@@ -200,7 +171,11 @@ function register(pi: ExtensionAPI): void {
 		if (!ctx.hasUI || startedAt === undefined) return;
 		updateWorkingIndicator(ctx);
 		ctx.ui.setWorkingMessage(
-			formatWorkingMessage(ctx, phase, buildLine(ctx, false)),
+			formatWorkingMessage(
+				ctx,
+				phase,
+				ctx.ui.theme.fg("dim", buildLiveMetrics()),
+			),
 		);
 	}
 
@@ -208,7 +183,7 @@ function register(pi: ExtensionAPI): void {
 		stopTickTimer();
 		clearWidget(ctx);
 		resetTurnMetrics();
-		phase = "Working";
+		setPhase("Working");
 		startedAt = Date.now();
 		updateWorkingMessage(ctx);
 		tickTimer = setInterval(() => updateWorkingMessage(ctx), TICK_MS);
@@ -216,7 +191,6 @@ function register(pi: ExtensionAPI): void {
 
 	pi.on("message_update", async (event, ctx) => {
 		if (event.message.role !== "assistant" || startedAt === undefined) return;
-		setCurrentUsage(event.message.usage.input, event.message.usage.output);
 		let hasThinking = false;
 		let hasVisibleWork = false;
 		for (const content of event.message.content) {
@@ -228,14 +202,10 @@ function register(pi: ExtensionAPI): void {
 			)
 				hasVisibleWork = true;
 		}
-		phase = hasThinking && !hasVisibleWork ? "Thinking" : "Working";
+		setPhase(hasThinking && !hasVisibleWork ? "Thinking" : "Working");
 		updateWorkingMessage(ctx);
 	});
 
-	pi.on("tool_execution_start", async (_event, ctx) => {
-		toolCalls++;
-		updateWorkingMessage(ctx);
-	});
 	pi.on("tool_execution_end", async (event) => {
 		if (event.toolName !== ENTER_FOCUS_TOOL) return;
 		preserveWorkingAfterAgentEnd = isTerminatingFocusResult(event.result);
@@ -244,8 +214,7 @@ function register(pi: ExtensionAPI): void {
 	pi.on("message_end", async (event, ctx) => {
 		if (event.message.role !== "assistant" || startedAt === undefined) return;
 
-		setCurrentUsage(event.message.usage.input, event.message.usage.output);
-		commitCurrentUsage();
+		setPhase("Working");
 
 		if (event.message.content.some((content) => content.type === "toolCall"))
 			return;

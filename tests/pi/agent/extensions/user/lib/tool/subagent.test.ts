@@ -314,8 +314,46 @@ describe("subagent tool registration", () => {
 		assert.match(output, /prompt:\s*\nSummarize the repository/u);
 		assert.match(output, /response:\s*\nDone with the task/u);
 		assert.match(output, /Completed/u);
+		assert.match(output, /2s \(1 tool used\)/u);
+		assert.doesNotMatch(output, /2\.5s/u);
 		assert.doesNotMatch(output, /tools:/u);
 		assert.doesNotMatch(output, /read_chunk/u);
+	});
+	it("renders subagent running time with fractions and completed time without fractions", () => {
+		const definition = getSubagentDefinition();
+		assert.ok(definition.renderResult);
+
+		const running = renderText(
+			definition.renderResult(
+				{
+					content: [{ type: "text", text: "◉ Running  9.2s (1 tool used)" }],
+					details: {
+						_status: "running",
+						_runningLine: "◉ Running  9.2s (1 tool used)",
+						toolCallCount: 1,
+						durationMs: 9200,
+					},
+				} satisfies AgentToolResult<Record<string, unknown>>,
+				{ expanded: false, isPartial: true },
+				plainTheme,
+				renderResultContext(),
+			) as { render(width: number): string[] },
+		);
+		assert.match(running, /9\.2s/u);
+
+		const completed = renderText(
+			definition.renderResult(
+				{
+					content: [{ type: "text", text: "Done" }],
+					details: { toolCallCount: 1, durationMs: 9200 },
+				} satisfies AgentToolResult<Record<string, unknown>>,
+				{ expanded: false, isPartial: false },
+				plainTheme,
+				renderResultContext(),
+			) as { render(width: number): string[] },
+		);
+		assert.match(completed, /9s \(1 tool used\)/u);
+		assert.doesNotMatch(completed, /9\.2s/u);
 	});
 
 	it("registers an isErrorResult hook", () => {
