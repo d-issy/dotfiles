@@ -9,7 +9,6 @@ import { guardToolCall } from "#pi-user/lib/focus/guard";
 import { registerBuiltInFocusPolicies } from "#pi-user/lib/focus/policies";
 import type { FocusController } from "#pi-user/lib/focus/controller";
 import {
-	BASE_FOCUS,
 	ENTER_FOCUS_TOOL,
 	EXIT_FOCUS_TOOL,
 } from "#pi-user/lib/focus/definitions";
@@ -34,14 +33,6 @@ function focus(allowedToolNames: readonly string[]): FocusController {
 						)
 					: allowedToolNames,
 			),
-	} as unknown as FocusController;
-}
-
-function noFocus(allowedToolNames: readonly string[]): FocusController {
-	return {
-		...focus(allowedToolNames),
-		current: BASE_FOCUS,
-		active: undefined,
 	} as unknown as FocusController;
 }
 
@@ -100,25 +91,6 @@ describe("guardToolCall", () => {
 			{
 				block: true,
 				reason: `${ENTER_FOCUS_TOOL} is not available in edit focus.`,
-			},
-		);
-	});
-
-	it("blocks edit_chunk when no focus is active", async () => {
-		const catalog = createToolCatalog();
-		registerBuiltInFocusPolicies(catalog);
-		const guard = guardToolCall(
-			{} as ExtensionAPI,
-			noFocus(["read", ENTER_FOCUS_TOOL]),
-			catalog,
-		);
-
-		assert.deepEqual(
-			await guard(toolCall("edit_chunk", {}), undefined as never),
-			{
-				block: true,
-				reason:
-					"edit_chunk is not available because no focus is active. Use enter_focus to enter an appropriate focus first.",
 			},
 		);
 	});

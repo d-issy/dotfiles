@@ -44,11 +44,6 @@ function pi(): ExtensionAPI {
 			},
 			{ name: ENTER_FOCUS_TOOL, description: "Enter focus", parameters: {} },
 			{ name: EXIT_FOCUS_TOOL, description: "Exit focus", parameters: {} },
-			{
-				name: "edit_chunk",
-				description: "Edit chunks",
-				parameters: { type: "object" },
-			},
 		],
 	} as unknown as ExtensionAPI;
 }

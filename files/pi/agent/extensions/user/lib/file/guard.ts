@@ -98,7 +98,6 @@ async function walkAllowedDescendants(
 	absolutePath: string,
 	operation: string,
 ): Promise<void> {
-	await assertRepoPathAllowedInRoot(ctx, absolutePath, operation);
 	let stat;
 	try {
 		stat = await lstat(absolutePath);
@@ -112,6 +111,7 @@ async function walkAllowedDescendants(
 		}
 		throw error;
 	}
+	await assertRepoPathAllowedInRoot(ctx, absolutePath, operation);
 	if (!stat.isDirectory()) return;
 
 	const entries = await readdir(absolutePath);

@@ -90,13 +90,9 @@ describe("filterProviderTools", () => {
 		);
 	});
 
-	it("removes edit_chunk and other focus-scoped tools when no focus is active", async () => {
+	it("removes tools not in the allowed set when no focus is active", async () => {
 		const payload = {
-			tools: [
-				{ name: "read" },
-				{ name: "edit_chunk" },
-				{ name: "enter_focus" },
-			],
+			tools: [{ name: "read" }, { name: "write" }, { name: "enter_focus" }],
 		};
 		const runtime = { lockedFocusName: undefined } as FocusRuntime;
 

@@ -1,15 +1,10 @@
 export {
-	type EditChunkToolInput,
-	type ReadChunkToolInput,
-	editChunkSchema,
-	executeEditChunk,
-	executeReadChunk,
-	readChunkSchema,
-	renderEditChunk,
-	renderEditChunkResult,
-	renderReadChunk,
-	renderReadChunkResult,
-} from "./chunk";
+	type ApplyPatchToolInput,
+	applyPatchSchema,
+	executeApplyPatch,
+	renderApplyPatch,
+	renderApplyPatchResult,
+} from "./apply-patch";
 export { ToolError, type ToolErrorCode, isErrnoCode } from "./errors";
 export {
 	type FsGuardContext,

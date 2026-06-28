@@ -196,7 +196,7 @@ describe("subagent tool registration", () => {
 					text: [
 						"── (other 2 tools...) ──",
 						' 3. grep (pattern={"raw":"TODO"})',
-						' 4. read_chunk (path="src/b.ts")',
+						' 4. read (path="src/b.ts")',
 						' 5. lint (options={"fix":false})  ← running',
 						"◉ Running  1.2s (5 tools used)",
 					].join("\n"),
@@ -209,14 +209,14 @@ describe("subagent tool registration", () => {
 				durationMs: 1200,
 				prompt: "Investigate the failing tests",
 				toolCalls: [
-					{ name: "read_chunk", args: { path: "src/a.ts" }, startTime: 0 },
+					{ name: "read", args: { path: "src/a.ts" }, startTime: 0 },
 					{ name: "find", args: { pattern: "*.ts" }, startTime: 500 },
 					{
 						name: "grep",
 						args: { pattern: { raw: "TODO" } },
 						startTime: 1000,
 					},
-					{ name: "read_chunk", args: { path: "src/b.ts" }, startTime: 1500 },
+					{ name: "read", args: { path: "src/b.ts" }, startTime: 1500 },
 					{ name: "lint", args: { options: { fix: false } }, startTime: 2000 },
 				],
 			},
@@ -233,7 +233,7 @@ describe("subagent tool registration", () => {
 
 		assert.doesNotMatch(output, /prompt:/u);
 		assert.doesNotMatch(output, /Investigate the failing tests/u);
-		assert.doesNotMatch(output, /1\. read_chunk/u);
+		assert.doesNotMatch(output, /1\. read(?!_chunk)/u);
 		assert.doesNotMatch(output, /2\. find/u);
 		assert.match(output, /other 2 tools/u);
 		assert.match(output, /3\. grep/u);
@@ -255,14 +255,14 @@ describe("subagent tool registration", () => {
 				durationMs: 1200,
 				prompt: "Investigate the failing tests",
 				toolCalls: [
-					{ name: "read_chunk", args: { path: "src/a.ts" }, startTime: 0 },
+					{ name: "read", args: { path: "src/a.ts" }, startTime: 0 },
 					{ name: "find", args: { pattern: "*.ts" }, startTime: 500 },
 					{
 						name: "grep",
 						args: { pattern: { raw: "TODO" } },
 						startTime: 1000,
 					},
-					{ name: "read_chunk", args: { path: "src/b.ts" }, startTime: 1500 },
+					{ name: "read", args: { path: "src/b.ts" }, startTime: 1500 },
 					{ name: "lint", args: { options: { fix: false } }, startTime: 2000 },
 				],
 			},
@@ -278,7 +278,7 @@ describe("subagent tool registration", () => {
 		);
 
 		assert.match(output, /prompt:\s*\nInvestigate the failing tests/u);
-		assert.match(output, /tools:\s*\n[\s\S]*1\. read_chunk/u);
+		assert.match(output, /tools:\s*\n[\s\S]*1\. read(?!_chunk)/u);
 		assert.match(output, /2\. find/u);
 		assert.match(output, /5\. lint/u);
 		assert.match(output, /pattern=\{"raw":"TODO"\}/u);
@@ -297,7 +297,7 @@ describe("subagent tool registration", () => {
 				durationMs: 2500,
 				prompt: "Summarize the repository",
 				toolCalls: [
-					{ name: "read_chunk", args: { path: "README.md" }, startTime: 0 },
+					{ name: "read", args: { path: "README.md" }, startTime: 0 },
 				],
 			},
 		} satisfies AgentToolResult<Record<string, unknown>>;
@@ -317,7 +317,7 @@ describe("subagent tool registration", () => {
 		assert.match(output, /2s \(1 tool used\)/u);
 		assert.doesNotMatch(output, /2\.5s/u);
 		assert.doesNotMatch(output, /tools:/u);
-		assert.doesNotMatch(output, /read_chunk/u);
+		assert.doesNotMatch(output, /read(?!_chunk)\b/u);
 	});
 	it("renders subagent running time with fractions and completed time without fractions", () => {
 		const definition = getSubagentDefinition();

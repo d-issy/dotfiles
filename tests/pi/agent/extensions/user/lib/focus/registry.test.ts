@@ -48,9 +48,9 @@ describe("loadFocusRegistry", () => {
 			"format",
 		]);
 		for (const tool of [
-			"read_chunk",
+			"read",
 			"write",
-			"edit_chunk",
+			"apply_patch",
 			"lint",
 			"test",
 			"coverage",

@@ -82,6 +82,10 @@ describe("file operations", () => {
 			/No such file or directory: missing\.txt/u,
 		);
 		await assert.rejects(
+			executeRemove(root, { path: "ignored-dir/missing.txt" }, undefined),
+			/No such file or directory: ignored-dir\/missing\.txt/u,
+		);
+		await assert.rejects(
 			executeRemove(root, { path: "ignored.txt" }, undefined),
 			/Removing ignored files is not allowed: ignored\.txt/u,
 		);
