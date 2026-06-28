@@ -44,11 +44,22 @@ type ApplyPatchDetails = {
 
 const lineNoSchema = Type.Integer({ minimum: 1 });
 
+const targetLineNoRangeSchema = Type.Object({
+	start: lineNoSchema,
+	end: lineNoSchema,
+});
+
 const replaceSchema = Type.Object({
 	oldText: Type.String(),
 	newText: Type.String(),
 	startLineNo: Type.Optional(lineNoSchema),
 	endLineNo: Type.Optional(lineNoSchema),
+	targetLineNoRanges: Type.Optional(
+		Type.Array(targetLineNoRangeSchema, {
+			description:
+				"Optional target 1-based line number ranges where oldText may match and be replaced. When omitted, the whole file is searched.",
+		}),
+	),
 });
 
 const lineRangeSchema = Type.Object({
@@ -61,7 +72,7 @@ export const applyPatchSchema = Type.Object({
 	replaces: Type.Optional(
 		Type.Array(replaceSchema, {
 			description:
-				"Replace oldText with newText. If oldText matches multiple locations, startLineNo/endLineNo must disambiguate the range.",
+				"Replace oldText with newText. If oldText matches multiple locations, startLineNo/endLineNo or targetLineNoRanges must disambiguate where replacements are allowed.",
 		}),
 	),
 	removeLineRanges: Type.Optional(
@@ -82,18 +93,6 @@ export const applyPatchSchema = Type.Object({
 			},
 		),
 	),
-	replaceLineRanges: Type.Optional(
-		Type.Array(
-			Type.Object({
-				startLineNo: lineNoSchema,
-				endLineNo: lineNoSchema,
-				contentLines: Type.Array(Type.String()),
-			}),
-			{
-				description: "Replace inclusive 1-based line ranges with contentLines.",
-			},
-		),
-	),
 });
 
 export type ApplyPatchToolInput = Static<typeof applyPatchSchema>;
@@ -107,8 +106,7 @@ function operationCount(params: ApplyPatchToolInput): number {
 	return (
 		(params.replaces?.length ?? 0) +
 		(params.removeLineRanges?.length ?? 0) +
-		(params.insertLines?.length ?? 0) +
-		(params.replaceLineRanges?.length ?? 0)
+		(params.insertLines?.length ?? 0)
 	);
 }
 
@@ -229,6 +227,58 @@ function collectLineRangeUsage(
 	}
 }
 
+function assertTargetLineNoRange(
+	index: LineIndex,
+	start: number,
+	end: number,
+	label: string,
+): void {
+	assertLineNo(index, start, `${label} start`);
+	assertLineNo(index, end, `${label} end`);
+	if (start > end) {
+		throw new Error(`${label} start must be <= end.`);
+	}
+}
+
+function targetLineNoRangeCandidate(
+	index: LineIndex,
+	position: number,
+	length: number,
+): string {
+	const start = lineNoAtOffset(index, position);
+	const end = lineNoAtOffset(index, position + length);
+	return `{ start: ${start}, end: ${end} }`;
+}
+
+function candidateTargetLineNoRanges(
+	index: LineIndex,
+	positions: readonly number[],
+	length: number,
+): string {
+	return `[${positions
+		.map((position) => targetLineNoRangeCandidate(index, position, length))
+		.join(", ")}]`;
+}
+
+function assertNoSameLineMatches(
+	index: LineIndex,
+	positions: readonly number[],
+	label: string,
+): void {
+	const counts = new Map<number, number>();
+	for (const position of positions) {
+		const lineNo = lineNoAtOffset(index, position);
+		counts.set(lineNo, (counts.get(lineNo) ?? 0) + 1);
+	}
+	for (const [lineNo, count] of counts) {
+		if (count > 1) {
+			throw new Error(
+				`${label} oldText matched multiple locations on line ${lineNo}. Line ranges cannot disambiguate multiple matches on the same line. Use a more specific oldText.`,
+			);
+		}
+	}
+}
+
 function createEdits(text: string, params: ApplyPatchToolInput): TextEdit[] {
 	const index = createLineIndex(text);
 	const edits: TextEdit[] = [];
@@ -244,22 +294,6 @@ function createEdits(text: string, params: ApplyPatchToolInput): TextEdit[] {
 		collectLineRangeUsage(usedLines, range.startLineNo, range.endLineNo);
 		const chars = lineRangeToChars(index, range.startLineNo, range.endLineNo);
 		edits.push({ ...chars, replacement: "", label: `removeLineRanges[${i}]` });
-	}
-
-	for (const [i, range] of (params.replaceLineRanges ?? []).entries()) {
-		assertLineRange(
-			index,
-			range.startLineNo,
-			range.endLineNo,
-			`replaceLineRanges[${i}]`,
-		);
-		collectLineRangeUsage(usedLines, range.startLineNo, range.endLineNo);
-		const chars = lineRangeToChars(index, range.startLineNo, range.endLineNo);
-		edits.push({
-			...chars,
-			replacement: lineText(range.contentLines),
-			label: `replaceLineRanges[${i}]`,
-		});
 	}
 
 	for (const [i, insert] of (params.insertLines ?? []).entries()) {
@@ -299,6 +333,42 @@ function createEdits(text: string, params: ApplyPatchToolInput): TextEdit[] {
 				`replaces[${i}] must specify both startLineNo and endLineNo, or neither.`,
 			);
 		}
+		if ((replace.targetLineNoRanges?.length ?? 0) > 0) {
+			if (hasStart || hasEnd) {
+				throw new Error(
+					`replaces[${i}] must specify either startLineNo/endLineNo or targetLineNoRanges, not both.`,
+				);
+			}
+			for (const [rangeIndex, range] of (
+				replace.targetLineNoRanges ?? []
+			).entries()) {
+				const label = `replaces[${i}].targetLineNoRanges[${rangeIndex}]`;
+				assertTargetLineNoRange(index, range.start, range.end, label);
+				const chars = rangeContentChars(index, range.start, range.end);
+				const positions = findOccurrences(
+					text.slice(chars.start, chars.end),
+					replace.oldText,
+					chars.start,
+				);
+				if (positions.length === 0) {
+					throw new Error(
+						`${label} oldText did not match within the target line range.`,
+					);
+				}
+				assertNoSameLineMatches(index, positions, label);
+				for (const start of positions) {
+					collectLineUsage(usedLines, lineNoAtOffset(index, start));
+					edits.push({
+						start,
+						end: start + replace.oldText.length,
+						replacement: replace.newText,
+						label,
+					});
+				}
+			}
+			continue;
+		}
+
 		let searchText = text;
 		let baseOffset = 0;
 		if (hasStart && hasEnd) {
@@ -314,18 +384,8 @@ function createEdits(text: string, params: ApplyPatchToolInput): TextEdit[] {
 		if (positions.length === 0)
 			throw new Error(`replaces[${i}] oldText was not found.`);
 		if (positions.length > 1) {
-			const candidates = positions
-				.map((position) => {
-					const startLineNo = lineNoAtOffset(index, position);
-					const endLineNo = lineNoAtOffset(
-						index,
-						position + replace.oldText.length,
-					);
-					return `${startLineNo}-${endLineNo}`;
-				})
-				.join(", ");
 			throw new Error(
-				`replaces[${i}] oldText matched multiple ranges. Specify startLineNo/endLineNo. Candidate ranges: ${candidates}.`,
+				`replaces[${i}] oldText matched multiple locations. Specify targetLineNoRanges. Candidate targetLineNoRanges: ${candidateTargetLineNoRanges(index, positions, replace.oldText.length)}.`,
 			);
 		}
 		const start = positions[0] ?? 0;
@@ -366,12 +426,7 @@ function renderApplyPatchParams(args: unknown, theme: Theme): string[] {
 	if (typeof input.path === "string") {
 		lines.push(theme.fg("toolOutput", `path: ${JSON.stringify(input.path)}`));
 	}
-	for (const key of [
-		"replaces",
-		"removeLineRanges",
-		"insertLines",
-		"replaceLineRanges",
-	] as const) {
+	for (const key of ["replaces", "removeLineRanges", "insertLines"] as const) {
 		if (!Array.isArray(input[key]) || input[key].length === 0) continue;
 		lines.push(theme.fg("toolOutput", `${key}: ${JSON.stringify(input[key])}`));
 	}
