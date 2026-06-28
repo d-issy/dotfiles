@@ -1,5 +1,9 @@
 import assert from "node:assert/strict";
-import type { ToolDefinition } from "@earendil-works/pi-coding-agent";
+import type {
+	AgentToolResult,
+	Theme,
+	ToolDefinition,
+} from "@earendil-works/pi-coding-agent";
 import { describe, it } from "vitest";
 import {
 	type FocusDefinition,
@@ -11,6 +15,27 @@ import {
 	registerSubagentTool,
 } from "#pi-user/lib/tool/subagent";
 
+const plainTheme = {
+	fg: (_name: string, text: string) => text,
+	bold: (text: string) => text,
+} as Theme;
+
+function renderText(component: { render(width: number): string[] }): string {
+	return component
+		.render(200)
+		.map((line) => line.replace(/[ \t]+$/u, ""))
+		.join("\n");
+}
+
+function getSubagentDefinition(): ToolDefinition {
+	const catalog = createToolCatalog();
+	registerSubagentTool(catalog);
+	const subagent = catalog
+		.list()
+		.find((t) => t.definition.name === SUBAGENT_TOOL);
+	assert.ok(subagent);
+	return subagent.definition as ToolDefinition;
+}
 function makeFocus(overrides: Partial<FocusDefinition>): FocusDefinition {
 	return {
 		name: "x",
@@ -151,6 +176,135 @@ describe("subagent tool registration", () => {
 			hasNestingWarning,
 			"guidelines should warn about single-level nesting",
 		);
+	});
+	it("renders collapsed running updates without prompt and with latest tool tail", () => {
+		const definition = getSubagentDefinition();
+		assert.ok(definition.renderResult);
+
+		const result = {
+			content: [
+				{
+					type: "text" as const,
+					text: [
+						"── (other 2 tools...) ──",
+						' 3. grep (pattern={"raw":"TODO"})',
+						' 4. read_chunk (path="src/b.ts")',
+						' 5. lint (options={"fix":false})  ← running',
+						"◉ Running  1.2s (5 tools used)",
+					].join("\n"),
+				},
+			],
+			details: {
+				_status: "running",
+				_runningLine: "◉ Running  1.2s (5 tools used)",
+				toolCallCount: 5,
+				durationMs: 1200,
+				prompt: "Investigate the failing tests",
+				toolCalls: [
+					{ name: "read_chunk", args: { path: "src/a.ts" }, startTime: 0 },
+					{ name: "find", args: { pattern: "*.ts" }, startTime: 500 },
+					{
+						name: "grep",
+						args: { pattern: { raw: "TODO" } },
+						startTime: 1000,
+					},
+					{ name: "read_chunk", args: { path: "src/b.ts" }, startTime: 1500 },
+					{ name: "lint", args: { options: { fix: false } }, startTime: 2000 },
+				],
+			},
+		} satisfies AgentToolResult<Record<string, unknown>>;
+
+		const output = renderText(
+			definition.renderResult(
+				result,
+				{ expanded: false, isPartial: true },
+				plainTheme,
+			) as { render(width: number): string[] },
+		);
+
+		assert.doesNotMatch(output, /prompt:/u);
+		assert.doesNotMatch(output, /Investigate the failing tests/u);
+		assert.doesNotMatch(output, /1\. read_chunk/u);
+		assert.doesNotMatch(output, /2\. find/u);
+		assert.match(output, /other 2 tools/u);
+		assert.match(output, /3\. grep/u);
+		assert.match(output, /5\. lint/u);
+		assert.match(output, /options=\{"fix":false\}/u);
+		assert.doesNotMatch(output, /\[object Object\]/u);
+	});
+
+	it("renders expanded running updates with prompt and all tools", () => {
+		const definition = getSubagentDefinition();
+		assert.ok(definition.renderResult);
+
+		const result = {
+			content: [{ type: "text" as const, text: "latest tail only" }],
+			details: {
+				_status: "running",
+				_runningLine: "◉ Running  1.2s (5 tools used)",
+				toolCallCount: 5,
+				durationMs: 1200,
+				prompt: "Investigate the failing tests",
+				toolCalls: [
+					{ name: "read_chunk", args: { path: "src/a.ts" }, startTime: 0 },
+					{ name: "find", args: { pattern: "*.ts" }, startTime: 500 },
+					{
+						name: "grep",
+						args: { pattern: { raw: "TODO" } },
+						startTime: 1000,
+					},
+					{ name: "read_chunk", args: { path: "src/b.ts" }, startTime: 1500 },
+					{ name: "lint", args: { options: { fix: false } }, startTime: 2000 },
+				],
+			},
+		} satisfies AgentToolResult<Record<string, unknown>>;
+
+		const output = renderText(
+			definition.renderResult(
+				result,
+				{ expanded: true, isPartial: true },
+				plainTheme,
+			) as { render(width: number): string[] },
+		);
+
+		assert.match(output, /prompt:\s*\nInvestigate the failing tests/u);
+		assert.match(output, /tools:\s*\n[\s\S]*1\. read_chunk/u);
+		assert.match(output, /2\. find/u);
+		assert.match(output, /5\. lint/u);
+		assert.match(output, /pattern=\{"raw":"TODO"\}/u);
+		assert.match(output, /◉ Running\s+1\.2s/u);
+		assert.doesNotMatch(output, /\[object Object\]/u);
+	});
+
+	it("omits tool history from completed expanded output", () => {
+		const definition = getSubagentDefinition();
+		assert.ok(definition.renderResult);
+
+		const result = {
+			content: [{ type: "text" as const, text: "Done with the task" }],
+			details: {
+				toolCallCount: 1,
+				durationMs: 2500,
+				prompt: "Summarize the repository",
+				toolCalls: [
+					{ name: "read_chunk", args: { path: "README.md" }, startTime: 0 },
+				],
+			},
+		} satisfies AgentToolResult<Record<string, unknown>>;
+
+		const output = renderText(
+			definition.renderResult(
+				result,
+				{ expanded: true, isPartial: false },
+				plainTheme,
+			) as { render(width: number): string[] },
+		);
+
+		assert.match(output, /prompt:\s*\nSummarize the repository/u);
+		assert.match(output, /response:\s*\nDone with the task/u);
+		assert.match(output, /Completed/u);
+		assert.doesNotMatch(output, /tools:/u);
+		assert.doesNotMatch(output, /read_chunk/u);
 	});
 
 	it("registers an isErrorResult hook", () => {

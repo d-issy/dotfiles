@@ -99,8 +99,11 @@ export type SubagentDetails = {
 	readonly toolCallCount: number;
 	readonly durationMs: number;
 	readonly stderr?: string;
+	readonly toolCalls?: readonly ToolCallRecord[];
 	/** @internal */
 	readonly _status?: string;
+	/** @internal */
+	readonly _runningLine?: string;
 	/** @internal */
 	readonly currentTool?: string;
 	/** Original prompt that was passed to the subagent. */
@@ -110,7 +113,6 @@ export type SubagentDetails = {
 	/** Focus the subagent runs in. */
 	readonly focus?: string;
 };
-
 type SubagentResult = AgentToolResult<SubagentDetails>;
 /** A result flagged as an error (the `isError` flag is an extension of the base shape). */
 type SubagentErrorResult = SubagentResult & { isError: true };
@@ -161,12 +163,23 @@ function renderSubagentResult(
 	theme: Theme,
 ): Component {
 	if (options.isPartial) {
-		// Content already includes state line at bottom (from onUpdate)
 		const text = result.content
 			.filter((c) => c.type === "text")
 			.map((c) => c.text)
 			.join("\n");
-		return new Text(text, 0, 0);
+		if (!options.expanded) return new Text(text, 0, 0);
+
+		const promptText = result.details?.prompt?.trim();
+		const toolCalls = result.details?.toolCalls ?? [];
+		const toolText = formatToolCallRecords(toolCalls);
+		const runningLine = result.details?.["_runningLine"];
+		const statusText = runningLine ?? text.trim();
+		const runningParts = [
+			promptText ? `${theme.fg("dim", "prompt:")}\n${promptText}` : undefined,
+			toolText ? `${theme.fg("dim", "tools:")}\n${toolText}` : undefined,
+			statusText,
+		].filter((part): part is string => part !== undefined && part.length > 0);
+		return new Text(runningParts.join("\n\n"), 0, 0);
 	}
 
 	const isAborted = result.details?.["_status"] === "aborted";
@@ -205,18 +218,62 @@ function renderSubagentResult(
 	const promptText = result.details?.prompt?.trim();
 	const stateDisplay = getStateDisplay(result.details, theme);
 	const expandedText = isAborted
-		? `${stateDisplay} ${theme.fg("dim", stats)}`
-		: `${theme.fg("dim", "prompt:")}\n${promptText ?? ""}\n\n${theme.fg("dim", "response:")}\n${contentText}\n\n${stateDisplay} ${theme.fg("dim", stats)}`;
+		? `${promptText ? `${theme.fg("dim", "prompt:")}\n${promptText}\n\n` : ""}${stateDisplay} ${theme.fg("dim", stats)}`
+		: [
+				promptText ? `${theme.fg("dim", "prompt:")}\n${promptText}` : undefined,
+				`${theme.fg("dim", "response:")}\n${contentText}`,
+				`${stateDisplay} ${theme.fg("dim", stats)}`,
+			]
+				.filter((part): part is string => part !== undefined)
+				.join("\n\n");
 	return new Text(expandedText, 0, 0);
 }
 
 /** Format a single tool-call argument value for display. */
 function formatArg(v: unknown): string {
 	if (typeof v === "string") {
-		return v.length > 50 ? `"${v.slice(0, 50)}…"` : `"${v}"`;
+		return v.length > 80 ? `"${v.slice(0, 80)}…"` : `"${v}"`;
 	}
-	if (Array.isArray(v)) return `[${v.join(", ")}]`;
-	return String(v);
+	if (typeof v === "number" || typeof v === "boolean" || v == null) {
+		return String(v);
+	}
+	try {
+		const json = JSON.stringify(v);
+		if (!json) return String(v);
+		return json.length > 120 ? `${json.slice(0, 120)}…` : json;
+	} catch {
+		return Object.prototype.toString.call(v);
+	}
+}
+function formatToolCallRecords(toolCalls: readonly ToolCallRecord[]): string {
+	return toolCalls
+		.map((_, index) => formatToolCallRecord(toolCalls, index))
+		.join("\n");
+}
+
+function formatToolCallRecord(
+	toolCalls: readonly ToolCallRecord[],
+	index: number,
+): string {
+	const minDurationMs = 1000;
+	const tc = toolCalls[index];
+	const next = toolCalls[index + 1];
+	const duration = next ? next.startTime - tc.startTime : undefined;
+	const p = Object.entries(tc.args)
+		.filter(([, v]) => v !== undefined)
+		.map(([k, v]) => `${k}=${formatArg(v)}`)
+		.join(", ");
+	const argsStr = p ? ` (${p})` : "";
+	const durationStr =
+		duration !== undefined && duration >= minDurationMs
+			? `  ${(duration / 1000).toFixed(1)}s`
+			: "";
+	const runningMarker =
+		index === toolCalls.length - 1 ? `  ${fg(colors.muted, "← running")}` : "";
+	return fg(
+		colors.muted,
+		`${String(index + 1).padStart(2)}. ${tc.name}${argsStr}${durationStr}${runningMarker}`,
+	);
 }
 
 /** Resolve the pi CLI entry point so RpcClient can spawn a child process. */
@@ -253,6 +310,7 @@ class SubagentProgress {
 		private readonly startedAt: number,
 		private readonly title: string | undefined,
 		private readonly focus: string,
+		private readonly prompt: string,
 		private readonly onUpdate:
 			| AgentToolUpdateCallback<SubagentDetails>
 			| undefined,
@@ -273,23 +331,35 @@ class SubagentProgress {
 	/** Record a `tool_execution_start` event and refresh the live display. */
 	recordToolStart(toolName: string, args: Record<string, unknown>): void {
 		this.toolCalls.push({ name: toolName, args, startTime: Date.now() });
-		this.lastTail = this.buildTail();
+		this.lastTail = this.buildTail(false);
 		if (this.onUpdate) {
+			const runningLine = this.runningLine();
 			this.onUpdate({
 				content: [
-					{ type: "text", text: `${this.lastTail}\n${this.runningLine()}` },
+					{
+						type: "text",
+						text: `${this.lastTail}\n${runningLine}`,
+					},
 				],
 				details: {
 					_status: "running",
+					_runningLine: runningLine,
 					currentTool: toolName,
 					toolCallCount: this.count,
+					toolCalls: this.toolCalls,
 					durationMs: this.elapsedMs(),
 					title: this.title,
 					focus: this.focus,
+					prompt: this.prompt,
 				},
 			});
 		}
 		this.restartRunningTimer();
+	}
+
+	/** Snapshot the observed tool calls for terminal rendering. */
+	snapshot(): readonly ToolCallRecord[] {
+		return [...this.toolCalls];
 	}
 
 	/** Stop the heartbeat timer (idempotent). */
@@ -352,19 +422,23 @@ class SubagentProgress {
 	}
 
 	private emitStarting(): void {
+		const runningLine = `${fg(colors.positive, this.runningIcon)} ${this.glossyRunningLabel}  ${this.elapsedLabel()}s`;
 		this.onUpdate?.({
 			content: [
 				{
 					type: "text",
-					text: `${fg(colors.muted, "(starting...)")}\n${fg(colors.positive, this.runningIcon)} ${this.glossyRunningLabel}  ${this.elapsedLabel()}s`,
+					text: `${fg(colors.muted, "(starting...)")}\n${runningLine}`,
 				},
 			],
 			details: {
 				_status: "starting",
+				_runningLine: runningLine,
 				toolCallCount: 0,
+				toolCalls: this.toolCalls,
 				durationMs: this.elapsedMs(),
 				title: this.title,
 				focus: this.focus,
+				prompt: this.prompt,
 			},
 		});
 	}
@@ -373,41 +447,35 @@ class SubagentProgress {
 		clearInterval(this.timer);
 		if (!this.onUpdate) return;
 		this.timer = setInterval(() => {
+			const runningLine = this.runningLine();
 			this.onUpdate?.({
 				content: [
-					{ type: "text", text: `${this.lastTail}\n${this.runningLine()}` },
+					{
+						type: "text",
+						text: `${this.lastTail}\n${runningLine}`,
+					},
 				],
 				details: {
 					_status: "running",
+					_runningLine: runningLine,
 					toolCallCount: this.count,
+					toolCalls: this.toolCalls,
 					durationMs: this.elapsedMs(),
 					title: this.title,
 					focus: this.focus,
+					prompt: this.prompt,
 				},
 			});
 		}, 120);
 	}
 
-	/**
-	 * Per-tool own run time: the time until the next tool started. The running
-	 * (latest) tool has no successor yet, so it has no duration. This is always a
-	 * single tool's elapsed time, never a cumulative total across tools.
-	 */
-	private ownDurationMs(index: number): number | undefined {
-		const lastIndex = this.toolCalls.length - 1;
-		if (index >= lastIndex) return undefined;
-		return (
-			this.toolCalls[index + 1].startTime - this.toolCalls[index].startTime
-		);
+	private promptBlock(): string {
+		return `${fg(colors.muted, "prompt:")}\n${this.prompt.trim()}`;
 	}
 
-	/** Build the rolling tail: latest 3 tools shown, older ones summarized. */
-	private buildTail(): string {
-		const maxVisible = 3;
-		// Durations shorter than this are too quick to be meaningful (e.g. they
-		// would render as 0.0s), so the tool is still shown but its seconds are
-		// omitted.
-		const minDurationMs = 1000;
+	/** Build the tool list. Collapsed views show the latest 3; expanded views show all. */
+	private buildTail(expanded: boolean): string {
+		const maxVisible = expanded ? this.toolCalls.length : 3;
 		const lines: string[] = [];
 		const lastIndex = this.toolCalls.length - 1;
 		const firstVisible = Math.max(0, this.toolCalls.length - maxVisible);
@@ -423,26 +491,7 @@ class SubagentProgress {
 		}
 
 		for (let index = firstVisible; index <= lastIndex; index++) {
-			const tc = this.toolCalls[index];
-			const duration = this.ownDurationMs(index);
-			const p = Object.entries(tc.args)
-				.filter(([, v]) => v !== undefined)
-				.map(([k, v]) => `${k}=${formatArg(v)}`)
-				.join(", ");
-			const argsStr = p ? ` (${p})` : "";
-			// Show the tool regardless; only hide the seconds when too short.
-			const durationStr =
-				duration !== undefined && duration >= minDurationMs
-					? `  ${(duration / 1000).toFixed(1)}s`
-					: "";
-			const runningMarker =
-				index === lastIndex ? `  ${fg(colors.muted, "← running")}` : "";
-			lines.push(
-				fg(
-					colors.muted,
-					`${String(index + 1).padStart(2)}. ${tc.name}${argsStr}${durationStr}${runningMarker}`,
-				),
-			);
+			lines.push(formatToolCallRecord(this.toolCalls, index));
 		}
 		return lines.join("\n");
 	}
@@ -598,7 +647,13 @@ const createSubagentExecute =
 		const { focus, prompt, title } = input;
 		const header = `${truncateTitle(title ?? focus)} (focus=${focus})`;
 		const startedAt = Date.now();
-		const progress = new SubagentProgress(startedAt, title, focus, onUpdate);
+		const progress = new SubagentProgress(
+			startedAt,
+			title,
+			focus,
+			prompt,
+			onUpdate,
+		);
 
 		const client = new RpcClient({
 			cliPath,
@@ -621,6 +676,7 @@ const createSubagentExecute =
 				prompt,
 				title,
 				focus,
+				toolCalls: progress.snapshot(),
 				_status: "aborted",
 			};
 			onUpdate?.({
@@ -652,6 +708,7 @@ const createSubagentExecute =
 				prompt,
 				title,
 				focus,
+				toolCalls: progress.snapshot(),
 				usage: buildUsage(stats),
 			},
 		});
@@ -667,7 +724,11 @@ const createSubagentExecute =
 					_status: "error",
 					stderr: stderr || undefined,
 					toolCallCount: progress.count,
+					toolCalls: progress.snapshot(),
 					durationMs,
+					prompt,
+					title,
+					focus,
 				},
 			});
 			return {
@@ -680,6 +741,7 @@ const createSubagentExecute =
 					prompt,
 					title,
 					focus,
+					toolCalls: progress.snapshot(),
 					stderr: stderr || undefined,
 				},
 				isError: true,
