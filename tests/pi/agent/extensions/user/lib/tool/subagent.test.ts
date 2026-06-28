@@ -27,6 +27,14 @@ function renderText(component: { render(width: number): string[] }): string {
 		.join("\n");
 }
 
+function renderResultContext(): Parameters<
+	NonNullable<ToolDefinition["renderResult"]>
+>[3] {
+	return { state: {}, invalidate: () => undefined } as Parameters<
+		NonNullable<ToolDefinition["renderResult"]>
+	>[3];
+}
+
 function getSubagentDefinition(): ToolDefinition {
 	const catalog = createToolCatalog();
 	registerSubagentTool(catalog);
@@ -219,6 +227,7 @@ describe("subagent tool registration", () => {
 				result,
 				{ expanded: false, isPartial: true },
 				plainTheme,
+				renderResultContext(),
 			) as { render(width: number): string[] },
 		);
 
@@ -264,6 +273,7 @@ describe("subagent tool registration", () => {
 				result,
 				{ expanded: true, isPartial: true },
 				plainTheme,
+				renderResultContext(),
 			) as { render(width: number): string[] },
 		);
 
@@ -297,6 +307,7 @@ describe("subagent tool registration", () => {
 				result,
 				{ expanded: true, isPartial: false },
 				plainTheme,
+				renderResultContext(),
 			) as { render(width: number): string[] },
 		);
 
