@@ -197,7 +197,9 @@ describe("apply_patch", () => {
 					},
 				],
 			},
-			["replaces[0].targetLineNoRanges[0] oldText was not found"],
+			[
+				"replaces[0].targetLineNoRanges[0] oldText did not match within the target line range",
+			],
 		);
 		assert.equal(readFileSync(path, "utf8"), "same\nother\nsame\n");
 	});

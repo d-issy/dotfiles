@@ -351,7 +351,9 @@ function createEdits(text: string, params: ApplyPatchToolInput): TextEdit[] {
 					chars.start,
 				);
 				if (positions.length === 0) {
-					throw new Error(`${label} oldText was not found.`);
+					throw new Error(
+						`${label} oldText did not match within the target line range.`,
+					);
 				}
 				assertNoSameLineMatches(index, positions, label);
 				for (const start of positions) {
