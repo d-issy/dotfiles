@@ -240,24 +240,34 @@ function assertTargetLineNoRange(
 	}
 }
 
-function targetLineNoRangeCandidate(
-	index: LineIndex,
-	position: number,
-	length: number,
-): string {
-	const start = lineNoAtOffset(index, position);
-	const end = lineNoAtOffset(index, position + length);
-	return `{ start: ${start}, end: ${end} }`;
-}
-
-function candidateTargetLineNoRanges(
+function matchedLineCounts(
 	index: LineIndex,
 	positions: readonly number[],
-	length: number,
+): Map<number, number> {
+	const counts = new Map<number, number>();
+	for (const position of positions) {
+		const lineNo = lineNoAtOffset(index, position);
+		counts.set(lineNo, (counts.get(lineNo) ?? 0) + 1);
+	}
+	return counts;
+}
+
+function matchedLinesSummary(
+	index: LineIndex,
+	positions: readonly number[],
 ): string {
-	return `[${positions
-		.map((position) => targetLineNoRangeCandidate(index, position, length))
-		.join(", ")}]`;
+	return `[${Array.from(matchedLineCounts(index, positions).keys()).join(", ")}]`;
+}
+
+function multipleMatchesOnSameLineWarning(
+	index: LineIndex,
+	positions: readonly number[],
+): string {
+	const lines = Array.from(matchedLineCounts(index, positions).entries()).filter(
+		([, count]) => count > 1,
+	);
+	if (lines.length === 0) return "";
+	return `\nWarning: oldText matched multiple times on the same line.\nUse a wider oldText, such as the full line or surrounding phrase, so the intended replacement is unambiguous.\nLines with multiple matches:\n${lines.map(([lineNo, count]) => `- line ${lineNo}: ${count} matches`).join("\n")}`;
 }
 
 function assertNoSameLineMatches(
@@ -265,15 +275,10 @@ function assertNoSameLineMatches(
 	positions: readonly number[],
 	label: string,
 ): void {
-	const counts = new Map<number, number>();
-	for (const position of positions) {
-		const lineNo = lineNoAtOffset(index, position);
-		counts.set(lineNo, (counts.get(lineNo) ?? 0) + 1);
-	}
-	for (const [lineNo, count] of counts) {
+	for (const [lineNo, count] of matchedLineCounts(index, positions)) {
 		if (count > 1) {
 			throw new Error(
-				`${label} oldText matched multiple locations on line ${lineNo}. Line ranges cannot disambiguate multiple matches on the same line. Use a more specific oldText.`,
+				`${label} oldText matched multiple locations on line ${lineNo}.\nLine ranges cannot disambiguate multiple matches on the same line.\nUse a wider oldText, such as the full line or surrounding phrase, so the intended replacement is unambiguous.`,
 			);
 		}
 	}
@@ -385,7 +390,7 @@ function createEdits(text: string, params: ApplyPatchToolInput): TextEdit[] {
 			throw new Error(`replaces[${i}] oldText was not found.`);
 		if (positions.length > 1) {
 			throw new Error(
-				`replaces[${i}] oldText matched multiple locations. Specify targetLineNoRanges. Candidate targetLineNoRanges: ${candidateTargetLineNoRanges(index, positions, replace.oldText.length)}.`,
+				`replaces[${i}] oldText matched multiple locations.\nSpecify targetLineNoRanges to limit where replacements apply.\nMatched lines: ${matchedLinesSummary(index, positions)}.${multipleMatchesOnSameLineWarning(index, positions)}`,
 			);
 		}
 		const start = positions[0] ?? 0;
