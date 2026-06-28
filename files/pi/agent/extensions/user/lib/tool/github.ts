@@ -1,4 +1,6 @@
 import { execFile } from "node:child_process";
+import { existsSync } from "node:fs";
+import path from "node:path";
 import type { AgentToolResult, Theme } from "@earendil-works/pi-coding-agent";
 import { type Component, Text } from "@earendil-works/pi-tui";
 import { type Static, Type } from "typebox";
@@ -176,7 +178,7 @@ const createPullRequestSchema = Type.Object({
 	}),
 	commitFiles: Type.Array(Type.String(), {
 		description:
-			"Explicit list of files to stage and commit. Only these files are staged.",
+			"Explicit list of files to stage and commit. Existing listed files are staged; only listed files are committed.",
 	}),
 	commitMessage: Type.String({
 		description: "Commit message for the new commit.",
@@ -190,7 +192,8 @@ type CreatePullRequestInput = Static<typeof createPullRequestSchema>;
 const updatePullRequestSchema = Type.Object({
 	commitFiles: Type.Optional(
 		Type.Array(Type.String(), {
-			description: "If provided, stage only these files, commit, and push.",
+			description:
+				"If provided, stage existing listed files, commit only listed files, and push.",
 		}),
 	),
 	commitMessage: Type.Optional(
@@ -985,6 +988,39 @@ async function currentBranch(
 	return branch;
 }
 
+function existingWorkingTreeFiles(
+	cwd: string,
+	files: readonly string[],
+): string[] {
+	return files.filter((file) => existsSync(path.resolve(cwd, file)));
+}
+
+async function stageAndCommitFiles(
+	cwd: string,
+	files: readonly string[],
+	commitMessage: string,
+	signal: AbortSignal | undefined,
+	commands: string[],
+): Promise<void> {
+	const existingFiles = existingWorkingTreeFiles(cwd, files);
+	if (existingFiles.length > 0) {
+		await runCommand(
+			"git",
+			cwd,
+			["add", "--", ...existingFiles],
+			signal,
+			commands,
+		);
+	}
+	await runCommand(
+		"git",
+		cwd,
+		["commit", "--only", "-m", commitMessage, "--", ...files],
+		signal,
+		commands,
+	);
+}
+
 async function createPullRequest(
 	params: CreatePullRequestInput,
 	cwd: string,
@@ -1007,17 +1043,10 @@ async function createPullRequest(
 	}
 
 	await runCommand("git", cwd, ["switch", "-c", branchName], signal, commands);
-	await runCommand(
-		"git",
+	await stageAndCommitFiles(
 		cwd,
-		["add", "--", ...params.commitFiles],
-		signal,
-		commands,
-	);
-	await runCommand(
-		"git",
-		cwd,
-		["commit", "--only", "-m", commitMessage, "--", ...params.commitFiles],
+		params.commitFiles,
+		commitMessage,
 		signal,
 		commands,
 	);
@@ -1081,14 +1110,7 @@ async function updatePullRequest(
 			params.commitMessage,
 			"commitMessage",
 		);
-		await runCommand("git", cwd, ["add", "--", ...files], signal, commands);
-		await runCommand(
-			"git",
-			cwd,
-			["commit", "--only", "-m", commitMessage, "--", ...files],
-			signal,
-			commands,
-		);
+		await stageAndCommitFiles(cwd, files, commitMessage, signal, commands);
 		await runCommand("git", cwd, ["push"], signal, commands);
 		lines.push("Pushed new commit to the current branch.");
 	}
@@ -1178,7 +1200,7 @@ function registerGithubTool<TInput extends object>(
 				promptGuidelines: config.write
 					? [
 							`${config.name} performs git and gh write operations directly from explicit inputs. Do not add interactive confirmation prompts.`,
-							"Use explicit commitFiles lists to avoid committing unrelated work. Only the listed files are staged.",
+							"Use explicit commitFiles lists to avoid committing unrelated work. Existing listed files are staged, and only listed files are committed.",
 							"Fail clearly when required inputs are missing, the target branch is the repository default branch, or unsafe conditions are detected.",
 							"Do not force-push, amend, rebase, or rewrite history.",
 						]
@@ -1280,7 +1302,7 @@ export function registerGithubTools(catalog: ToolCatalog): void {
 		name: "create_pull_request",
 		label: "create pull request",
 		description:
-			"Create a new draft pull request from specified commit files. Creates a new branch, stages only the listed files, commits, pushes, and opens a draft PR with gh.",
+			"Create a new draft pull request from specified commit files. Creates a new branch, stages existing listed files, commits only listed files, pushes, and opens a draft PR with gh.",
 		parameters: createPullRequestSchema,
 		promptSnippet: "Create a draft pull request from explicit files",
 		extractSecretPaths: (input) => input.commitFiles,
