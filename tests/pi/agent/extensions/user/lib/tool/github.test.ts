@@ -197,9 +197,9 @@ describe("create_pull_request", () => {
 			};
 			assert.match(result.content[0]?.text ?? "", /pull\/1/u);
 
-			const commands = new Set(calls.map(
-				(call) => `${call.bin} ${call.args.join(" ")}`,
-			));
+			const commands = new Set(
+				calls.map((call) => `${call.bin} ${call.args.join(" ")}`),
+			);
 			assert.ok(commands.has("git branch --show-current"));
 			assert.ok(!commands.has("git switch -c feature/test"));
 			assert.ok(
