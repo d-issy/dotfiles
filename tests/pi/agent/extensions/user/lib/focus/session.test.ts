@@ -181,7 +181,7 @@ describe("focus session lifecycle", () => {
 		);
 		assert.equal(
 			capturedContent[2],
-			"Use only the tool definitions in the latest reminder. If focus-scoped tools are needed, call enter_focus to do the work yourself, or subagent with the target focus to delegate it without entering.",
+			"Use only the tool definitions in the latest reminder. If focus-scoped tools are needed, call enter_focus to do the work yourself, or agent with the target focus to delegate it without entering.",
 		);
 	});
 });

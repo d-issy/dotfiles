@@ -41,7 +41,7 @@ export function getFocusExitMode(focus: FocusDefinition): FocusExitMode {
 }
 
 /**
- * Whether a focus may be launched as a subagent. Interactive focuses (e.g.
+ * Whether a focus may be launched as an agent. Interactive focuses (e.g.
  * `interview`) cannot run headless, so they are excluded unless `spawnable` is
  * explicitly set. Derivation: `spawnable ?? !interactiveOnly` (SPEC §6).
  */

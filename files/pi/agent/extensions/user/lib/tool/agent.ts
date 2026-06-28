@@ -15,9 +15,9 @@ import {
 } from "../focus/confirmation";
 import { type Color, colors, fg } from "../theme";
 import { formatHumanElapsed, formatLiveElapsed } from "../time";
-export const SUBAGENT_TOOL = "subagent";
+export const AGENT_TOOL = "agent";
 
-/** A focus that may be launched as a subagent (name + human description). */
+/** A focus that may be launched as an agent (name + human description). */
 export type SpawnableFocus = {
 	readonly name: string;
 	readonly description?: string;
@@ -25,7 +25,7 @@ export type SpawnableFocus = {
 	readonly transition?: string;
 };
 
-type SubagentInput = {
+type AgentInput = {
 	readonly focus: string;
 	readonly prompt: string;
 	readonly title: string;
@@ -33,7 +33,7 @@ type SubagentInput = {
 
 /** Mutable set of spawnable focus names, initialised at tool registration time
  * and extendable later (e.g. with project-defined focuses after session start).
- * The subagent execute handler closes over this same Set reference, so updates
+ * The agent execute handler closes over this same Set reference, so updates
  * are visible to all future invocations. */
 const spawnableFocusNames = new Set<string>();
 
@@ -57,38 +57,38 @@ export function extendConfirmFocuses(names: readonly string[]): void {
  * the description so the LLM can pick the right one. When unknown (e.g. unit
  * tests registering the tool standalone), it falls back to a free-form string.
  */
-function buildSubagentSchema(focuses: readonly SpawnableFocus[]): TSchema {
+function buildAgentSchema(focuses: readonly SpawnableFocus[]): TSchema {
 	const focusList = focuses
 		.map((f) => (f.description ? `${f.name} — ${f.description}` : f.name))
 		.join("; ");
 	const focusDescription =
 		focuses.length > 0
-			? `Name of the focus the subagent should use. Available: ${focusList}.`
-			: "Name of the focus the subagent should use.";
+			? `Name of the focus the agent should use. Available: ${focusList}.`
+			: "Name of the focus the agent should use.";
 	return Type.Object({
 		focus: Type.String({ description: focusDescription }),
 		prompt: Type.String({
 			description:
-				"Task instruction to pass to the subagent. Be specific and self-contained.",
+				"Task instruction to pass to the agent. Be specific and self-contained.",
 		}),
 		title: Type.String({
 			description:
-				"Short label for the subagent task (3–5 words). Defaults to focus name.",
+				"Short label for the agent task (3–5 words). Defaults to focus name.",
 		}),
 	});
 }
 
 /**
- * Maximum time to wait for the subagent to go idle, in milliseconds. Override
- * with `PI_SUBAGENT_TIMEOUT_MS`. Defaults to 10 minutes so that genuinely long
+ * Maximum time to wait for the agent to go idle, in milliseconds. Override
+ * with `PI_AGENT_TIMEOUT_MS`. Defaults to 10 minutes so that genuinely long
  * delegated work is not cut short mid-task.
  */
-const SUBAGENT_TIMEOUT_MS = (() => {
-	const raw = Number(process.env.PI_SUBAGENT_TIMEOUT_MS);
+const AGENT_TIMEOUT_MS = (() => {
+	const raw = Number(process.env.PI_AGENT_TIMEOUT_MS);
 	return Number.isFinite(raw) && raw > 0 ? raw : 600_000;
 })();
 
-export type SubagentDetails = {
+export type AgentDetails = {
 	readonly usage?: {
 		readonly inputTokens: number;
 		readonly outputTokens: number;
@@ -107,16 +107,16 @@ export type SubagentDetails = {
 	readonly _runningLine?: string;
 	/** @internal */
 	readonly currentTool?: string;
-	/** Original prompt that was passed to the subagent. */
+	/** Original prompt that was passed to the agent. */
 	readonly prompt?: string;
-	/** Title passed to the subagent. */
+	/** Title passed to the agent. */
 	readonly title?: string;
-	/** Focus the subagent runs in. */
+	/** Focus the agent runs in. */
 	readonly focus?: string;
 };
-type SubagentResult = AgentToolResult<SubagentDetails>;
+type AgentResult = AgentToolResult<AgentDetails>;
 /** A result flagged as an error (the `isError` flag is an extension of the base shape). */
-type SubagentErrorResult = SubagentResult & { isError: true };
+type AgentErrorResult = AgentResult & { isError: true };
 
 const MAX_TITLE_LEN = 30;
 
@@ -127,26 +127,26 @@ function truncateTitle(label: string): string {
 		: label;
 }
 
-/** Format the one-line call display: `subagent <title> in <focus>`. */
-function renderSubagentCall(rawArgs: unknown, theme: Theme): Component {
-	const args = rawArgs as SubagentInput;
+/** Format the one-line call display: `agent <title> in <focus>`. */
+function renderAgentCall(rawArgs: unknown, theme: Theme): Component {
+	const args = rawArgs as AgentInput;
 	const titlePart = args.title ? truncateTitle(args.title) : null;
 	const titleDisplay = titlePart ?? theme.fg("dim", "...");
 	const inPart = theme.fg("dim", " in ");
 	const focusDisplay = args.focus
 		? theme.fg("warning", args.focus)
 		: theme.fg("dim", "...");
-	const text = `${theme.bold("subagent")} ${titleDisplay}${inPart}${focusDisplay}`;
+	const text = `${theme.bold("agent")} ${titleDisplay}${inPart}${focusDisplay}`;
 	return new Text(text, 0, 0);
 }
 
 /**
  * Determine the icon and state label for a finalized result. Partial/streaming
- * frames render their own state line (see `renderSubagentResult`), so this is
+ * frames render their own state line (see `renderAgentResult`), so this is
  * only ever called for the terminal state.
  */
 function getStateDisplay(
-	details: SubagentDetails | undefined,
+	details: AgentDetails | undefined,
 	theme: Theme,
 ): string {
 	if (details?.["_status"] === "aborted") {
@@ -158,8 +158,8 @@ function getStateDisplay(
 	return `${fg(colors.positive, "✓")} ${theme.fg("dim", "Completed")}`;
 }
 
-function renderSubagentResult(
-	result: AgentToolResult<SubagentDetails>,
+function renderAgentResult(
+	result: AgentToolResult<AgentDetails>,
 	options: { expanded: boolean; isPartial: boolean },
 	theme: Theme,
 ): Component {
@@ -297,12 +297,12 @@ type ToolCallRecord = {
 };
 
 /**
- * Owns the live progress UI for a running subagent: the initial "starting"
+ * Owns the live progress UI for a running agent: the initial "starting"
  * frame, the rolling tool tail (latest 3 tools, older ones summarized), and the
  * 1s heartbeat timer. Keeping all `onUpdate` emission here lets `execute` deal
  * only with lifecycle and final results.
  */
-class SubagentProgress {
+class AgentProgress {
 	private readonly toolCalls: ToolCallRecord[] = [];
 	private lastTail = "";
 	private timer: ReturnType<typeof setInterval> | undefined;
@@ -313,7 +313,7 @@ class SubagentProgress {
 		private readonly focus: string,
 		private readonly prompt: string,
 		private readonly onUpdate:
-			| AgentToolUpdateCallback<SubagentDetails>
+			| AgentToolUpdateCallback<AgentDetails>
 			| undefined,
 	) {}
 
@@ -521,10 +521,10 @@ function wireAbort(
 	return () => signal.removeEventListener("abort", onAbort);
 }
 
-/** Map RpcClient session stats into the `usage` shape of `SubagentDetails`. */
+/** Map RpcClient session stats into the `usage` shape of `AgentDetails`. */
 function buildUsage(
 	stats: Awaited<ReturnType<RpcClient["getSessionStats"]>> | undefined,
-): SubagentDetails["usage"] {
+): AgentDetails["usage"] {
 	if (!stats) return undefined;
 	return {
 		inputTokens: stats.tokens.input,
@@ -543,8 +543,8 @@ function buildUsage(
  */
 function rejectNonSpawnableFocus(
 	allowedFocusNames: ReadonlySet<string>,
-	input: SubagentInput,
-): SubagentErrorResult | undefined {
+	input: AgentInput,
+): AgentErrorResult | undefined {
 	if (allowedFocusNames.size === 0 || allowedFocusNames.has(input.focus)) {
 		return undefined;
 	}
@@ -552,7 +552,7 @@ function rejectNonSpawnableFocus(
 		content: [
 			{
 				type: "text" as const,
-				text: `Subagent focus "${input.focus}" does not exist.`,
+				text: `Agent focus "${input.focus}" does not exist.`,
 			},
 		],
 		details: {
@@ -562,38 +562,38 @@ function rejectNonSpawnableFocus(
 			toolCallCount: 0,
 			durationMs: 0,
 			stderr: `unknown spawnable focus: ${input.focus}`,
-		} satisfies SubagentDetails,
+		} satisfies AgentDetails,
 		isError: true,
 	};
 }
 
 /**
- * Build the subagent `execute` handler, capturing the resolved CLI path and the
+ * Build the agent `execute` handler, capturing the resolved CLI path and the
  * spawnable allow-list. Kept out of the tool definition object so the (long)
  * lifecycle logic reads as a standalone unit: validate → spawn → stream
  * progress → return the terminal result.
  */
-const createSubagentExecute =
+const createAgentExecute =
 	(cliPath: string, allowedFocusNames: ReadonlySet<string>) =>
 	async (
 		_toolCallId: string,
 		params: unknown,
 		signal: AbortSignal | undefined,
-		onUpdate: AgentToolUpdateCallback<SubagentDetails> | undefined,
+		onUpdate: AgentToolUpdateCallback<AgentDetails> | undefined,
 		ctx: ExtensionContext,
-	): Promise<SubagentResult> => {
-		const input = params as SubagentInput;
+	): Promise<AgentResult> => {
+		const input = params as AgentInput;
 		const rejection = rejectNonSpawnableFocus(allowedFocusNames, input);
 		if (rejection) return rejection;
 
 		/* Confirm-transition focuses require user permission before spawning */
 		if (confirmFocusNames.has(input.focus)) {
 			if (!ctx.hasUI) {
-				const err: SubagentErrorResult = {
+				const err: AgentErrorResult = {
 					content: [
 						{
 							type: "text" as const,
-							text: `Cannot spawn subagent: focus "${input.focus}" requires interactive confirmation.`,
+							text: `Cannot spawn agent: focus "${input.focus}" requires interactive confirmation.`,
 						},
 					],
 					details: {
@@ -603,19 +603,19 @@ const createSubagentExecute =
 						toolCallCount: 0,
 						durationMs: 0,
 						stderr: `denied: no interactive confirmation available for focus "${input.focus}"`,
-					} satisfies SubagentDetails,
+					} satisfies AgentDetails,
 					isError: true,
 				};
 				return err;
 			}
 
-			/* Re-check session state in case a parallel subagent already obtained permission */
+			/* Re-check session state in case a parallel agent already obtained permission */
 			if (isFocusAllowedForSession(input.focus)) {
 				/* Already allowed this session — skip dialog */
 			} else {
 				const decision = await confirmFocusTransition(
 					ctx,
-					"subagent",
+					"agent",
 					input.focus,
 					input.title,
 					input.prompt,
@@ -623,9 +623,9 @@ const createSubagentExecute =
 				if (!decision || decision.choice.startsWith("deny")) {
 					const reason = decision?.rejectReason;
 					const text = reason
-						? `User denied subagent in focus "${input.focus}": ${reason}`
-						: `User denied subagent in focus "${input.focus}".`;
-					const err: SubagentErrorResult = {
+						? `User denied agent in focus "${input.focus}": ${reason}`
+						: `User denied agent in focus "${input.focus}".`;
+					const err: AgentErrorResult = {
 						content: [{ type: "text" as const, text }],
 						details: {
 							focus: input.focus,
@@ -634,21 +634,21 @@ const createSubagentExecute =
 							toolCallCount: 0,
 							durationMs: 0,
 							stderr: reason ?? `denied by user: "${input.focus}"`,
-						} satisfies SubagentDetails,
+						} satisfies AgentDetails,
 						isError: true,
 					};
 					return err;
 				}
 				// A session-level decision (allow/deny "for this session") is
 				// persisted inside confirmFocusTransition while it holds the UI
-				// lock, so parallel subagents racing on the same focus observe it
+				// lock, so parallel agents racing on the same focus observe it
 				// without prompting again. Nothing to remember here.
 			}
 		}
 		const { focus, prompt, title } = input;
 		const header = `${truncateTitle(title ?? focus)} (focus=${focus})`;
 		const startedAt = Date.now();
-		const progress = new SubagentProgress(
+		const progress = new AgentProgress(
 			startedAt,
 			title,
 			focus,
@@ -659,19 +659,13 @@ const createSubagentExecute =
 		const client = new RpcClient({
 			cliPath,
 			cwd: ctx.cwd,
-			env: { PI_SUBAGENT: "1" },
-			args: [
-				"--focus",
-				focus,
-				"--no-session",
-				"--exclude-tools",
-				SUBAGENT_TOOL,
-			],
+			env: { PI_AGENT: "1" },
+			args: ["--focus", focus, "--no-session", "--exclude-tools", AGENT_TOOL],
 		});
 
 		// Build the terminal result for a cancelled run (also notifies the UI).
-		const cancelledResult = (durationMs: number): SubagentErrorResult => {
-			const details: SubagentDetails = {
+		const cancelledResult = (durationMs: number): AgentErrorResult => {
+			const details: AgentDetails = {
 				toolCallCount: progress.count,
 				durationMs,
 				prompt,
@@ -696,11 +690,11 @@ const createSubagentExecute =
 			text: string | null | undefined,
 			durationMs: number,
 			stats: Awaited<ReturnType<RpcClient["getSessionStats"]>> | undefined,
-		): SubagentResult => ({
+		): AgentResult => ({
 			content: [
 				{
 					type: "text" as const,
-					text: `\n${text ?? "(subagent produced no output)"}`,
+					text: `\n${text ?? "(agent produced no output)"}`,
 				},
 			],
 			details: {
@@ -715,7 +709,7 @@ const createSubagentExecute =
 		});
 
 		// Build the terminal result for a failed run (also notifies the UI).
-		const failedResult = (error: unknown): SubagentErrorResult => {
+		const failedResult = (error: unknown): AgentErrorResult => {
 			const message = error instanceof Error ? error.message : String(error);
 			const stderr = client.getStderr();
 			const durationMs = Date.now() - startedAt;
@@ -769,7 +763,7 @@ const createSubagentExecute =
 			});
 
 			await client.prompt(prompt);
-			await client.waitForIdle(SUBAGENT_TIMEOUT_MS);
+			await client.waitForIdle(AGENT_TIMEOUT_MS);
 
 			const text = await client.getLastAssistantText();
 			const durationMs = Date.now() - startedAt;
@@ -788,7 +782,7 @@ const createSubagentExecute =
 		}
 	};
 
-export function registerSubagentTool(
+export function registerAgentTool(
 	catalog: ToolCatalog,
 	spawnableFocuses: readonly SpawnableFocus[] = [],
 ): void {
@@ -801,32 +795,32 @@ export function registerSubagentTool(
 	catalog.register(
 		defineToolContribution({
 			policy: {
-				name: SUBAGENT_TOOL,
+				name: AGENT_TOOL,
 				notAllowedReason: (focus) =>
-					`subagent can only be used when no focus is active. Current focus: ${focus}. Use enter_focus to exit the current focus first.`,
+					`agent can only be used when no focus is active. Current focus: ${focus}. Use enter_focus to exit the current focus first.`,
 			},
 			definition: {
-				name: SUBAGENT_TOOL,
-				label: "subagent",
+				name: AGENT_TOOL,
+				label: "agent",
 				description:
-					"Spawn a subagent (child agent) to work on an isolated subtask in the specified focus. Multiple subagents can be called in the same turn and run in parallel. Returns only the subagent's final message.",
-				promptSnippet: "Spawn a subagent for an isolated subtask",
+					"Spawn an agent (child agent) to work on an isolated subtask in the specified focus. Multiple agents can be called in the same turn and run in parallel. Returns only the agent's final message.",
+				promptSnippet: "Spawn an agent for an isolated subtask",
 				promptGuidelines: [
-					"Use subagent to delegate independent subtasks to a child agent running in a specific focus.",
-					"Multiple subagent calls in the same turn run in parallel via executionMode: 'parallel'.",
-					"The subagent receives the focus prompt and tools, and returns only its final message.",
-					"Subagents cannot spawn further subagents (single level only).",
+					"Use agent to delegate independent subtasks to a child agent running in a specific focus.",
+					"Multiple agent calls in the same turn run in parallel via executionMode: 'parallel'.",
+					"The agent receives the focus prompt and tools, and returns only its final message.",
+					"Agents cannot spawn further agents (single level only).",
 					"Choose the focus that matches the subtask; the focus parameter lists the available focuses and what each is for.",
 				],
-				parameters: buildSubagentSchema(spawnableFocuses),
+				parameters: buildAgentSchema(spawnableFocuses),
 				executionMode: "parallel",
-				renderCall: renderSubagentCall,
-				renderResult: renderSubagentResult,
-				execute: createSubagentExecute(cliPath, spawnableFocusNames),
+				renderCall: renderAgentCall,
+				renderResult: renderAgentResult,
+				execute: createAgentExecute(cliPath, spawnableFocusNames),
 			},
 			isErrorResult: (details) => {
 				if (!details) return false;
-				const d = details as SubagentDetails;
+				const d = details as AgentDetails;
 				return d.stderr !== undefined || d["_status"] === "aborted";
 			},
 		}),

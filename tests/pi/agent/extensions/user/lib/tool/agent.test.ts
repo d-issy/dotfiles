@@ -10,10 +10,7 @@ import {
 	isFocusSpawnable,
 } from "#pi-user/lib/focus/definitions";
 import { createToolCatalog } from "#pi-user/lib/tool/catalog";
-import {
-	SUBAGENT_TOOL,
-	registerSubagentTool,
-} from "#pi-user/lib/tool/subagent";
+import { AGENT_TOOL, registerAgentTool } from "#pi-user/lib/tool/agent";
 
 const plainTheme = {
 	fg: (_name: string, text: string) => text,
@@ -35,14 +32,12 @@ function renderResultContext(): Parameters<
 	>[3];
 }
 
-function getSubagentDefinition(): ToolDefinition {
+function getAgentDefinition(): ToolDefinition {
 	const catalog = createToolCatalog();
-	registerSubagentTool(catalog);
-	const subagent = catalog
-		.list()
-		.find((t) => t.definition.name === SUBAGENT_TOOL);
-	assert.ok(subagent);
-	return subagent.definition as ToolDefinition;
+	registerAgentTool(catalog);
+	const agent = catalog.list().find((t) => t.definition.name === AGENT_TOOL);
+	assert.ok(agent);
+	return agent.definition as ToolDefinition;
 }
 function makeFocus(overrides: Partial<FocusDefinition>): FocusDefinition {
 	return {
@@ -73,45 +68,45 @@ describe("isFocusSpawnable", () => {
 	});
 });
 
-describe("subagent tool registration", () => {
-	it("registers the subagent tool in the catalog", () => {
+describe("agent tool registration", () => {
+	it("registers the agent tool in the catalog", () => {
 		const catalog = createToolCatalog();
-		registerSubagentTool(catalog);
+		registerAgentTool(catalog);
 
 		const tools = catalog.list();
-		const subagent = tools.find((t) => t.definition.name === SUBAGENT_TOOL);
+		const agent = tools.find((t) => t.definition.name === AGENT_TOOL);
 
-		assert.ok(subagent, "subagent tool should be registered");
-		assert.equal(subagent.definition.name, SUBAGENT_TOOL);
-		assert.equal(subagent.definition.executionMode, "parallel");
-		assert.ok(subagent.definition.parameters, "should have parameters");
+		assert.ok(agent, "agent tool should be registered");
+		assert.equal(agent.definition.name, AGENT_TOOL);
+		assert.equal(agent.definition.executionMode, "parallel");
+		assert.ok(agent.definition.parameters, "should have parameters");
 	});
 
 	it("defines schema with focus, prompt, and optional title", () => {
 		const catalog = createToolCatalog();
-		registerSubagentTool(catalog);
+		registerAgentTool(catalog);
 
 		const tools = catalog.list();
-		const subagent = tools.find((t) => t.definition.name === SUBAGENT_TOOL);
-		assert.ok(subagent);
+		const agent = tools.find((t) => t.definition.name === AGENT_TOOL);
+		assert.ok(agent);
 
-		const params = subagent.definition.parameters;
+		const params = agent.definition.parameters;
 		// TypeBox schema should have focus, prompt, title properties
 		assert.ok(params, "parameters schema is defined");
 	});
 
 	it("describes the focus param as a free-form string with available focuses", () => {
 		const catalog = createToolCatalog();
-		registerSubagentTool(catalog, [
+		registerAgentTool(catalog, [
 			{ name: "explore", description: "investigate the codebase" },
 			{ name: "edit", description: "make file changes" },
 		]);
 
 		const tools = catalog.list();
-		const subagent = tools.find((t) => t.definition.name === SUBAGENT_TOOL);
-		assert.ok(subagent);
+		const agent = tools.find((t) => t.definition.name === AGENT_TOOL);
+		assert.ok(agent);
 
-		const params = subagent.definition.parameters as {
+		const params = agent.definition.parameters as {
 			properties: { focus: { type?: string; description?: string } };
 		};
 		const focus = params.properties.focus;
@@ -122,13 +117,13 @@ describe("subagent tool registration", () => {
 
 	it("rejects a non-spawnable focus before spawning a process", async () => {
 		const catalog = createToolCatalog();
-		registerSubagentTool(catalog, [{ name: "explore" }]);
+		registerAgentTool(catalog, [{ name: "explore" }]);
 
 		const tools = catalog.list();
-		const subagent = tools.find((t) => t.definition.name === SUBAGENT_TOOL);
-		assert.ok(subagent?.definition.execute);
+		const agent = tools.find((t) => t.definition.name === AGENT_TOOL);
+		assert.ok(agent?.definition.execute);
 
-		const result = await subagent.definition.execute(
+		const result = await agent.definition.execute(
 			"call-1",
 			{ focus: "interview", prompt: "do something" },
 			undefined,
@@ -144,13 +139,13 @@ describe("subagent tool registration", () => {
 
 	it("executes with UI returns result from getLastAssistantText", async () => {
 		const catalog = createToolCatalog();
-		registerSubagentTool(catalog);
+		registerAgentTool(catalog);
 
 		const tools = catalog.list();
-		const subagent = tools.find((t) => t.definition.name === SUBAGENT_TOOL);
-		assert.ok(subagent);
+		const agent = tools.find((t) => t.definition.name === AGENT_TOOL);
+		assert.ok(agent);
 
-		const definition = subagent.definition as ToolDefinition;
+		const definition = agent.definition as ToolDefinition;
 		assert.ok(definition.execute, "should have an execute function");
 
 		// The actual execute spawns a real pi process – at unit-test level we
@@ -160,23 +155,23 @@ describe("subagent tool registration", () => {
 
 	it("has executionMode set to parallel", () => {
 		const catalog = createToolCatalog();
-		registerSubagentTool(catalog);
+		registerAgentTool(catalog);
 
 		const tools = catalog.list();
-		const subagent = tools.find((t) => t.definition.name === SUBAGENT_TOOL);
-		assert.ok(subagent);
-		assert.equal(subagent.definition.executionMode, "parallel");
+		const agent = tools.find((t) => t.definition.name === AGENT_TOOL);
+		assert.ok(agent);
+		assert.equal(agent.definition.executionMode, "parallel");
 	});
 
 	it("includes prompt guidelines about nesting prevention", () => {
 		const catalog = createToolCatalog();
-		registerSubagentTool(catalog);
+		registerAgentTool(catalog);
 
 		const tools = catalog.list();
-		const subagent = tools.find((t) => t.definition.name === SUBAGENT_TOOL);
-		assert.ok(subagent);
+		const agent = tools.find((t) => t.definition.name === AGENT_TOOL);
+		assert.ok(agent);
 
-		const guidelines = subagent.definition.promptGuidelines ?? [];
+		const guidelines = agent.definition.promptGuidelines ?? [];
 		const hasNestingWarning = guidelines.some((g) =>
 			g.toLowerCase().includes("cannot spawn further"),
 		);
@@ -186,7 +181,7 @@ describe("subagent tool registration", () => {
 		);
 	});
 	it("renders collapsed running updates without prompt and with latest tool tail", () => {
-		const definition = getSubagentDefinition();
+		const definition = getAgentDefinition();
 		assert.ok(definition.renderResult);
 
 		const result = {
@@ -243,7 +238,7 @@ describe("subagent tool registration", () => {
 	});
 
 	it("renders expanded running updates with prompt and all tools", () => {
-		const definition = getSubagentDefinition();
+		const definition = getAgentDefinition();
 		assert.ok(definition.renderResult);
 
 		const result = {
@@ -287,7 +282,7 @@ describe("subagent tool registration", () => {
 	});
 
 	it("omits tool history from completed expanded output", () => {
-		const definition = getSubagentDefinition();
+		const definition = getAgentDefinition();
 		assert.ok(definition.renderResult);
 
 		const result = {
@@ -319,8 +314,8 @@ describe("subagent tool registration", () => {
 		assert.doesNotMatch(output, /tools:/u);
 		assert.doesNotMatch(output, /read(?!_chunk)\b/u);
 	});
-	it("renders subagent running time with fractions and completed time without fractions", () => {
-		const definition = getSubagentDefinition();
+	it("renders agent running time with fractions and completed time without fractions", () => {
+		const definition = getAgentDefinition();
 		assert.ok(definition.renderResult);
 
 		const running = renderText(
@@ -358,70 +353,69 @@ describe("subagent tool registration", () => {
 
 	it("registers an isErrorResult hook", () => {
 		const catalog = createToolCatalog();
-		registerSubagentTool(catalog);
+		registerAgentTool(catalog);
 
 		const tools = catalog.list();
-		const subagent = tools.find((t) => t.definition.name === SUBAGENT_TOOL);
-		assert.ok(subagent);
+		const agent = tools.find((t) => t.definition.name === AGENT_TOOL);
+		assert.ok(agent);
 		assert.ok(
-			typeof subagent.isErrorResult === "function",
+			typeof agent.isErrorResult === "function",
 			"should have isErrorResult hook",
 		);
 	});
 });
 
-describe("subagent isErrorResult", () => {
+describe("agent isErrorResult", () => {
 	it("returns false when details are undefined", () => {
 		const catalog = createToolCatalog();
-		registerSubagentTool(catalog);
+		registerAgentTool(catalog);
 
 		const tools = catalog.list();
-		const subagent = tools.find((t) => t.definition.name === SUBAGENT_TOOL);
-		assert.ok(subagent);
+		const agent = tools.find((t) => t.definition.name === AGENT_TOOL);
+		assert.ok(agent);
 
-		const result = subagent.isErrorResult?.(undefined);
+		const result = agent.isErrorResult?.(undefined);
 		assert.equal(result, false);
 	});
 
 	it("returns true when stderr is present", () => {
 		const catalog = createToolCatalog();
-		registerSubagentTool(catalog);
+		registerAgentTool(catalog);
 
 		const tools = catalog.list();
-		const subagent = tools.find((t) => t.definition.name === SUBAGENT_TOOL);
-		assert.ok(subagent);
+		const agent = tools.find((t) => t.definition.name === AGENT_TOOL);
+		assert.ok(agent);
 
-		const result = subagent.isErrorResult?.({ stderr: "error output" });
+		const result = agent.isErrorResult?.({ stderr: "error output" });
 		assert.equal(result, true);
 	});
 });
 
-describe("subagent tool access", () => {
+describe("agent tool access", () => {
 	it("is not blocked by focus policy when registered in catalog", () => {
 		const catalog = createToolCatalog();
-		registerSubagentTool(catalog);
+		registerAgentTool(catalog);
 
-		// The subagent tool should be allowed in all focuses (via ALWAYS_ALLOWED_TOOL_NAMES)
+		// The agent tool should be allowed in all focuses (via ALWAYS_ALLOWED_TOOL_NAMES)
 		// In the catalog, it has no notAllowedReason policy, so the fallback applies
-		const reason = catalog.checkToolAllowed(
-			"explore",
-			new Set([SUBAGENT_TOOL]),
-			{ toolName: SUBAGENT_TOOL, input: {} } as never,
-		);
+		const reason = catalog.checkToolAllowed("explore", new Set([AGENT_TOOL]), {
+			toolName: AGENT_TOOL,
+			input: {},
+		} as never);
 		assert.equal(reason, undefined);
 	});
 });
 
-describe("subagent PI_SUBAGENT environment guard", () => {
+describe("agent PI_AGENT environment guard", () => {
 	it("tool is registered regardless of environment", () => {
 		// The spec says the feature/feature-registration should skip
-		// when PI_SUBAGENT=1, but the tool registration itself is independent.
+		// when PI_AGENT=1, but the tool registration itself is independent.
 		// The guard is applied at the feature registration level (main.ts / features/tool.ts).
 		const catalog = createToolCatalog();
-		registerSubagentTool(catalog);
+		registerAgentTool(catalog);
 
 		const tools = catalog.list();
-		const subagent = tools.find((t) => t.definition.name === SUBAGENT_TOOL);
-		assert.ok(subagent);
+		const agent = tools.find((t) => t.definition.name === AGENT_TOOL);
+		assert.ok(agent);
 	});
 });

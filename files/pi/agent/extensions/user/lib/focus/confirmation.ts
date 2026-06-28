@@ -24,7 +24,7 @@ export type FocusConfirmDecision = {
 	choice: FocusConfirmChoice;
 	rejectReason?: string;
 };
-export type ConfirmCaller = "enter_focus" | "subagent";
+export type ConfirmCaller = "enter_focus" | "agent";
 
 type FocusConfirmAction =
 	| FocusConfirmChoice
@@ -134,7 +134,7 @@ function renderReasonLines(
 	);
 }
 
-function renderSubagentPromptLines(
+function renderAgentPromptLines(
 	theme: { fg(role: string, text: string): string },
 	prompt: string,
 	width: number,
@@ -228,7 +228,7 @@ async function chooseFocusTransitionAction(
 	| undefined
 > {
 	const items = focusConfirmItems();
-	// Parallel subagents can race on the same confirm focus. While we waited
+	// Parallel agents can race on the same confirm focus. While we waited
 	// for the UI lock held by confirmFocusTransition, a sibling may already have
 	// been granted or denied "for this session", so re-check inside the lock and
 	// honour that decision instead of prompting again.
@@ -254,8 +254,8 @@ async function chooseFocusTransitionAction(
 		};
 		const select = (item: FocusConfirmItem): void => finish(item.value);
 		const titleLine =
-			caller === "subagent"
-				? `Subagent requesting focus: ${name}`
+			caller === "agent"
+				? `Agent requesting focus: ${name}`
 				: `Enter focus: ${name}`;
 		return {
 			render(width: number) {
@@ -264,8 +264,8 @@ async function chooseFocusTransitionAction(
 					...border.render(width),
 					padDialogLine(theme.fg("accent", theme.bold(titleLine)), width),
 					...renderReasonLines(theme, reason, width),
-					...(caller === "subagent" && prompt
-						? renderSubagentPromptLines(theme, prompt, width)
+					...(caller === "agent" && prompt
+						? renderAgentPromptLines(theme, prompt, width)
 						: []),
 					...items.map((item, index) =>
 						padDialogLine(
@@ -319,10 +319,10 @@ async function chooseFocusTransitionAction(
 			},
 		};
 	});
-	// Persist a session-level subagent decision while still holding the UI
+	// Persist a session-level agent decision while still holding the UI
 	// lock so a racing sibling observes it on its own re-check above.
 	if (
-		caller === "subagent" &&
+		caller === "agent" &&
 		result &&
 		(result.action === "allow-session" || result.action === "deny-session")
 	) {
@@ -380,7 +380,7 @@ export async function confirmFocusTransition(
 				name,
 				reason,
 				selectedIndex,
-				firstPrompt && caller === "subagent",
+				firstPrompt && caller === "agent",
 				prompt,
 			);
 			firstPrompt = false;

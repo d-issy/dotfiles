@@ -118,12 +118,12 @@ describe("focus confirmation", () => {
 		);
 	});
 
-	it("does not re-prompt parallel subagents once one is allowed for the session", async () => {
+	it("does not re-prompt parallel agents once one is allowed for the session", async () => {
 		let secondRenders = 0;
 		const [first, second] = await Promise.all([
 			confirmFocusTransition(
 				context({ inputs: ["a"] }),
-				"subagent",
+				"agent",
 				"edit",
 				"first request",
 			),
@@ -134,26 +134,26 @@ describe("focus confirmation", () => {
 						secondRenders += 1;
 					},
 				}),
-				"subagent",
+				"agent",
 				"edit",
 				"second request",
 			),
 		]);
 
 		assert.deepEqual(first, { choice: "allow-session" });
-		// The second subagent short-circuits to the first decision without showing
+		// The second agent short-circuits to the first decision without showing
 		// its own dialog, so its "deny-session" input is never read.
 		assert.deepEqual(second, { choice: "allow-session" });
 		assert.equal(secondRenders, 0);
 		assert.equal(isFocusAllowedForSession("edit"), true);
 	});
 
-	it("still prompts each subagent when the decision is only allow-once", async () => {
+	it("still prompts each agent when the decision is only allow-once", async () => {
 		let secondRenders = 0;
 		const [first, second] = await Promise.all([
 			confirmFocusTransition(
 				context({ inputs: ["y"] }),
-				"subagent",
+				"agent",
 				"edit",
 				"first request",
 			),
@@ -164,7 +164,7 @@ describe("focus confirmation", () => {
 						secondRenders += 1;
 					},
 				}),
-				"subagent",
+				"agent",
 				"edit",
 				"second request",
 			),
@@ -172,12 +172,12 @@ describe("focus confirmation", () => {
 
 		assert.deepEqual(first, { choice: "allow-once" });
 		assert.deepEqual(second, { choice: "allow-once" });
-		// "Allow once" is not remembered, so the second subagent still prompts.
+		// "Allow once" is not remembered, so the second agent still prompts.
 		assert.ok(secondRenders > 0);
 		assert.equal(isFocusAllowedForSession("edit"), false);
 	});
 
-	it("does not interleave another subagent confirmation before reject reason input", async () => {
+	it("does not interleave another agent confirmation before reject reason input", async () => {
 		const events: string[] = [];
 		const [first, second] = await Promise.all([
 			confirmFocusTransition(
@@ -186,7 +186,7 @@ describe("focus confirmation", () => {
 					editorResults: ["needs details"],
 					onCustomCall: (index) => events.push(`first:${index}`),
 				}),
-				"subagent",
+				"agent",
 				"edit",
 				"first request",
 				"first prompt",
@@ -196,7 +196,7 @@ describe("focus confirmation", () => {
 					inputs: ["y"],
 					onCustomCall: (index) => events.push(`second:${index}`),
 				}),
-				"subagent",
+				"agent",
 				"edit",
 				"second request",
 				"second prompt",

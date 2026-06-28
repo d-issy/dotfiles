@@ -1,10 +1,10 @@
 export { registerCoreUserTools } from "./builtin";
 export {
-	registerSubagentTool,
-	SUBAGENT_TOOL,
+	registerAgentTool,
+	AGENT_TOOL,
 	extendSpawnableFocuses,
 	extendConfirmFocuses,
-} from "./subagent";
+} from "./agent";
 export { type ProjectToolSummary, registerProjectTools } from "./project";
 export {
 	type Tool,
