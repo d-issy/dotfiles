@@ -174,7 +174,7 @@ type GithubPrChecksInput = Static<typeof githubPrChecksSchema>;
 const createPullRequestSchema = Type.Object({
 	branchName: Type.String({
 		description:
-			"Name of the new working branch to create. Must not be the repository default branch.",
+			"Name of the working branch to use. If the current branch already matches, it is reused; otherwise a new branch is created. Must not be the repository default branch.",
 	}),
 	commitFiles: Type.Array(Type.String(), {
 		description:
@@ -988,6 +988,24 @@ async function currentBranch(
 	return branch;
 }
 
+async function currentBranchIfAvailable(
+	cwd: string,
+	signal: AbortSignal | undefined,
+	commands: string[],
+): Promise<string | undefined> {
+	const result = await execCommand(
+		"git",
+		cwd,
+		["branch", "--show-current"],
+		signal,
+	);
+	commands.push(result.command);
+	if (result.exitCode !== 0) return undefined;
+
+	const branch = result.stdout.trim();
+	return branch === "" ? undefined : branch;
+}
+
 function existingWorkingTreeFiles(
 	cwd: string,
 	files: readonly string[],
@@ -1042,7 +1060,16 @@ async function createPullRequest(
 		);
 	}
 
-	await runCommand("git", cwd, ["switch", "-c", branchName], signal, commands);
+	const branch = await currentBranchIfAvailable(cwd, signal, commands);
+	if (branch !== branchName) {
+		await runCommand(
+			"git",
+			cwd,
+			["switch", "-c", branchName],
+			signal,
+			commands,
+		);
+	}
 	await stageAndCommitFiles(
 		cwd,
 		params.commitFiles,
@@ -1302,7 +1329,7 @@ export function registerGithubTools(catalog: ToolCatalog): void {
 		name: "create_pull_request",
 		label: "create pull request",
 		description:
-			"Create a new draft pull request from specified commit files. Creates a new branch, stages existing listed files, commits only listed files, pushes, and opens a draft PR with gh.",
+			"Create a new draft pull request from specified commit files. Reuses the current branch when it matches branchName; otherwise creates a new branch. Stages existing listed files, commits only listed files, pushes, and opens a draft PR with gh.",
 		parameters: createPullRequestSchema,
 		promptSnippet: "Create a draft pull request from explicit files",
 		extractSecretPaths: (input) => input.commitFiles,
