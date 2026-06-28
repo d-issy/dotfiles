@@ -1,4 +1,10 @@
 export {
+	type ApplyPatchToolInput,
+	applyPatchSchema,
+	executeApplyPatch,
+	renderApplyPatch,
+} from "./apply-patch";
+export {
 	type EditChunkToolInput,
 	type ReadChunkToolInput,
 	editChunkSchema,

@@ -1,5 +1,7 @@
 import {
+	applyPatchSchema,
 	editChunkSchema,
+	executeApplyPatch,
 	executeEditChunk,
 	executeMove,
 	executeReadChunk,
@@ -7,6 +9,7 @@ import {
 	mvSchema,
 	normalizeStringOrArray,
 	readChunkSchema,
+	renderApplyPatch,
 	renderEditChunk,
 	renderEditChunkResult,
 	renderMv,
@@ -102,6 +105,34 @@ function registerFileTools(catalog: ToolCatalog): void {
 		}),
 	);
 
+	catalog.register(
+		defineToolContribution({
+			policy: {
+				name: "apply_patch",
+				extractSecretPaths: (input) => [input.path],
+				secretBlockReason: makeSecretActionReason("Applying patch to"),
+			},
+			definition: {
+				name: "apply_patch",
+				label: "apply_patch",
+				description:
+					"Apply one or more edits to a single file using pre-edit 1-based line numbers and/or text replacement. Supports replaces, removeLineRanges, insertLines, and replaceLineRanges in one call.",
+				promptSnippet: "Apply multiple edits to one file",
+				promptGuidelines: [
+					"Use path plus one or more operation arrays: replaces, removeLineRanges, insertLines, replaceLineRanges.",
+					"All line numbers are 1-based and refer to the file before any edits in this call are applied.",
+					"Do not target the same line with multiple operations; overlapping line targets fail to avoid ambiguous edits.",
+					"For insertLines, specify exactly one of insertAfterLineNo or insertBeforeLineNo.",
+					"If replaces.oldText matches multiple ranges, specify startLineNo and endLineNo to disambiguate.",
+				],
+				parameters: applyPatchSchema,
+				executionMode: "sequential",
+				renderCall: renderApplyPatch,
+				execute: (_toolCallId, params, signal, _onUpdate, ctx) =>
+					executeApplyPatch(ctx.cwd, params, signal),
+			},
+		}),
+	);
 	catalog.register(
 		defineToolContribution({
 			policy: {

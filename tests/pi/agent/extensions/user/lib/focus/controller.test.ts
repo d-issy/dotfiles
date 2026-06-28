@@ -87,7 +87,7 @@ describe("createFocusController", () => {
 		assert.deepEqual(pi.entries, [
 			{ customType: FOCUS_STATE_TYPE, data: { focus: "explore" } },
 		]);
-		assert.ok(pi.activeTools.includes("read_chunk"));
+		assert.ok(pi.activeTools.includes("read"));
 		assert.equal(typeof ctx.statuses.focus, "string");
 
 		controller.restore(ctx, "edit");

@@ -95,7 +95,7 @@ describe("focus session lifecycle", () => {
 		assert.deepEqual(pi.entries, []);
 		assert.deepEqual(pi.activeTools, [
 			"multi_tool_use.parallel",
-			"read_chunk",
+			"read",
 			"grep",
 			"find",
 			"ls",
