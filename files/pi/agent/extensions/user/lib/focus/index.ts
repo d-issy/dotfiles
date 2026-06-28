@@ -1,6 +1,5 @@
 export {
 	BASE_FOCUS,
-	ENTER_FOCUS_TOOL,
 	FOCUS_REMINDER_TYPE,
 	FOCUS_STATE_TYPE,
 	type FocusDefinition,

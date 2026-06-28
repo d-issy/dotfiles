@@ -31,7 +31,7 @@ function fakePi(): ExtensionAPI & {
 		getAllTools: () =>
 			[
 				"multi_tool_use.parallel",
-				"enter_focus",
+				"agent",
 				"exit_focus",
 				"read",
 				"read_chunk",
@@ -183,7 +183,7 @@ describe("focus session lifecycle", () => {
 		);
 		assert.equal(
 			capturedContent[2],
-			"Use only the tool definitions in the latest reminder. If focus-scoped tools are needed, call enter_focus to do the work yourself, or subagent with the target focus to delegate it without entering.",
+			"Use only the tool definitions in the latest reminder. If focus-scoped tools are needed, call agent with the target focus to delegate it.",
 		);
 	});
 });

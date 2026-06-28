@@ -95,7 +95,7 @@ export function createToolCatalog(): ToolCatalog {
 		checkToolAllowed(focusName, allowedToolNames, event) {
 			if (allowedToolNames.has(event.toolName)) return undefined;
 			if (!focusName) {
-				return `${event.toolName} is not available because no focus is active. Use enter_focus to enter an appropriate focus first.`;
+				return `${event.toolName} is not available because no focus is active. Use agent with an appropriate focus first.`;
 			}
 			const policy = policies.get(event.toolName);
 			return (
@@ -109,7 +109,7 @@ export function createToolCatalog(): ToolCatalog {
 			const paths = policy.extractSecretPaths(event.input as never);
 			if (!paths.some(isSecretPath)) return undefined;
 			if (!focusName) {
-				return `${policy.name} on secret files is disabled because no focus is active. Use enter_focus to enter an appropriate focus first.`;
+				return `${policy.name} on secret files is disabled because no focus is active. Use agent with an appropriate focus first.`;
 			}
 			return (
 				policy.secretBlockReason?.(focusName) ??

@@ -8,11 +8,7 @@ import { createToolCatalog } from "#pi-user/lib/tool/catalog";
 import { guardToolCall } from "#pi-user/lib/focus/guard";
 import { registerBuiltInFocusPolicies } from "#pi-user/lib/focus/policies";
 import type { FocusController } from "#pi-user/lib/focus/controller";
-import {
-	BASE_FOCUS,
-	ENTER_FOCUS_TOOL,
-	EXIT_FOCUS_TOOL,
-} from "#pi-user/lib/focus/definitions";
+import { BASE_FOCUS, EXIT_FOCUS_TOOL } from "#pi-user/lib/focus/definitions";
 import type { FocusRuntime } from "#pi-user/lib/focus/runtime";
 
 function toolCall(toolName: string, input: unknown): ToolCallEvent {
@@ -29,9 +25,7 @@ function focus(allowedToolNames: readonly string[]): FocusController {
 		) =>
 			new Set(
 				options?.includeManagementTools === false
-					? allowedToolNames.filter(
-							(name) => name !== ENTER_FOCUS_TOOL && name !== EXIT_FOCUS_TOOL,
-						)
+					? allowedToolNames.filter((name) => name !== EXIT_FOCUS_TOOL)
 					: allowedToolNames,
 			),
 	} as unknown as FocusController;
@@ -87,19 +81,19 @@ describe("guardToolCall", () => {
 		const runtime = { lockedFocusName: "edit" } as FocusRuntime;
 		const guard = guardToolCall(
 			{} as ExtensionAPI,
-			focus(["read", ENTER_FOCUS_TOOL, EXIT_FOCUS_TOOL]),
+			focus(["read", EXIT_FOCUS_TOOL]),
 			catalog,
 			runtime,
 		);
 
 		assert.deepEqual(
 			await guard(
-				toolCall(ENTER_FOCUS_TOOL, { name: "explore" }),
+				toolCall(EXIT_FOCUS_TOOL, { reason: "done" }),
 				undefined as never,
 			),
 			{
 				block: true,
-				reason: `${ENTER_FOCUS_TOOL} is not available in edit focus.`,
+				reason: `${EXIT_FOCUS_TOOL} is not available in edit focus.`,
 			},
 		);
 	});
@@ -109,7 +103,7 @@ describe("guardToolCall", () => {
 		registerBuiltInFocusPolicies(catalog);
 		const guard = guardToolCall(
 			{} as ExtensionAPI,
-			noFocus(["read", ENTER_FOCUS_TOOL]),
+			noFocus(["read", "agent"]),
 			catalog,
 		);
 
@@ -118,7 +112,7 @@ describe("guardToolCall", () => {
 			{
 				block: true,
 				reason:
-					"edit_chunk is not available because no focus is active. Use enter_focus to enter an appropriate focus first.",
+					"edit_chunk is not available because no focus is active. Use agent with an appropriate focus first.",
 			},
 		);
 	});

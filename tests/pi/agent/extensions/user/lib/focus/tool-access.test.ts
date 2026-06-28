@@ -2,7 +2,6 @@ import assert from "node:assert/strict";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { describe, it } from "vitest";
 import {
-	ENTER_FOCUS_TOOL,
 	EXIT_FOCUS_TOOL,
 	FOCUS_EXIT_MODE,
 	FOCUS_TRANSITION,
@@ -33,51 +32,47 @@ function focus(overrides: Partial<FocusDefinition> = {}): FocusDefinition {
 		name: "edit",
 		description: "Edit files",
 		prompt: "Edit files",
-		tools: ["read", "write", ENTER_FOCUS_TOOL, EXIT_FOCUS_TOOL],
+		tools: ["read", "write", EXIT_FOCUS_TOOL],
 		transition: FOCUS_TRANSITION.CONFIRM,
 		...overrides,
 	};
 }
 
 describe("focus tool access", () => {
-	it("base focus exposes only always-allowed and enter_focus when registered", () => {
-		const api = pi(["read", "multi_tool_use.parallel", ENTER_FOCUS_TOOL]);
+	it("base focus exposes always-allowed and agent tools", () => {
+		const api = pi(["read", "multi_tool_use.parallel", "agent"]);
 
 		assert.deepEqual(getBaseFocusTools(api), [
 			"multi_tool_use.parallel",
-			ENTER_FOCUS_TOOL,
+			"agent",
 		]);
 		assert.deepEqual(activateBaseFocusTools(api), [
 			"multi_tool_use.parallel",
-			ENTER_FOCUS_TOOL,
+			"agent",
 		]);
-		assert.deepEqual(api.activeTools, [
-			"multi_tool_use.parallel",
-			ENTER_FOCUS_TOOL,
-		]);
+		assert.deepEqual(api.activeTools, ["multi_tool_use.parallel", "agent"]);
 	});
 
 	it("can hide base focus management tools for locked focus mode", () => {
-		const api = pi(["read", "multi_tool_use.parallel", ENTER_FOCUS_TOOL]);
+		const api = pi(["read", "multi_tool_use.parallel", "agent"]);
 
 		assert.deepEqual(
 			getBaseFocusTools(api, { includeManagementTools: false }),
-			["multi_tool_use.parallel"],
+			["multi_tool_use.parallel", "agent"],
 		);
 		assert.deepEqual(
 			activateBaseFocusTools(api, { includeManagementTools: false }),
-			["multi_tool_use.parallel"],
+			["multi_tool_use.parallel", "agent"],
 		);
-		assert.deepEqual(api.activeTools, ["multi_tool_use.parallel"]);
+		assert.deepEqual(api.activeTools, ["multi_tool_use.parallel", "agent"]);
 	});
 
-	it("active single-turn focuses get declared tools plus enter_focus", () => {
+	it("active single-turn focuses get declared tools without focus management tools", () => {
 		const api = pi([
 			"read",
 			"write",
 			"missing",
 			"multi_tool_use.parallel",
-			ENTER_FOCUS_TOOL,
 			EXIT_FOCUS_TOOL,
 		]);
 
@@ -85,7 +80,6 @@ describe("focus tool access", () => {
 			"multi_tool_use.parallel",
 			"read",
 			"write",
-			ENTER_FOCUS_TOOL,
 		]);
 	});
 
@@ -94,7 +88,6 @@ describe("focus tool access", () => {
 			"read",
 			"write",
 			"multi_tool_use.parallel",
-			ENTER_FOCUS_TOOL,
 			EXIT_FOCUS_TOOL,
 		]);
 
@@ -118,7 +111,6 @@ describe("focus tool access", () => {
 			"read",
 			"write",
 			"multi_tool_use.parallel",
-			ENTER_FOCUS_TOOL,
 			EXIT_FOCUS_TOOL,
 		]);
 
@@ -132,13 +124,8 @@ describe("focus tool access", () => {
 		);
 	});
 
-	it("explicit-exit focuses expose exit_focus instead of enter_focus", () => {
-		const api = pi([
-			"read",
-			"multi_tool_use.parallel",
-			ENTER_FOCUS_TOOL,
-			EXIT_FOCUS_TOOL,
-		]);
+	it("explicit-exit focuses expose exit_focus", () => {
+		const api = pi(["read", "multi_tool_use.parallel", EXIT_FOCUS_TOOL]);
 
 		assert.deepEqual(
 			activateFocusTools(
@@ -155,11 +142,11 @@ describe("focus tool access", () => {
 	});
 
 	it("falls back to base tools when no focus is active", () => {
-		const api = pi(["multi_tool_use.parallel", ENTER_FOCUS_TOOL]);
+		const api = pi(["multi_tool_use.parallel", "agent"]);
 
 		assert.deepEqual(activateFocusTools(api, undefined), [
 			"multi_tool_use.parallel",
-			ENTER_FOCUS_TOOL,
+			"agent",
 		]);
 	});
 });

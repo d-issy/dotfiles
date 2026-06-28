@@ -4,7 +4,6 @@ import { describe, it } from "vitest";
 import type { SystemReminderRegistry } from "#pi-user/lib/system-reminder";
 import type { FocusController } from "#pi-user/lib/focus/controller";
 import {
-	ENTER_FOCUS_TOOL,
 	EXIT_FOCUS_TOOL,
 	FOCUS_TRANSITION,
 	type FocusDefinition,
@@ -42,7 +41,7 @@ function pi(): ExtensionAPI {
 				description: "Write files",
 				parameters: { type: "object" },
 			},
-			{ name: ENTER_FOCUS_TOOL, description: "Enter focus", parameters: {} },
+			{ name: "agent", description: "Spawn agent", parameters: {} },
 			{ name: EXIT_FOCUS_TOOL, description: "Exit focus", parameters: {} },
 			{
 				name: "edit_chunk",
@@ -63,8 +62,7 @@ function focusController(options: {
 	return {
 		current: options.current ?? active?.name ?? "base",
 		active,
-		allowedToolNames: () =>
-			new Set(options.allowed ?? ["read", ENTER_FOCUS_TOOL]),
+		allowedToolNames: () => new Set(options.allowed ?? ["read", "agent"]),
 		registry: {
 			search: () =>
 				options.searchable ?? [
@@ -90,7 +88,7 @@ function beforeAgentEvent(systemPrompt: string): {
 			toolSnippets: {
 				read: "Read files",
 				write: "Write files",
-				[ENTER_FOCUS_TOOL]: "Enter focus",
+				agent: "Spawn agent",
 				[EXIT_FOCUS_TOOL]: "Exit focus",
 			},
 		},
@@ -119,11 +117,12 @@ describe("focus prompt injection", () => {
 		const runtime = createFocusRuntime();
 		const result = await injectFocusRestorePrompt(
 			pi(),
-			focusController({ allowed: [ENTER_FOCUS_TOOL] }),
+			focusController({ allowed: ["agent"] }),
 			runtime,
 		)(beforeAgentEvent(baseSystemPrompt) as never, undefined as never);
 
-		assert.match(result?.systemPrompt ?? "", /- enter_focus: Enter focus/u);
+		assert.match(result?.systemPrompt ?? "", /- agent: Spawn agent/u);
+		assert.doesNotMatch(result?.systemPrompt ?? "", /enter_focus/u);
 		assert.doesNotMatch(result?.systemPrompt ?? "", /- read: Read files/u);
 		assert.doesNotMatch(result?.systemPrompt ?? "", /<available_skills>/u);
 		assert.match(result?.systemPrompt ?? "", /\[FOCUS\]/u);
@@ -135,7 +134,7 @@ describe("focus prompt injection", () => {
 		const result = await injectFocusRestorePrompt(
 			pi(),
 			focusController({
-				allowed: [ENTER_FOCUS_TOOL],
+				allowed: ["agent"],
 				searchable: [
 					activeFocus({
 						name: "explore",
@@ -185,7 +184,7 @@ describe("focus prompt injection", () => {
 		runtime.setLockedFocusName("edit");
 		const focus = focusController({
 			active: activeFocus(),
-			allowed: ["read", ENTER_FOCUS_TOOL, EXIT_FOCUS_TOOL],
+			allowed: ["read", EXIT_FOCUS_TOOL],
 		});
 
 		const result = await injectFocusRestorePrompt(
@@ -280,7 +279,7 @@ describe("focus prompt injection", () => {
 
 		registerFocusReminderSource(
 			pi(),
-			focusController({ allowed: [ENTER_FOCUS_TOOL] }),
+			focusController({ allowed: ["agent"] }),
 			runtime,
 			reminders,
 		);
@@ -299,7 +298,7 @@ describe("focus prompt injection", () => {
 				"No focus is active.",
 				"Previous focus instructions and tool definitions are no longer active.",
 				"Use only the tool definitions in this latest reminder.",
-				"If focus-scoped tools are needed, either call enter_focus to do the work yourself, or call subagent with the target focus to delegate it without entering (keeping this context clean).",
+				"If focus-scoped tools are needed, call agent with the target focus to delegate it.",
 				"",
 				"Focus routing instructions:",
 				"[FOCUS]",
@@ -308,8 +307,8 @@ describe("focus prompt injection", () => {
 				"Focus rules:",
 				"- A focus is an operational mode that controls available tools and instructions.",
 				"- Use the descriptions below to choose which focus a task needs.",
-				"- Before substantive work, choose how to run that focus: enter_focus to do the work yourself in the current context, or subagent to delegate it to a child agent that runs in the focus and returns only its final message.",
-				"- Prefer subagent when you only need the result, want to keep this context clean, or want to run work in parallel; pass the focus as the subagent focus parameter instead of entering it yourself. Prefer enter_focus when you want to work step by step in that focus.",
+				"- Before substantive work, delegate focus-scoped work with agent using the target focus parameter.",
+				"- Prefer agent when focus-scoped tools are needed; it keeps this context clean and can run work in parallel.",
 				"- Auto focuses may be entered without asking the user.",
 				"- Do not ask the user for information that can be discovered after entering an appropriate focus.",
 				"- If a needed capability is not visible, first check whether another available focus exposes it.",
@@ -322,8 +321,8 @@ describe("focus prompt injection", () => {
 				JSON.stringify(
 					[
 						{
-							name: ENTER_FOCUS_TOOL,
-							description: "Enter focus",
+							name: "agent",
+							description: "Spawn agent",
 							parameters: {},
 						},
 					],

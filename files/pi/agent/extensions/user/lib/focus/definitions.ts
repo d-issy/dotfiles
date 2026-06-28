@@ -33,7 +33,6 @@ export type FocusDefinition = {
 export const BASE_FOCUS = "base";
 export const FOCUS_STATE_TYPE = "focus-state";
 export const FOCUS_REMINDER_TYPE = "focus-reminder";
-export const ENTER_FOCUS_TOOL = "enter_focus";
 export const EXIT_FOCUS_TOOL = "exit_focus";
 
 export function getFocusExitMode(focus: FocusDefinition): FocusExitMode {
@@ -41,7 +40,7 @@ export function getFocusExitMode(focus: FocusDefinition): FocusExitMode {
 }
 
 /**
- * Whether a focus may be launched as a subagent. Interactive focuses (e.g.
+ * Whether a focus may be launched as an agent. Interactive focuses (e.g.
  * `interview`) cannot run headless, so they are excluded unless `spawnable` is
  * explicitly set. Derivation: `spawnable ?? !interactiveOnly` (SPEC §6).
  */

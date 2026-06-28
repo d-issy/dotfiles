@@ -38,11 +38,9 @@ function renderResultContext(): Parameters<
 function getSubagentDefinition(): ToolDefinition {
 	const catalog = createToolCatalog();
 	registerSubagentTool(catalog);
-	const subagent = catalog
-		.list()
-		.find((t) => t.definition.name === SUBAGENT_TOOL);
-	assert.ok(subagent);
-	return subagent.definition as ToolDefinition;
+	const agent = catalog.list().find((t) => t.definition.name === SUBAGENT_TOOL);
+	assert.ok(agent);
+	return agent.definition as ToolDefinition;
 }
 function makeFocus(overrides: Partial<FocusDefinition>): FocusDefinition {
 	return {
@@ -73,18 +71,18 @@ describe("isFocusSpawnable", () => {
 	});
 });
 
-describe("subagent tool registration", () => {
-	it("registers the subagent tool in the catalog", () => {
+describe("agent tool registration", () => {
+	it("registers the agent tool in the catalog", () => {
 		const catalog = createToolCatalog();
 		registerSubagentTool(catalog);
 
 		const tools = catalog.list();
-		const subagent = tools.find((t) => t.definition.name === SUBAGENT_TOOL);
+		const agent = tools.find((t) => t.definition.name === SUBAGENT_TOOL);
 
-		assert.ok(subagent, "subagent tool should be registered");
-		assert.equal(subagent.definition.name, SUBAGENT_TOOL);
-		assert.equal(subagent.definition.executionMode, "parallel");
-		assert.ok(subagent.definition.parameters, "should have parameters");
+		assert.ok(agent, "agent tool should be registered");
+		assert.equal(agent.definition.name, SUBAGENT_TOOL);
+		assert.equal(agent.definition.executionMode, "parallel");
+		assert.ok(agent.definition.parameters, "should have parameters");
 	});
 
 	it("defines schema with focus, prompt, and optional title", () => {
@@ -92,10 +90,10 @@ describe("subagent tool registration", () => {
 		registerSubagentTool(catalog);
 
 		const tools = catalog.list();
-		const subagent = tools.find((t) => t.definition.name === SUBAGENT_TOOL);
-		assert.ok(subagent);
+		const agent = tools.find((t) => t.definition.name === SUBAGENT_TOOL);
+		assert.ok(agent);
 
-		const params = subagent.definition.parameters;
+		const params = agent.definition.parameters;
 		// TypeBox schema should have focus, prompt, title properties
 		assert.ok(params, "parameters schema is defined");
 	});
@@ -108,10 +106,10 @@ describe("subagent tool registration", () => {
 		]);
 
 		const tools = catalog.list();
-		const subagent = tools.find((t) => t.definition.name === SUBAGENT_TOOL);
-		assert.ok(subagent);
+		const agent = tools.find((t) => t.definition.name === SUBAGENT_TOOL);
+		assert.ok(agent);
 
-		const params = subagent.definition.parameters as {
+		const params = agent.definition.parameters as {
 			properties: { focus: { type?: string; description?: string } };
 		};
 		const focus = params.properties.focus;
@@ -125,10 +123,10 @@ describe("subagent tool registration", () => {
 		registerSubagentTool(catalog, [{ name: "explore" }]);
 
 		const tools = catalog.list();
-		const subagent = tools.find((t) => t.definition.name === SUBAGENT_TOOL);
-		assert.ok(subagent?.definition.execute);
+		const agent = tools.find((t) => t.definition.name === SUBAGENT_TOOL);
+		assert.ok(agent?.definition.execute);
 
-		const result = await subagent.definition.execute(
+		const result = await agent.definition.execute(
 			"call-1",
 			{ focus: "interview", prompt: "do something" },
 			undefined,
@@ -147,10 +145,10 @@ describe("subagent tool registration", () => {
 		registerSubagentTool(catalog);
 
 		const tools = catalog.list();
-		const subagent = tools.find((t) => t.definition.name === SUBAGENT_TOOL);
-		assert.ok(subagent);
+		const agent = tools.find((t) => t.definition.name === SUBAGENT_TOOL);
+		assert.ok(agent);
 
-		const definition = subagent.definition as ToolDefinition;
+		const definition = agent.definition as ToolDefinition;
 		assert.ok(definition.execute, "should have an execute function");
 
 		// The actual execute spawns a real pi process – at unit-test level we
@@ -163,9 +161,9 @@ describe("subagent tool registration", () => {
 		registerSubagentTool(catalog);
 
 		const tools = catalog.list();
-		const subagent = tools.find((t) => t.definition.name === SUBAGENT_TOOL);
-		assert.ok(subagent);
-		assert.equal(subagent.definition.executionMode, "parallel");
+		const agent = tools.find((t) => t.definition.name === SUBAGENT_TOOL);
+		assert.ok(agent);
+		assert.equal(agent.definition.executionMode, "parallel");
 	});
 
 	it("includes prompt guidelines about nesting prevention", () => {
@@ -173,10 +171,10 @@ describe("subagent tool registration", () => {
 		registerSubagentTool(catalog);
 
 		const tools = catalog.list();
-		const subagent = tools.find((t) => t.definition.name === SUBAGENT_TOOL);
-		assert.ok(subagent);
+		const agent = tools.find((t) => t.definition.name === SUBAGENT_TOOL);
+		assert.ok(agent);
 
-		const guidelines = subagent.definition.promptGuidelines ?? [];
+		const guidelines = agent.definition.promptGuidelines ?? [];
 		const hasNestingWarning = guidelines.some((g) =>
 			g.toLowerCase().includes("cannot spawn further"),
 		);
@@ -319,7 +317,7 @@ describe("subagent tool registration", () => {
 		assert.doesNotMatch(output, /tools:/u);
 		assert.doesNotMatch(output, /read_chunk/u);
 	});
-	it("renders subagent running time with fractions and completed time without fractions", () => {
+	it("renders agent running time with fractions and completed time without fractions", () => {
 		const definition = getSubagentDefinition();
 		assert.ok(definition.renderResult);
 
@@ -361,25 +359,25 @@ describe("subagent tool registration", () => {
 		registerSubagentTool(catalog);
 
 		const tools = catalog.list();
-		const subagent = tools.find((t) => t.definition.name === SUBAGENT_TOOL);
-		assert.ok(subagent);
+		const agent = tools.find((t) => t.definition.name === SUBAGENT_TOOL);
+		assert.ok(agent);
 		assert.ok(
-			typeof subagent.isErrorResult === "function",
+			typeof agent.isErrorResult === "function",
 			"should have isErrorResult hook",
 		);
 	});
 });
 
-describe("subagent isErrorResult", () => {
+describe("agent isErrorResult", () => {
 	it("returns false when details are undefined", () => {
 		const catalog = createToolCatalog();
 		registerSubagentTool(catalog);
 
 		const tools = catalog.list();
-		const subagent = tools.find((t) => t.definition.name === SUBAGENT_TOOL);
-		assert.ok(subagent);
+		const agent = tools.find((t) => t.definition.name === SUBAGENT_TOOL);
+		assert.ok(agent);
 
-		const result = subagent.isErrorResult?.(undefined);
+		const result = agent.isErrorResult?.(undefined);
 		assert.equal(result, false);
 	});
 
@@ -388,20 +386,20 @@ describe("subagent isErrorResult", () => {
 		registerSubagentTool(catalog);
 
 		const tools = catalog.list();
-		const subagent = tools.find((t) => t.definition.name === SUBAGENT_TOOL);
-		assert.ok(subagent);
+		const agent = tools.find((t) => t.definition.name === SUBAGENT_TOOL);
+		assert.ok(agent);
 
-		const result = subagent.isErrorResult?.({ stderr: "error output" });
+		const result = agent.isErrorResult?.({ stderr: "error output" });
 		assert.equal(result, true);
 	});
 });
 
-describe("subagent tool access", () => {
+describe("agent tool access", () => {
 	it("is not blocked by focus policy when registered in catalog", () => {
 		const catalog = createToolCatalog();
 		registerSubagentTool(catalog);
 
-		// The subagent tool should be allowed in all focuses (via ALWAYS_ALLOWED_TOOL_NAMES)
+		// The agent tool should be allowed in all focuses (via ALWAYS_ALLOWED_TOOL_NAMES)
 		// In the catalog, it has no notAllowedReason policy, so the fallback applies
 		const reason = catalog.checkToolAllowed(
 			"explore",
@@ -412,7 +410,7 @@ describe("subagent tool access", () => {
 	});
 });
 
-describe("subagent PI_SUBAGENT environment guard", () => {
+describe("agent PI_SUBAGENT environment guard", () => {
 	it("tool is registered regardless of environment", () => {
 		// The spec says the feature/feature-registration should skip
 		// when PI_SUBAGENT=1, but the tool registration itself is independent.
@@ -421,7 +419,7 @@ describe("subagent PI_SUBAGENT environment guard", () => {
 		registerSubagentTool(catalog);
 
 		const tools = catalog.list();
-		const subagent = tools.find((t) => t.definition.name === SUBAGENT_TOOL);
-		assert.ok(subagent);
+		const agent = tools.find((t) => t.definition.name === SUBAGENT_TOOL);
+		assert.ok(agent);
 	});
 });

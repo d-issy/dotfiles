@@ -1,7 +1,6 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { isProjectToolAvailable } from "../tool/project";
 import {
-	ENTER_FOCUS_TOOL,
 	EXIT_FOCUS_TOOL,
 	FOCUS_EXIT_MODE,
 	FOCUS_TRANSITION,
@@ -18,11 +17,11 @@ const FOCUS_MANAGEMENT_TOOLS_BY_TRANSITION_AND_EXIT_MODE: Record<
 	Record<FocusExitMode, readonly string[]>
 > = {
 	[FOCUS_TRANSITION.AUTO]: {
-		[FOCUS_EXIT_MODE.SINGLE_TURN]: [ENTER_FOCUS_TOOL],
+		[FOCUS_EXIT_MODE.SINGLE_TURN]: NO_FOCUS_MANAGEMENT_TOOLS,
 		[FOCUS_EXIT_MODE.EXPLICIT]: [EXIT_FOCUS_TOOL],
 	},
 	[FOCUS_TRANSITION.CONFIRM]: {
-		[FOCUS_EXIT_MODE.SINGLE_TURN]: [ENTER_FOCUS_TOOL],
+		[FOCUS_EXIT_MODE.SINGLE_TURN]: NO_FOCUS_MANAGEMENT_TOOLS,
 		[FOCUS_EXIT_MODE.EXPLICIT]: [EXIT_FOCUS_TOOL],
 	},
 	[FOCUS_TRANSITION.MANUAL]: {
@@ -48,24 +47,14 @@ function filterAvailable(pi: ExtensionAPI, names: readonly string[]): string[] {
 
 export function getBaseFocusTools(
 	pi: ExtensionAPI,
-	options?: FocusToolAccessOptions,
+	_options?: FocusToolAccessOptions,
 ): string[] {
-	return filterAvailable(
-		pi,
-		unique([
-			...ALWAYS_ALLOWED_TOOL_NAMES,
-			"subagent",
-			...(options?.includeManagementTools === false ? [] : [ENTER_FOCUS_TOOL]),
-		]),
-	);
+	return filterAvailable(pi, unique([...ALWAYS_ALLOWED_TOOL_NAMES, "agent"]));
 }
 
 function declaredFocusToolNames(focus: FocusDefinition): string[] {
 	return focus.tools.filter(
-		(name) =>
-			name !== ENTER_FOCUS_TOOL &&
-			name !== EXIT_FOCUS_TOOL &&
-			isProjectToolAvailable(name),
+		(name) => name !== EXIT_FOCUS_TOOL && isProjectToolAvailable(name),
 	);
 }
 

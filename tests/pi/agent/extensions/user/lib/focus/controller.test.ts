@@ -20,7 +20,7 @@ function fakePi(): ExtensionAPI & {
 		getAllTools: () =>
 			[
 				"multi_tool_use.parallel",
-				"enter_focus",
+				"agent",
 				"exit_focus",
 				"read",
 				"read_chunk",
@@ -127,7 +127,7 @@ describe("createFocusController", () => {
 		assert.match(ctx.notifications.join("\n"), /must contain a JSON object/u);
 		assert.deepEqual(
 			controller.allowedToolNames(pi),
-			new Set(["multi_tool_use.parallel", "enter_focus"]),
+			new Set(["multi_tool_use.parallel", "agent"]),
 		);
 	});
 

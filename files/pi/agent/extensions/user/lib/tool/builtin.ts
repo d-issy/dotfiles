@@ -24,7 +24,7 @@ import { registerPullRequestTools } from "./pull-request";
 import { type SpawnableFocus, registerSubagentTool } from "./subagent";
 
 export type RegisterCoreUserToolsOptions = {
-	/** Focuses the subagent tool may launch (used to build the `focus` enum). */
+	/** Focuses the agent tool may launch (used to build the `focus` enum). */
 	readonly spawnableFocuses?: readonly SpawnableFocus[];
 };
 

@@ -1,6 +1,6 @@
 import { execFile } from "node:child_process";
 import { lstat, readdir } from "node:fs/promises";
-import { dirname, relative, resolve, sep } from "node:path";
+import { relative, resolve, sep } from "node:path";
 import { promisify } from "node:util";
 import { ToolError, isErrnoCode } from "./errors";
 type IgnoreCache = Map<string, boolean>;
@@ -123,27 +123,16 @@ async function walkAllowedDescendants(
 }
 
 async function findRepositoryRoot(cwd: string): Promise<string | undefined> {
-	const candidates: string[] = [];
-	let dir = resolve(cwd);
-	while (true) {
-		candidates.push(dir);
-		const parent = dirname(dir);
-		if (parent === dir) break;
-		dir = parent;
+	try {
+		const { stdout } = await execFileAsync(
+			"git",
+			["rev-parse", "--show-toplevel"],
+			{ cwd },
+		);
+		return stdout.trim() || undefined;
+	} catch {
+		return undefined;
 	}
-
-	const results = await Promise.all(
-		candidates.map(async (candidate) => {
-			try {
-				await lstat(resolve(candidate, ".git"));
-				return candidate;
-			} catch {
-				return undefined;
-			}
-		}),
-	);
-
-	return results.find((r) => r !== undefined);
 }
 
 function isInside(root: string, path: string): boolean {

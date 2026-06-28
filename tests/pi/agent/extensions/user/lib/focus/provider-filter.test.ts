@@ -5,10 +5,7 @@ import type {
 } from "@earendil-works/pi-coding-agent";
 import { describe, it } from "vitest";
 import type { FocusController } from "#pi-user/lib/focus/controller";
-import {
-	ENTER_FOCUS_TOOL,
-	EXIT_FOCUS_TOOL,
-} from "#pi-user/lib/focus/definitions";
+import { EXIT_FOCUS_TOOL } from "#pi-user/lib/focus/definitions";
 import { filterProviderTools } from "#pi-user/lib/focus/provider-filter";
 import type { FocusRuntime } from "#pi-user/lib/focus/runtime";
 
@@ -20,9 +17,7 @@ function focus(allowedToolNames: readonly string[]): FocusController {
 		) =>
 			new Set(
 				options?.includeManagementTools === false
-					? allowedToolNames.filter(
-							(name) => name !== ENTER_FOCUS_TOOL && name !== EXIT_FOCUS_TOOL,
-						)
+					? allowedToolNames.filter((name) => name !== EXIT_FOCUS_TOOL)
 					: allowedToolNames,
 			),
 	} as unknown as FocusController;
@@ -37,7 +32,7 @@ describe("filterProviderTools", () => {
 		const payload = {
 			tools: [
 				{ name: "read" },
-				{ name: ENTER_FOCUS_TOOL },
+				{ name: "agent" },
 				{ function: { name: EXIT_FOCUS_TOOL } },
 			],
 		};
@@ -46,10 +41,10 @@ describe("filterProviderTools", () => {
 		assert.deepEqual(
 			await filterProviderTools(
 				{} as ExtensionAPI,
-				focus(["read", ENTER_FOCUS_TOOL, EXIT_FOCUS_TOOL]),
+				focus(["read", "agent", EXIT_FOCUS_TOOL]),
 				runtime,
 			)(event(payload), undefined as never),
-			{ tools: [{ name: "read" }] },
+			{ tools: [{ name: "read" }, { name: "agent" }] },
 		);
 	});
 
@@ -61,7 +56,7 @@ describe("filterProviderTools", () => {
 						{
 							functionDeclarations: [
 								{ name: "read" },
-								{ name: ENTER_FOCUS_TOOL },
+								{ name: EXIT_FOCUS_TOOL },
 							],
 						},
 					],
@@ -73,7 +68,7 @@ describe("filterProviderTools", () => {
 		assert.deepEqual(
 			await filterProviderTools(
 				{} as ExtensionAPI,
-				focus(["read", ENTER_FOCUS_TOOL]),
+				focus(["read", EXIT_FOCUS_TOOL]),
 				runtime,
 			)(event(payload), undefined as never),
 			{
@@ -92,21 +87,17 @@ describe("filterProviderTools", () => {
 
 	it("removes edit_chunk and other focus-scoped tools when no focus is active", async () => {
 		const payload = {
-			tools: [
-				{ name: "read" },
-				{ name: "edit_chunk" },
-				{ name: "enter_focus" },
-			],
+			tools: [{ name: "read" }, { name: "edit_chunk" }, { name: "agent" }],
 		};
 		const runtime = { lockedFocusName: undefined } as FocusRuntime;
 
 		assert.deepEqual(
 			await filterProviderTools(
 				{} as ExtensionAPI,
-				focus(["read", ENTER_FOCUS_TOOL]),
+				focus(["read", "agent"]),
 				runtime,
 			)(event(payload), undefined as never),
-			{ tools: [{ name: "read" }, { name: ENTER_FOCUS_TOOL }] },
+			{ tools: [{ name: "read" }, { name: "agent" }] },
 		);
 	});
 });
