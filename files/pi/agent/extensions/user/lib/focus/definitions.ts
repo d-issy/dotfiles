@@ -146,11 +146,11 @@ export const BASE_FOCUS_DEFINITIONS: readonly FocusDefinition[] = [
 		color: "alert",
 	},
 	{
-		name: "pull-request",
+		name: "github",
 		description:
 			"Use when creating or updating a pull request. Stages explicit files on a dedicated branch, pushes, and opens or updates a draft PR via gh without low-level git/gh commands.",
 		prompt: [
-			"You are in pull-request focus. At the start of each turn, inspect the current diff (e.g. with git_diff or github_pull_request_diff) before doing any work, so you act on the real state of changes.",
+			"You are in github focus. At the start of each turn, inspect the current diff (e.g. with git_diff or github_pull_request_diff) before doing any work, so you act on the real state of changes.",
 			"Keep PR body concise: do not include a Changes section (the changed files are visible) or a Verify section (CI checks handle verification). Prefer this focus over the runbook skill for PR creation and updates.",
 		].join(" "),
 		tools: ["create_pull_request", "update_pull_request"],

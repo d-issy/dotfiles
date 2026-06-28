@@ -13,6 +13,7 @@ import { type ToolCatalog, defineToolContribution } from "./catalog";
 const GH_TIMEOUT_MS = 30_000;
 const GH_WATCH_TIMEOUT_MS = 30 * 60 * 1000;
 const GH_MAX_BUFFER_BYTES = 10 * 1024 * 1024;
+const GITHUB_WRITE_TIMEOUT_MS = 60_000;
 const DEFAULT_MAX_FILES = 50;
 const MAX_FILES_LIMIT = 200;
 const DEFAULT_MAX_PATCH_BYTES = 20_000;
@@ -167,6 +168,51 @@ const githubPrChecksSchema = Type.Object({
 });
 
 type GithubPrChecksInput = Static<typeof githubPrChecksSchema>;
+
+const createPullRequestSchema = Type.Object({
+	branchName: Type.String({
+		description:
+			"Name of the new working branch to create. Must not be the repository default branch.",
+	}),
+	commitFiles: Type.Array(Type.String(), {
+		description:
+			"Explicit list of files to stage and commit. Only these files are staged.",
+	}),
+	commitMessage: Type.String({
+		description: "Commit message for the new commit.",
+	}),
+	title: Type.String({ description: "Pull request title." }),
+	body: Type.String({ description: "Pull request body." }),
+});
+
+type CreatePullRequestInput = Static<typeof createPullRequestSchema>;
+
+const updatePullRequestSchema = Type.Object({
+	commitFiles: Type.Optional(
+		Type.Array(Type.String(), {
+			description: "If provided, stage only these files, commit, and push.",
+		}),
+	),
+	commitMessage: Type.Optional(
+		Type.String({
+			description: "Commit message. Required when commitFiles is provided.",
+		}),
+	),
+	title: Type.Optional(
+		Type.String({ description: "If provided, update the PR title." }),
+	),
+	body: Type.Optional(
+		Type.String({ description: "If provided, update the PR body." }),
+	),
+	reviewStatus: Type.Optional(
+		Type.Union([Type.Literal("draft"), Type.Literal("ready")], {
+			description:
+				"If provided, update whether the PR is draft or ready for review. Allowed values: draft, ready. If omitted, do not change review readiness state.",
+		}),
+	),
+});
+
+type UpdatePullRequestInput = Static<typeof updatePullRequestSchema>;
 
 type GithubToolDetails = RenderableTextDetails & {
 	readonly commands: readonly string[];
@@ -780,6 +826,310 @@ async function githubPrChecks(
 	};
 }
 
+function commandTextForBin(bin: string, args: readonly string[]): string {
+	return [bin, ...args].map(shellQuote).join(" ");
+}
+
+function requireNonEmpty(value: string | undefined, field: string): string {
+	const text = nonEmpty(value, field);
+	if (text === undefined) throw new Error(`${field} must not be empty.`);
+	return text;
+}
+
+async function execCommand(
+	bin: string,
+	cwd: string,
+	args: readonly string[],
+	signal: AbortSignal | undefined,
+	options?: { readonly timeoutMs?: number },
+): Promise<GhExecResult> {
+	return await new Promise((resolve) => {
+		execFile(
+			bin,
+			[...args],
+			{
+				cwd,
+				env: {
+					...process.env,
+					GIT_PAGER: "cat",
+					GH_PAGER: "cat",
+					NO_COLOR: "1",
+				},
+				maxBuffer: GH_MAX_BUFFER_BYTES,
+				timeout: options?.timeoutMs ?? GITHUB_WRITE_TIMEOUT_MS,
+				signal,
+			},
+			(error, stdout, stderr) => {
+				const rawCode = error && "code" in error ? error.code : 0;
+				const exitCode = typeof rawCode === "number" ? rawCode : null;
+				resolve({
+					command: commandTextForBin(bin, args),
+					exitCode,
+					stdout: String(stdout),
+					stderr: String(stderr),
+					error: error instanceof Error ? error.message : undefined,
+				});
+			},
+		);
+	});
+}
+
+function assertCommandSuccess(result: GhExecResult): void {
+	if (result.exitCode === 0) return;
+	const detail = result.stderr.trim() || result.stdout.trim() || "no output";
+	throw new Error(
+		`${result.command} failed with exit code ${String(result.exitCode)}: ${detail}`,
+	);
+}
+
+async function runCommand(
+	bin: string,
+	cwd: string,
+	args: readonly string[],
+	signal: AbortSignal | undefined,
+	commands: string[],
+	options?: { readonly timeoutMs?: number },
+): Promise<GhExecResult> {
+	const result = await execCommand(bin, cwd, args, signal, options);
+	commands.push(result.command);
+	assertCommandSuccess(result);
+	return result;
+}
+
+async function detectDefaultBranch(
+	cwd: string,
+	signal: AbortSignal | undefined,
+): Promise<string> {
+	const sym = await execCommand(
+		"git",
+		cwd,
+		["symbolic-ref", "--short", "refs/remotes/origin/HEAD"],
+		signal,
+	);
+	if (sym.exitCode === 0) {
+		const ref = sym.stdout.trim();
+		if (ref.startsWith("origin/")) return ref.slice("origin/".length);
+		if (ref) return ref;
+	}
+
+	const ghRepo = await execCommand(
+		"gh",
+		cwd,
+		["repo", "view", "--json", "defaultBranchRef"],
+		signal,
+	);
+	if (ghRepo.exitCode === 0) {
+		const branch = parseDefaultBranchRef(ghRepo.stdout);
+		if (branch) return branch;
+	}
+
+	const remote = await execCommand(
+		"git",
+		cwd,
+		["remote", "show", "origin"],
+		signal,
+	);
+	if (remote.exitCode === 0) {
+		const branch = parseRemoteHeadBranch(remote.stdout);
+		if (branch) return branch;
+	}
+
+	const config = await execCommand(
+		"git",
+		cwd,
+		["config", "--get", "init.defaultBranch"],
+		signal,
+	);
+	if (config.exitCode === 0 && config.stdout.trim()) {
+		return config.stdout.trim();
+	}
+
+	return "main";
+}
+
+function parseDefaultBranchRef(stdout: string): string | undefined {
+	try {
+		const value = JSON.parse(stdout) as {
+			defaultBranchRef?: { name?: string };
+		};
+		const name = value.defaultBranchRef?.name;
+		return typeof name === "string" && name.trim() !== ""
+			? name.trim()
+			: undefined;
+	} catch {
+		return undefined;
+	}
+}
+
+function parseRemoteHeadBranch(stdout: string): string | undefined {
+	const match = /HEAD branch:\s*(\S+)/u.exec(stdout);
+	return match?.[1];
+}
+
+async function currentBranch(
+	cwd: string,
+	signal: AbortSignal | undefined,
+	commands: string[],
+): Promise<string> {
+	const result = await runCommand(
+		"git",
+		cwd,
+		["rev-parse", "--abbrev-ref", "HEAD"],
+		signal,
+		commands,
+	);
+	const branch = result.stdout.trim();
+	if (!branch || branch === "HEAD") {
+		throw new Error("Could not detect the current branch (detached HEAD).");
+	}
+	return branch;
+}
+
+async function createPullRequest(
+	params: CreatePullRequestInput,
+	cwd: string,
+	signal: AbortSignal | undefined,
+): Promise<GithubToolOutput> {
+	const branchName = requireNonEmpty(params.branchName, "branchName");
+	const commitMessage = requireNonEmpty(params.commitMessage, "commitMessage");
+	const title = requireNonEmpty(params.title, "title");
+	const body = requireNonEmpty(params.body, "body");
+	if (params.commitFiles.length === 0) {
+		throw new Error("commitFiles must not be empty.");
+	}
+
+	const commands: string[] = [];
+	const defaultBranchName = await detectDefaultBranch(cwd, signal);
+	if (branchName === defaultBranchName) {
+		throw new Error(
+			`branchName must not be the repository default branch ('${defaultBranchName}').`,
+		);
+	}
+
+	await runCommand("git", cwd, ["switch", "-c", branchName], signal, commands);
+	await runCommand(
+		"git",
+		cwd,
+		["add", "--", ...params.commitFiles],
+		signal,
+		commands,
+	);
+	await runCommand(
+		"git",
+		cwd,
+		["commit", "--only", "-m", commitMessage, "--", ...params.commitFiles],
+		signal,
+		commands,
+	);
+	await runCommand(
+		"git",
+		cwd,
+		["push", "-u", "origin", branchName],
+		signal,
+		commands,
+	);
+	const pr = await runCommand(
+		"gh",
+		cwd,
+		["pr", "create", "--draft", "--title", title, "--body", body],
+		signal,
+		commands,
+	);
+
+	const output =
+		pr.stdout.trim() || pr.stderr.trim() || "Created draft pull request.";
+	return { text: output, commands };
+}
+
+async function updatePullRequest(
+	params: UpdatePullRequestInput,
+	cwd: string,
+	signal: AbortSignal | undefined,
+): Promise<GithubToolOutput> {
+	const hasCommit = params.commitFiles !== undefined;
+	const hasMeta =
+		params.title !== undefined ||
+		params.body !== undefined ||
+		params.reviewStatus !== undefined;
+	if (!hasCommit && !hasMeta) {
+		throw new Error(
+			"No update inputs provided. Provide commitFiles, title, body, or reviewStatus.",
+		);
+	}
+
+	if (hasCommit) {
+		if ((params.commitFiles ?? []).length === 0) {
+			throw new Error("commitFiles must not be empty.");
+		}
+		requireNonEmpty(params.commitMessage, "commitMessage");
+	}
+
+	const commands: string[] = [];
+	const lines: string[] = [];
+
+	const defaultBranchName = await detectDefaultBranch(cwd, signal);
+	const branch = await currentBranch(cwd, signal, commands);
+	if (branch === defaultBranchName) {
+		throw new Error(
+			`update_pull_request must not run on the repository default branch ('${defaultBranchName}').`,
+		);
+	}
+
+	if (hasCommit) {
+		const files = params.commitFiles ?? [];
+		const commitMessage = requireNonEmpty(
+			params.commitMessage,
+			"commitMessage",
+		);
+		await runCommand("git", cwd, ["add", "--", ...files], signal, commands);
+		await runCommand(
+			"git",
+			cwd,
+			["commit", "--only", "-m", commitMessage, "--", ...files],
+			signal,
+			commands,
+		);
+		await runCommand("git", cwd, ["push"], signal, commands);
+		lines.push("Pushed new commit to the current branch.");
+	}
+
+	if (params.title !== undefined) {
+		requireNonEmpty(params.title, "title");
+		await runCommand(
+			"gh",
+			cwd,
+			["pr", "edit", "--title", params.title],
+			signal,
+			commands,
+		);
+		lines.push("Updated PR title.");
+	}
+
+	if (params.body !== undefined) {
+		requireNonEmpty(params.body, "body");
+		await runCommand(
+			"gh",
+			cwd,
+			["pr", "edit", "--body", params.body],
+			signal,
+			commands,
+		);
+		lines.push("Updated PR body.");
+	}
+
+	if (params.reviewStatus !== undefined) {
+		if (params.reviewStatus === "draft") {
+			await runCommand("gh", cwd, ["pr", "ready", "--undo"], signal, commands);
+			lines.push("Converted PR to draft.");
+		} else {
+			await runCommand("gh", cwd, ["pr", "ready"], signal, commands);
+			lines.push("Marked PR ready for review.");
+		}
+	}
+
+	return { text: lines.join("\n"), commands };
+}
+
 function lineLimitFromInput(
 	input: Record<string, unknown>,
 ): number | undefined {
@@ -805,6 +1155,7 @@ function registerGithubTool<TInput extends object>(
 			signal: AbortSignal | undefined,
 		) => Promise<GithubToolOutput>;
 		readonly extractSecretPaths?: (input: TInput) => readonly string[];
+		readonly write?: boolean;
 	},
 ): void {
 	catalog.register(
@@ -815,19 +1166,28 @@ function registerGithubTool<TInput extends object>(
 					? (input) => config.extractSecretPaths?.(input as TInput) ?? []
 					: undefined,
 				notAllowedReason: (focus) =>
-					`${config.name} is available only in git/GitHub read-only investigation focuses, not in ${focus} focus.`,
+					config.write === true
+						? `${config.name} is available only in github focus, not in ${focus} focus.`
+						: `${config.name} is available only in git/GitHub read-only investigation focuses, not in ${focus} focus.`,
 			} satisfies ToolPolicy,
 			definition: {
 				name: config.name,
 				label: config.label,
 				description: config.description,
 				promptSnippet: config.promptSnippet,
-				promptGuidelines: [
-					`${config.name} runs fixed read-only GitHub CLI commands. Use filtering parameters such as paths, mode, maxFiles, and include* flags to keep context small.`,
-					"Outputs are bounded like built-in tools. If output is truncated, inspect the saved temp file with read offset/limit or retry with narrower parameters.",
-				],
+				promptGuidelines: config.write
+					? [
+							`${config.name} performs git and gh write operations directly from explicit inputs. Do not add interactive confirmation prompts.`,
+							"Use explicit commitFiles lists to avoid committing unrelated work. Only the listed files are staged.",
+							"Fail clearly when required inputs are missing, the target branch is the repository default branch, or unsafe conditions are detected.",
+							"Do not force-push, amend, rebase, or rewrite history.",
+						]
+					: [
+							`${config.name} runs fixed read-only GitHub CLI commands. Use filtering parameters such as paths, mode, maxFiles, and include* flags to keep context small.`,
+							"Outputs are bounded like built-in tools. If output is truncated, inspect the saved temp file with read offset/limit or retry with narrower parameters.",
+						],
 				parameters: config.parameters,
-				executionMode: "parallel",
+				executionMode: config.write ? "sequential" : "parallel",
 				renderCall: (args, theme) => renderGithubCall(config.name, args, theme),
 				renderResult: renderLimitedTextResult,
 				execute: async (_toolCallId, params, signal, _onUpdate, ctx) => {
@@ -838,9 +1198,13 @@ function registerGithubTool<TInput extends object>(
 						signal,
 					);
 					const limited = await limitToolOutput(output.text, {
-						tempPrefix: "pi-github-tool",
+						tempPrefix: config.write
+							? "pi-github-write-tool"
+							: "pi-github-tool",
 						fileName: `${config.name}.txt`,
-						lineLimit: lineLimitFromInput(params as Record<string, unknown>),
+						lineLimit: config.write
+							? undefined
+							: lineLimitFromInput(params as Record<string, unknown>),
 						emptyMessage: "(no output)",
 						hint: "Retry with narrower paths, mode, maxFiles, include* flags, or check filters when possible.",
 					});
@@ -910,5 +1274,29 @@ export function registerGithubTools(catalog: ToolCatalog): void {
 		parameters: githubPrChecksSchema,
 		promptSnippet: "Inspect GitHub PR CI checks",
 		execute: githubPrChecks,
+	});
+
+	registerGithubTool<CreatePullRequestInput>(catalog, {
+		name: "create_pull_request",
+		label: "create pull request",
+		description:
+			"Create a new draft pull request from specified commit files. Creates a new branch, stages only the listed files, commits, pushes, and opens a draft PR with gh.",
+		parameters: createPullRequestSchema,
+		promptSnippet: "Create a draft pull request from explicit files",
+		extractSecretPaths: (input) => input.commitFiles,
+		write: true,
+		execute: createPullRequest,
+	});
+
+	registerGithubTool<UpdatePullRequestInput>(catalog, {
+		name: "update_pull_request",
+		label: "update pull request",
+		description:
+			"Update the pull request associated with the current branch: push new commits from explicit files, and/or update title, body, or draft/ready state.",
+		parameters: updatePullRequestSchema,
+		promptSnippet: "Update the PR for the current branch",
+		extractSecretPaths: (input) => input.commitFiles ?? [],
+		write: true,
+		execute: updatePullRequest,
 	});
 }

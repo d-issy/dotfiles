@@ -3,7 +3,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import assert from "node:assert/strict";
-import { describe, it } from "vitest";
+import { afterEach, describe, it } from "vitest";
 import {
 	assertNoIgnoredDescendants,
 	assertRepoPathAllowed,
@@ -12,8 +12,22 @@ import {
 	resolveRepoPath,
 } from "#pi-user/lib/file/guard";
 
+const tempParents: string[] = [];
+
+afterEach(() => {
+	for (const root of tempParents.splice(0)) {
+		rmSync(root, { recursive: true, force: true });
+	}
+});
+
+function tempParent(): string {
+	const parent = mkdtempSync(join(tmpdir(), "pi-file-guard-suite-"));
+	tempParents.push(parent);
+	return parent;
+}
+
 function tempRepo(): string {
-	const root = mkdtempSync(join(tmpdir(), "pi-file-guard-"));
+	const root = mkdtempSync(join(tempParent(), "repo-"));
 	execFileSync("git", ["init"], { cwd: root, stdio: "ignore" });
 	writeFileSync(join(root, ".gitignore"), "ignored.txt\nignored-dir/\n");
 	mkdirSync(join(root, "src", "nested"), { recursive: true });
@@ -98,13 +112,11 @@ describe("file guard", () => {
 	});
 
 	it("allows non-git temp projects without running gitignore checks", async () => {
-		const root = mkdtempSync(join(tmpdir(), "pi-file-guard-no-git-"));
+		const root = mkdtempSync(join(tempParent(), "no-git-"));
 		writeFileSync(join(root, "ignored.txt"), "not actually ignored\n");
 		const ctx = await createFsGuardContext(root);
 
 		assert.equal(ctx.isGitRepo, false);
 		await assertRepoPathAllowed(ctx, join(root, "ignored.txt"), "Reading");
-
-		rmSync(root, { recursive: true, force: true });
 	});
 });

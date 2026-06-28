@@ -20,7 +20,6 @@ import { type ToolCatalog, defineToolContribution } from "./catalog";
 import { registerGitTools } from "./git";
 import { registerGithubTools } from "./github";
 import { registerInterviewTools } from "./interview";
-import { registerPullRequestTools } from "./pull-request";
 import { type SpawnableFocus, registerSubagentTool } from "./subagent";
 
 export type RegisterCoreUserToolsOptions = {
@@ -41,7 +40,6 @@ export function registerCoreUserTools(
 	registerGitTools(catalog);
 	registerGithubTools(catalog);
 	registerInterviewTools(catalog);
-	registerPullRequestTools(catalog);
 	registerSubagentTool(catalog, options?.spawnableFocuses);
 }
 
