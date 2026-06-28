@@ -6,7 +6,13 @@ import {
 	RpcClient,
 	type Theme,
 } from "@earendil-works/pi-coding-agent";
-import { type Component, Text } from "@earendil-works/pi-tui";
+import {
+	type Component,
+	Text,
+	sliceByColumn,
+	truncateToWidth,
+	visibleWidth,
+} from "@earendil-works/pi-tui";
 import { type TSchema, Type } from "typebox";
 import { type ToolCatalog, defineToolContribution } from "./catalog";
 import {
@@ -127,6 +133,47 @@ function truncateTitle(label: string): string {
 		: label;
 }
 
+function truncateMiddleToWidth(text: string, width: number): string {
+	if (visibleWidth(text) <= width) return text;
+	if (width <= 1) return truncateToWidth(text, width, "");
+
+	const ellipsis = "…";
+	const remainingWidth = width - visibleWidth(ellipsis);
+	const headWidth = Math.ceil(remainingWidth / 2);
+	const tailWidth = Math.floor(remainingWidth / 2);
+	const textWidth = visibleWidth(text);
+	return `${sliceByColumn(text, 0, headWidth, true)}${ellipsis}${sliceByColumn(text, textWidth - tailWidth, tailWidth, true)}`;
+}
+
+function truncateAgentLine(line: string, width: number): string {
+	if (visibleWidth(line) <= width) return line;
+
+	const argsStart = line.indexOf(" (");
+	const argsEnd = line.lastIndexOf(")");
+	if (argsStart === -1 || argsEnd <= argsStart + 2) {
+		return truncateToWidth(line, width, "");
+	}
+
+	const prefix = line.slice(0, argsStart + 2);
+	const args = line.slice(argsStart + 2, argsEnd);
+	const suffix = line.slice(argsEnd);
+	const argsWidth = width - visibleWidth(prefix) - visibleWidth(suffix);
+	if (argsWidth <= 0) return truncateToWidth(line, width, "");
+
+	return `${prefix}${truncateMiddleToWidth(args, argsWidth)}${suffix}`;
+}
+
+/** Render each input line as one terminal row by truncating instead of wrapping. */
+class OneLinePerRowText implements Component {
+	constructor(private readonly text: string) {}
+
+	render(width: number): string[] {
+		return this.text.split("\n").map((line) => truncateAgentLine(line, width));
+	}
+
+	invalidate(): void {}
+}
+
 /** Format the one-line call display: `agent <title> in <focus>`. */
 function renderAgentCall(rawArgs: unknown, theme: Theme): Component {
 	const args = rawArgs as AgentInput;
@@ -168,11 +215,11 @@ function renderAgentResult(
 			.filter((c) => c.type === "text")
 			.map((c) => c.text)
 			.join("\n");
-		if (!options.expanded) return new Text(text, 0, 0);
+		if (!options.expanded) return new OneLinePerRowText(text);
 
 		const promptText = result.details?.prompt?.trim();
 		const toolCalls = result.details?.toolCalls ?? [];
-		const toolText = formatToolCallRecords(toolCalls);
+		const toolText = formatToolCallRecords(toolCalls, { truncateArgs: false });
 		const runningLine = result.details?.["_runningLine"];
 		const statusText = runningLine ?? text.trim();
 		const runningParts = [
@@ -201,13 +248,11 @@ function renderAgentResult(
 				.filter((c) => c.type === "text")
 				.map((c) => c.text)
 				.join("\n");
-			return new Text(
+			return new OneLinePerRowText(
 				`${stateDisplay} ${theme.fg("error", errorText)} ${theme.fg("dim", stats)}`,
-				0,
-				0,
 			);
 		}
-		return new Text(`${stateDisplay} ${theme.fg("dim", stats)}`, 0, 0);
+		return new OneLinePerRowText(`${stateDisplay} ${theme.fg("dim", stats)}`);
 	}
 
 	// Expanded – prompt + response + state + stats
@@ -231,9 +276,11 @@ function renderAgentResult(
 }
 
 /** Format a single tool-call argument value for display. */
-function formatArg(v: unknown): string {
+function formatArg(v: unknown, options: { truncate: boolean }): string {
 	if (typeof v === "string") {
-		return v.length > 80 ? `"${v.slice(0, 80)}…"` : `"${v}"`;
+		return options.truncate && v.length > 80
+			? `"${v.slice(0, 80)}…"`
+			: `"${v}"`;
 	}
 	if (typeof v === "number" || typeof v === "boolean" || v == null) {
 		return String(v);
@@ -241,20 +288,26 @@ function formatArg(v: unknown): string {
 	try {
 		const json = JSON.stringify(v);
 		if (!json) return String(v);
-		return json.length > 120 ? `${json.slice(0, 120)}…` : json;
+		return options.truncate && json.length > 120
+			? `${json.slice(0, 120)}…`
+			: json;
 	} catch {
 		return Object.prototype.toString.call(v);
 	}
 }
-function formatToolCallRecords(toolCalls: readonly ToolCallRecord[]): string {
+function formatToolCallRecords(
+	toolCalls: readonly ToolCallRecord[],
+	options: { truncateArgs?: boolean } = {},
+): string {
 	return toolCalls
-		.map((_, index) => formatToolCallRecord(toolCalls, index))
+		.map((_, index) => formatToolCallRecord(toolCalls, index, options))
 		.join("\n");
 }
 
 function formatToolCallRecord(
 	toolCalls: readonly ToolCallRecord[],
 	index: number,
+	options: { truncateArgs?: boolean } = {},
 ): string {
 	const minDurationMs = 1000;
 	const tc = toolCalls[index];
@@ -262,7 +315,10 @@ function formatToolCallRecord(
 	const duration = next ? next.startTime - tc.startTime : undefined;
 	const p = Object.entries(tc.args)
 		.filter(([, v]) => v !== undefined)
-		.map(([k, v]) => `${k}=${formatArg(v)}`)
+		.map(
+			([k, v]) =>
+				`${k}=${formatArg(v, { truncate: options.truncateArgs ?? true })}`,
+		)
 		.join(", ");
 	const argsStr = p ? ` (${p})` : "";
 	const durationStr =
