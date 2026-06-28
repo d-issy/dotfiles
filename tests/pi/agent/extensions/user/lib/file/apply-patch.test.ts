@@ -91,7 +91,7 @@ describe("apply_patch", () => {
 			[
 				[
 					"replaces[0] oldText matched multiple locations.",
-					"Specify targetLineNoRanges to limit where replacements apply.",
+					"Specify targetLineNoRanges for a safe range that contains only intended replacements.",
 					"Matched lines: [1, 3].",
 					"Warning: oldText matched multiple times on the same line.",
 					"Use a wider oldText, such as the full line or surrounding phrase, so the intended replacement is unambiguous.",

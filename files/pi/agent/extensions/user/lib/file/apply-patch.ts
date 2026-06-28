@@ -57,7 +57,7 @@ const replaceSchema = Type.Object({
 	targetLineNoRanges: Type.Optional(
 		Type.Array(targetLineNoRangeSchema, {
 			description:
-				"Optional target 1-based line number ranges where oldText may match and be replaced. When omitted, the whole file is searched.",
+				"Optional safe 1-based line number ranges that contain only intended oldText replacements. When omitted, the whole file is searched."
 		}),
 	),
 });
@@ -72,7 +72,7 @@ export const applyPatchSchema = Type.Object({
 	replaces: Type.Optional(
 		Type.Array(replaceSchema, {
 			description:
-				"Replace oldText with newText. If oldText matches multiple locations, startLineNo/endLineNo or targetLineNoRanges must disambiguate where replacements are allowed.",
+				"Replace oldText with newText. If oldText matches multiple locations, use startLineNo/endLineNo or targetLineNoRanges to specify a safe range that contains only intended replacements."
 		}),
 	),
 	removeLineRanges: Type.Optional(
@@ -390,7 +390,7 @@ function createEdits(text: string, params: ApplyPatchToolInput): TextEdit[] {
 			throw new Error(`replaces[${i}] oldText was not found.`);
 		if (positions.length > 1) {
 			throw new Error(
-				`replaces[${i}] oldText matched multiple locations.\nSpecify targetLineNoRanges to limit where replacements apply.\nMatched lines: ${matchedLinesSummary(index, positions)}.${multipleMatchesOnSameLineWarning(index, positions)}`,
+				`replaces[${i}] oldText matched multiple locations.\nSpecify targetLineNoRanges for a safe range that contains only intended replacements.\nMatched lines: ${matchedLinesSummary(index, positions)}.${multipleMatchesOnSameLineWarning(index, positions)}`,
 			);
 		}
 		const start = positions[0] ?? 0;
