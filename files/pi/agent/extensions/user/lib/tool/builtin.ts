@@ -16,10 +16,10 @@ import { type ToolCatalog, defineToolContribution } from "./catalog";
 import { registerGitTools } from "./git";
 import { registerGithubTools } from "./github";
 import { registerInterviewTools } from "./interview";
-import { type SpawnableFocus, registerSubagentTool } from "./subagent";
+import { type SpawnableFocus, registerAgentTool } from "./agent";
 
 export type RegisterCoreUserToolsOptions = {
-	/** Focuses the subagent tool may launch (used to build the `focus` enum). */
+	/** Focuses the agent tool may launch (used to build the `focus` enum). */
 	readonly spawnableFocuses?: readonly SpawnableFocus[];
 };
 
@@ -36,7 +36,7 @@ export function registerCoreUserTools(
 	registerGitTools(catalog);
 	registerGithubTools(catalog);
 	registerInterviewTools(catalog);
-	registerSubagentTool(catalog, options?.spawnableFocuses);
+	registerAgentTool(catalog, options?.spawnableFocuses);
 }
 
 function registerFileTools(catalog: ToolCatalog): void {

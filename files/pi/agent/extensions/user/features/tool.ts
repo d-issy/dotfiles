@@ -179,14 +179,14 @@ function register(pi: ExtensionAPI, services: UserExtensionServices): void {
 			includeManagementTools: services.focus.lockedFocusName === undefined,
 		});
 
-		/* Extend the subagent spawnable set with project-defined focuses */
+		/* Extend the agent spawnable set with project-defined focuses */
 		const projectSpawnable = services.focus.registry
 			.list()
 			.filter(isFocusSpawnable)
 			.map((focus) => ({ name: focus.name, description: focus.description }));
 		extendSpawnableFocuses(projectSpawnable);
 
-		/* Also register confirm-transition project focuses for subagent confirmation */
+		/* Also register confirm-transition project focuses for agent confirmation */
 		const projectConfirm = services.focus.registry
 			.list()
 			.filter(isFocusSpawnable)
