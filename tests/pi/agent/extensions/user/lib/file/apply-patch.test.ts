@@ -161,6 +161,54 @@ describe("apply_patch", () => {
 		);
 	});
 
+ 	it("applies replace operations sequentially on a temporary copy", async () => {
+		const root = tempRepo();
+		const path = join(root, "src", "example.txt");
+		writeFileSync(path, "one two\n");
+
+		const result = await executeApplyPatch(
+			root,
+			{
+				path: "src/example.txt",
+				replaces: [
+					{
+						oldText: "one",
+						newText: "two",
+						targetLineNoRanges: [{ start: 1, end: 1 }],
+					},
+					{
+						oldText: "two two",
+						newText: "done",
+						targetLineNoRanges: [{ start: 1, end: 1 }],
+					},
+				],
+			},
+			undefined,
+		);
+
+		assert.equal(readFileSync(path, "utf8"), "done\n");
+		assert.equal(result.details.edits, 2);
+	});
+
+	it("does not mutate the file when a later sequential replace fails", async () => {
+		const root = tempRepo();
+		const path = join(root, "src", "example.txt");
+		writeFileSync(path, "one\n");
+
+		await expectApplyPatchError(
+			root,
+			{
+				path: "src/example.txt",
+				replaces: [
+					{ oldText: "one", newText: "two" },
+					{ oldText: "missing", newText: "done" },
+				],
+			},
+			["replaces[1] oldText was not found."],
+		);
+		assert.equal(readFileSync(path, "utf8"), "one\n");
+	});
+
 	it("rejects multiple matches on the same line within a target line number range", async () => {
 		const root = tempRepo();
 		const path = join(root, "src", "example.txt");

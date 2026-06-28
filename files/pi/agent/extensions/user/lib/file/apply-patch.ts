@@ -96,6 +96,7 @@ export const applyPatchSchema = Type.Object({
 });
 
 export type ApplyPatchToolInput = Static<typeof applyPatchSchema>;
+type ReplaceOperation = NonNullable<ApplyPatchToolInput["replaces"]>[number];
 
 function checkAbort(signal: AbortSignal | undefined): void {
 	if (signal?.aborted)
@@ -282,6 +283,98 @@ function assertNoSameLineMatches(
 			);
 		}
 	}
+}
+
+function createSequentialReplaceEdits(
+	text: string,
+	replace: ReplaceOperation,
+	replaceIndex: number,
+): TextEdit[] {
+	const index = createLineIndex(text);
+	const edits: TextEdit[] = [];
+	const hasStart = replace.startLineNo !== undefined;
+	const hasEnd = replace.endLineNo !== undefined;
+	if (hasStart !== hasEnd) {
+		throw new Error(
+			`replaces[${replaceIndex}] must specify both startLineNo and endLineNo, or neither.`,
+		);
+	}
+	if ((replace.targetLineNoRanges?.length ?? 0) > 0) {
+		if (hasStart || hasEnd) {
+			throw new Error(
+				`replaces[${replaceIndex}] must specify either startLineNo/endLineNo or targetLineNoRanges, not both.`,
+			);
+		}
+		for (const [rangeIndex, range] of (
+			replace.targetLineNoRanges ?? []
+		).entries()) {
+			const label = `replaces[${replaceIndex}].targetLineNoRanges[${rangeIndex}]`;
+			assertTargetLineNoRange(index, range.start, range.end, label);
+			const chars = rangeContentChars(index, range.start, range.end);
+			const positions = findOccurrences(
+				text.slice(chars.start, chars.end),
+				replace.oldText,
+				chars.start,
+			);
+			if (positions.length === 0) {
+				throw new Error(
+					`${label} oldText did not match within the target line range.`,
+				);
+			}
+			assertNoSameLineMatches(index, positions, label);
+			for (const start of positions) {
+				edits.push({
+					start,
+					end: start + replace.oldText.length,
+					replacement: replace.newText,
+					label,
+				});
+			}
+		}
+		return edits;
+	}
+
+	let searchText = text;
+	let baseOffset = 0;
+	if (hasStart && hasEnd) {
+		const startLineNo = replace.startLineNo ?? 1;
+		const endLineNo = replace.endLineNo ?? 1;
+		assertLineRange(index, startLineNo, endLineNo, `replaces[${replaceIndex}]`);
+		const chars = rangeContentChars(index, startLineNo, endLineNo);
+		searchText = text.slice(chars.start, chars.end);
+		baseOffset = chars.start;
+	}
+	const positions = findOccurrences(searchText, replace.oldText, baseOffset);
+	if (positions.length === 0)
+		throw new Error(`replaces[${replaceIndex}] oldText was not found.`);
+	if (positions.length > 1) {
+		throw new Error(
+			`replaces[${replaceIndex}] oldText matched multiple locations.\nSpecify targetLineNoRanges for a safe range that contains only intended replacements.\nMatched lines: ${matchedLinesSummary(index, positions)}.${multipleMatchesOnSameLineWarning(index, positions)}`,
+		);
+	}
+	const start = positions[0] ?? 0;
+	return [
+		{
+			start,
+			end: start + replace.oldText.length,
+			replacement: replace.newText,
+			label: `replaces[${replaceIndex}]`,
+		},
+	];
+}
+
+function applySequentialReplaces(
+	text: string,
+	replaces: readonly ReplaceOperation[],
+): { text: string; edits: number } {
+	let nextText = text;
+	let editCount = 0;
+	for (const [i, replace] of replaces.entries()) {
+		const edits = createSequentialReplaceEdits(nextText, replace, i);
+		nextText = applyTextEdits(nextText, edits);
+		editCount += edits.length;
+	}
+	return { text: nextText, edits: editCount };
 }
 
 function createEdits(text: string, params: ApplyPatchToolInput): TextEdit[] {
@@ -512,8 +605,17 @@ export async function executeApplyPatch(
 	await assertRepoPathAllowed(guardContext, absolute, APPLY_PATCH_OPERATION);
 	const displayPath = displayRepoPath(cwd, absolute);
 	const text = await readFile(absolute, "utf8");
-	const edits = createEdits(text, params);
-	const nextText = applyTextEdits(text, edits);
+	const replaceOnly =
+		(params.replaces?.length ?? 0) > 0 &&
+		(params.removeLineRanges?.length ?? 0) === 0 &&
+		(params.insertLines?.length ?? 0) === 0;
+	const result = replaceOnly
+		? applySequentialReplaces(text, params.replaces ?? [])
+		: (() => {
+				const edits = createEdits(text, params);
+				return { text: applyTextEdits(text, edits), edits: edits.length };
+			})();
+	const nextText = result.text;
 	checkAbort(signal);
 	await writeFile(absolute, nextText, "utf8");
 
@@ -521,7 +623,7 @@ export async function executeApplyPatch(
 	const patch = generateUnifiedPatch(displayPath, text, nextText);
 	const diffLineCount =
 		diffResult.diff === "" ? 0 : diffResult.diff.split("\n").length;
-	const resultSummary = `Applied ${edits.length} edit(s) to ${displayPath}.`;
+	const resultSummary = `Applied ${result.edits} edit(s) to ${displayPath}.`;
 	const resultBody = !diffResult.diff
 		? resultSummary
 		: diffLineCount >= LLM_DIFF_OMIT_LINE_THRESHOLD
@@ -538,7 +640,7 @@ export async function executeApplyPatch(
 		details: {
 			operation: "apply_patch",
 			path: displayPath,
-			edits: edits.length,
+			edits: result.edits,
 			diff: diffResult.diff,
 			patch,
 		} satisfies ApplyPatchDetails,
