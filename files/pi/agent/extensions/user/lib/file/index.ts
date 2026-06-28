@@ -3,6 +3,7 @@ export {
 	applyPatchSchema,
 	executeApplyPatch,
 	renderApplyPatch,
+	renderApplyPatchResult,
 } from "./apply-patch";
 export {
 	type EditChunkToolInput,

@@ -1,5 +1,14 @@
 import { readFile, writeFile } from "node:fs/promises";
-import type { AgentToolResult, Theme } from "@earendil-works/pi-coding-agent";
+import type {
+	AgentToolResult,
+	EditDiffResult,
+	Theme,
+} from "@earendil-works/pi-coding-agent";
+import {
+	generateDiffString,
+	generateUnifiedPatch,
+	renderDiff,
+} from "@earendil-works/pi-coding-agent";
 import { type Component, Text } from "@earendil-works/pi-tui";
 import { type Static, Type } from "typebox";
 import { ToolError } from "./errors";
@@ -9,9 +18,8 @@ import {
 	displayRepoPath,
 	resolveRepoPath,
 } from "./guard";
-
 const APPLY_PATCH_OPERATION = "Applying patch to";
-
+const LLM_DIFF_OMIT_LINE_THRESHOLD = 50;
 type TextEdit = {
 	readonly start: number;
 	readonly end: number;
@@ -30,6 +38,8 @@ type ApplyPatchDetails = {
 	operation: "apply_patch";
 	path: string;
 	edits: number;
+	diff: string;
+	patch: string;
 };
 
 const lineNoSchema = Type.Integer({ minimum: 1 });
@@ -350,12 +360,82 @@ function applyTextEdits(text: string, edits: readonly TextEdit[]): string {
 	return output;
 }
 
-export function renderApplyPatch(args: unknown, theme: Theme): Component {
+function renderApplyPatchParams(args: unknown, theme: Theme): string[] {
+	const input = (args ?? {}) as Record<string, unknown>;
+	const lines: string[] = [];
+	if (typeof input.path === "string") {
+		lines.push(theme.fg("toolOutput", `path: ${JSON.stringify(input.path)}`));
+	}
+	for (const key of [
+		"replaces",
+		"removeLineRanges",
+		"insertLines",
+		"replaceLineRanges",
+	] as const) {
+		if (!Array.isArray(input[key]) || input[key].length === 0) continue;
+		lines.push(theme.fg("toolOutput", `${key}: ${JSON.stringify(input[key])}`));
+	}
+	return lines;
+}
+
+export function renderApplyPatch(
+	args: unknown,
+	theme: Theme,
+	context?: { readonly expanded?: boolean },
+): Component {
 	const input = (args ?? {}) as Record<string, unknown>;
 	const path = typeof input.path === "string" ? input.path : "";
 	let text = theme.fg("toolTitle", theme.bold("apply_patch"));
 	if (path) text += ` ${theme.fg("accent", path)}`;
-	return new Text(text, 0, 0);
+	if (!(context?.expanded ?? false)) return new Text(text, 0, 0);
+
+	const params = renderApplyPatchParams(args, theme);
+	if (params.length === 0) return new Text(text, 0, 0);
+	return new Text(`${text}\n${params.join("\n")}`, 0, 0);
+}
+
+function isApplyPatchDetails(details: unknown): details is ApplyPatchDetails {
+	if (typeof details !== "object" || details === null) return false;
+	const value = details as Record<string, unknown>;
+	return (
+		value.operation === "apply_patch" &&
+		typeof value.path === "string" &&
+		typeof value.edits === "number" &&
+		typeof value.diff === "string" &&
+		typeof value.patch === "string"
+	);
+}
+
+function renderToolResultText(
+	result: AgentToolResult<unknown>,
+	theme: Theme,
+): Component {
+	const text = result.content
+		.filter((content) => content.type === "text")
+		.map((content) => content.text)
+		.join("\n");
+	return new Text(theme.fg("toolOutput", text || "(no output)"), 0, 0);
+}
+
+export function renderApplyPatchResult(
+	result: AgentToolResult<ApplyPatchDetails>,
+	options: { expanded: boolean; isPartial: boolean },
+	theme: Theme,
+): Component {
+	if (options.isPartial) {
+		return new Text(theme.fg("warning", "Applying patch..."), 0, 0);
+	}
+
+	const details = result.details;
+	if (!isApplyPatchDetails(details)) return renderToolResultText(result, theme);
+
+	const summary = theme.fg("success", `Applied ${details.edits} edit(s).`);
+	const resultParts = [
+		...(details.diff.length === 0 ? [] : [renderDiff(details.diff)]),
+		summary,
+	];
+
+	return new Text(resultParts.join("\n"), 0, 0);
 }
 
 export async function executeApplyPatch(
@@ -376,17 +456,31 @@ export async function executeApplyPatch(
 	const nextText = applyTextEdits(text, edits);
 	checkAbort(signal);
 	await writeFile(absolute, nextText, "utf8");
+
+	const diffResult: EditDiffResult = generateDiffString(text, nextText);
+	const patch = generateUnifiedPatch(displayPath, text, nextText);
+	const diffLineCount =
+		diffResult.diff === "" ? 0 : diffResult.diff.split("\n").length;
+	const resultSummary = `Applied ${edits.length} edit(s) to ${displayPath}.`;
+	const resultBody = !diffResult.diff
+		? resultSummary
+		: diffLineCount >= LLM_DIFF_OMIT_LINE_THRESHOLD
+			? `Diff omitted from tool result because it is ${diffLineCount} lines (>= ${LLM_DIFF_OMIT_LINE_THRESHOLD}). Use read_chunk only if you need to inspect the changed content.\n${resultSummary}`
+			: `Diff:\n${diffResult.diff}\n${resultSummary}`;
+
 	return {
 		content: [
 			{
 				type: "text",
-				text: `Applied ${edits.length} edit(s) to ${displayPath}.`,
+				text: resultBody,
 			},
 		],
 		details: {
 			operation: "apply_patch",
 			path: displayPath,
 			edits: edits.length,
-		},
+			diff: diffResult.diff,
+			patch,
+		} satisfies ApplyPatchDetails,
 	};
 }

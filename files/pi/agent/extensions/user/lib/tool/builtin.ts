@@ -10,6 +10,7 @@ import {
 	normalizeStringOrArray,
 	readChunkSchema,
 	renderApplyPatch,
+	renderApplyPatchResult,
 	renderEditChunk,
 	renderEditChunkResult,
 	renderMv,
@@ -128,11 +129,13 @@ function registerFileTools(catalog: ToolCatalog): void {
 				parameters: applyPatchSchema,
 				executionMode: "sequential",
 				renderCall: renderApplyPatch,
+				renderResult: renderApplyPatchResult,
 				execute: (_toolCallId, params, signal, _onUpdate, ctx) =>
 					executeApplyPatch(ctx.cwd, params, signal),
 			},
 		}),
 	);
+
 	catalog.register(
 		defineToolContribution({
 			policy: {

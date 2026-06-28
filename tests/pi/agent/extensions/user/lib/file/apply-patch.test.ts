@@ -57,11 +57,11 @@ describe("apply_patch", () => {
 			readFileSync(join(root, "src", "example.txt"), "utf8"),
 			["one", "TWO", "three", "five", "inserted", "SIX", ""].join("\n"),
 		);
-		assert.deepEqual(result.details, {
-			operation: "apply_patch",
-			path: "src/example.txt",
-			edits: 4,
-		});
+		assert.equal(result.details.operation, "apply_patch");
+		assert.equal(result.details.path, "src/example.txt");
+		assert.equal(result.details.edits, 4);
+		assert.ok(typeof result.details.diff === "string");
+		assert.ok(typeof result.details.patch === "string");
 	});
 
 	it("reports candidate ranges when text replacement is ambiguous", async () => {
@@ -113,11 +113,11 @@ describe("apply_patch", () => {
 		);
 
 		assert.equal(readFileSync(path, "utf8"), "line 1\nchanged\n");
-		assert.deepEqual(result.details, {
-			operation: "apply_patch",
-			path: "src/created.txt",
-			edits: 1,
-		});
+		assert.equal(result.details.operation, "apply_patch");
+		assert.equal(result.details.path, "src/created.txt");
+		assert.equal(result.details.edits, 1);
+		assert.ok(typeof result.details.diff === "string");
+		assert.ok(typeof result.details.patch === "string");
 	});
 
 	it("does not create a missing file", async () => {
