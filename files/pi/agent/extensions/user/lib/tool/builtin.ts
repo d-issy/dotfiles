@@ -56,9 +56,10 @@ function registerFileTools(catalog: ToolCatalog): void {
 				promptGuidelines: [
 					"Use path plus one or more operation arrays: replaces, removeLineRanges, insertLines, replaceLineRanges.",
 					"All line numbers are 1-based and refer to the file before any edits in this call are applied.",
+					"Read the target file immediately before using line-number based edits (insertLines, removeLineRanges, replaceLineRanges); after applying one, read again before another line-number based edit because line numbers may have shifted.",
 					"Do not target the same line with multiple operations; overlapping line targets fail to avoid ambiguous edits.",
 					"For insertLines, specify exactly one of insertAfterLineNo or insertBeforeLineNo.",
-					"If replaces.oldText matches multiple ranges, specify startLineNo and endLineNo to disambiguate.",
+					"If replaces.oldText matches multiple locations, specify startLineNo/endLineNo or targetLineNoRanges to disambiguate.",
 				],
 				parameters: applyPatchSchema,
 				executionMode: "sequential",

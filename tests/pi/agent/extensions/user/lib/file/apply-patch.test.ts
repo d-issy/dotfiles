@@ -29,6 +29,23 @@ function tempRepo(): string {
 	return root;
 }
 
+async function expectApplyPatchError(
+	root: string,
+	params: Parameters<typeof executeApplyPatch>[1],
+	messageIncludes: readonly string[],
+): Promise<void> {
+	await assert.rejects(executeApplyPatch(root, params, undefined), (error) => {
+		assert(error instanceof Error);
+		for (const text of messageIncludes) {
+			assert.ok(
+				error.message.includes(text),
+				`Expected error message to include ${JSON.stringify(text)}, got ${JSON.stringify(error.message)}`,
+			);
+		}
+		return true;
+	});
+}
+
 describe("apply_patch", () => {
 	it("applies multiple operation kinds using pre-edit line numbers", async () => {
 		const root = tempRepo();
@@ -64,21 +81,150 @@ describe("apply_patch", () => {
 		assert.ok(typeof result.details.patch === "string");
 	});
 
-	it("reports candidate ranges when text replacement is ambiguous", async () => {
+	it("reports candidate target line number ranges when text replacement is ambiguous", async () => {
 		const root = tempRepo();
 		writeFileSync(join(root, "src", "example.txt"), "same\nother\nsame\n");
 
-		await assert.rejects(
-			executeApplyPatch(
-				root,
-				{
-					path: "src/example.txt",
-					replaces: [{ oldText: "same", newText: "changed" }],
-				},
-				undefined,
-			),
-			/Candidate ranges: 1-1, 3-3/u,
+		await expectApplyPatchError(
+			root,
+			{
+				path: "src/example.txt",
+				replaces: [{ oldText: "same", newText: "changed" }],
+			},
+			[
+				"replaces[0] oldText matched multiple locations",
+				"Specify targetLineNoRanges",
+				"Candidate targetLineNoRanges: [{ start: 1, end: 1 }, { start: 3, end: 3 }]",
+			],
 		);
+	});
+
+	it("replaces all matching text within the target line number ranges", async () => {
+		const root = tempRepo();
+		const path = join(root, "src", "example.txt");
+		writeFileSync(
+			path,
+			["same", "keep", "same", "keep", "same", ""].join("\n"),
+		);
+
+		const result = await executeApplyPatch(
+			root,
+			{
+				path: "src/example.txt",
+				replaces: [
+					{
+						oldText: "same",
+						newText: "changed",
+						targetLineNoRanges: [{ start: 1, end: 3 }],
+					},
+				],
+			},
+			undefined,
+		);
+
+		assert.equal(
+			readFileSync(path, "utf8"),
+			["changed", "keep", "changed", "keep", "same", ""].join("\n"),
+		);
+		assert.equal(result.details.edits, 2);
+	});
+
+	it("uses target line number ranges to disambiguate globally ambiguous text", async () => {
+		const root = tempRepo();
+		const path = join(root, "src", "example.txt");
+		writeFileSync(
+			path,
+			["same", "keep", "same", "keep", "same", ""].join("\n"),
+		);
+
+		await executeApplyPatch(
+			root,
+			{
+				path: "src/example.txt",
+				replaces: [
+					{
+						oldText: "same",
+						newText: "changed",
+						targetLineNoRanges: [{ start: 3, end: 3 }],
+					},
+				],
+			},
+			undefined,
+		);
+
+		assert.equal(
+			readFileSync(path, "utf8"),
+			["same", "keep", "changed", "keep", "same", ""].join("\n"),
+		);
+	});
+
+	it("rejects multiple matches on the same line within a target line number range", async () => {
+		const root = tempRepo();
+		const path = join(root, "src", "example.txt");
+		writeFileSync(path, "same same\n");
+
+		await expectApplyPatchError(
+			root,
+			{
+				path: "src/example.txt",
+				replaces: [
+					{
+						oldText: "same",
+						newText: "changed",
+						targetLineNoRanges: [{ start: 1, end: 1 }],
+					},
+				],
+			},
+			[
+				"replaces[0].targetLineNoRanges[0] oldText matched multiple locations on line 1",
+				"Use a more specific oldText",
+			],
+		);
+		assert.equal(readFileSync(path, "utf8"), "same same\n");
+	});
+
+	it("rejects a target line number range that contains no match", async () => {
+		const root = tempRepo();
+		const path = join(root, "src", "example.txt");
+		writeFileSync(path, "same\nother\nsame\n");
+
+		await expectApplyPatchError(
+			root,
+			{
+				path: "src/example.txt",
+				replaces: [
+					{
+						oldText: "same",
+						newText: "changed",
+						targetLineNoRanges: [{ start: 2, end: 2 }],
+					},
+				],
+			},
+			["replaces[0].targetLineNoRanges[0] oldText was not found"],
+		);
+		assert.equal(readFileSync(path, "utf8"), "same\nother\nsame\n");
+	});
+
+	it("rejects target line number ranges with start after end", async () => {
+		const root = tempRepo();
+		const path = join(root, "src", "example.txt");
+		writeFileSync(path, "same\nother\n");
+
+		await expectApplyPatchError(
+			root,
+			{
+				path: "src/example.txt",
+				replaces: [
+					{
+						oldText: "same",
+						newText: "changed",
+						targetLineNoRanges: [{ start: 2, end: 1 }],
+					},
+				],
+			},
+			["replaces[0].targetLineNoRanges[0] start must be <= end"],
+		);
+		assert.equal(readFileSync(path, "utf8"), "same\nother\n");
 	});
 
 	it("inserts after the last line when the file ends with a newline", async () => {
