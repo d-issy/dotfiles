@@ -1,21 +1,13 @@
 import {
 	applyPatchSchema,
-	editChunkSchema,
 	executeApplyPatch,
-	executeEditChunk,
 	executeMove,
-	executeReadChunk,
 	executeRemove,
 	mvSchema,
 	normalizeStringOrArray,
-	readChunkSchema,
 	renderApplyPatch,
 	renderApplyPatchResult,
-	renderEditChunk,
-	renderEditChunkResult,
 	renderMv,
-	renderReadChunk,
-	renderReadChunkResult,
 	renderRm,
 	rmSchema,
 } from "../file";
@@ -48,64 +40,6 @@ export function registerCoreUserTools(
 }
 
 function registerFileTools(catalog: ToolCatalog): void {
-	catalog.register(
-		defineToolContribution({
-			policy: {
-				name: "read_chunk",
-				extractSecretPaths: (input) => [input.path],
-				secretBlockReason: makeSecretActionReason("Reading chunk from"),
-			},
-			definition: {
-				name: "read_chunk",
-				label: "read_chunk",
-				description:
-					"Read up to 200 file lines by default with 3-character per-line anchors for later chunk edits. Pass offset and limit explicitly for large files or other ranges. Ambiguous anchors are hidden as @--- and cannot be used for editing.",
-				promptSnippet:
-					"Read file lines with short unique anchors for edit_chunk",
-				promptGuidelines: [
-					"Use read_chunk before edit_chunk when exact oldText replacement would be ambiguous or wasteful.",
-					"read_chunk defaults to the first 200 lines. For large files, pass offset and limit to read only the relevant range.",
-					"read_chunk shows @--- for ambiguous lines; do not use @--- as an edit_chunk old_range endpoint.",
-				],
-				parameters: readChunkSchema,
-				executionMode: "parallel",
-				renderCall: renderReadChunk,
-				renderResult: renderReadChunkResult,
-				execute: (_toolCallId, params, signal, _onUpdate, ctx) =>
-					executeReadChunk(ctx.cwd, params, signal),
-			},
-		}),
-	);
-
-	catalog.register(
-		defineToolContribution({
-			policy: {
-				name: "edit_chunk",
-				extractSecretPaths: (input) => [input.path],
-				secretBlockReason: makeSecretActionReason("Editing chunk in"),
-			},
-			definition: {
-				name: "edit_chunk",
-				label: "edit_chunk",
-				description:
-					"Edit a file by replacing anchor-delimited whole-line ranges produced by read_chunk. Each old_range endpoint is included: the complete start-anchor line, complete end-anchor line, and every line between them are replaced by new_lines. Anchors are not insertion points; to insert before or after a line, replace an adjacent line and include that original line plus the inserted lines in new_lines. Whitespace and blank lines are part of the edit: choose old_range and new_lines so the file has correct spacing after this single edit, without requiring a follow-up cleanup edit. Fails without modifying files when anchors are missing, ambiguous, reversed, or overlapping.",
-				promptSnippet: "Replace line chunks using anchors from read_chunk",
-				promptGuidelines: [
-					"Use anchors copied from read_chunk; use the same anchor twice to replace that one entire line.",
-					"old_range is an inclusive whole-line range, and new_lines is its exact replacement. Nothing inside old_range is preserved unless you copy it into new_lines. For deletions, use []; include only the lines intended for removal in old_range.",
-					"To insert new lines, replace a nearby existing line and include that original line plus the inserted lines in new_lines.",
-					"Use only visible unique anchors. If needed anchors are hidden as @--- or stale, run read_chunk again on a smaller relevant area.",
-				],
-				parameters: editChunkSchema,
-				executionMode: "sequential",
-				renderCall: renderEditChunk,
-				renderResult: renderEditChunkResult,
-				execute: (_toolCallId, params, signal, _onUpdate, ctx) =>
-					executeEditChunk(ctx.cwd, params, signal),
-			},
-		}),
-	);
-
 	catalog.register(
 		defineToolContribution({
 			policy: {

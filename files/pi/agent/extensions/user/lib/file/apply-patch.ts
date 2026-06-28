@@ -465,7 +465,7 @@ export async function executeApplyPatch(
 	const resultBody = !diffResult.diff
 		? resultSummary
 		: diffLineCount >= LLM_DIFF_OMIT_LINE_THRESHOLD
-			? `Diff omitted from tool result because it is ${diffLineCount} lines (>= ${LLM_DIFF_OMIT_LINE_THRESHOLD}). Use read_chunk only if you need to inspect the changed content.\n${resultSummary}`
+			? `Diff omitted from tool result because it is ${diffLineCount} lines (>= ${LLM_DIFF_OMIT_LINE_THRESHOLD}).\n${resultSummary}`
 			: `Diff:\n${diffResult.diff}\n${resultSummary}`;
 
 	return {
