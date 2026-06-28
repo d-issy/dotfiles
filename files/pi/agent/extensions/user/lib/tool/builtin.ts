@@ -21,7 +21,7 @@ import { registerGitTools } from "./git";
 import { registerGithubTools } from "./github";
 import { registerInterviewTools } from "./interview";
 import { registerPullRequestTools } from "./pull-request";
-import { type SpawnableFocus, registerSubagentTool } from "./subagent";
+import { type SpawnableFocus, registerAgentTool } from "./agent";
 
 export type RegisterCoreUserToolsOptions = {
 	/** Focuses the agent tool may launch (used to build the `focus` enum). */
@@ -42,7 +42,7 @@ export function registerCoreUserTools(
 	registerGithubTools(catalog);
 	registerInterviewTools(catalog);
 	registerPullRequestTools(catalog);
-	registerSubagentTool(catalog, options?.spawnableFocuses);
+	registerAgentTool(catalog, options?.spawnableFocuses);
 }
 
 function registerFileTools(catalog: ToolCatalog): void {

@@ -253,13 +253,13 @@ describe("focus confirmation", () => {
 			"         approved proceeding    ",
 		]);
 
-		const subagentLines: Array<readonly string[]> = [];
+		const agentLines: Array<readonly string[]> = [];
 		assert.deepEqual(
 			await confirmFocusTransition(
 				context({
 					inputs: ["a"],
 					renderWidth: 32,
-					onRender: (lines) => subagentLines.push(lines),
+					onRender: (lines) => agentLines.push(lines),
 				}),
 				"agent",
 				"edit",
@@ -267,7 +267,7 @@ describe("focus confirmation", () => {
 			),
 			{ choice: "allow-session" },
 		);
-		assert.deepEqual(subagentLines[0]?.slice(2, 4), [
+		assert.deepEqual(agentLines[0]?.slice(2, 4), [
 			" Reason: need focused edits     ",
 			"         before running checks  ",
 		]);

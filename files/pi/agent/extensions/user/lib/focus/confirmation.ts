@@ -134,7 +134,7 @@ function renderReasonLines(
 	);
 }
 
-function renderSubagentPromptLines(
+function renderAgentPromptLines(
 	theme: { fg(role: string, text: string): string },
 	prompt: string,
 	width: number,
@@ -260,7 +260,7 @@ async function chooseFocusTransitionAction(
 					...border.render(width),
 					padDialogLine(theme.fg("accent", theme.bold(titleLine)), width),
 					...renderReasonLines(theme, reason, width),
-					...(prompt ? renderSubagentPromptLines(theme, prompt, width) : []),
+					...(prompt ? renderAgentPromptLines(theme, prompt, width) : []),
 					...items.map((item, index) =>
 						padDialogLine(
 							renderKeyedPanelItem(theme, item, {
