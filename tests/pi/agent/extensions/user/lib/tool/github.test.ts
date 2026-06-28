@@ -1,4 +1,7 @@
 import assert from "node:assert/strict";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import type { ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { beforeEach, describe, it, vi } from "vitest";
 
@@ -96,6 +99,16 @@ function findTool(name: string): {
 	};
 }
 
+function tempRepo(files: readonly string[]): string {
+	const cwd = mkdtempSync(path.join(tmpdir(), "pi-github-test-"));
+	for (const file of files) {
+		const target = path.join(cwd, file);
+		mkdirSync(path.dirname(target), { recursive: true });
+		writeFileSync(target, "test\n");
+	}
+	return cwd;
+}
+
 async function reject(promise: Promise<unknown>): Promise<Error> {
 	try {
 		await promise;
@@ -161,55 +174,51 @@ describe("create_pull_request", () => {
 		assert.ok(!calls.some((c) => c.bin === "git" && c.args[0] === "switch"));
 	});
 
-	it("stages files with git add then commits only those files via git commit --only", async () => {
-		const calls: Call[] = [];
-		setupExec({
-			calls,
-			stdout: {
-				...defaultArgs("git", [
-					"symbolic-ref",
-					"--short",
-					"refs/remotes/origin/HEAD",
-				]),
-				"gh pr create --draft --title Add a and b --body ## Summary\n- adds a and b":
-					"https://github.com/owner/repo/pull/1\n",
-			},
-		});
-		const create = findTool("create_pull_request");
-		const result = (await invoke(create, validCreateInput, "/repo")) as {
-			readonly content: readonly { readonly text: string }[];
-		};
-		assert.match(result.content[0]?.text ?? "", /pull\/1/u);
+	it("stages existing files, then commits only listed files", async () => {
+		const cwd = tempRepo(["src/a.ts", "src/b.ts"]);
+		try {
+			const calls: Call[] = [];
+			setupExec({
+				calls,
+				stdout: {
+					...defaultArgs("git", [
+						"symbolic-ref",
+						"--short",
+						"refs/remotes/origin/HEAD",
+					]),
+					"gh pr create --draft --title Add a and b --body ## Summary\n- adds a and b":
+						"https://github.com/owner/repo/pull/1\n",
+				},
+			});
+			const create = findTool("create_pull_request");
+			const result = (await invoke(create, validCreateInput, cwd)) as {
+				readonly content: readonly { readonly text: string }[];
+			};
+			assert.match(result.content[0]?.text ?? "", /pull\/1/u);
 
-		const commands = calls.map((call) => `${call.bin} ${call.args.join(" ")}`);
-		// git add must come before git commit --only, and commit must use --only.
-		const addIndex = commands.findIndex((cmd) =>
-			/^git add -- src\/a\.ts src\/b\.ts$/u.test(cmd),
-		);
-		const commitIndex = commands.findIndex((cmd) =>
-			/^git commit --only -m feat: add a and b -- src\/a\.ts src\/b\.ts$/u.test(
-				cmd,
-			),
-		);
-		assert.notEqual(
-			addIndex,
-			-1,
-			`git add should run; commands:\n${commands.join("\n")}`,
-		);
-		assert.notEqual(
-			commitIndex,
-			-1,
-			`git commit --only should run; commands:\n${commands.join("\n")}`,
-		);
-		assert.ok(
-			addIndex < commitIndex,
-			`git add must precede git commit --only; commands:\n${commands.join("\n")}`,
-		);
-		// No destructive reset of the whole index.
-		assert.ok(
-			!commands.some((cmd) => cmd.startsWith("git reset ")),
-			`should not run git reset; commands:\n${commands.join("\n")}`,
-		);
+			const commands = calls.map(
+				(call) => `${call.bin} ${call.args.join(" ")}`,
+			);
+			const addIndex = commands.indexOf("git add -- src/a.ts src/b.ts");
+			const commitIndex = commands.indexOf(
+				"git commit --only -m feat: add a and b -- src/a.ts src/b.ts",
+			);
+			assert.notEqual(
+				addIndex,
+				-1,
+				`git add should run; commands:\n${commands.join("\n")}`,
+			);
+			assert.notEqual(
+				commitIndex,
+				-1,
+				`git commit --only should run; commands:\n${commands.join("\n")}`,
+			);
+			assert.ok(addIndex < commitIndex);
+			assert.ok(!commands.some((cmd) => cmd.includes("diff --cached")));
+			assert.ok(!commands.some((cmd) => cmd.startsWith("git reset ")));
+		} finally {
+			rmSync(cwd, { recursive: true, force: true });
+		}
 	});
 });
 
@@ -269,48 +278,87 @@ describe("update_pull_request", () => {
 		);
 	});
 
-	it("stages files with git add then commits only those files via git commit --only", async () => {
-		const calls: Call[] = [];
-		setupExec({
-			calls,
-			stdout: {
-				"git symbolic-ref --short refs/remotes/origin/HEAD": "origin/main\n",
-				"git rev-parse --abbrev-ref HEAD": "feature/test\n",
-			},
-		});
-		const update = findTool("update_pull_request");
-		const result = (await invoke(
-			update,
-			{ commitFiles: ["src/a.ts"], commitMessage: "msg" },
-			"/repo",
-		)) as { readonly content: readonly { readonly text: string }[] };
-		assert.match(result.content[0]?.text ?? "", /Pushed new commit/u);
+	it("stages existing files, then commits only listed files", async () => {
+		const cwd = tempRepo(["src/a.ts"]);
+		try {
+			const calls: Call[] = [];
+			setupExec({
+				calls,
+				stdout: {
+					"git symbolic-ref --short refs/remotes/origin/HEAD": "origin/main\n",
+					"git rev-parse --abbrev-ref HEAD": "feature/test\n",
+				},
+			});
+			const update = findTool("update_pull_request");
+			const result = (await invoke(
+				update,
+				{ commitFiles: ["src/a.ts"], commitMessage: "msg" },
+				cwd,
+			)) as { readonly content: readonly { readonly text: string }[] };
+			assert.match(result.content[0]?.text ?? "", /Pushed new commit/u);
 
-		const commands = calls.map((call) => `${call.bin} ${call.args.join(" ")}`);
-		const addIndex = commands.findIndex((cmd) =>
-			/^git add -- src\/a\.ts$/u.test(cmd),
-		);
-		const commitIndex = commands.findIndex((cmd) =>
-			/^git commit --only -m msg -- src\/a\.ts$/u.test(cmd),
-		);
-		assert.notEqual(
-			addIndex,
-			-1,
-			`git add should run; commands:\n${commands.join("\n")}`,
-		);
-		assert.notEqual(
-			commitIndex,
-			-1,
-			`git commit --only should run; commands:\n${commands.join("\n")}`,
-		);
-		assert.ok(
-			addIndex < commitIndex,
-			`git add must precede git commit --only; commands:\n${commands.join("\n")}`,
-		);
-		assert.ok(
-			!commands.some((cmd) => cmd.startsWith("git reset ")),
-			`should not run git reset; commands:\n${commands.join("\n")}`,
-		);
+			const commands = calls.map(
+				(call) => `${call.bin} ${call.args.join(" ")}`,
+			);
+			const addIndex = commands.indexOf("git add -- src/a.ts");
+			const commitIndex = commands.indexOf(
+				"git commit --only -m msg -- src/a.ts",
+			);
+			assert.notEqual(
+				addIndex,
+				-1,
+				`git add should run; commands:\n${commands.join("\n")}`,
+			);
+			assert.notEqual(
+				commitIndex,
+				-1,
+				`git commit --only should run; commands:\n${commands.join("\n")}`,
+			);
+			assert.ok(addIndex < commitIndex);
+			assert.ok(!commands.some((cmd) => cmd.includes("diff --cached")));
+			assert.ok(!commands.some((cmd) => cmd.startsWith("git reset ")));
+		} finally {
+			rmSync(cwd, { recursive: true, force: true });
+		}
+	});
+
+	it("stages only existing rename/delete paths and commits all listed paths with --only", async () => {
+		const cwd = tempRepo(["new/name.ts"]);
+		try {
+			const calls: Call[] = [];
+			setupExec({
+				calls,
+				stdout: {
+					"git symbolic-ref --short refs/remotes/origin/HEAD": "origin/main\n",
+					"git rev-parse --abbrev-ref HEAD": "feature/test\n",
+				},
+			});
+			const update = findTool("update_pull_request");
+			await invoke(
+				update,
+				{
+					commitFiles: ["old/name.ts", "new/name.ts", "deleted.ts"],
+					commitMessage: "rename and delete",
+				},
+				cwd,
+			);
+
+			const commands = calls.map(
+				(call) => `${call.bin} ${call.args.join(" ")}`,
+			);
+			assert.ok(
+				commands.includes("git add -- new/name.ts"),
+				`git add should stage only existing paths; commands:\n${commands.join("\n")}`,
+			);
+			assert.ok(
+				commands.includes(
+					"git commit --only -m rename and delete -- old/name.ts new/name.ts deleted.ts",
+				),
+				`git commit should use --only with all paths; commands:\n${commands.join("\n")}`,
+			);
+		} finally {
+			rmSync(cwd, { recursive: true, force: true });
+		}
 	});
 
 	it("converts to draft with gh pr ready --undo", async () => {
