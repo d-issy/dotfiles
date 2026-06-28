@@ -9,11 +9,12 @@ import {
 import { type Component, Text } from "@earendil-works/pi-tui";
 import { type TSchema, Type } from "typebox";
 import { type ToolCatalog, defineToolContribution } from "./catalog";
-import { type Color, colors, fg } from "../theme";
 import {
 	confirmFocusTransition,
 	isFocusAllowedForSession,
 } from "../focus/confirmation";
+import { type Color, colors, fg } from "../theme";
+import { formatHumanElapsed, formatLiveElapsed } from "../time";
 export const SUBAGENT_TOOL = "subagent";
 
 /** A focus that may be launched as a subagent (name + human description). */
@@ -184,7 +185,7 @@ function renderSubagentResult(
 
 	const isAborted = result.details?.["_status"] === "aborted";
 	const durationMs = result.details?.durationMs ?? 0;
-	const duration = `${(durationMs / 1000).toFixed(1)}s`;
+	const duration = formatHumanElapsed(durationMs);
 	const toolCount = result.details?.toolCallCount ?? 0;
 	const usage = result.details?.usage;
 	const tokenStr = usage
@@ -266,7 +267,7 @@ function formatToolCallRecord(
 	const argsStr = p ? ` (${p})` : "";
 	const durationStr =
 		duration !== undefined && duration >= minDurationMs
-			? `  ${(duration / 1000).toFixed(1)}s`
+			? `  ${formatLiveElapsed(duration)}`
 			: "";
 	const runningMarker =
 		index === toolCalls.length - 1 ? `  ${fg(colors.muted, "← running")}` : "";
@@ -372,7 +373,7 @@ class SubagentProgress {
 	}
 
 	private elapsedLabel(): string {
-		return (this.elapsedMs() / 1000).toFixed(1);
+		return formatLiveElapsed(this.elapsedMs());
 	}
 
 	private toolUsageSuffix(): string {
@@ -418,11 +419,11 @@ class SubagentProgress {
 	}
 
 	private runningLine(): string {
-		return `${fg(colors.positive, this.runningIcon)} ${this.glossyRunningLabel}  ${this.elapsedLabel()}s${this.toolUsageSuffix()}`;
+		return `${fg(colors.positive, this.runningIcon)} ${this.glossyRunningLabel}  ${this.elapsedLabel()}${this.toolUsageSuffix()}`;
 	}
 
 	private emitStarting(): void {
-		const runningLine = `${fg(colors.positive, this.runningIcon)} ${this.glossyRunningLabel}  ${this.elapsedLabel()}s`;
+		const runningLine = `${fg(colors.positive, this.runningIcon)} ${this.glossyRunningLabel}  ${this.elapsedLabel()}`;
 		this.onUpdate?.({
 			content: [
 				{
@@ -791,8 +792,6 @@ export function registerSubagentTool(
 	catalog: ToolCatalog,
 	spawnableFocuses: readonly SpawnableFocus[] = [],
 ): void {
-	if (process.env.PI_SUBAGENT === "1") return;
-
 	confirmFocusNames.clear();
 	for (const f of spawnableFocuses) {
 		spawnableFocusNames.add(f.name);
