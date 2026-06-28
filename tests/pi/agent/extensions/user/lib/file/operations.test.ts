@@ -4,20 +4,35 @@ import {
 	mkdirSync,
 	mkdtempSync,
 	readFileSync,
+	rmSync,
 	writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import assert from "node:assert/strict";
-import { describe, it } from "vitest";
+import { afterEach, describe, it } from "vitest";
 import {
 	executeMove,
 	executeRemove,
 	normalizeStringOrArray,
 } from "#pi-user/lib/file/operations";
 
+const tempParents: string[] = [];
+
+afterEach(() => {
+	for (const root of tempParents.splice(0)) {
+		rmSync(root, { recursive: true, force: true });
+	}
+});
+
+function tempParent(): string {
+	const parent = mkdtempSync(join(tmpdir(), "pi-file-operations-suite-"));
+	tempParents.push(parent);
+	return parent;
+}
+
 function tempRepo(): string {
-	const root = mkdtempSync(join(tmpdir(), "pi-file-operations-"));
+	const root = mkdtempSync(join(tempParent(), "repo-"));
 	execFileSync("git", ["init"], { cwd: root, stdio: "ignore" });
 	writeFileSync(join(root, ".gitignore"), "ignored.txt\nignored-dir/\n");
 	mkdirSync(join(root, "src"), { recursive: true });

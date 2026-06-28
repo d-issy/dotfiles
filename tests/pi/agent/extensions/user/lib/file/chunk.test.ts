@@ -1,13 +1,27 @@
 import { execFileSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import assert from "node:assert/strict";
-import { describe, it } from "vitest";
+import { afterEach, describe, it } from "vitest";
 import { executeEditChunk, executeReadChunk } from "#pi-user/lib/file/chunk";
 
+const tempParents: string[] = [];
+
+afterEach(() => {
+	for (const root of tempParents.splice(0)) {
+		rmSync(root, { recursive: true, force: true });
+	}
+});
+
+function tempParent(): string {
+	const parent = mkdtempSync(join(tmpdir(), "pi-file-chunk-suite-"));
+	tempParents.push(parent);
+	return parent;
+}
+
 function tempRepo(): string {
-	const root = mkdtempSync(join(tmpdir(), "pi-file-chunk-"));
+	const root = mkdtempSync(join(tempParent(), "repo-"));
 	execFileSync("git", ["init"], { cwd: root, stdio: "ignore" });
 	writeFileSync(join(root, ".gitignore"), "ignored.txt\n");
 	mkdirSync(join(root, "src"), { recursive: true });
@@ -330,7 +344,7 @@ describe("chunk file tools", () => {
 			executeReadChunk(root, { path: ".envrc" }, undefined),
 			/Reading chunk from secret files is not allowed/u,
 		);
-		const outsideDir = mkdtempSync(join(tmpdir(), "pi-file-chunk-outside-"));
+		const outsideDir = mkdtempSync(join(tempParent(), "outside-"));
 		const outsidePath = join(outsideDir, "outside.txt");
 		writeFileSync(outsidePath, ["outside", "file", ""].join("\n"));
 		const outsideResult = await executeReadChunk(

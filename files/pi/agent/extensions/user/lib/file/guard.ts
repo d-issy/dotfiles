@@ -136,14 +136,26 @@ async function findRepositoryRoot(cwd: string): Promise<string | undefined> {
 		candidates.map(async (candidate) => {
 			try {
 				await lstat(resolve(candidate, ".git"));
-				return candidate;
 			} catch {
 				return undefined;
 			}
+			return (await isGitRepositoryRoot(candidate)) ? candidate : undefined;
 		}),
 	);
 
 	return results.find((r) => r !== undefined);
+}
+
+async function isGitRepositoryRoot(candidate: string): Promise<boolean> {
+	try {
+		const { stdout } = await execFileAsync(
+			"git",
+			["-C", candidate, "rev-parse", "--show-toplevel"],
+		);
+		return resolve(stdout.trim()) === resolve(candidate);
+	} catch {
+		return false;
+	}
 }
 
 function isInside(root: string, path: string): boolean {

@@ -4,12 +4,13 @@ import { beforeEach, describe, it, vi } from "vitest";
 
 const execFileMock = vi.hoisted(() => vi.fn());
 
-vi.mock("node:child_process", () => ({
+vi.mock("node:child_process", async (importActual) => ({
+	...(await importActual<typeof import("node:child_process")>()),
 	execFile: execFileMock,
 }));
 
 import { createToolCatalog } from "#pi-user/lib/tool/catalog";
-import { registerPullRequestTools } from "#pi-user/lib/tool/pull-request";
+import { registerGithubTools } from "#pi-user/lib/tool/github";
 
 type ExecArgs = readonly unknown[];
 
@@ -85,7 +86,7 @@ function findTool(name: string): {
 	readonly execute: (...args: never[]) => Promise<unknown>;
 } {
 	const catalog = createToolCatalog();
-	registerPullRequestTools(catalog);
+	registerGithubTools(catalog);
 	const tool = catalog
 		.list()
 		.find((candidate) => candidate.definition.name === name);
