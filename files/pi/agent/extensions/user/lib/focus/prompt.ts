@@ -50,7 +50,7 @@ function buildFocusSystemPrompt(focus: FocusController): string {
 		description: definition.description,
 		transition: definition.transition,
 	}));
-	return `[FOCUS]\nUse focuses to solve the user's request.\n\nFocus rules:\n- A focus is an operational mode that controls available tools and instructions.\n- Use the descriptions below to choose which focus a task needs.\n- Before substantive work, delegate focus-scoped work with agent using the target focus parameter.\n- Prefer agent when focus-scoped tools are needed; it keeps this context clean and can run work in parallel.\n- Auto focuses may be entered without asking the user.\n- Do not ask the user for information that can be discovered after entering an appropriate focus.\n- If a needed capability is not visible, first check whether another available focus exposes it.\n\nAvailable focuses:\n${formatFocusList(focuses)}`;
+	return `[FOCUS]\nUse focuses to solve the user's request.\n\nFocus rules:\n- A focus controls available tools and instructions.\n- Use agent to delegate focus-scoped work.\n- Do not ask the user for information that can be discovered after entering an appropriate focus.\n\nAvailable focuses:\n${formatFocusList(focuses)}`;
 }
 
 function formatVisibleToolsList(
@@ -203,7 +203,7 @@ function buildFocusReminderPayloadWithTools(
 				"No focus is active.",
 				"Previous focus instructions and tool definitions are no longer active.",
 				"Use only the tool definitions in this latest reminder.",
-				"If focus-scoped tools are needed, call agent with the target focus to delegate it.",
+				"If focus-scoped tools are needed, use agent.",
 			].join("\n");
 	return {
 		content: [
