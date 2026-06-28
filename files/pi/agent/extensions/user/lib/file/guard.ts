@@ -148,10 +148,12 @@ async function findRepositoryRoot(cwd: string): Promise<string | undefined> {
 
 async function isGitRepositoryRoot(candidate: string): Promise<boolean> {
 	try {
-		const { stdout } = await execFileAsync(
-			"git",
-			["-C", candidate, "rev-parse", "--show-toplevel"],
-		);
+		const { stdout } = await execFileAsync("git", [
+			"-C",
+			candidate,
+			"rev-parse",
+			"--show-toplevel",
+		]);
 		return resolve(stdout.trim()) === resolve(candidate);
 	} catch {
 		return false;
