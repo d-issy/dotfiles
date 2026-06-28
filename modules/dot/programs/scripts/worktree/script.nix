@@ -1459,22 +1459,85 @@ in
   	done < <(list_prune_branches "$base")
   }
 
+  finish_prune_worktree_remove() {
+  	local path="$1" mode="$2"
+  	if [[ ! -e "$path" && ! -L "$path" ]]; then
+  		return 0
+  	fi
+
+  	warn "git worktree remove $mode returned success but left the path behind: $path"
+  	warn "Removing leftover worktree directory."
+  	${pkgs.coreutils}/bin/rm -rf -- "$path"
+  	[[ ! -e "$path" && ! -L "$path" ]]
+  }
+
+  remove_prune_worktree() {
+  	local path="$1" dirty="$2" err force_err double_force_err
+  	err="$(${pkgs.coreutils}/bin/mktemp)"
+  	force_err="$(${pkgs.coreutils}/bin/mktemp)"
+  	double_force_err="$(${pkgs.coreutils}/bin/mktemp)"
+
+  	if [[ "$dirty" == yes ]]; then
+  		if ${pkgs.git}/bin/git worktree remove --force "$path" 2>"$force_err"; then
+  			if finish_prune_worktree_remove "$path" "--force"; then
+  				${pkgs.coreutils}/bin/rm -f "$err" "$force_err" "$double_force_err"
+  				return 0
+  			fi
+  		fi
+  	else
+  		if ${pkgs.git}/bin/git worktree remove "$path" 2>"$err"; then
+  			if finish_prune_worktree_remove "$path" "without force"; then
+  				${pkgs.coreutils}/bin/rm -f "$err" "$force_err" "$double_force_err"
+  				return 0
+  			fi
+  		fi
+  		warn "Could not remove clean-looking worktree without force: $path"
+  		warn "Retrying with --force."
+  		if ${pkgs.git}/bin/git worktree remove --force "$path" 2>"$force_err"; then
+  			if finish_prune_worktree_remove "$path" "--force"; then
+  				${pkgs.coreutils}/bin/rm -f "$err" "$force_err" "$double_force_err"
+  				return 0
+  			fi
+  		fi
+  	fi
+
+  	warn "Retrying with --force --force for nested repositories: $path"
+  	if ${pkgs.git}/bin/git worktree remove --force --force "$path" 2>"$double_force_err"; then
+  		if finish_prune_worktree_remove "$path" "--force --force"; then
+  			${pkgs.coreutils}/bin/rm -f "$err" "$force_err" "$double_force_err"
+  			return 0
+  		fi
+  	fi
+
+  	printf 'git worktree remove failed for: %s\n' "$path" >&2
+  	if [[ -s "$err" ]]; then
+  		printf '\nwithout force:\n' >&2
+  		${pkgs.coreutils}/bin/cat "$err" >&2
+  	fi
+  	if [[ -s "$force_err" ]]; then
+  		printf '\nwith --force:\n' >&2
+  		${pkgs.coreutils}/bin/cat "$force_err" >&2
+  	fi
+  	if [[ -s "$double_force_err" ]]; then
+  		printf '\nwith --force --force:\n' >&2
+  		${pkgs.coreutils}/bin/cat "$double_force_err" >&2
+  	fi
+  	${pkgs.coreutils}/bin/rm -f "$err" "$force_err" "$double_force_err"
+  	return 1
+  }
+
   prune_records() {
-  	local targets="$1" branch path dirty window cleaned remove_args=()
+  	local targets="$1" branch path dirty window cleaned
   	while IFS=$'\t' read -r branch path dirty window; do
   		[[ -n "$branch" ]] || continue
   		cleaned="branch"
   		if [[ "$path" != - ]]; then
-  			remove_args=()
-  			if [[ "$dirty" == yes ]]; then
-  				remove_args+=(--force)
-  			fi
-  			${pkgs.git}/bin/git worktree remove "''${remove_args[@]}" "$path"
+  			remove_prune_worktree "$path" "$dirty" || die "Could not remove worktree for $branch: $path"
   			remove_pending_state_for_path "$path"
   			close_tmux_window_for_deleted_path "$path" "$(managed_repo_root)"
   			cleaned="''${cleaned}, worktree: $path"
   		fi
-  		${pkgs.git}/bin/git branch -D "$branch" >/dev/null
+  		${pkgs.git}/bin/git branch -D "$branch" >/dev/null || die "Could not delete branch: $branch"
   		unset_saved_window_for_branch "$branch"
   		if [[ "$window" != - ]]; then
   			cleaned="''${cleaned}, window: $window"
