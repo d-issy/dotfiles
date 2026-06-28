@@ -161,7 +161,7 @@ describe("apply_patch", () => {
 		);
 	});
 
- 	it("applies replace operations sequentially on a temporary copy", async () => {
+	it("applies replace operations sequentially on a temporary copy", async () => {
 		const root = tempRepo();
 		const path = join(root, "src", "example.txt");
 		writeFileSync(path, "one two\n");

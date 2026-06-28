@@ -57,7 +57,7 @@ const replaceSchema = Type.Object({
 	targetLineNoRanges: Type.Optional(
 		Type.Array(targetLineNoRangeSchema, {
 			description:
-				"Optional safe 1-based line number ranges that contain only intended oldText replacements. When omitted, the whole file is searched."
+				"Optional safe 1-based line number ranges that contain only intended oldText replacements. When omitted, the whole file is searched.",
 		}),
 	),
 });
@@ -72,7 +72,7 @@ export const applyPatchSchema = Type.Object({
 	replaces: Type.Optional(
 		Type.Array(replaceSchema, {
 			description:
-				"Replace oldText with newText. If oldText matches multiple locations, use startLineNo/endLineNo or targetLineNoRanges to specify a safe range that contains only intended replacements."
+				"Replace oldText with newText. If oldText matches multiple locations, use startLineNo/endLineNo or targetLineNoRanges to specify a safe range that contains only intended replacements.",
 		}),
 	),
 	removeLineRanges: Type.Optional(
