@@ -51,7 +51,7 @@ function registerFileTools(catalog: ToolCatalog): void {
 				name: "apply_patch",
 				label: "apply_patch",
 				description:
-					"Apply one or more edits to a single file using pre-edit 1-based line numbers and/or text replacement. Supports replaces, removeLineRanges, and insertLines in one call.",
+					"Apply one or more edits to a single file using pre-edit 1-based line numbers and/or exact text replacement. Supports replaces, removeLineRanges, and insertLines in one call.",
 				promptSnippet: "Apply multiple edits to one file",
 				promptGuidelines: [
 					"Use path plus the operation array that matches the edit: replaces for changing existing text, removeLineRanges for deleting whole lines, and insertLines for adding lines.",
@@ -60,7 +60,8 @@ function registerFileTools(catalog: ToolCatalog): void {
 					"Read the target file immediately before line-number based edits; after applying one patch, read again before another line-number based patch because line numbers may have shifted.",
 					"Keep non-replace operations on separate lines: removeLineRanges and insertLines reserve their target lines so overlapping edits fail instead of guessing order.",
 					"For insertLines, choose exactly one insertion point: insertAfterLineNo or insertBeforeLineNo.",
-					"When replaces.oldText matches multiple lines, set startLineNo/endLineNo or targetLineNoRanges to a safe range that contains all intended replacements and excludes unintended ones.",
+					"For replaces, oldText must match exactly, including whitespace and newlines.",
+					"When line numbers can make a replacement unambiguous, prefer allowedReplacementLineRanges with concise oldText and the smallest suitable line ranges; avoid broad ranges such as the whole file.",
 					"When the same line contains multiple oldText matches, make oldText wider (for example the full line or surrounding phrase) because line ranges cannot choose between matches on one line.",
 					"Multiple replaces run in order on temporary text before the file is written, so a later replace can match text produced by an earlier replace and any failure leaves the file unchanged.",
 				],

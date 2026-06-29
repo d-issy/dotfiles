@@ -44,7 +44,7 @@ type ApplyPatchDetails = {
 
 const lineNoSchema = Type.Integer({ minimum: 1 });
 
-const targetLineNoRangeSchema = Type.Object({
+const allowedReplacementLineRangeSchema = Type.Object({
 	start: lineNoSchema,
 	end: lineNoSchema,
 });
@@ -54,10 +54,10 @@ const replaceSchema = Type.Object({
 	newText: Type.String(),
 	startLineNo: Type.Optional(lineNoSchema),
 	endLineNo: Type.Optional(lineNoSchema),
-	targetLineNoRanges: Type.Optional(
-		Type.Array(targetLineNoRangeSchema, {
+	allowedReplacementLineRanges: Type.Optional(
+		Type.Array(allowedReplacementLineRangeSchema, {
 			description:
-				"Optional safe 1-based line number ranges that contain only intended oldText replacements. When omitted, the whole file is searched.",
+				"Optional 1-based line ranges where exact oldText replacement is allowed. oldText must match exactly, including whitespace and newlines. Use the smallest ranges that include the intended replacements; avoid broad ranges such as the whole file. These ranges limit where replacement may occur; they are not replaced by themselves.",
 		}),
 	),
 });
@@ -72,7 +72,7 @@ export const applyPatchSchema = Type.Object({
 	replaces: Type.Optional(
 		Type.Array(replaceSchema, {
 			description:
-				"Replace oldText with newText. If oldText matches multiple locations, use startLineNo/endLineNo or targetLineNoRanges to specify a safe range that contains only intended replacements.",
+				"Replace oldText with newText. oldText must match exactly, including whitespace and newlines. If line numbers can make the edit unambiguous, use allowedReplacementLineRanges with concise oldText and the smallest suitable line ranges to save tokens; use wider oldText only when needed, such as multiple matches on the same line.",
 		}),
 	),
 	removeLineRanges: Type.Optional(
@@ -228,7 +228,7 @@ function collectLineRangeUsage(
 	}
 }
 
-function assertTargetLineNoRange(
+function assertAllowedReplacementLineRange(
 	index: LineIndex,
 	start: number,
 	end: number,
@@ -299,17 +299,17 @@ function createSequentialReplaceEdits(
 			`replaces[${replaceIndex}] must specify both startLineNo and endLineNo, or neither.`,
 		);
 	}
-	if ((replace.targetLineNoRanges?.length ?? 0) > 0) {
+	if ((replace.allowedReplacementLineRanges?.length ?? 0) > 0) {
 		if (hasStart || hasEnd) {
 			throw new Error(
-				`replaces[${replaceIndex}] must specify either startLineNo/endLineNo or targetLineNoRanges, not both.`,
+				`replaces[${replaceIndex}] must specify either startLineNo/endLineNo or allowedReplacementLineRanges, not both.`,
 			);
 		}
 		for (const [rangeIndex, range] of (
-			replace.targetLineNoRanges ?? []
+			replace.allowedReplacementLineRanges ?? []
 		).entries()) {
-			const label = `replaces[${replaceIndex}].targetLineNoRanges[${rangeIndex}]`;
-			assertTargetLineNoRange(index, range.start, range.end, label);
+			const label = `replaces[${replaceIndex}].allowedReplacementLineRanges[${rangeIndex}]`;
+			assertAllowedReplacementLineRange(index, range.start, range.end, label);
 			const chars = rangeContentChars(index, range.start, range.end);
 			const positions = findOccurrences(
 				text.slice(chars.start, chars.end),
@@ -318,7 +318,7 @@ function createSequentialReplaceEdits(
 			);
 			if (positions.length === 0) {
 				throw new Error(
-					`${label} oldText did not match within the target line range.`,
+					`${label} oldText did not match within the allowed replacement line range.`,
 				);
 			}
 			assertNoSameLineMatches(index, positions, label);
@@ -349,7 +349,7 @@ function createSequentialReplaceEdits(
 		throw new Error(`replaces[${replaceIndex}] oldText was not found.`);
 	if (positions.length > 1) {
 		throw new Error(
-			`replaces[${replaceIndex}] oldText matched multiple locations.\nSpecify targetLineNoRanges for a safe range that contains only intended replacements.\nMatched lines: ${matchedLinesSummary(index, positions)}.${multipleMatchesOnSameLineWarning(index, positions)}`,
+			`replaces[${replaceIndex}] oldText matched multiple locations.\nSpecify allowedReplacementLineRanges with the smallest line ranges that contain only intended replacements.\nMatched lines: ${matchedLinesSummary(index, positions)}.${multipleMatchesOnSameLineWarning(index, positions)}`,
 		);
 	}
 	const start = positions[0] ?? 0;
@@ -431,17 +431,17 @@ function createEdits(text: string, params: ApplyPatchToolInput): TextEdit[] {
 				`replaces[${i}] must specify both startLineNo and endLineNo, or neither.`,
 			);
 		}
-		if ((replace.targetLineNoRanges?.length ?? 0) > 0) {
+		if ((replace.allowedReplacementLineRanges?.length ?? 0) > 0) {
 			if (hasStart || hasEnd) {
 				throw new Error(
-					`replaces[${i}] must specify either startLineNo/endLineNo or targetLineNoRanges, not both.`,
+					`replaces[${i}] must specify either startLineNo/endLineNo or allowedReplacementLineRanges, not both.`,
 				);
 			}
 			for (const [rangeIndex, range] of (
-				replace.targetLineNoRanges ?? []
+				replace.allowedReplacementLineRanges ?? []
 			).entries()) {
-				const label = `replaces[${i}].targetLineNoRanges[${rangeIndex}]`;
-				assertTargetLineNoRange(index, range.start, range.end, label);
+				const label = `replaces[${i}].allowedReplacementLineRanges[${rangeIndex}]`;
+				assertAllowedReplacementLineRange(index, range.start, range.end, label);
 				const chars = rangeContentChars(index, range.start, range.end);
 				const positions = findOccurrences(
 					text.slice(chars.start, chars.end),
@@ -450,7 +450,7 @@ function createEdits(text: string, params: ApplyPatchToolInput): TextEdit[] {
 				);
 				if (positions.length === 0) {
 					throw new Error(
-						`${label} oldText did not match within the target line range.`,
+						`${label} oldText did not match within the allowed replacement line range.`,
 					);
 				}
 				assertNoSameLineMatches(index, positions, label);
@@ -483,7 +483,7 @@ function createEdits(text: string, params: ApplyPatchToolInput): TextEdit[] {
 			throw new Error(`replaces[${i}] oldText was not found.`);
 		if (positions.length > 1) {
 			throw new Error(
-				`replaces[${i}] oldText matched multiple locations.\nSpecify targetLineNoRanges for a safe range that contains only intended replacements.\nMatched lines: ${matchedLinesSummary(index, positions)}.${multipleMatchesOnSameLineWarning(index, positions)}`,
+				`replaces[${i}] oldText matched multiple locations.\nSpecify allowedReplacementLineRanges with the smallest line ranges that contain only intended replacements.\nMatched lines: ${matchedLinesSummary(index, positions)}.${multipleMatchesOnSameLineWarning(index, positions)}`,
 			);
 		}
 		const start = positions[0] ?? 0;
