@@ -67,6 +67,12 @@ export function createStatusBarFooter(
 			return fg(pickRemainingColor(remaining), text);
 		}
 
+		function renderCacheHitRate(): string {
+			const totals = getAssistantTotals(ctx.sessionManager.getBranch());
+			if (totals.latestCacheHitRate === undefined) return "";
+			return fg(colors.muted, `CH${formatPercent(totals.latestCacheHitRate)}`);
+		}
+
 		function renderCost(): string {
 			const totals = getAssistantTotals(ctx.sessionManager.getBranch());
 			if (totals.cost <= 0) return "";
@@ -110,7 +116,7 @@ export function createStatusBarFooter(
 				const left = [renderSessionStatus(separator), renderLocation()]
 					.filter(Boolean)
 					.join(` ${separator} `);
-				const right = [renderCost(), renderContextUsage()]
+				const right = [renderCacheHitRate(), renderCost(), renderContextUsage()]
 					.filter(Boolean)
 					.join("  ");
 				const gap = " ".repeat(
