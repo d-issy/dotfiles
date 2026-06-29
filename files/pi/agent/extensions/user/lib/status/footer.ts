@@ -16,7 +16,7 @@ import {
 } from "./format";
 import type { FooterNoticeState } from "./notice";
 import type { RequestRender } from "./render-trigger";
-import { getAssistantTotals } from "./usage";
+import { type LiveAgentUsageTracker, getAssistantTotals } from "./usage";
 
 type FooterFactory = NonNullable<
 	Parameters<ExtensionUIContext["setFooter"]>[0]
@@ -30,6 +30,7 @@ export function createStatusBarFooter(
 	ctx: ExtensionContext,
 	setRequestRender: (requestRender: RequestRender | undefined) => void,
 	notice?: FooterNoticeState,
+	liveAgentUsage?: LiveAgentUsageTracker,
 ): FooterFactory {
 	return (
 		tui: TUI,
@@ -74,7 +75,10 @@ export function createStatusBarFooter(
 		}
 
 		function renderCost(): string {
-			const totals = getAssistantTotals(ctx.sessionManager.getBranch());
+			const totals = getAssistantTotals(
+				ctx.sessionManager.getBranch(),
+				liveAgentUsage?.snapshot(),
+			);
 			if (totals.cost <= 0) return "";
 			return fg(colors.muted, `$${totals.cost.toFixed(3)}`);
 		}

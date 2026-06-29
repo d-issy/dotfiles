@@ -1,4 +1,5 @@
 import { fileURLToPath } from "node:url";
+import type { AssistantMessage } from "@earendil-works/pi-ai";
 import {
 	type AgentToolResult,
 	type AgentToolUpdateCallback,
@@ -352,6 +353,28 @@ type ToolCallRecord = {
 	readonly startTime: number;
 };
 
+function addAssistantUsage(
+	current: AgentDetails["usage"] | undefined,
+	message: AssistantMessage,
+): AgentDetails["usage"] {
+	const usage = message.usage;
+	return {
+		inputTokens: (current?.inputTokens ?? 0) + (usage.input ?? 0),
+		outputTokens: (current?.outputTokens ?? 0) + (usage.output ?? 0),
+		cacheReadTokens: (current?.cacheReadTokens ?? 0) + (usage.cacheRead ?? 0),
+		cacheWriteTokens:
+			(current?.cacheWriteTokens ?? 0) + (usage.cacheWrite ?? 0),
+		totalTokens:
+			(current?.totalTokens ?? 0) +
+			(usage.totalTokens ??
+				(usage.input ?? 0) +
+					(usage.output ?? 0) +
+					(usage.cacheRead ?? 0) +
+					(usage.cacheWrite ?? 0)),
+		cost: (current?.cost ?? 0) + (usage.cost?.total ?? 0),
+	};
+}
+
 /**
  * Owns the live progress UI for a running agent: the initial "starting"
  * frame, the rolling tool tail (latest 3 tools, older ones summarized), and the
@@ -362,6 +385,7 @@ class AgentProgress {
 	private readonly toolCalls: ToolCallRecord[] = [];
 	private lastTail = "";
 	private timer: ReturnType<typeof setInterval> | undefined;
+	private usage: AgentDetails["usage"] | undefined;
 
 	constructor(
 		private readonly startedAt: number,
@@ -389,29 +413,14 @@ class AgentProgress {
 	recordToolStart(toolName: string, args: Record<string, unknown>): void {
 		this.toolCalls.push({ name: toolName, args, startTime: Date.now() });
 		this.lastTail = this.buildTail(false);
-		if (this.onUpdate) {
-			const runningLine = this.runningLine();
-			this.onUpdate({
-				content: [
-					{
-						type: "text",
-						text: `${this.lastTail}\n${runningLine}`,
-					},
-				],
-				details: {
-					_status: "running",
-					_runningLine: runningLine,
-					currentTool: toolName,
-					toolCallCount: this.count,
-					toolCalls: this.toolCalls,
-					durationMs: this.elapsedMs(),
-					title: this.title,
-					focus: this.focus,
-					prompt: this.prompt,
-				},
-			});
-		}
+		this.emitProgress();
 		this.restartRunningTimer();
+	}
+
+	/** Accumulate finalized child assistant usage and refresh parent live details. */
+	recordAssistantUsage(message: AssistantMessage): void {
+		this.usage = addAssistantUsage(this.usage, message);
+		this.emitProgress();
 	}
 
 	/** Snapshot the observed tool calls for terminal rendering. */
@@ -487,43 +496,56 @@ class AgentProgress {
 					text: `${fg(colors.muted, "(starting...)")}\n${runningLine}`,
 				},
 			],
-			details: {
-				_status: "starting",
-				_runningLine: runningLine,
-				toolCallCount: 0,
-				toolCalls: this.toolCalls,
-				durationMs: this.elapsedMs(),
-				title: this.title,
-				focus: this.focus,
-				prompt: this.prompt,
-			},
+			details: this.details("starting", runningLine),
+		});
+	}
+
+	private emitProgress(): void {
+		if (!this.onUpdate) return;
+		if (this.count === 0) {
+			this.emitStarting();
+			return;
+		}
+
+		const runningLine = this.runningLine();
+		this.onUpdate({
+			content: [
+				{
+					type: "text",
+					text: `${this.lastTail}\n${runningLine}`,
+				},
+			],
+			details: this.details(
+				"running",
+				runningLine,
+				this.toolCalls.at(-1)?.name,
+			),
 		});
 	}
 
 	private restartRunningTimer(): void {
 		clearInterval(this.timer);
 		if (!this.onUpdate) return;
-		this.timer = setInterval(() => {
-			const runningLine = this.runningLine();
-			this.onUpdate?.({
-				content: [
-					{
-						type: "text",
-						text: `${this.lastTail}\n${runningLine}`,
-					},
-				],
-				details: {
-					_status: "running",
-					_runningLine: runningLine,
-					toolCallCount: this.count,
-					toolCalls: this.toolCalls,
-					durationMs: this.elapsedMs(),
-					title: this.title,
-					focus: this.focus,
-					prompt: this.prompt,
-				},
-			});
-		}, 120);
+		this.timer = setInterval(() => this.emitProgress(), 120);
+	}
+
+	private details(
+		status: "starting" | "running",
+		runningLine: string,
+		currentTool?: string,
+	): AgentDetails {
+		return {
+			_status: status,
+			_runningLine: runningLine,
+			currentTool,
+			toolCallCount: this.count,
+			toolCalls: this.toolCalls,
+			durationMs: this.elapsedMs(),
+			title: this.title,
+			focus: this.focus,
+			prompt: this.prompt,
+			usage: this.usage,
+		};
 	}
 
 	private promptBlock(): string {
@@ -810,12 +832,22 @@ const createAgentExecute =
 			await client.start();
 
 			unsubscribe = client.onEvent((event) => {
-				if (event.type !== "tool_execution_start") return;
-				const ev = event as {
-					toolName: string;
-					args: Record<string, unknown>;
-				};
-				progress.recordToolStart(ev.toolName, ev.args ?? {});
+				if (event.type === "tool_execution_start") {
+					const ev = event as {
+						toolName: string;
+						args: Record<string, unknown>;
+					};
+					progress.recordToolStart(ev.toolName, ev.args ?? {});
+					return;
+				}
+
+				if (
+					event.type === "message_end" &&
+					event.message.role === "assistant" &&
+					event.message.usage
+				) {
+					progress.recordAssistantUsage(event.message as AssistantMessage);
+				}
 			});
 
 			await client.prompt(prompt);

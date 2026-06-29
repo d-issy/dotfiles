@@ -13,4 +13,9 @@ export {
 	type RequestRender,
 } from "./status/render-trigger";
 export { formatCount } from "./status/format";
-export { getAssistantTotals, type Totals } from "./status/usage";
+export {
+	createLiveAgentUsageTracker,
+	getAssistantTotals,
+	type LiveAgentUsageTracker,
+	type Totals,
+} from "./status/usage";

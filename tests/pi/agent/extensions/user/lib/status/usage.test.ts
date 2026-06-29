@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
 import type { SessionEntry } from "@earendil-works/pi-coding-agent";
 import { describe, it } from "vitest";
-import { getAssistantTotals } from "#pi-user/lib/status/usage";
+import {
+	createLiveAgentUsageTracker,
+	getAssistantTotals,
+} from "#pi-user/lib/status/usage";
 
 describe("getAssistantTotals", () => {
 	it("sums assistant usage and ignores other entries", () => {
@@ -73,6 +76,102 @@ describe("getAssistantTotals", () => {
 			cost: 0.03,
 			latestCacheHitRate: 80,
 		});
+	});
+
+	it("includes live in-flight agent cost in the displayed total", () => {
+		const entries = [
+			{
+				type: "message",
+				message: {
+					role: "assistant",
+					usage: { input: 10, output: 20, cost: { total: 0.1 } },
+				},
+			},
+		] as unknown as SessionEntry[];
+
+		assert.deepEqual(getAssistantTotals(entries, new Map([["call-1", 0.23]])), {
+			input: 10,
+			output: 20,
+			cacheRead: 0,
+			cacheWrite: 0,
+			cost: 0.33,
+			latestCacheHitRate: undefined,
+		});
+	});
+
+	it("does not double count live agent cost once the final tool result exists", () => {
+		const entries = [
+			{
+				type: "message",
+				message: {
+					role: "assistant",
+					usage: { input: 10, output: 20, cost: { total: 0.1 } },
+				},
+			},
+			{
+				type: "message",
+				message: {
+					role: "toolResult",
+					toolCallId: "call-1",
+					toolName: "agent",
+					details: { usage: { cost: 0.23 } },
+				},
+			},
+		] as unknown as SessionEntry[];
+
+		assert.deepEqual(
+			getAssistantTotals(
+				entries,
+				new Map([
+					["call-1", 0.23],
+					["call-2", 0.04],
+				]),
+			),
+			{
+				input: 10,
+				output: 20,
+				cacheRead: 0,
+				cacheWrite: 0,
+				cost: 0.37,
+				latestCacheHitRate: undefined,
+			},
+		);
+	});
+
+	it("tracks live agent cost from tool execution updates and clears after tool result", () => {
+		const tracker = createLiveAgentUsageTracker();
+
+		assert.equal(
+			tracker.handleToolExecutionUpdate({
+				type: "tool_execution_update",
+				toolCallId: "call-1",
+				toolName: "agent",
+				partialResult: { details: { usage: { cost: 0.12 } } },
+			}),
+			true,
+		);
+		assert.deepEqual([...tracker.snapshot()], [["call-1", 0.12]]);
+		assert.equal(
+			tracker.handleToolExecutionUpdate({
+				type: "tool_execution_update",
+				toolCallId: "call-1",
+				toolName: "agent",
+				partialResult: { details: { usage: { cost: 0.12 } } },
+			}),
+			false,
+		);
+		assert.equal(
+			tracker.handleMessageEnd({
+				type: "message_end",
+				message: {
+					role: "toolResult",
+					toolCallId: "call-1",
+					toolName: "agent",
+				},
+			}),
+			true,
+		);
+		assert.deepEqual([...tracker.snapshot()], []);
 	});
 
 	it("includes agent tool result cost in the displayed total", () => {
