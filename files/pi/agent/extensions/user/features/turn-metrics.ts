@@ -4,7 +4,11 @@ import type {
 } from "@earendil-works/pi-coding-agent";
 import type { Feature } from "../feature";
 import { ENTER_FOCUS_TOOL, isTerminatingFocusResult } from "../lib/focus";
-import { formatHumanElapsed, formatLiveElapsed } from "../lib/time";
+import {
+	formatHumanElapsed,
+	formatLiveElapsed,
+	formatLiveElapsedDecimal,
+} from "../lib/time";
 
 const WIDGET_KEY = "turn-metrics";
 const TICK_MS = 1000;
@@ -133,12 +137,10 @@ function register(pi: ExtensionAPI): void {
 
 	function buildLiveMetrics(now = Date.now()): string {
 		if (phase === "Thinking") {
-			return `${getLiveElapsed(now)} total · ${formatLiveElapsed(
-				getThinkingElapsedMs(now),
-			)} thinking`;
+			return `${formatLiveElapsed(getThinkingElapsedMs(now))} thinking`;
 		}
 		if (thoughtDisplayUntil !== undefined && now < thoughtDisplayUntil) {
-			return `${getLiveElapsed(now)} total · ${formatLiveElapsed(completedThinkingMs)} thought`;
+			return `${getLiveElapsed(now)} total · ${formatLiveElapsedDecimal(completedThinkingMs)} thought`;
 		}
 		return getLiveElapsed(now);
 	}
