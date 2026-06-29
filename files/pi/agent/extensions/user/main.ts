@@ -6,6 +6,7 @@ import { createExitConfirmFeature } from "./features/exit-confirm";
 import { createFocusFeature } from "./features/focus";
 import { createPromptRefineFeature } from "./features/prompt-refine";
 import { createQuickActionsFeature } from "./features/quick-actions";
+import { createRenderPolicyFeature } from "./features/render-policy";
 import { createStatusFeature } from "./features/status";
 import { createSystemRemindersFeature } from "./features/system-reminders";
 import { createThinkingFeature } from "./features/thinking";
@@ -24,6 +25,7 @@ function createFeatures(): readonly Feature[] {
 		createPromptRefineFeature(),
 		createThinkingFeature(),
 		createTmuxNoticeFeature(),
+		createRenderPolicyFeature(),
 		createToolFeature(),
 	];
 }
