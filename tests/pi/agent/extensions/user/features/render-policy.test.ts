@@ -75,6 +75,13 @@ function createHarness(): Harness {
 
 const theme = makeTheme();
 const noCtx = {};
+const errorCtx = {
+	args: { path: "missing.txt" },
+	cwd: process.cwd(),
+	isError: true,
+	lastComponent: undefined,
+	showImages: false,
+};
 
 // ────────────────────────────────────────────────────────
 // read
@@ -102,6 +109,19 @@ describe("read renderResult", () => {
 			noCtx,
 		);
 		assert.equal(renderText(component), "");
+	});
+
+	it("does not hide error results", () => {
+		const result = makeResult({ lines: ["read failed"], isError: true });
+		const component = read.renderResult!(
+			result,
+			{ expanded: false, isPartial: false },
+			theme,
+			errorCtx,
+		);
+		const text = renderText(component);
+		assert.notEqual(text, "");
+		assert.match(text, /read failed/u);
 	});
 
 	it("shows Reading... during partial", () => {
@@ -164,6 +184,19 @@ describe("grep renderResult", () => {
 		assert.equal(renderText(component), "a.txt:1:foo\nb.txt:2:bar");
 	});
 
+	it("does not collapse error results into a match count", () => {
+		const result = makeResult({ lines: ["grep failed"], isError: true });
+		const component = grep.renderResult!(
+			result,
+			{ expanded: false, isPartial: false },
+			theme,
+			errorCtx,
+		);
+		const text = renderText(component);
+		assert.match(text, /grep failed/u);
+		assert.doesNotMatch(text, /matches/u);
+	});
+
 	it("shows Searching... during partial", () => {
 		const component = grep.renderResult!(
 			makeResult(),
@@ -221,6 +254,19 @@ describe("find renderResult", () => {
 		assert.equal(renderText(component), "a.ts\nb.ts");
 	});
 
+	it("does not collapse error results into a file count", () => {
+		const result = makeResult({ lines: ["find failed"], isError: true });
+		const component = find.renderResult!(
+			result,
+			{ expanded: false, isPartial: false },
+			theme,
+			errorCtx,
+		);
+		const text = renderText(component);
+		assert.match(text, /find failed/u);
+		assert.doesNotMatch(text, /files/u);
+	});
+
 	it("shows Searching... during partial", () => {
 		const component = find.renderResult!(
 			makeResult(),
@@ -276,6 +322,19 @@ describe("ls renderResult", () => {
 			noCtx,
 		);
 		assert.equal(renderText(component), "dir/\nfile.ts");
+	});
+
+	it("does not collapse error results into an entry count", () => {
+		const result = makeResult({ lines: ["ls failed"], isError: true });
+		const component = ls.renderResult!(
+			result,
+			{ expanded: false, isPartial: false },
+			theme,
+			errorCtx,
+		);
+		const text = renderText(component);
+		assert.match(text, /ls failed/u);
+		assert.doesNotMatch(text, /entries/u);
 	});
 
 	it("shows Listing... during partial", () => {
