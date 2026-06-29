@@ -125,15 +125,6 @@ type AgentResult = AgentToolResult<AgentDetails>;
 /** A result flagged as an error (the `isError` flag is an extension of the base shape). */
 type AgentErrorResult = AgentResult & { isError: true };
 
-const MAX_TITLE_LEN = 30;
-
-/** Truncate a label to `MAX_TITLE_LEN`, appending an ellipsis when clipped. */
-function truncateTitle(label: string): string {
-	return label.length > MAX_TITLE_LEN
-		? `${label.slice(0, MAX_TITLE_LEN)}…`
-		: label;
-}
-
 function truncateMiddleToWidth(text: string, width: number): string {
 	if (visibleWidth(text) <= width) return text;
 	if (width <= 1) return truncateToWidth(text, width, "");
@@ -178,13 +169,12 @@ class OneLinePerRowText implements Component {
 /** Format the one-line call display: `agent <title> in <focus>`. */
 function renderAgentCall(rawArgs: unknown, theme: Theme): Component {
 	const args = rawArgs as AgentInput;
-	const titlePart = args.title ? truncateTitle(args.title) : null;
-	const titleDisplay = titlePart ?? theme.fg("dim", "...");
-	const inPart = theme.fg("dim", " in ");
-	const focusDisplay = args.focus
-		? theme.fg("warning", args.focus)
+	const titlePart = args.title || null;
+	const titleDisplay = titlePart
+		? theme.fg("accent", titlePart)
 		: theme.fg("dim", "...");
-	const text = `${theme.bold("agent")} ${titleDisplay}${inPart}${focusDisplay}`;
+	const focusPart = theme.fg("toolOutput", ` in ${args.focus || "..."}`);
+	const text = `${theme.bold("agent")} ${titleDisplay}${focusPart}`;
 	return new Text(text, 0, 0);
 }
 
@@ -718,7 +708,7 @@ const createAgentExecute =
 			}
 		}
 		const { focus, prompt, title } = input;
-		const header = `${truncateTitle(title ?? focus)} (focus=${focus})`;
+		const header = `${title ?? focus} (focus=${focus})`;
 		const startedAt = Date.now();
 		const progress = new AgentProgress(
 			startedAt,

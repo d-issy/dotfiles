@@ -18,6 +18,13 @@ const plainTheme = {
 	bold: (text: string) => text,
 } as Theme;
 
+function markerTheme(): Theme {
+	return {
+		fg: (name: string, text: string) => `<${name}>${text}</${name}>`,
+		bold: (text: string) => `<bold>${text}</bold>`,
+	} as Theme;
+}
+
 function renderText(
 	component: { render(width: number): string[] },
 	width = 200,
@@ -464,5 +471,111 @@ describe("agent PI_AGENT environment guard", () => {
 		const tools = catalog.list();
 		const agent = tools.find((t) => t.definition.name === AGENT_TOOL);
 		assert.ok(agent);
+	});
+});
+
+describe("agent renderCall", () => {
+	it("displays title in accent color matching read's path style", () => {
+		const catalog = createToolCatalog();
+		registerAgentTool(catalog);
+
+		const tools = catalog.list();
+		const agent = tools.find((t) => t.definition.name === AGENT_TOOL);
+		assert.ok(agent);
+
+		// renderCall is optional in ToolDefinition
+		if (!agent.definition.renderCall) return;
+
+		const component = agent.definition.renderCall(
+			{ focus: "explore", prompt: "do stuff", title: "my task" },
+			plainTheme,
+			{ state: {}, invalidate: () => undefined } as never,
+		);
+
+		const text = renderText(component as { render(width: number): string[] });
+
+		// agent label stays bold (plainTheme strips ansi, so just check presence)
+		assert.match(text, /agent/u);
+		// "in" separator and focus name are preserved
+		assert.match(text, /explore/u);
+		// title is rendered (accent in real theme, but plainTheme passes through)
+		assert.match(text, /my task/u);
+		// no title fallback to dim ...
+		assert.doesNotMatch(text, /\.\.\./u);
+	});
+
+	it("renders focus suffix with grep/find toolOutput color", () => {
+		const catalog = createToolCatalog();
+		registerAgentTool(catalog);
+
+		const tools = catalog.list();
+		const agent = tools.find((t) => t.definition.name === AGENT_TOOL);
+		assert.ok(agent);
+
+		if (!agent.definition.renderCall) return;
+
+		const component = agent.definition.renderCall(
+			{ focus: "explore", prompt: "do stuff", title: "my task" },
+			markerTheme(),
+			{ state: {}, invalidate: () => undefined } as never,
+		);
+
+		const text = renderText(component as { render(width: number): string[] });
+
+		assert.match(text, /<bold>agent<\/bold>/u);
+		assert.match(text, /<accent>my task<\/accent>/u);
+		assert.match(text, /<toolOutput> in explore<\/toolOutput>/u);
+		assert.doesNotMatch(text, /<warning>explore<\/warning>/u);
+	});
+
+	it("does not pre-truncate title before terminal-width rendering", () => {
+		const catalog = createToolCatalog();
+		registerAgentTool(catalog);
+
+		const tools = catalog.list();
+		const agent = tools.find((t) => t.definition.name === AGENT_TOOL);
+		assert.ok(agent);
+
+		if (!agent.definition.renderCall) return;
+
+		const title = "very/long/path/like/read/tool/title/example.ts";
+		const component = agent.definition.renderCall(
+			{ focus: "explore", prompt: "do stuff", title },
+			plainTheme,
+			{ state: {}, invalidate: () => undefined } as never,
+		);
+
+		const text = renderText(component as { render(width: number): string[] });
+
+		assert.match(text, /agent/u);
+		assert.match(text, / in explore/u);
+		assert.match(
+			text,
+			new RegExp(title.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&"), "u"),
+		);
+		assert.doesNotMatch(text, /…/u);
+	});
+
+	it("with no title shows dim placeholder", () => {
+		const catalog = createToolCatalog();
+		registerAgentTool(catalog);
+
+		const tools = catalog.list();
+		const agent = tools.find((t) => t.definition.name === AGENT_TOOL);
+		assert.ok(agent);
+
+		if (!agent.definition.renderCall) return;
+
+		const component = agent.definition.renderCall(
+			{ focus: "explore", prompt: "do stuff" },
+			plainTheme,
+			{ state: {}, invalidate: () => undefined } as never,
+		);
+
+		const text = renderText(component as { render(width: number): string[] });
+
+		assert.match(text, /agent/u);
+		assert.match(text, /explore/u);
+		assert.match(text, /\.\.\./u);
 	});
 });
