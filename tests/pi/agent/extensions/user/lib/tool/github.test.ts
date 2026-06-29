@@ -169,9 +169,49 @@ describe("create_pull_request", () => {
 		const error = await reject(
 			invoke(create, { ...validCreateInput, branchName: "main" }, "/repo"),
 		);
+
 		assert.match(error.message, /repository default branch/u);
 		// Detection may run, but no branch creation should happen.
 		assert.ok(!calls.some((c) => c.bin === "git" && c.args[0] === "switch"));
+	});
+
+	it("creates a draft PR from existing branch commits without committing files", async () => {
+		const calls: Call[] = [];
+		setupExec({
+			calls,
+			stdout: {
+				...defaultArgs("git", [
+					"symbolic-ref",
+					"--short",
+					"refs/remotes/origin/HEAD",
+				]),
+				"git branch --show-current": "feature/test\n",
+				"gh pr create --draft --title Add a and b --body ## Summary\n- adds a and b":
+					"https://github.com/owner/repo/pull/1\n",
+			},
+		});
+		const create = findTool("create_pull_request");
+		const result = (await invoke(
+			create,
+			{
+				branchName: "feature/test",
+				title: "Add a and b",
+				body: "## Summary\n- adds a and b",
+			},
+			"/repo",
+		)) as { readonly content: readonly { readonly text: string }[] };
+		assert.match(result.content[0]?.text ?? "", /pull\/1/u);
+
+		const commands = calls.map((call) => `${call.bin} ${call.args.join(" ")}`);
+		assert.ok(commands.includes("git branch --show-current"));
+		assert.ok(commands.includes("git push -u origin feature/test"));
+		assert.ok(
+			commands.includes(
+				"gh pr create --draft --title Add a and b --body ## Summary\n- adds a and b",
+			),
+		);
+		assert.ok(!commands.some((cmd) => cmd.startsWith("git add ")));
+		assert.ok(!commands.some((cmd) => cmd.startsWith("git commit ")));
 	});
 
 	it("reuses the current branch when it matches branchName", async () => {

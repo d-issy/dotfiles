@@ -4,7 +4,11 @@ import type {
 } from "@earendil-works/pi-coding-agent";
 import type { Feature } from "../feature";
 import { ENTER_FOCUS_TOOL, isTerminatingFocusResult } from "../lib/focus";
-import { formatHumanElapsed, formatLiveElapsed } from "../lib/time";
+import {
+	formatHumanElapsed,
+	formatLiveElapsed,
+	formatLiveElapsedDecimal,
+} from "../lib/time";
 
 const WIDGET_KEY = "turn-metrics";
 const TICK_MS = 1000;
@@ -21,6 +25,7 @@ const DEFAULT_INDICATOR_FRAMES = [
 	"⠏",
 ] as const;
 const DEFAULT_INDICATOR_INTERVAL_MS = 80;
+const THOUGHT_METRICS_DISPLAY_MS = 2000;
 
 type WorkPhase = "Thinking" | "Working";
 type PhaseColor = "accent" | "warning";
@@ -110,16 +115,17 @@ function register(pi: ExtensionAPI): void {
 		if (phase === nextPhase) return;
 
 		if (phase === "Thinking" && thinkingStartedAt !== undefined) {
-			completedThinkingMs += now - thinkingStartedAt;
+			completedThinkingMs = now - thinkingStartedAt; // reset per period
 			thinkingStartedAt = undefined;
 		}
 
 		phase = nextPhase;
 		if (phase === "Thinking") {
+			completedThinkingMs = 0; // reset cumulative — show only current period
 			thinkingStartedAt = now;
 			thoughtDisplayUntil = undefined;
 		} else {
-			thoughtDisplayUntil = now + 1000;
+			thoughtDisplayUntil = now + THOUGHT_METRICS_DISPLAY_MS;
 		}
 	}
 
@@ -133,12 +139,17 @@ function register(pi: ExtensionAPI): void {
 
 	function buildLiveMetrics(now = Date.now()): string {
 		if (phase === "Thinking") {
-			return `${getLiveElapsed(now)} total · ${formatLiveElapsed(
-				getThinkingElapsedMs(now),
-			)} thinking`;
+			const thinkingMs = getThinkingElapsedMs(now);
+			return thinkingMs < 1000
+				? "small thought"
+				: `${formatLiveElapsed(thinkingMs)} thinking`;
 		}
 		if (thoughtDisplayUntil !== undefined && now < thoughtDisplayUntil) {
-			return `${getLiveElapsed(now)} total · ${formatLiveElapsed(completedThinkingMs)} thought`;
+			const thoughtDuration =
+				completedThinkingMs < 1000
+					? "small thought"
+					: `${formatLiveElapsedDecimal(completedThinkingMs)} thought`;
+			return `${getLiveElapsed(now)} total · ${thoughtDuration}`;
 		}
 		return getLiveElapsed(now);
 	}

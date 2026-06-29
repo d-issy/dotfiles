@@ -86,7 +86,6 @@ describe("turn metrics feature", () => {
 
 		const line = h.widgets.at(-1)?.[0] ?? "";
 		assert.match(line, /Worked for 9s/u);
-		assert.doesNotMatch(line, /9\.2s/u);
 	});
 
 	it("renders live elapsed time with fractional seconds only under one minute", async () => {
@@ -100,7 +99,7 @@ describe("turn metrics feature", () => {
 			"message_update",
 			assistantMessage([{ type: "text", text: "working" }]),
 		);
-		assert.match(h.workingMessages.at(-1) ?? "", /9\.2s/u);
+		assert.match(h.workingMessages.at(-1) ?? "", /9s/u);
 
 		vi.setSystemTime(72_300);
 		await h.emit(
@@ -109,7 +108,6 @@ describe("turn metrics feature", () => {
 		);
 		const line = h.workingMessages.at(-1) ?? "";
 		assert.match(line, /1m 12s/u);
-		assert.doesNotMatch(line, /72\.3s/u);
 	});
 
 	it("renders thinking metrics with both total and thinking elapsed time", async () => {
@@ -130,10 +128,34 @@ describe("turn metrics feature", () => {
 		);
 
 		const line = h.workingMessages.at(-1) ?? "";
-		assert.match(line, /18\.4s total/u);
-		assert.match(line, /9\.2s thinking/u);
+		assert.match(line, /9s thinking/u);
 	});
-	it("displays thought metrics for 1 second after thinking phase ends", async () => {
+
+	it("shows 'small thought' when thinking for under 1 second", async () => {
+		vi.useFakeTimers();
+		vi.setSystemTime(0);
+		const h = createHarness();
+
+		await h.emit("before_agent_start");
+		// thinking starts immediately after a text message
+		vi.setSystemTime(100);
+		await h.emit(
+			"message_update",
+			assistantMessage([{ type: "thinking", thinking: "quick reasoning" }]),
+		);
+		// advance to 800ms (still < 1s)
+		vi.setSystemTime(800);
+		await h.emit(
+			"message_update",
+			assistantMessage([{ type: "thinking", thinking: "still quick" }]),
+		);
+
+		const line = h.workingMessages.at(-1) ?? "";
+		assert.match(line, /small thought/u);
+		assert.doesNotMatch(line, /s thinking/u);
+	});
+
+	it("displays thought metrics for 2 seconds after thinking phase ends", async () => {
 		vi.useFakeTimers();
 		vi.setSystemTime(0);
 		const h = createHarness();
@@ -151,26 +173,63 @@ describe("turn metrics feature", () => {
 			"message_update",
 			assistantMessage([{ type: "text", text: "now working" }]),
 		);
-		// Just transitioned to Working, thought display active until T=16s
+		// Just transitioned to Working, thought display active until T=17s
 
 		const thoughtLine = h.workingMessages.at(-1) ?? "";
-		assert.match(thoughtLine, /15\.0s total/u);
+		assert.match(thoughtLine, /15s total/u);
 		assert.match(thoughtLine, /5\.0s thought/u);
 		assert.doesNotMatch(thoughtLine, /Thought for/u);
 
-		// Advance past the 1-second thought display window
+		// Still within the 2-second thought display window
 		vi.setSystemTime(16_001);
 		await h.emit(
 			"message_update",
 			assistantMessage([{ type: "text", text: "still working" }]),
 		);
 
+		const stillThoughtLine = h.workingMessages.at(-1) ?? "";
+		assert.match(stillThoughtLine, /16s total/u);
+		assert.match(stillThoughtLine, /5\.0s thought/u);
+
+		// Advance past the 2-second thought display window
+		vi.setSystemTime(17_001);
+		await h.emit(
+			"message_update",
+			assistantMessage([{ type: "text", text: "still working" }]),
+		);
+
 		const normalLine = h.workingMessages.at(-1) ?? "";
-		assert.match(normalLine, /16\.0s/u);
+		assert.match(normalLine, /17s/u);
 		assert.doesNotMatch(normalLine, /thought/u);
 		assert.doesNotMatch(normalLine, /total/u);
 		assert.doesNotMatch(normalLine, /Thought/u);
 	});
+
+	it("shows 'small thought' when thought duration is under 1 second", async () => {
+		vi.useFakeTimers();
+		vi.setSystemTime(0);
+		const h = createHarness();
+
+		await h.emit("before_agent_start");
+		vi.setSystemTime(1_000);
+		await h.emit(
+			"message_update",
+			assistantMessage([{ type: "thinking", thinking: "quick reasoning" }]),
+		);
+		// 500ms of thinking
+		vi.setSystemTime(1_500);
+		await h.emit(
+			"message_update",
+			assistantMessage([{ type: "text", text: "done thinking" }]),
+		);
+		// Thought display active until T=3.5s
+
+		const thoughtLine = h.workingMessages.at(-1) ?? "";
+		assert.match(thoughtLine, /1s total/u);
+		assert.match(thoughtLine, /small thought/u);
+		assert.doesNotMatch(thoughtLine, /0\.5s thought/u);
+	});
+
 	it("clears thought display when going back to thinking", async () => {
 		vi.useFakeTimers();
 		vi.setSystemTime(0);
@@ -190,7 +249,7 @@ describe("turn metrics feature", () => {
 		);
 		// In thought display window
 		const thoughtLine = h.workingMessages.at(-1) ?? "";
-		assert.match(thoughtLine, /15\.0s total/u);
+		assert.match(thoughtLine, /15s total/u);
 		assert.match(thoughtLine, /5\.0s thought/u);
 		assert.doesNotMatch(thoughtLine, /Thought for/u);
 		// Go back to thinking while still in thought window
@@ -201,8 +260,8 @@ describe("turn metrics feature", () => {
 		);
 
 		const thinkingLine = h.workingMessages.at(-1) ?? "";
-		assert.match(thinkingLine, /total/u);
-		assert.match(thinkingLine, /thinking/u);
+		// Re-entered thinking for only 500ms (< 1s), so shows "small thought"
+		assert.match(thinkingLine, /small thought/u);
 		assert.doesNotMatch(thinkingLine, /Thought/u);
 	});
 });

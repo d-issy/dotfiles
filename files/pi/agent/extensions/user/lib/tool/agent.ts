@@ -125,15 +125,6 @@ type AgentResult = AgentToolResult<AgentDetails>;
 /** A result flagged as an error (the `isError` flag is an extension of the base shape). */
 type AgentErrorResult = AgentResult & { isError: true };
 
-const MAX_TITLE_LEN = 30;
-
-/** Truncate a label to `MAX_TITLE_LEN`, appending an ellipsis when clipped. */
-function truncateTitle(label: string): string {
-	return label.length > MAX_TITLE_LEN
-		? `${label.slice(0, MAX_TITLE_LEN)}…`
-		: label;
-}
-
 function truncateMiddleToWidth(text: string, width: number): string {
 	if (visibleWidth(text) <= width) return text;
 	if (width <= 1) return truncateToWidth(text, width, "");
@@ -178,13 +169,12 @@ class OneLinePerRowText implements Component {
 /** Format the one-line call display: `agent <title> in <focus>`. */
 function renderAgentCall(rawArgs: unknown, theme: Theme): Component {
 	const args = rawArgs as AgentInput;
-	const titlePart = args.title ? truncateTitle(args.title) : null;
-	const titleDisplay = titlePart ?? theme.fg("dim", "...");
-	const inPart = theme.fg("dim", " in ");
-	const focusDisplay = args.focus
-		? theme.fg("warning", args.focus)
+	const titlePart = args.title || null;
+	const titleDisplay = titlePart
+		? theme.fg("accent", titlePart)
 		: theme.fg("dim", "...");
-	const text = `${theme.bold("agent")} ${titleDisplay}${inPart}${focusDisplay}`;
+	const focusPart = theme.fg("toolOutput", ` in ${args.focus || "..."}`);
+	const text = `${theme.bold("agent")} ${titleDisplay}${focusPart}`;
 	return new Text(text, 0, 0);
 }
 
@@ -276,12 +266,20 @@ function renderAgentResult(
 	return new Text(expandedText, 0, 0);
 }
 
+function firstLine(value: string): { text: string; omittedLines: boolean } {
+	const lineBreak = /\r\n|\n|\r/u.exec(value);
+	if (!lineBreak) return { text: value, omittedLines: false };
+	return { text: value.slice(0, lineBreak.index), omittedLines: true };
+}
+
 /** Format a single tool-call argument value for display. */
 function formatArg(v: unknown, options: { truncate: boolean }): string {
 	if (typeof v === "string") {
-		return options.truncate && v.length > 80
-			? `"${v.slice(0, 80)}…"`
-			: `"${v}"`;
+		const { text, omittedLines } = firstLine(v);
+		const truncated = options.truncate && text.length > 80;
+		const display = truncated ? text.slice(0, 80) : text;
+		const suffix = omittedLines || truncated ? "…" : "";
+		return `"${display}${suffix}"`;
 	}
 	if (typeof v === "number" || typeof v === "boolean" || v == null) {
 		return String(v);
@@ -441,12 +439,6 @@ class AgentProgress {
 		return formatLiveElapsed(this.elapsedMs());
 	}
 
-	private toolUsageSuffix(): string {
-		return this.count > 0
-			? ` (${this.count} tool${this.count !== 1 ? "s" : ""} used)`
-			: "";
-	}
-
 	private get runningIcon(): string {
 		return Math.floor(this.elapsedMs() / 600) % 2 === 0 ? "◉" : "○";
 	}
@@ -484,7 +476,7 @@ class AgentProgress {
 	}
 
 	private runningLine(): string {
-		return `${fg(colors.positive, this.runningIcon)} ${this.glossyRunningLabel}  ${this.elapsedLabel()}${this.toolUsageSuffix()}`;
+		return `${fg(colors.positive, this.runningIcon)} ${this.glossyRunningLabel}  ${this.elapsedLabel()}`;
 	}
 
 	private emitStarting(): void {
@@ -724,7 +716,7 @@ const createAgentExecute =
 			}
 		}
 		const { focus, prompt, title } = input;
-		const header = `${truncateTitle(title ?? focus)} (focus=${focus})`;
+		const header = `${title ?? focus} (focus=${focus})`;
 		const startedAt = Date.now();
 		const progress = new AgentProgress(
 			startedAt,

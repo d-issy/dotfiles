@@ -176,13 +176,18 @@ const createPullRequestSchema = Type.Object({
 		description:
 			"Name of the working branch to use. If the current branch already matches, it is reused; otherwise a new branch is created. Must not be the repository default branch.",
 	}),
-	commitFiles: Type.Array(Type.String(), {
-		description:
-			"Explicit list of files to stage and commit. Existing listed files are staged; only listed files are committed.",
-	}),
-	commitMessage: Type.String({
-		description: "Commit message for the new commit.",
-	}),
+	commitFiles: Type.Optional(
+		Type.Array(Type.String(), {
+			description:
+				"Optional explicit list of files to stage and commit. Existing listed files are staged; only listed files are committed. Omit when the branch already has commits for the PR.",
+		}),
+	),
+	commitMessage: Type.Optional(
+		Type.String({
+			description:
+				"Commit message for the new commit. Required when commitFiles is provided.",
+		}),
+	),
 	title: Type.String({ description: "Pull request title." }),
 	body: Type.String({ description: "Pull request body." }),
 });
@@ -1045,11 +1050,13 @@ async function createPullRequest(
 	signal: AbortSignal | undefined,
 ): Promise<GithubToolOutput> {
 	const branchName = requireNonEmpty(params.branchName, "branchName");
-	const commitMessage = requireNonEmpty(params.commitMessage, "commitMessage");
 	const title = requireNonEmpty(params.title, "title");
 	const body = requireNonEmpty(params.body, "body");
-	if (params.commitFiles.length === 0) {
-		throw new Error("commitFiles must not be empty.");
+	if (params.commitFiles !== undefined) {
+		if (params.commitFiles.length === 0) {
+			throw new Error("commitFiles must not be empty.");
+		}
+		requireNonEmpty(params.commitMessage, "commitMessage");
 	}
 
 	const commands: string[] = [];
@@ -1070,13 +1077,19 @@ async function createPullRequest(
 			commands,
 		);
 	}
-	await stageAndCommitFiles(
-		cwd,
-		params.commitFiles,
-		commitMessage,
-		signal,
-		commands,
-	);
+	if (params.commitFiles !== undefined) {
+		const commitMessage = requireNonEmpty(
+			params.commitMessage,
+			"commitMessage",
+		);
+		await stageAndCommitFiles(
+			cwd,
+			params.commitFiles,
+			commitMessage,
+			signal,
+			commands,
+		);
+	}
 	await runCommand(
 		"git",
 		cwd,
@@ -1329,10 +1342,10 @@ export function registerGithubTools(catalog: ToolCatalog): void {
 		name: "create_pull_request",
 		label: "create pull request",
 		description:
-			"Create a new draft pull request from specified commit files. Reuses the current branch when it matches branchName; otherwise creates a new branch. Stages existing listed files, commits only listed files, pushes, and opens a draft PR with gh.",
+			"Create a new draft pull request. Reuses the current branch when it matches branchName; otherwise creates a new branch. When commitFiles is provided, stages existing listed files and commits only listed files. Then pushes and opens a draft PR with gh.",
 		parameters: createPullRequestSchema,
-		promptSnippet: "Create a draft pull request from explicit files",
-		extractSecretPaths: (input) => input.commitFiles,
+		promptSnippet: "Create a draft pull request",
+		extractSecretPaths: (input) => input.commitFiles ?? [],
 		write: true,
 		execute: createPullRequest,
 	});

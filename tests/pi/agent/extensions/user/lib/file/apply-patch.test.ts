@@ -91,7 +91,7 @@ describe("apply_patch", () => {
 			[
 				[
 					"replaces[0] oldText matched multiple locations.",
-					"Specify targetLineNoRanges for a safe range that contains only intended replacements.",
+					"Specify allowedReplacementLineRanges with the smallest line ranges that contain only intended replacements.",
 					"Matched lines: [1, 3].",
 					"Warning: oldText matched multiple times on the same line.",
 					"Use a wider oldText, such as the full line or surrounding phrase, so the intended replacement is unambiguous.",
@@ -102,7 +102,7 @@ describe("apply_patch", () => {
 		);
 	});
 
-	it("replaces all matching text within the target line number ranges", async () => {
+	it("replaces all matching text within the allowed replacement line ranges", async () => {
 		const root = tempRepo();
 		const path = join(root, "src", "example.txt");
 		writeFileSync(
@@ -118,7 +118,7 @@ describe("apply_patch", () => {
 					{
 						oldText: "same",
 						newText: "changed",
-						targetLineNoRanges: [{ start: 1, end: 3 }],
+						allowedReplacementLineRanges: [{ start: 1, end: 3 }],
 					},
 				],
 			},
@@ -132,7 +132,7 @@ describe("apply_patch", () => {
 		assert.equal(result.details.edits, 2);
 	});
 
-	it("uses target line number ranges to disambiguate globally ambiguous text", async () => {
+	it("uses allowed replacement line ranges to disambiguate globally ambiguous text", async () => {
 		const root = tempRepo();
 		const path = join(root, "src", "example.txt");
 		writeFileSync(
@@ -148,7 +148,7 @@ describe("apply_patch", () => {
 					{
 						oldText: "same",
 						newText: "changed",
-						targetLineNoRanges: [{ start: 3, end: 3 }],
+						allowedReplacementLineRanges: [{ start: 3, end: 3 }],
 					},
 				],
 			},
@@ -174,12 +174,12 @@ describe("apply_patch", () => {
 					{
 						oldText: "one",
 						newText: "two",
-						targetLineNoRanges: [{ start: 1, end: 1 }],
+						allowedReplacementLineRanges: [{ start: 1, end: 1 }],
 					},
 					{
 						oldText: "two two",
 						newText: "done",
-						targetLineNoRanges: [{ start: 1, end: 1 }],
+						allowedReplacementLineRanges: [{ start: 1, end: 1 }],
 					},
 				],
 			},
@@ -209,7 +209,7 @@ describe("apply_patch", () => {
 		assert.equal(readFileSync(path, "utf8"), "one\n");
 	});
 
-	it("rejects multiple matches on the same line within a target line number range", async () => {
+	it("rejects multiple matches on the same line within an allowed replacement line range", async () => {
 		const root = tempRepo();
 		const path = join(root, "src", "example.txt");
 		writeFileSync(path, "same same\n");
@@ -222,13 +222,13 @@ describe("apply_patch", () => {
 					{
 						oldText: "same",
 						newText: "changed",
-						targetLineNoRanges: [{ start: 1, end: 1 }],
+						allowedReplacementLineRanges: [{ start: 1, end: 1 }],
 					},
 				],
 			},
 			[
 				[
-					"replaces[0].targetLineNoRanges[0] oldText matched multiple locations on line 1.",
+					"replaces[0].allowedReplacementLineRanges[0] oldText matched multiple locations on line 1.",
 					"Line ranges cannot disambiguate multiple matches on the same line.",
 					"Use a wider oldText, such as the full line or surrounding phrase, so the intended replacement is unambiguous.",
 				].join("\n"),
@@ -237,7 +237,7 @@ describe("apply_patch", () => {
 		assert.equal(readFileSync(path, "utf8"), "same same\n");
 	});
 
-	it("rejects a target line number range that contains no match", async () => {
+	it("rejects an allowed replacement line range that contains no match", async () => {
 		const root = tempRepo();
 		const path = join(root, "src", "example.txt");
 		writeFileSync(path, "same\nother\nsame\n");
@@ -250,18 +250,18 @@ describe("apply_patch", () => {
 					{
 						oldText: "same",
 						newText: "changed",
-						targetLineNoRanges: [{ start: 2, end: 2 }],
+						allowedReplacementLineRanges: [{ start: 2, end: 2 }],
 					},
 				],
 			},
 			[
-				"replaces[0].targetLineNoRanges[0] oldText did not match within the target line range",
+				"replaces[0].allowedReplacementLineRanges[0] oldText did not match within the allowed replacement line range",
 			],
 		);
 		assert.equal(readFileSync(path, "utf8"), "same\nother\nsame\n");
 	});
 
-	it("rejects target line number ranges with start after end", async () => {
+	it("rejects allowed replacement line ranges with start after end", async () => {
 		const root = tempRepo();
 		const path = join(root, "src", "example.txt");
 		writeFileSync(path, "same\nother\n");
@@ -274,11 +274,11 @@ describe("apply_patch", () => {
 					{
 						oldText: "same",
 						newText: "changed",
-						targetLineNoRanges: [{ start: 2, end: 1 }],
+						allowedReplacementLineRanges: [{ start: 2, end: 1 }],
 					},
 				],
 			},
-			["replaces[0].targetLineNoRanges[0] start must be <= end"],
+			["replaces[0].allowedReplacementLineRanges[0] start must be <= end"],
 		);
 		assert.equal(readFileSync(path, "utf8"), "same\nother\n");
 	});

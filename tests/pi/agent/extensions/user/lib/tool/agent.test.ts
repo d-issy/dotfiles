@@ -18,6 +18,13 @@ const plainTheme = {
 	bold: (text: string) => text,
 } as Theme;
 
+function markerTheme(): Theme {
+	return {
+		fg: (name: string, text: string) => `<${name}>${text}</${name}>`,
+		bold: (text: string) => `<bold>${text}</bold>`,
+	} as Theme;
+}
+
 function renderText(
 	component: { render(width: number): string[] },
 	width = 200,
@@ -197,13 +204,13 @@ describe("agent tool registration", () => {
 						' 3. grep (pattern={"raw":"TODO"})',
 						' 4. read (path="src/b.ts")',
 						' 5. lint (options={"fix":false})  ← running',
-						"◉ Running  1.2s (5 tools used)",
+						"◉ Running  1.2s",
 					].join("\n"),
 				},
 			],
 			details: {
 				_status: "running",
-				_runningLine: "◉ Running  1.2s (5 tools used)",
+				_runningLine: "◉ Running  1.2s",
 				toolCallCount: 5,
 				durationMs: 1200,
 				prompt: "Investigate the failing tests",
@@ -238,6 +245,7 @@ describe("agent tool registration", () => {
 		assert.match(output, /3\. grep/u);
 		assert.match(output, /5\. lint/u);
 		assert.match(output, /options=\{"fix":false\}/u);
+		assert.doesNotMatch(output, /5 tools used/u);
 		assert.doesNotMatch(output, /\[object Object\]/u);
 	});
 
@@ -251,13 +259,13 @@ describe("agent tool registration", () => {
 					type: "text" as const,
 					text: [
 						' 1. grep (pattern="this is a very long pattern that used to wrap in narrow terminals")  2.3s  ← running',
-						"◉ Running  1.2s (1 tool used)",
+						"◉ Running  1.2s",
 					].join("\n"),
 				},
 			],
 			details: {
 				_status: "running",
-				_runningLine: "◉ Running  1.2s (1 tool used)",
+				_runningLine: "◉ Running  1.2s",
 				toolCallCount: 1,
 				durationMs: 1200,
 			},
@@ -289,7 +297,7 @@ describe("agent tool registration", () => {
 			content: [{ type: "text" as const, text: "latest tail only" }],
 			details: {
 				_status: "running",
-				_runningLine: "◉ Running  1.2s (5 tools used)",
+				_runningLine: "◉ Running  1.2s",
 				toolCallCount: 5,
 				durationMs: 1200,
 				prompt: "Investigate the failing tests",
@@ -322,7 +330,47 @@ describe("agent tool registration", () => {
 		assert.match(output, /5\. lint/u);
 		assert.match(output, new RegExp(longPattern, "u"));
 		assert.match(output, /◉ Running\s+1\.2s/u);
+		assert.doesNotMatch(output, /5 tools used/u);
 		assert.doesNotMatch(output, /\[object Object\]/u);
+	});
+
+	it("omits multiline string argument lines in running tool history", () => {
+		const definition = getAgentDefinition();
+		assert.ok(definition.renderResult);
+
+		const result = {
+			content: [{ type: "text" as const, text: "latest tail only" }],
+			details: {
+				_status: "running",
+				_runningLine: "◉ Running  1.2s",
+				toolCallCount: 1,
+				durationMs: 1200,
+				toolCalls: [
+					{
+						name: "write",
+						args: {
+							path: "notes.txt",
+							content: "first line\nsecond line\nthird line",
+						},
+						startTime: 0,
+					},
+				],
+			},
+		} satisfies AgentToolResult<Record<string, unknown>>;
+
+		const output = renderText(
+			definition.renderResult(
+				result,
+				{ expanded: true, isPartial: true },
+				plainTheme,
+				renderResultContext(),
+			) as { render(width: number): string[] },
+		);
+
+		assert.match(output, /1\. write/u);
+		assert.match(output, /content="first line…"/u);
+		assert.doesNotMatch(output, /second line/u);
+		assert.doesNotMatch(output, /third line/u);
 	});
 
 	it("omits tool history from completed expanded output", () => {
@@ -358,17 +406,17 @@ describe("agent tool registration", () => {
 		assert.doesNotMatch(output, /tools:/u);
 		assert.doesNotMatch(output, /read(?!_chunk)\b/u);
 	});
-	it("renders agent running time with fractions and completed time without fractions", () => {
+	it("renders agent running time without live count and completed stats with count", () => {
 		const definition = getAgentDefinition();
 		assert.ok(definition.renderResult);
 
 		const running = renderText(
 			definition.renderResult(
 				{
-					content: [{ type: "text", text: "◉ Running  9.2s (1 tool used)" }],
+					content: [{ type: "text", text: "◉ Running  9.2s" }],
 					details: {
 						_status: "running",
-						_runningLine: "◉ Running  9.2s (1 tool used)",
+						_runningLine: "◉ Running  9.2s",
 						toolCallCount: 1,
 						durationMs: 9200,
 					},
@@ -379,6 +427,7 @@ describe("agent tool registration", () => {
 			) as { render(width: number): string[] },
 		);
 		assert.match(running, /9\.2s/u);
+		assert.doesNotMatch(running, /1 tool used/u);
 
 		const completed = renderText(
 			definition.renderResult(
@@ -461,5 +510,111 @@ describe("agent PI_AGENT environment guard", () => {
 		const tools = catalog.list();
 		const agent = tools.find((t) => t.definition.name === AGENT_TOOL);
 		assert.ok(agent);
+	});
+});
+
+describe("agent renderCall", () => {
+	it("displays title in accent color matching read's path style", () => {
+		const catalog = createToolCatalog();
+		registerAgentTool(catalog);
+
+		const tools = catalog.list();
+		const agent = tools.find((t) => t.definition.name === AGENT_TOOL);
+		assert.ok(agent);
+
+		// renderCall is optional in ToolDefinition
+		if (!agent.definition.renderCall) return;
+
+		const component = agent.definition.renderCall(
+			{ focus: "explore", prompt: "do stuff", title: "my task" },
+			plainTheme,
+			{ state: {}, invalidate: () => undefined } as never,
+		);
+
+		const text = renderText(component as { render(width: number): string[] });
+
+		// agent label stays bold (plainTheme strips ansi, so just check presence)
+		assert.match(text, /agent/u);
+		// "in" separator and focus name are preserved
+		assert.match(text, /explore/u);
+		// title is rendered (accent in real theme, but plainTheme passes through)
+		assert.match(text, /my task/u);
+		// no title fallback to dim ...
+		assert.doesNotMatch(text, /\.\.\./u);
+	});
+
+	it("renders focus suffix with grep/find toolOutput color", () => {
+		const catalog = createToolCatalog();
+		registerAgentTool(catalog);
+
+		const tools = catalog.list();
+		const agent = tools.find((t) => t.definition.name === AGENT_TOOL);
+		assert.ok(agent);
+
+		if (!agent.definition.renderCall) return;
+
+		const component = agent.definition.renderCall(
+			{ focus: "explore", prompt: "do stuff", title: "my task" },
+			markerTheme(),
+			{ state: {}, invalidate: () => undefined } as never,
+		);
+
+		const text = renderText(component as { render(width: number): string[] });
+
+		assert.match(text, /<bold>agent<\/bold>/u);
+		assert.match(text, /<accent>my task<\/accent>/u);
+		assert.match(text, /<toolOutput> in explore<\/toolOutput>/u);
+		assert.doesNotMatch(text, /<warning>explore<\/warning>/u);
+	});
+
+	it("does not pre-truncate title before terminal-width rendering", () => {
+		const catalog = createToolCatalog();
+		registerAgentTool(catalog);
+
+		const tools = catalog.list();
+		const agent = tools.find((t) => t.definition.name === AGENT_TOOL);
+		assert.ok(agent);
+
+		if (!agent.definition.renderCall) return;
+
+		const title = "very/long/path/like/read/tool/title/example.ts";
+		const component = agent.definition.renderCall(
+			{ focus: "explore", prompt: "do stuff", title },
+			plainTheme,
+			{ state: {}, invalidate: () => undefined } as never,
+		);
+
+		const text = renderText(component as { render(width: number): string[] });
+
+		assert.match(text, /agent/u);
+		assert.match(text, / in explore/u);
+		assert.match(
+			text,
+			new RegExp(title.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&"), "u"),
+		);
+		assert.doesNotMatch(text, /…/u);
+	});
+
+	it("with no title shows dim placeholder", () => {
+		const catalog = createToolCatalog();
+		registerAgentTool(catalog);
+
+		const tools = catalog.list();
+		const agent = tools.find((t) => t.definition.name === AGENT_TOOL);
+		assert.ok(agent);
+
+		if (!agent.definition.renderCall) return;
+
+		const component = agent.definition.renderCall(
+			{ focus: "explore", prompt: "do stuff" },
+			plainTheme,
+			{ state: {}, invalidate: () => undefined } as never,
+		);
+
+		const text = renderText(component as { render(width: number): string[] });
+
+		assert.match(text, /agent/u);
+		assert.match(text, /explore/u);
+		assert.match(text, /\.\.\./u);
 	});
 });
