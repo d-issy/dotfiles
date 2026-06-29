@@ -441,12 +441,6 @@ class AgentProgress {
 		return formatLiveElapsed(this.elapsedMs());
 	}
 
-	private toolUsageSuffix(): string {
-		return this.count > 0
-			? ` (${this.count} tool${this.count !== 1 ? "s" : ""} used)`
-			: "";
-	}
-
 	private get runningIcon(): string {
 		return Math.floor(this.elapsedMs() / 600) % 2 === 0 ? "◉" : "○";
 	}
@@ -484,7 +478,7 @@ class AgentProgress {
 	}
 
 	private runningLine(): string {
-		return `${fg(colors.positive, this.runningIcon)} ${this.glossyRunningLabel}  ${this.elapsedLabel()}${this.toolUsageSuffix()}`;
+		return `${fg(colors.positive, this.runningIcon)} ${this.glossyRunningLabel}  ${this.elapsedLabel()}`;
 	}
 
 	private emitStarting(): void {

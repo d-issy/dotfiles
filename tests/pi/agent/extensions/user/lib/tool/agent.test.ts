@@ -197,13 +197,13 @@ describe("agent tool registration", () => {
 						' 3. grep (pattern={"raw":"TODO"})',
 						' 4. read (path="src/b.ts")',
 						' 5. lint (options={"fix":false})  ← running',
-						"◉ Running  1.2s (5 tools used)",
+						"◉ Running  1.2s",
 					].join("\n"),
 				},
 			],
 			details: {
 				_status: "running",
-				_runningLine: "◉ Running  1.2s (5 tools used)",
+				_runningLine: "◉ Running  1.2s",
 				toolCallCount: 5,
 				durationMs: 1200,
 				prompt: "Investigate the failing tests",
@@ -238,6 +238,7 @@ describe("agent tool registration", () => {
 		assert.match(output, /3\. grep/u);
 		assert.match(output, /5\. lint/u);
 		assert.match(output, /options=\{"fix":false\}/u);
+		assert.doesNotMatch(output, /5 tools used/u);
 		assert.doesNotMatch(output, /\[object Object\]/u);
 	});
 
@@ -251,13 +252,13 @@ describe("agent tool registration", () => {
 					type: "text" as const,
 					text: [
 						' 1. grep (pattern="this is a very long pattern that used to wrap in narrow terminals")  2.3s  ← running',
-						"◉ Running  1.2s (1 tool used)",
+						"◉ Running  1.2s",
 					].join("\n"),
 				},
 			],
 			details: {
 				_status: "running",
-				_runningLine: "◉ Running  1.2s (1 tool used)",
+				_runningLine: "◉ Running  1.2s",
 				toolCallCount: 1,
 				durationMs: 1200,
 			},
@@ -289,7 +290,7 @@ describe("agent tool registration", () => {
 			content: [{ type: "text" as const, text: "latest tail only" }],
 			details: {
 				_status: "running",
-				_runningLine: "◉ Running  1.2s (5 tools used)",
+				_runningLine: "◉ Running  1.2s",
 				toolCallCount: 5,
 				durationMs: 1200,
 				prompt: "Investigate the failing tests",
@@ -322,6 +323,7 @@ describe("agent tool registration", () => {
 		assert.match(output, /5\. lint/u);
 		assert.match(output, new RegExp(longPattern, "u"));
 		assert.match(output, /◉ Running\s+1\.2s/u);
+		assert.doesNotMatch(output, /5 tools used/u);
 		assert.doesNotMatch(output, /\[object Object\]/u);
 	});
 
@@ -358,17 +360,17 @@ describe("agent tool registration", () => {
 		assert.doesNotMatch(output, /tools:/u);
 		assert.doesNotMatch(output, /read(?!_chunk)\b/u);
 	});
-	it("renders agent running time with fractions and completed time without fractions", () => {
+	it("renders agent running time without live count and completed stats with count", () => {
 		const definition = getAgentDefinition();
 		assert.ok(definition.renderResult);
 
 		const running = renderText(
 			definition.renderResult(
 				{
-					content: [{ type: "text", text: "◉ Running  9.2s (1 tool used)" }],
+					content: [{ type: "text", text: "◉ Running  9.2s" }],
 					details: {
 						_status: "running",
-						_runningLine: "◉ Running  9.2s (1 tool used)",
+						_runningLine: "◉ Running  9.2s",
 						toolCallCount: 1,
 						durationMs: 9200,
 					},
@@ -379,6 +381,7 @@ describe("agent tool registration", () => {
 			) as { render(width: number): string[] },
 		);
 		assert.match(running, /9\.2s/u);
+		assert.doesNotMatch(running, /1 tool used/u);
 
 		const completed = renderText(
 			definition.renderResult(
