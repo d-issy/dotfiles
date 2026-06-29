@@ -25,6 +25,7 @@ const DEFAULT_INDICATOR_FRAMES = [
 	"⠏",
 ] as const;
 const DEFAULT_INDICATOR_INTERVAL_MS = 80;
+const THOUGHT_METRICS_DISPLAY_MS = 2000;
 
 type WorkPhase = "Thinking" | "Working";
 type PhaseColor = "accent" | "warning";
@@ -123,7 +124,7 @@ function register(pi: ExtensionAPI): void {
 			thinkingStartedAt = now;
 			thoughtDisplayUntil = undefined;
 		} else {
-			thoughtDisplayUntil = now + 1000;
+			thoughtDisplayUntil = now + THOUGHT_METRICS_DISPLAY_MS;
 		}
 	}
 
