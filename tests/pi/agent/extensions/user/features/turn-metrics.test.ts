@@ -130,6 +130,31 @@ describe("turn metrics feature", () => {
 		const line = h.workingMessages.at(-1) ?? "";
 		assert.match(line, /9s thinking/u);
 	});
+
+	it("shows 'small thought' when thinking for under 1 second", async () => {
+		vi.useFakeTimers();
+		vi.setSystemTime(0);
+		const h = createHarness();
+
+		await h.emit("before_agent_start");
+		// thinking starts immediately after a text message
+		vi.setSystemTime(100);
+		await h.emit(
+			"message_update",
+			assistantMessage([{ type: "thinking", thinking: "quick reasoning" }]),
+		);
+		// advance to 800ms (still < 1s)
+		vi.setSystemTime(800);
+		await h.emit(
+			"message_update",
+			assistantMessage([{ type: "thinking", thinking: "still quick" }]),
+		);
+
+		const line = h.workingMessages.at(-1) ?? "";
+		assert.match(line, /small thought/u);
+		assert.doesNotMatch(line, /s thinking/u);
+	});
+
 	it("displays thought metrics for 2 seconds after thinking phase ends", async () => {
 		vi.useFakeTimers();
 		vi.setSystemTime(0);
@@ -179,6 +204,32 @@ describe("turn metrics feature", () => {
 		assert.doesNotMatch(normalLine, /total/u);
 		assert.doesNotMatch(normalLine, /Thought/u);
 	});
+
+	it("shows 'small thought' when thought duration is under 1 second", async () => {
+		vi.useFakeTimers();
+		vi.setSystemTime(0);
+		const h = createHarness();
+
+		await h.emit("before_agent_start");
+		vi.setSystemTime(1_000);
+		await h.emit(
+			"message_update",
+			assistantMessage([{ type: "thinking", thinking: "quick reasoning" }]),
+		);
+		// 500ms of thinking
+		vi.setSystemTime(1_500);
+		await h.emit(
+			"message_update",
+			assistantMessage([{ type: "text", text: "done thinking" }]),
+		);
+		// Thought display active until T=3.5s
+
+		const thoughtLine = h.workingMessages.at(-1) ?? "";
+		assert.match(thoughtLine, /1s total/u);
+		assert.match(thoughtLine, /small thought/u);
+		assert.doesNotMatch(thoughtLine, /0\.5s thought/u);
+	});
+
 	it("clears thought display when going back to thinking", async () => {
 		vi.useFakeTimers();
 		vi.setSystemTime(0);
@@ -209,7 +260,8 @@ describe("turn metrics feature", () => {
 		);
 
 		const thinkingLine = h.workingMessages.at(-1) ?? "";
-		assert.match(thinkingLine, /thinking/u);
+		// Re-entered thinking for only 500ms (< 1s), so shows "small thought"
+		assert.match(thinkingLine, /small thought/u);
 		assert.doesNotMatch(thinkingLine, /Thought/u);
 	});
 });

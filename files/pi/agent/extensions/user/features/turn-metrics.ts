@@ -115,12 +115,13 @@ function register(pi: ExtensionAPI): void {
 		if (phase === nextPhase) return;
 
 		if (phase === "Thinking" && thinkingStartedAt !== undefined) {
-			completedThinkingMs += now - thinkingStartedAt;
+			completedThinkingMs = now - thinkingStartedAt; // reset per period
 			thinkingStartedAt = undefined;
 		}
 
 		phase = nextPhase;
 		if (phase === "Thinking") {
+			completedThinkingMs = 0; // reset cumulative — show only current period
 			thinkingStartedAt = now;
 			thoughtDisplayUntil = undefined;
 		} else {
@@ -138,10 +139,17 @@ function register(pi: ExtensionAPI): void {
 
 	function buildLiveMetrics(now = Date.now()): string {
 		if (phase === "Thinking") {
-			return `${formatLiveElapsed(getThinkingElapsedMs(now))} thinking`;
+			const thinkingMs = getThinkingElapsedMs(now);
+			return thinkingMs < 1000
+				? "small thought"
+				: `${formatLiveElapsed(thinkingMs)} thinking`;
 		}
 		if (thoughtDisplayUntil !== undefined && now < thoughtDisplayUntil) {
-			return `${getLiveElapsed(now)} total · ${formatLiveElapsedDecimal(completedThinkingMs)} thought`;
+			const thoughtDuration =
+				completedThinkingMs < 1000
+					? "small thought"
+					: `${formatLiveElapsedDecimal(completedThinkingMs)} thought`;
+			return `${getLiveElapsed(now)} total · ${thoughtDuration}`;
 		}
 		return getLiveElapsed(now);
 	}
