@@ -266,12 +266,20 @@ function renderAgentResult(
 	return new Text(expandedText, 0, 0);
 }
 
+function firstLine(value: string): { text: string; omittedLines: boolean } {
+	const lineBreak = /\r\n|\n|\r/u.exec(value);
+	if (!lineBreak) return { text: value, omittedLines: false };
+	return { text: value.slice(0, lineBreak.index), omittedLines: true };
+}
+
 /** Format a single tool-call argument value for display. */
 function formatArg(v: unknown, options: { truncate: boolean }): string {
 	if (typeof v === "string") {
-		return options.truncate && v.length > 80
-			? `"${v.slice(0, 80)}…"`
-			: `"${v}"`;
+		const { text, omittedLines } = firstLine(v);
+		const truncated = options.truncate && text.length > 80;
+		const display = truncated ? text.slice(0, 80) : text;
+		const suffix = omittedLines || truncated ? "…" : "";
+		return `"${display}${suffix}"`;
 	}
 	if (typeof v === "number" || typeof v === "boolean" || v == null) {
 		return String(v);

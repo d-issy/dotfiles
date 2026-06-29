@@ -334,6 +334,45 @@ describe("agent tool registration", () => {
 		assert.doesNotMatch(output, /\[object Object\]/u);
 	});
 
+	it("omits multiline string argument lines in running tool history", () => {
+		const definition = getAgentDefinition();
+		assert.ok(definition.renderResult);
+
+		const result = {
+			content: [{ type: "text" as const, text: "latest tail only" }],
+			details: {
+				_status: "running",
+				_runningLine: "◉ Running  1.2s",
+				toolCallCount: 1,
+				durationMs: 1200,
+				toolCalls: [
+					{
+						name: "write",
+						args: {
+							path: "notes.txt",
+							content: "first line\nsecond line\nthird line",
+						},
+						startTime: 0,
+					},
+				],
+			},
+		} satisfies AgentToolResult<Record<string, unknown>>;
+
+		const output = renderText(
+			definition.renderResult(
+				result,
+				{ expanded: true, isPartial: true },
+				plainTheme,
+				renderResultContext(),
+			) as { render(width: number): string[] },
+		);
+
+		assert.match(output, /1\. write/u);
+		assert.match(output, /content="first line…"/u);
+		assert.doesNotMatch(output, /second line/u);
+		assert.doesNotMatch(output, /third line/u);
+	});
+
 	it("omits tool history from completed expanded output", () => {
 		const definition = getAgentDefinition();
 		assert.ok(definition.renderResult);
