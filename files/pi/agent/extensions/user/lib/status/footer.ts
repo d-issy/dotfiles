@@ -16,7 +16,7 @@ import {
 } from "./format";
 import type { FooterNoticeState } from "./notice";
 import type { RequestRender } from "./render-trigger";
-import { getAssistantTotals } from "./usage";
+import { type LiveAgentUsageTracker, getAssistantTotals } from "./usage";
 
 type FooterFactory = NonNullable<
 	Parameters<ExtensionUIContext["setFooter"]>[0]
@@ -30,6 +30,7 @@ export function createStatusBarFooter(
 	ctx: ExtensionContext,
 	setRequestRender: (requestRender: RequestRender | undefined) => void,
 	notice?: FooterNoticeState,
+	liveAgentUsage?: LiveAgentUsageTracker,
 ): FooterFactory {
 	return (
 		tui: TUI,
@@ -67,8 +68,17 @@ export function createStatusBarFooter(
 			return fg(pickRemainingColor(remaining), text);
 		}
 
-		function renderCost(): string {
+		function renderCacheHitRate(): string {
 			const totals = getAssistantTotals(ctx.sessionManager.getBranch());
+			if (totals.latestCacheHitRate === undefined) return "";
+			return fg(colors.muted, `CH${formatPercent(totals.latestCacheHitRate)}`);
+		}
+
+		function renderCost(): string {
+			const totals = getAssistantTotals(
+				ctx.sessionManager.getBranch(),
+				liveAgentUsage?.snapshot(),
+			);
 			if (totals.cost <= 0) return "";
 			return fg(colors.muted, `$${totals.cost.toFixed(3)}`);
 		}
@@ -110,7 +120,7 @@ export function createStatusBarFooter(
 				const left = [renderSessionStatus(separator), renderLocation()]
 					.filter(Boolean)
 					.join(` ${separator} `);
-				const right = [renderCost(), renderContextUsage()]
+				const right = [renderCacheHitRate(), renderCost(), renderContextUsage()]
 					.filter(Boolean)
 					.join("  ");
 				const gap = " ".repeat(
