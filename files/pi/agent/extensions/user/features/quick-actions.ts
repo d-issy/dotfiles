@@ -24,6 +24,9 @@ const openQuickActions =
 			case "refinePrompt":
 				await runQuickAction("refinePrompt", ctx);
 				break;
+			case "promptStash":
+				await runQuickAction("promptStash", ctx);
+				break;
 		}
 	};
 

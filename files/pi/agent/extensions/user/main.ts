@@ -5,6 +5,7 @@ import { createUserExtensionServices } from "./lib/services";
 import { createExitConfirmFeature } from "./features/exit-confirm";
 import { createFocusFeature } from "./features/focus";
 import { createPromptRefineFeature } from "./features/prompt-refine";
+import { createPromptStashFeature } from "./features/prompt-stash";
 import { createQuickActionsFeature } from "./features/quick-actions";
 import { createRenderPolicyFeature } from "./features/render-policy";
 import { createStatusFeature } from "./features/status";
@@ -23,6 +24,7 @@ function createFeatures(): readonly Feature[] {
 		createFocusFeature(),
 		createQuickActionsFeature(),
 		createPromptRefineFeature(),
+		createPromptStashFeature(),
 		createThinkingFeature(),
 		createTmuxNoticeFeature(),
 		createRenderPolicyFeature(),

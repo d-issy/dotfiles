@@ -11,7 +11,12 @@ import {
 	renderKeyedPanelItem,
 } from "./ui/keyed-panel";
 
-export type QuickActionId = "focus" | "effort" | "model" | "refinePrompt";
+export type QuickActionId =
+	| "focus"
+	| "effort"
+	| "model"
+	| "refinePrompt"
+	| "promptStash";
 
 type QuickAction = KeyedPanelItem & {
 	id: QuickActionId;
@@ -43,6 +48,12 @@ const QUICK_ACTIONS: readonly QuickAction[] = [
 		key: "r",
 		label: "Refine Prompt",
 		description: "Improve the editor prompt with AI",
+	},
+	{
+		id: "promptStash",
+		key: "s",
+		label: "Prompt Stash",
+		description: "Save or restore editor prompts",
 	},
 ];
 
