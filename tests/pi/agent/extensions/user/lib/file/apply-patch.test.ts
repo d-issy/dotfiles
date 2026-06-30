@@ -47,7 +47,7 @@ async function expectApplyPatchError(
 }
 
 describe("apply_patch", () => {
-	it("applies multiple operation kinds using pre-edit line numbers", async () => {
+	it("applies sed scripts and replaces on a temporary copy", async () => {
 		const root = tempRepo();
 		writeFileSync(
 			join(root, "src", "example.txt"),
@@ -58,11 +58,10 @@ describe("apply_patch", () => {
 			root,
 			{
 				path: "src/example.txt",
+				sedScripts: ["4d;4a\\inserted"],
 				replaces: [
 					{ oldText: "two", newText: "TWO", startLineNo: 2, endLineNo: 2 },
 				],
-				removeLineRanges: [{ startLineNo: 4, endLineNo: 4 }],
-				insertLines: [{ insertAfterLineNo: 5, contentLines: ["inserted"] }],
 			},
 			undefined,
 		);
@@ -73,7 +72,7 @@ describe("apply_patch", () => {
 		);
 		assert.equal(result.details.operation, "apply_patch");
 		assert.equal(result.details.path, "src/example.txt");
-		assert.equal(result.details.edits, 3);
+		assert.equal(result.details.edits, 2);
 		assert.ok(typeof result.details.diff === "string");
 		assert.ok(typeof result.details.patch === "string");
 	});
@@ -283,7 +282,7 @@ describe("apply_patch", () => {
 		assert.equal(readFileSync(path, "utf8"), "same\nother\n");
 	});
 
-	it("inserts after the last line when the file ends with a newline", async () => {
+	it("uses sed append scripts", async () => {
 		const root = tempRepo();
 		const path = join(root, "src", "example.txt");
 		writeFileSync(path, "line 1\nline 2\n");
@@ -292,12 +291,32 @@ describe("apply_patch", () => {
 			root,
 			{
 				path: "src/example.txt",
-				insertLines: [{ insertAfterLineNo: 2, contentLines: ["line 3"] }],
+				sedScripts: ["2a\\line 3"],
 			},
 			undefined,
 		);
 
 		assert.equal(readFileSync(path, "utf8"), "line 1\nline 2\nline 3\n");
+	});
+
+	it("applies semicolon-separated sed commands sequentially", async () => {
+		const root = tempRepo();
+		const path = join(root, "src", "example.txt");
+		writeFileSync(path, "alpha\nremove-me\nanchor\nomega\n");
+
+		await executeApplyPatch(
+			root,
+			{
+				path: "src/example.txt",
+				sedScripts: ["2d;2a\\inserted"],
+			},
+			undefined,
+		);
+
+		assert.equal(
+			readFileSync(path, "utf8"),
+			"alpha\nanchor\ninserted\nomega\n",
+		);
 	});
 
 	it("edits an existing untracked file created by write", async () => {
@@ -330,7 +349,7 @@ describe("apply_patch", () => {
 				root,
 				{
 					path: "src/missing.txt",
-					insertLines: [{ insertAfterLineNo: 1, contentLines: ["line 1"] }],
+					sedScripts: ["1a\\line 1"],
 				},
 				undefined,
 			),
@@ -338,7 +357,7 @@ describe("apply_patch", () => {
 		);
 	});
 
-	it("rejects invalid line usage before mutating the file", async () => {
+	it("does not mutate the file when a sed script fails", async () => {
 		const root = tempRepo();
 		const path = join(root, "src", "example.txt");
 		writeFileSync(path, "one\ntwo\nthree\n");
@@ -348,36 +367,29 @@ describe("apply_patch", () => {
 				root,
 				{
 					path: "src/example.txt",
-					removeLineRanges: [{ startLineNo: 2, endLineNo: 2 }],
-					insertLines: [{ insertBeforeLineNo: 2, contentLines: ["changed"] }],
+					sedScripts: ["s/one/changed/", "s/[//"],
 				},
 				undefined,
 			),
-			/Line 2 is used by multiple apply_patch operations/u,
+			/sedScripts\[1\]/u,
 		);
 		assert.equal(readFileSync(path, "utf8"), "one\ntwo\nthree\n");
 	});
 
-	it("requires exactly one insert position", async () => {
+	it("applies sed scripts in order", async () => {
 		const root = tempRepo();
-		writeFileSync(join(root, "src", "example.txt"), "one\n");
+		const path = join(root, "src", "example.txt");
+		writeFileSync(path, "one\n");
 
-		await assert.rejects(
-			executeApplyPatch(
-				root,
-				{
-					path: "src/example.txt",
-					insertLines: [
-						{
-							insertAfterLineNo: 1,
-							insertBeforeLineNo: 1,
-							contentLines: ["bad"],
-						},
-					],
-				},
-				undefined,
-			),
-			/requires exactly one of insertAfterLineNo or insertBeforeLineNo/u,
+		await executeApplyPatch(
+			root,
+			{
+				path: "src/example.txt",
+				sedScripts: ["s/one/two/", "s/two/done/"],
+			},
+			undefined,
 		);
+
+		assert.equal(readFileSync(path, "utf8"), "done\n");
 	});
 });

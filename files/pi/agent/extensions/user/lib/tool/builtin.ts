@@ -51,15 +51,12 @@ function registerFileTools(catalog: ToolCatalog): void {
 				name: "apply_patch",
 				label: "apply_patch",
 				description:
-					"Apply one or more edits to a single file using pre-edit 1-based line numbers and/or exact text replacement. Supports replaces, removeLineRanges, and insertLines in one call.",
+					"Apply one or more edits to a single file using exact text replacement and a small sed-like script subset.",
 				promptSnippet: "Apply multiple edits to one file",
 				promptGuidelines: [
-					"Use path plus the operation array that matches the edit: replaces for changing existing text, removeLineRanges for deleting whole lines, and insertLines for adding lines.",
+					"Use replaces for exact text changes and sedScripts for compact line/range edits such as d, a\\text, i\\text, or s/pattern/replacement/g.",
 					"Prefer the operation that states the intent directly so the tool can validate the edit and avoid ambiguous text matches.",
-					"Use 1-based line numbers from the file as it existed before this apply_patch call.",
-					"Read the target file immediately before line-number based edits; after applying one patch, read again before another line-number based patch because line numbers may have shifted.",
-					"Keep non-replace operations on separate lines: removeLineRanges and insertLines reserve their target lines so overlapping edits fail instead of guessing order.",
-					"For insertLines, choose exactly one insertion point: insertAfterLineNo or insertBeforeLineNo.",
+					"Read the target file immediately before line-number based sed edits; if a sedScripts entry uses line-number addresses, provide only one sedScripts entry.",
 					"For replaces, oldText must match exactly, including whitespace and newlines.",
 					"When line numbers can make a replacement unambiguous, prefer allowedReplacementLineRanges with concise oldText and the smallest suitable line ranges; avoid broad ranges such as the whole file.",
 					"When the same line contains multiple oldText matches, make oldText wider (for example the full line or surrounding phrase) because line ranges cannot choose between matches on one line.",

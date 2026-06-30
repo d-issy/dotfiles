@@ -62,11 +62,6 @@ const replaceSchema = Type.Object({
 	),
 });
 
-const lineRangeSchema = Type.Object({
-	startLineNo: lineNoSchema,
-	endLineNo: lineNoSchema,
-});
-
 export const applyPatchSchema = Type.Object({
 	path: Type.String({ description: "Path of the file to edit." }),
 	replaces: Type.Optional(
@@ -75,23 +70,11 @@ export const applyPatchSchema = Type.Object({
 				"Replace oldText with newText. oldText must match exactly, including whitespace and newlines. If line numbers can make the edit unambiguous, use allowedReplacementLineRanges with concise oldText and the smallest suitable line ranges to save tokens; use wider oldText only when needed, such as multiple matches on the same line.",
 		}),
 	),
-	removeLineRanges: Type.Optional(
-		Type.Array(lineRangeSchema, {
-			description: "Remove inclusive 1-based line ranges.",
+	sedScripts: Type.Optional(
+		Type.Array(Type.String(), {
+			description:
+				"Apply one or more sed scripts to the file, in order. Use this for compact line/range edits such as deletion or scoped substitution. Do not use sedScripts blindly: first inspect the target range with read, grep, or similar tools, and ensure the sed range uniquely targets the intended lines. If a script uses line-number addresses, provide only one script in sedScripts because earlier edits can shift later line numbers; for multiple line-number edits, apply one script, re-read the file, then apply the next.",
 		}),
-	),
-	insertLines: Type.Optional(
-		Type.Array(
-			Type.Object({
-				contentLines: Type.Array(Type.String()),
-				insertAfterLineNo: Type.Optional(lineNoSchema),
-				insertBeforeLineNo: Type.Optional(lineNoSchema),
-			}),
-			{
-				description:
-					"Insert contentLines before or after a 1-based line number. Exactly one of insertAfterLineNo or insertBeforeLineNo is required.",
-			},
-		),
 	),
 });
 
@@ -104,16 +87,7 @@ function checkAbort(signal: AbortSignal | undefined): void {
 }
 
 function operationCount(params: ApplyPatchToolInput): number {
-	return (
-		(params.replaces?.length ?? 0) +
-		(params.removeLineRanges?.length ?? 0) +
-		(params.insertLines?.length ?? 0)
-	);
-}
-
-function lineText(lines: readonly string[]): string {
-	if (lines.length === 0) return "";
-	return `${lines.join("\n")}\n`;
+	return (params.replaces?.length ?? 0) + (params.sedScripts?.length ?? 0);
 }
 
 function createLineIndex(text: string): LineIndex {
@@ -160,17 +134,6 @@ function assertLineRange(
 	}
 }
 
-function lineRangeToChars(
-	index: LineIndex,
-	startLineNo: number,
-	endLineNo: number,
-): { start: number; end: number } {
-	return {
-		start: index.starts[startLineNo - 1] ?? 0,
-		end: index.rangeEnds[endLineNo - 1] ?? 0,
-	};
-}
-
 function rangeContentChars(
 	index: LineIndex,
 	startLineNo: number,
@@ -208,24 +171,6 @@ function findOccurrences(
 		offset = found + Math.max(needle.length, 1);
 	}
 	return positions;
-}
-
-function collectLineUsage(usedLines: Set<number>, lineNo: number): void {
-	if (usedLines.has(lineNo))
-		throw new Error(
-			`Line ${lineNo} is used by multiple apply_patch operations.`,
-		);
-	usedLines.add(lineNo);
-}
-
-function collectLineRangeUsage(
-	usedLines: Set<number>,
-	startLineNo: number,
-	endLineNo: number,
-): void {
-	for (let lineNo = startLineNo; lineNo <= endLineNo; lineNo++) {
-		collectLineUsage(usedLines, lineNo);
-	}
 }
 
 function assertAllowedReplacementLineRange(
@@ -377,125 +322,364 @@ function applySequentialReplaces(
 	return { text: nextText, edits: editCount };
 }
 
-function createEdits(text: string, params: ApplyPatchToolInput): TextEdit[] {
-	const index = createLineIndex(text);
-	const edits: TextEdit[] = [];
-	const usedLines = new Set<number>();
+type SedAddress = {
+	readonly startLineNo: number;
+	readonly endLineNo: number;
+};
 
-	for (const [i, range] of (params.removeLineRanges ?? []).entries()) {
-		assertLineRange(
-			index,
-			range.startLineNo,
-			range.endLineNo,
-			`removeLineRanges[${i}]`,
-		);
-		collectLineRangeUsage(usedLines, range.startLineNo, range.endLineNo);
-		const chars = lineRangeToChars(index, range.startLineNo, range.endLineNo);
-		edits.push({ ...chars, replacement: "", label: `removeLineRanges[${i}]` });
+type SedCommand =
+	| {
+			readonly kind: "delete";
+			readonly address: SedAddress | undefined;
+	  }
+	| {
+			readonly kind: "append" | "insert";
+			readonly address: SedAddress | undefined;
+			readonly text: string;
+	  }
+	| {
+			readonly kind: "substitute";
+			readonly address: SedAddress | undefined;
+			readonly regex: RegExp;
+			readonly replacement: string;
+	  };
+
+type ParsedSedScript = {
+	readonly commands: readonly SedCommand[];
+	readonly usesLineAddresses: boolean;
+};
+
+type SedLine = {
+	readonly content: string;
+	readonly newline: string;
+};
+
+function isDigit(char: string | undefined): boolean {
+	return char !== undefined && char >= "0" && char <= "9";
+}
+
+function skipSedSpaces(script: string, cursor: number): number {
+	let nextCursor = cursor;
+	while (/\s/u.test(script[nextCursor] ?? "")) nextCursor++;
+	return nextCursor;
+}
+
+function readSedLineNo(
+	script: string,
+	cursor: number,
+	label: string,
+): { lineNo: number; cursor: number } {
+	let nextCursor = cursor;
+	while (isDigit(script[nextCursor])) nextCursor++;
+	if (nextCursor === cursor) {
+		throw new Error(`${label} expected a line number.`);
+	}
+	const lineNo = Number(script.slice(cursor, nextCursor));
+	if (!Number.isSafeInteger(lineNo) || lineNo < 1) {
+		throw new Error(`${label} line number must be a positive integer.`);
+	}
+	return { lineNo, cursor: nextCursor };
+}
+
+function parseSedAddress(
+	script: string,
+	cursor: number,
+	label: string,
+): { address: SedAddress | undefined; cursor: number } {
+	let nextCursor = skipSedSpaces(script, cursor);
+	if (!isDigit(script[nextCursor])) {
+		return { address: undefined, cursor: nextCursor };
 	}
 
-	for (const [i, insert] of (params.insertLines ?? []).entries()) {
-		const hasAfter = insert.insertAfterLineNo !== undefined;
-		const hasBefore = insert.insertBeforeLineNo !== undefined;
-		if (hasAfter === hasBefore) {
+	const start = readSedLineNo(script, nextCursor, label);
+	nextCursor = skipSedSpaces(script, start.cursor);
+	let endLineNo = start.lineNo;
+	if (script[nextCursor] === ",") {
+		nextCursor = skipSedSpaces(script, nextCursor + 1);
+		const end = readSedLineNo(script, nextCursor, label);
+		endLineNo = end.lineNo;
+		nextCursor = skipSedSpaces(script, end.cursor);
+	}
+	if (start.lineNo > endLineNo) {
+		throw new Error(`${label} address range start must be <= end.`);
+	}
+	return {
+		address: { startLineNo: start.lineNo, endLineNo },
+		cursor: nextCursor,
+	};
+}
+
+function readSedEscapedSection(
+	script: string,
+	cursor: number,
+	delimiter: string,
+	label: string,
+): { value: string; cursor: number } {
+	let value = "";
+	let nextCursor = cursor;
+	while (nextCursor < script.length) {
+		const char = script[nextCursor] ?? "";
+		if (char === delimiter) {
+			return { value, cursor: nextCursor + 1 };
+		}
+		if (char === "\\") {
+			const nextChar = script[nextCursor + 1];
+			if (nextChar === undefined) {
+				value += char;
+				nextCursor++;
+				continue;
+			}
+			value += nextChar === delimiter ? delimiter : `${char}${nextChar}`;
+			nextCursor += 2;
+			continue;
+		}
+		value += char;
+		nextCursor++;
+	}
+	throw new Error(`${label} unterminated substitute command.`);
+}
+
+function parseSedSubstitute(
+	script: string,
+	cursor: number,
+	address: SedAddress | undefined,
+	label: string,
+): { command: SedCommand; cursor: number } {
+	const delimiter = script[cursor];
+	if (delimiter === undefined || delimiter === ";" || delimiter === "\\") {
+		throw new Error(`${label} substitute command is missing a delimiter.`);
+	}
+	const pattern = readSedEscapedSection(script, cursor + 1, delimiter, label);
+	const replacement = readSedEscapedSection(
+		script,
+		pattern.cursor,
+		delimiter,
+		label,
+	);
+	let global = false;
+	let nextCursor = replacement.cursor;
+	while (nextCursor < script.length && script[nextCursor] !== ";") {
+		const flag = script[nextCursor] ?? "";
+		if (/\s/u.test(flag)) {
+			nextCursor++;
+			continue;
+		}
+		if (flag !== "g") {
 			throw new Error(
-				`insertLines[${i}] requires exactly one of insertAfterLineNo or insertBeforeLineNo.`,
+				`${label} unsupported substitute flag ${JSON.stringify(flag)}.`,
 			);
 		}
-		const lineNo = insert.insertAfterLineNo ?? insert.insertBeforeLineNo;
-		if (lineNo === undefined)
-			throw new Error(`insertLines[${i}] is missing a line number.`);
-		assertLineNo(index, lineNo, `insertLines[${i}]`);
-		collectLineUsage(usedLines, lineNo);
-		const insertAfter = insert.insertAfterLineNo !== undefined;
-		const position = insertAfter
-			? (index.rangeEnds[lineNo - 1] ?? 0)
-			: (index.starts[lineNo - 1] ?? 0);
-		let replacement = lineText(insert.contentLines);
-		if (insertAfter && position === text.length && !text.endsWith("\n")) {
-			replacement = `\n${insert.contentLines.join("\n")}`;
+		if (global) {
+			throw new Error(`${label} duplicate substitute flag "g".`);
 		}
-		edits.push({
-			start: position,
-			end: position,
-			replacement,
-			label: `insertLines[${i}]`,
+		global = true;
+		nextCursor++;
+	}
+	try {
+		return {
+			command: {
+				kind: "substitute",
+				address,
+				regex: new RegExp(pattern.value, global ? "g" : ""),
+				replacement: replacement.value,
+			},
+			cursor: nextCursor,
+		};
+	} catch (error) {
+		const message = error instanceof Error ? error.message : String(error);
+		throw new Error(`${label} invalid substitute pattern: ${message}`, {
+			cause: error,
 		});
 	}
+}
 
-	for (const [i, replace] of (params.replaces ?? []).entries()) {
-		const hasStart = replace.startLineNo !== undefined;
-		const hasEnd = replace.endLineNo !== undefined;
-		if (hasStart !== hasEnd) {
-			throw new Error(
-				`replaces[${i}] must specify both startLineNo and endLineNo, or neither.`,
-			);
-		}
-		if ((replace.allowedReplacementLineRanges?.length ?? 0) > 0) {
-			if (hasStart || hasEnd) {
-				throw new Error(
-					`replaces[${i}] must specify either startLineNo/endLineNo or allowedReplacementLineRanges, not both.`,
-				);
-			}
-			for (const [rangeIndex, range] of (
-				replace.allowedReplacementLineRanges ?? []
-			).entries()) {
-				const label = `replaces[${i}].allowedReplacementLineRanges[${rangeIndex}]`;
-				assertAllowedReplacementLineRange(index, range.start, range.end, label);
-				const chars = rangeContentChars(index, range.start, range.end);
-				const positions = findOccurrences(
-					text.slice(chars.start, chars.end),
-					replace.oldText,
-					chars.start,
-				);
-				if (positions.length === 0) {
-					throw new Error(
-						`${label} oldText did not match within the allowed replacement line range.`,
-					);
-				}
-				assertNoSameLineMatches(index, positions, label);
-				for (const start of positions) {
-					collectLineUsage(usedLines, lineNoAtOffset(index, start));
-					edits.push({
-						start,
-						end: start + replace.oldText.length,
-						replacement: replace.newText,
-						label,
-					});
-				}
-			}
+function readSedTextCommand(
+	script: string,
+	cursor: number,
+	kind: "append" | "insert",
+	address: SedAddress | undefined,
+	label: string,
+): { command: SedCommand; cursor: number } {
+	if (script[cursor] !== "\\") {
+		throw new Error(
+			`${label} ${kind} command must use ${kind[0]}\\text syntax.`,
+		);
+	}
+	let nextCursor = cursor + 1;
+	while (nextCursor < script.length && script[nextCursor] !== ";") {
+		nextCursor++;
+	}
+	return {
+		command: { kind, address, text: script.slice(cursor + 1, nextCursor) },
+		cursor: nextCursor,
+	};
+}
+
+function parseSedScript(script: string, scriptIndex: number): ParsedSedScript {
+	const commands: SedCommand[] = [];
+	let cursor = 0;
+	while (cursor < script.length) {
+		cursor = skipSedSpaces(script, cursor);
+		if (cursor >= script.length) break;
+		if (script[cursor] === ";") {
+			cursor++;
 			continue;
 		}
 
-		let searchText = text;
-		let baseOffset = 0;
-		if (hasStart && hasEnd) {
-			const startLineNo = replace.startLineNo ?? 1;
-			const endLineNo = replace.endLineNo ?? 1;
-			assertLineRange(index, startLineNo, endLineNo, `replaces[${i}]`);
-			collectLineRangeUsage(usedLines, startLineNo, endLineNo);
-			const chars = rangeContentChars(index, startLineNo, endLineNo);
-			searchText = text.slice(chars.start, chars.end);
-			baseOffset = chars.start;
+		const label = `sedScripts[${scriptIndex}] command ${commands.length}`;
+		const parsedAddress = parseSedAddress(script, cursor, label);
+		cursor = parsedAddress.cursor;
+		const commandChar = script[cursor];
+		if (commandChar === undefined) {
+			throw new Error(`${label} missing command.`);
 		}
-		const positions = findOccurrences(searchText, replace.oldText, baseOffset);
-		if (positions.length === 0)
-			throw new Error(`replaces[${i}] oldText was not found.`);
-		if (positions.length > 1) {
+		cursor++;
+
+		let parsedCommand: { command: SedCommand; cursor: number };
+		if (commandChar === "d") {
+			parsedCommand = {
+				command: { kind: "delete", address: parsedAddress.address },
+				cursor: skipSedSpaces(script, cursor),
+			};
+		} else if (commandChar === "a") {
+			parsedCommand = readSedTextCommand(
+				script,
+				cursor,
+				"append",
+				parsedAddress.address,
+				label,
+			);
+		} else if (commandChar === "i") {
+			parsedCommand = readSedTextCommand(
+				script,
+				cursor,
+				"insert",
+				parsedAddress.address,
+				label,
+			);
+		} else if (commandChar === "s") {
+			parsedCommand = parseSedSubstitute(
+				script,
+				cursor,
+				parsedAddress.address,
+				label,
+			);
+		} else {
 			throw new Error(
-				`replaces[${i}] oldText matched multiple locations.\nSpecify allowedReplacementLineRanges with the smallest line ranges that contain only intended replacements.\nMatched lines: ${matchedLinesSummary(index, positions)}.${multipleMatchesOnSameLineWarning(index, positions)}`,
+				`${label} unsupported command ${JSON.stringify(commandChar)}.`,
 			);
 		}
-		const start = positions[0] ?? 0;
-		edits.push({
-			start,
-			end: start + replace.oldText.length,
-			replacement: replace.newText,
-			label: `replaces[${i}]`,
-		});
+
+		commands.push(parsedCommand.command);
+		cursor = parsedCommand.cursor;
+		if (cursor < script.length) {
+			if (script[cursor] !== ";") {
+				throw new Error(`${label} expected command separator ";".`);
+			}
+			cursor++;
+		}
+	}
+	return {
+		commands,
+		usesLineAddresses: commands.some(
+			(command) => command.address !== undefined,
+		),
+	};
+}
+
+function splitSedLines(text: string): SedLine[] {
+	if (text.length === 0) return [];
+	const lines: SedLine[] = [];
+	let start = 0;
+	while (start < text.length) {
+		const newline = text.indexOf("\n", start);
+		if (newline === -1) {
+			lines.push({ content: text.slice(start), newline: "" });
+			break;
+		}
+		lines.push({ content: text.slice(start, newline), newline: "\n" });
+		start = newline + 1;
+	}
+	return lines;
+}
+
+function sedAddressMatches(
+	address: SedAddress | undefined,
+	lineNo: number,
+): boolean {
+	return (
+		address === undefined ||
+		(lineNo >= address.startLineNo && lineNo <= address.endLineNo)
+	);
+}
+
+function sedCommandText(text: string): string {
+	return text.endsWith("\n") ? text : `${text}\n`;
+}
+
+function applySedCommand(text: string, command: SedCommand): string {
+	const output: string[] = [];
+	for (const [lineIndex, line] of splitSedLines(text).entries()) {
+		const lineNo = lineIndex + 1;
+		if (!sedAddressMatches(command.address, lineNo)) {
+			output.push(`${line.content}${line.newline}`);
+			continue;
+		}
+
+		switch (command.kind) {
+			case "delete":
+				break;
+			case "insert":
+				output.push(sedCommandText(command.text));
+				output.push(`${line.content}${line.newline}`);
+				break;
+			case "append":
+				output.push(`${line.content}${line.newline}`);
+				if (line.newline === "") output.push("\n");
+				output.push(sedCommandText(command.text));
+				break;
+			case "substitute":
+				output.push(
+					`${line.content.replace(command.regex, () => command.replacement)}${line.newline}`,
+				);
+				break;
+		}
+	}
+	return output.join("");
+}
+
+function applySedScript(text: string, script: ParsedSedScript): string {
+	let nextText = text;
+	for (const command of script.commands) {
+		nextText = applySedCommand(nextText, command);
+	}
+	return nextText;
+}
+
+function applySedScripts(
+	text: string,
+	sedScripts: readonly string[],
+): { text: string; edits: number } {
+	const parsedScripts = sedScripts.map((script, index) =>
+		parseSedScript(script, index),
+	);
+	if (
+		parsedScripts.length > 1 &&
+		parsedScripts.some((script) => script.usesLineAddresses)
+	) {
+		throw new Error(
+			"sedScripts with line-number addresses must be provided as a single script entry.",
+		);
 	}
 
-	return edits;
+	let nextText = text;
+	let edits = 0;
+	for (const parsedScript of parsedScripts) {
+		const previousText = nextText;
+		nextText = applySedScript(nextText, parsedScript);
+		if (nextText !== previousText) edits++;
+	}
+	return { text: nextText, edits };
 }
 
 function applyTextEdits(text: string, edits: readonly TextEdit[]): string {
@@ -524,7 +708,7 @@ function renderApplyPatchParams(args: unknown, theme: Theme): string[] {
 	if (typeof input.path === "string") {
 		lines.push(theme.fg("toolOutput", `path: ${JSON.stringify(input.path)}`));
 	}
-	for (const key of ["replaces", "removeLineRanges", "insertLines"] as const) {
+	for (const key of ["replaces", "sedScripts"] as const) {
 		if (!Array.isArray(input[key]) || input[key].length === 0) continue;
 		lines.push(theme.fg("toolOutput", `${key}: ${JSON.stringify(input[key])}`));
 	}
@@ -605,16 +789,15 @@ export async function executeApplyPatch(
 	await assertRepoPathAllowed(guardContext, absolute, APPLY_PATCH_OPERATION);
 	const displayPath = displayRepoPath(cwd, absolute);
 	const text = await readFile(absolute, "utf8");
-	const replaceOnly =
-		(params.replaces?.length ?? 0) > 0 &&
-		(params.removeLineRanges?.length ?? 0) === 0 &&
-		(params.insertLines?.length ?? 0) === 0;
-	const result = replaceOnly
-		? applySequentialReplaces(text, params.replaces ?? [])
-		: (() => {
-				const edits = createEdits(text, params);
-				return { text: applyTextEdits(text, edits), edits: edits.length };
-			})();
+	const sedResult = applySedScripts(text, params.sedScripts ?? []);
+	const replaceResult = applySequentialReplaces(
+		sedResult.text,
+		params.replaces ?? [],
+	);
+	const result = {
+		text: replaceResult.text,
+		edits: sedResult.edits + replaceResult.edits,
+	};
 	const nextText = result.text;
 	checkAbort(signal);
 	await writeFile(absolute, nextText, "utf8");
