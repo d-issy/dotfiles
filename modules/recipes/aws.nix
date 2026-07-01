@@ -12,7 +12,7 @@ in
 {
   config = {
     dot.programs.aws = {
-      enable = false;
+      enable = true;
       plugins = {
         awsVault.enable = true;
         saml2aws.enable = true;

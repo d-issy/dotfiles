@@ -10,7 +10,7 @@ in
 
 {
   config = {
-    dot.programs.gcloud.enable = true;
+    dot.programs.gcloud.enable = false;
 
     dot.programs.navi.cheats.gcloud.sections = lib.mkIf config.dot.programs.gcloud.enable [
       {
