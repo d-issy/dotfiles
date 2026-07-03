@@ -198,6 +198,9 @@ _:
       ".direnv"
       ".envrc"
       ""
+      "### pnpm ###"
+      ".pnpm-store"
+      ""
       "### Git Worktree ###"
       ".worktree"
     ];
