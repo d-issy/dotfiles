@@ -89,7 +89,7 @@ let
       "#{pane_current_command}";
 
   windowNoticeText = lib.optionalString cfg.status.windowNotice.enable "#(${statusCommands.windowNotices} #{q:window_id})";
-  statusSessions = lib.optionalString cfg.status.sessionList.enable "#(${statusCommands.sessions} #{q:session_id})";
+  statusSessions = lib.optionalString cfg.status.sessionList.enable "#(${statusCommands.sessions} #{q:session_id} #{client_width} #{session_windows})";
   statusNeedsRefresh =
     cfg.status.sessionList.enable || cfg.status.windowNotice.enable || tmuxNoticeCfg.enable;
 

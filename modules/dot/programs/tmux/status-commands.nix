@@ -118,10 +118,14 @@ in
 
   sessions = pkgs.writeShellScript "tmux-status-sessions" ''
     current_session_id=''${1-}
+    client_width=''${2:-0}
+    session_windows=''${3:-1}
     frame=$(( $(${pkgs.coreutils}/bin/date +%s%3N) / 1000 ))
 
     ${anyNoticeShellFunctions}
 
+    output=""
+    session_list_width=0
     while IFS=$'\037' read -r session_id session_name; do
       [[ -n "$session_id" ]] || continue
 
@@ -130,13 +134,52 @@ in
         name_color="${cfg.status.sessionList.colors.active}"
       fi
 
-      printf '#[range=session|%s]' "$session_id"
+      icon=""
       if session_notification_indicator_color=$(first_session_notification_indicator_color_by_session "$session_id"); then
         icon=$(blink_icon "$frame")
-        printf '#[fg=%s]%s' "$session_notification_indicator_color" "$icon"
       fi
-      printf '#[fg=%s]%s  #[norange]' "$name_color" "$session_name"
+
+      output+="#[range=session|$session_id]"
+      if [[ -n "$icon" ]]; then
+        output+="#[fg=$session_notification_indicator_color]$icon"
+      fi
+      output+="#[fg=$name_color]$session_name  #[norange]"
+      session_list_width=$(( session_list_width + ''${#icon} + ''${#session_name} + 2 ))
     done < <(${cfg.package}/bin/tmux list-sessions -F '#{session_id}${fieldSep}#{session_name}' 2>/dev/null || true)
+
+    if [[ "$client_width" =~ ^[0-9]+$ && "$session_windows" =~ ^[0-9]+$ && "$session_windows" -gt 1 ]]; then
+      window_list_width=0
+      while IFS=$'\037' read -r window_id window_index window_name; do
+        window_width=$(( ''${#window_index} + 2 ))
+        if [[ "$window_name" != "Window" ]]; then
+          window_width=$(( window_width + ''${#window_name} + 1 ))
+        fi
+        if any_notice_in_window "$window_id"; then
+          window_width=$(( window_width + 1 ))
+        fi
+        window_list_width=$(( window_list_width + window_width ))
+      done < <(${cfg.package}/bin/tmux list-windows -t "$current_session_id" -F '#{window_id}${fieldSep}#{window_index}${fieldSep}#{window_name}' 2>/dev/null || true)
+      if (( session_windows > 1 )); then
+        window_list_width=$(( window_list_width + session_windows - 1 ))
+      fi
+
+      # Prefer a true absolute centre. If the full session list would collide
+      # with that centred window list, fall back to tmux's non-overlapping centre
+      # layout instead of abbreviating session names.
+      left_prefix_width=6
+      safe_left_limit=$(( client_width / 2 - (window_list_width + 1) / 2 - 1 ))
+      if (( left_prefix_width + session_list_width > safe_left_limit )); then
+        target_justify="centre"
+      else
+        target_justify="absolute-centre"
+      fi
+      current_justify=$(${cfg.package}/bin/tmux show-options -qv -t "$current_session_id" status-justify 2>/dev/null || true)
+      if [[ "$current_justify" != "$target_justify" ]]; then
+        ${cfg.package}/bin/tmux set-option -q -t "$current_session_id" status-justify "$target_justify" 2>/dev/null || true
+      fi
+    fi
+
+    printf '%s' "$output"
   '';
 
   windowNotices = pkgs.writeShellScript "tmux-status-window-notices" ''
