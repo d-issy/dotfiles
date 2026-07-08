@@ -1,15 +1,10 @@
-{ pkgs, ... }:
-
 {
-  config = {
-    dot.options.fuzzyFinder.package = pkgs.fzf;
+  config.dot.programs.fzf = {
+    enable = true;
 
-    programs.fzf = {
-      enable = true;
-      defaultOptions = [
-        "--reverse"
-        "--border"
-      ];
-    };
+    defaultOptions = [
+      "--reverse"
+      "--border"
+    ];
   };
 }
