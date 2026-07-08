@@ -19,7 +19,10 @@ with lib;
       };
     };
 
-    programs.nushell.extraConfig = mkAfter ''
+    # Home Manager's Atuin Nushell integration uses mkOrder 2000; this
+    # keybinding calls _atuin_search_cmd defined by that integration, so it
+    # must be emitted after it.
+    programs.nushell.extraConfig = mkOrder 2100 ''
       $env.config = (
       $env.config | upsert keybindings (
         $env.config.keybindings | append {
