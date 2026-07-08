@@ -8,7 +8,6 @@
 let
   cfg = config.dot.programs.tmux;
   paneCommand = import ./pane-command.nix { inherit pkgs; };
-  sessionSelector = import ./session-selector.nix { inherit config pkgs; };
   statusCommands = import ./status-commands.nix { inherit config pkgs; };
   tmuxNoticeCfg = config.dot.programs.scripts.tmuxNotice;
   tmuxNoticeCommand = "${tmuxNoticeCfg.package}/bin/tmux-notice";
@@ -200,7 +199,7 @@ let
         set -g extended-keys-format csi-u
       '')
       (lib.optionalString cfg.keyBindings.popups.sessionSelector.enable ''
-        bind-key -T prefix s display-popup -E "nu --login -i -c '${cfg.sessionSelector.commandName}'"
+        bind-key -T prefix s display-popup -E "nu --login -i -c '${config.dot.programs.scripts.tm.commandName}'"
       '')
       (lib.optionalString cfg.keyBindings.sessionNavigation.enable ''
         bind-key -T prefix ${cfg.keyBindings.sessionNavigation.nextKey} switch-client -n
@@ -496,27 +495,6 @@ in
 
     renumberWindows.enable = lib.mkEnableOption "tmux renumber-windows";
 
-    sessionSelector = {
-      enable = lib.mkEnableOption "tmux session selector shell function";
-      commandName = lib.mkOption {
-        type = lib.types.str;
-        default = "tm";
-        description = "Shell function name for selecting tmux sessions.";
-      };
-      zshIntegration.enable = lib.mkOption {
-        type = lib.types.bool;
-        default = cfg.zshIntegration.enable;
-        defaultText = lib.literalExpression "config.dot.programs.tmux.zshIntegration.enable";
-        description = "Whether to install the session selector zsh integration.";
-      };
-      nushellIntegration.enable = lib.mkOption {
-        type = lib.types.bool;
-        default = cfg.nushellIntegration.enable;
-        defaultText = lib.literalExpression "config.dot.programs.tmux.nushellIntegration.enable";
-        description = "Whether to install the session selector nushell integration.";
-      };
-    };
-
     extraConfig = lib.mkOption {
       type = lib.types.lines;
       default = "";
@@ -529,14 +507,5 @@ in
 
     xdg.configFile."tmux/tmux.conf".text = generatedConfig;
 
-    programs = {
-      zsh.initContent = lib.mkIf (
-        cfg.sessionSelector.enable && cfg.sessionSelector.zshIntegration.enable
-      ) sessionSelector.zsh;
-
-      nushell.extraConfig = lib.mkIf (
-        cfg.sessionSelector.enable && cfg.sessionSelector.nushellIntegration.enable
-      ) sessionSelector.nushell;
-    };
   };
 }

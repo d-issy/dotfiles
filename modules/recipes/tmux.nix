@@ -129,9 +129,5 @@ in
       format = "Window";
     };
 
-    sessionSelector = {
-      enable = true;
-      commandName = "tm";
-    };
   };
 }
