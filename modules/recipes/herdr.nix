@@ -16,6 +16,7 @@
     };
 
     settings = {
+      onboarding = false;
       terminal.default_shell = "${pkgs.nushell}/bin/nu";
 
       keys = {
