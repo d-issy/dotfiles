@@ -7,6 +7,7 @@
 {
   imports = [
     ./git-autocommit.nix
+    ./tm
     ./tmux-notice
     ./worktree
   ];

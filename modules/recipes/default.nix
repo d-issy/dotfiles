@@ -77,6 +77,7 @@
     ./python.nix
     ./scripts.nix
     ./starship.nix
+    ./tm.nix
     ./tmux.nix
     ./zed.nix
     ./zsh.nix
