@@ -12,6 +12,7 @@ import {
 	decodePrintableInput,
 } from "../ui";
 import { type KeyedPanelItem, renderKeyedPanelItem } from "../ui/keyed-panel";
+import { withHerdrBlocked } from "../herdr";
 import { notifyUserInputNeeded } from "../tmux-notice";
 
 type FocusConfirmChoice =
@@ -241,84 +242,86 @@ async function chooseFocusTransitionAction(
 		}
 	}
 	void notifyUserInputNeeded();
-	const result = await ctx.ui.custom<
-		{ action: FocusConfirmAction; index: number } | undefined
-	>((tui, theme, keybindings, done) => {
-		const border = new DynamicBorder((text) => theme.fg("accent", text));
-		let selectedIndex = Math.min(initialIndex, items.length - 1);
-		const move = (delta: -1 | 1): void => {
-			selectedIndex = (selectedIndex + delta + items.length) % items.length;
-		};
-		const finish = (action: FocusConfirmAction): void => {
-			done({ action, index: selectedIndex });
-		};
-		const select = (item: FocusConfirmItem): void => finish(item.value);
-		const titleLine =
-			caller === "agent"
-				? `Agent requesting focus: ${name}`
-				: `Enter focus: ${name}`;
-		return {
-			render(width: number) {
-				const contentWidth = dialogContentWidth(width);
-				return [
-					...border.render(width),
-					padDialogLine(theme.fg("accent", theme.bold(titleLine)), width),
-					...renderReasonLines(theme, reason, width),
-					...(caller === "agent" && prompt
-						? renderAgentPromptLines(theme, prompt, width)
-						: []),
-					...items.map((item, index) =>
-						padDialogLine(
-							renderKeyedPanelItem(theme, item, {
-								width: contentWidth,
-								selected: index === selectedIndex,
-								labelWidth: 26,
-							}),
-							width,
-						),
-					),
-					padDialogLine(
-						theme.fg(
-							"dim",
-							"y/n/r/a/d select • ↑↓ navigate • Enter select • Tab write reject reason • Esc cancel",
-						),
-						width,
-					),
-					...border.render(width),
-				];
+	const result = await withHerdrBlocked(`Enter focus: ${name}`, () =>
+		ctx.ui.custom<{ action: FocusConfirmAction; index: number } | undefined>(
+			(tui, theme, keybindings, done) => {
+				const border = new DynamicBorder((text) => theme.fg("accent", text));
+				let selectedIndex = Math.min(initialIndex, items.length - 1);
+				const move = (delta: -1 | 1): void => {
+					selectedIndex = (selectedIndex + delta + items.length) % items.length;
+				};
+				const finish = (action: FocusConfirmAction): void => {
+					done({ action, index: selectedIndex });
+				};
+				const select = (item: FocusConfirmItem): void => finish(item.value);
+				const titleLine =
+					caller === "agent"
+						? `Agent requesting focus: ${name}`
+						: `Enter focus: ${name}`;
+				return {
+					render(width: number) {
+						const contentWidth = dialogContentWidth(width);
+						return [
+							...border.render(width),
+							padDialogLine(theme.fg("accent", theme.bold(titleLine)), width),
+							...renderReasonLines(theme, reason, width),
+							...(caller === "agent" && prompt
+								? renderAgentPromptLines(theme, prompt, width)
+								: []),
+							...items.map((item, index) =>
+								padDialogLine(
+									renderKeyedPanelItem(theme, item, {
+										width: contentWidth,
+										selected: index === selectedIndex,
+										labelWidth: 26,
+									}),
+									width,
+								),
+							),
+							padDialogLine(
+								theme.fg(
+									"dim",
+									"y/n/r/a/d select • ↑↓ navigate • Enter select • Tab write reject reason • Esc cancel",
+								),
+								width,
+							),
+							...border.render(width),
+						];
+					},
+					invalidate: () => border.invalidate(),
+					handleInput(data: string) {
+						if (keybindings.matches(data, "tui.select.up")) {
+							move(-1);
+							tui.requestRender();
+							return;
+						}
+						if (keybindings.matches(data, "tui.select.down")) {
+							move(1);
+							tui.requestRender();
+							return;
+						}
+						if (keybindings.matches(data, "tui.select.confirm")) {
+							select(items[selectedIndex]);
+							return;
+						}
+						if (keybindings.matches(data, "tui.select.cancel")) {
+							done(undefined);
+							return;
+						}
+						if (matchesKey(data, "tab")) {
+							finish("reason-input");
+							return;
+						}
+						const input = decodePrintableInput(data);
+						if (!input) return;
+						const key = input.toLowerCase();
+						const item = items.find((entry) => entry.key === key);
+						if (item) select(item);
+					},
+				};
 			},
-			invalidate: () => border.invalidate(),
-			handleInput(data: string) {
-				if (keybindings.matches(data, "tui.select.up")) {
-					move(-1);
-					tui.requestRender();
-					return;
-				}
-				if (keybindings.matches(data, "tui.select.down")) {
-					move(1);
-					tui.requestRender();
-					return;
-				}
-				if (keybindings.matches(data, "tui.select.confirm")) {
-					select(items[selectedIndex]);
-					return;
-				}
-				if (keybindings.matches(data, "tui.select.cancel")) {
-					done(undefined);
-					return;
-				}
-				if (matchesKey(data, "tab")) {
-					finish("reason-input");
-					return;
-				}
-				const input = decodePrintableInput(data);
-				if (!input) return;
-				const key = input.toLowerCase();
-				const item = items.find((entry) => entry.key === key);
-				if (item) select(item);
-			},
-		};
-	});
+		),
+	);
 	// Persist a session-level agent decision while still holding the UI
 	// lock so a racing sibling observes it on its own re-check above.
 	if (
@@ -346,17 +349,19 @@ async function editEnterRejectReason(
 		.filter((line): line is string => line !== undefined)
 		.join("\n");
 	void notifyUserInputNeeded();
-	return ctx.ui.custom<string | undefined>((tui, _theme, keybindings, done) =>
-		createRefinableExtensionEditorComponent(
-			ctx,
-			tui,
-			keybindings,
-			title,
-			initialValue ?? "",
-			(value) => done(value),
-			() => done(undefined),
-			{},
-			{ notifyLabel: "a reject reason" },
+	return withHerdrBlocked(`Reject focus: ${name}`, () =>
+		ctx.ui.custom<string | undefined>((tui, _theme, keybindings, done) =>
+			createRefinableExtensionEditorComponent(
+				ctx,
+				tui,
+				keybindings,
+				title,
+				initialValue ?? "",
+				(value) => done(value),
+				() => done(undefined),
+				{},
+				{ notifyLabel: "a reject reason" },
+			),
 		),
 	);
 }
@@ -425,17 +430,19 @@ async function editExitRejectReason(
 		.join("\n");
 	void notifyUserInputNeeded();
 	return withUiLock(() =>
-		ctx.ui.custom<string | undefined>((tui, _theme, keybindings, done) =>
-			createRefinableExtensionEditorComponent(
-				ctx,
-				tui,
-				keybindings,
-				title,
-				initialValue ?? "",
-				(value) => done(value),
-				() => done(undefined),
-				{},
-				{ notifyLabel: "a reject reason" },
+		withHerdrBlocked(`Stay in focus: ${name}`, () =>
+			ctx.ui.custom<string | undefined>((tui, _theme, keybindings, done) =>
+				createRefinableExtensionEditorComponent(
+					ctx,
+					tui,
+					keybindings,
+					title,
+					initialValue ?? "",
+					(value) => done(value),
+					() => done(undefined),
+					{},
+					{ notifyLabel: "a reject reason" },
+				),
 			),
 		),
 	);
@@ -450,79 +457,82 @@ async function chooseExitFocusAction(
 	const items = exitFocusItems();
 	void notifyUserInputNeeded();
 	return withUiLock(() =>
-		ctx.ui.custom<{ action: ExitFocusAction; index: number } | undefined>(
-			(tui, theme, keybindings, done) => {
-				const border = new DynamicBorder((text) => theme.fg("accent", text));
-				let selectedIndex = Math.min(initialIndex, items.length - 1);
-				const move = (delta: -1 | 1): void => {
-					selectedIndex = (selectedIndex + delta + items.length) % items.length;
-				};
-				const finish = (action: ExitFocusAction): void => {
-					done({ action, index: selectedIndex });
-				};
-				const select = (item: ExitFocusItem): void => finish(item.value);
-				return {
-					render(width: number) {
-						const contentWidth = dialogContentWidth(width);
-						return [
-							...border.render(width),
-							padDialogLine(
-								theme.fg("accent", theme.bold(`Exit focus: ${name}`)),
-								width,
-							),
-							...renderReasonLines(theme, reason, width),
-							...items.map((item, index) =>
+		withHerdrBlocked(`Exit focus: ${name}`, () =>
+			ctx.ui.custom<{ action: ExitFocusAction; index: number } | undefined>(
+				(tui, theme, keybindings, done) => {
+					const border = new DynamicBorder((text) => theme.fg("accent", text));
+					let selectedIndex = Math.min(initialIndex, items.length - 1);
+					const move = (delta: -1 | 1): void => {
+						selectedIndex =
+							(selectedIndex + delta + items.length) % items.length;
+					};
+					const finish = (action: ExitFocusAction): void => {
+						done({ action, index: selectedIndex });
+					};
+					const select = (item: ExitFocusItem): void => finish(item.value);
+					return {
+						render(width: number) {
+							const contentWidth = dialogContentWidth(width);
+							return [
+								...border.render(width),
 								padDialogLine(
-									renderKeyedPanelItem(theme, item, {
-										width: contentWidth,
-										selected: index === selectedIndex,
-										labelWidth: 26,
-									}),
+									theme.fg("accent", theme.bold(`Exit focus: ${name}`)),
 									width,
 								),
-							),
-							padDialogLine(
-								theme.fg(
-									"dim",
-									"y/n/r select • ↑↓ navigate • Enter select • Tab write reject reason • Esc cancel",
+								...renderReasonLines(theme, reason, width),
+								...items.map((item, index) =>
+									padDialogLine(
+										renderKeyedPanelItem(theme, item, {
+											width: contentWidth,
+											selected: index === selectedIndex,
+											labelWidth: 26,
+										}),
+										width,
+									),
 								),
-								width,
-							),
-							...border.render(width),
-						];
-					},
-					invalidate: () => border.invalidate(),
-					handleInput(data: string) {
-						if (keybindings.matches(data, "tui.select.up")) {
-							move(-1);
-							tui.requestRender();
-							return;
-						}
-						if (keybindings.matches(data, "tui.select.down")) {
-							move(1);
-							tui.requestRender();
-							return;
-						}
-						if (keybindings.matches(data, "tui.select.confirm")) {
-							select(items[selectedIndex]);
-							return;
-						}
-						if (keybindings.matches(data, "tui.select.cancel")) {
-							done(undefined);
-							return;
-						}
-						if (matchesKey(data, "tab")) {
-							finish("reason-input");
-							return;
-						}
-						const input = decodePrintableInput(data);
-						if (!input) return;
-						const key = input.toLowerCase();
-						const item = items.find((entry) => entry.key === key);
-						if (item) select(item);
-					},
-				};
-			},
+								padDialogLine(
+									theme.fg(
+										"dim",
+										"y/n/r select • ↑↓ navigate • Enter select • Tab write reject reason • Esc cancel",
+									),
+									width,
+								),
+								...border.render(width),
+							];
+						},
+						invalidate: () => border.invalidate(),
+						handleInput(data: string) {
+							if (keybindings.matches(data, "tui.select.up")) {
+								move(-1);
+								tui.requestRender();
+								return;
+							}
+							if (keybindings.matches(data, "tui.select.down")) {
+								move(1);
+								tui.requestRender();
+								return;
+							}
+							if (keybindings.matches(data, "tui.select.confirm")) {
+								select(items[selectedIndex]);
+								return;
+							}
+							if (keybindings.matches(data, "tui.select.cancel")) {
+								done(undefined);
+								return;
+							}
+							if (matchesKey(data, "tab")) {
+								finish("reason-input");
+								return;
+							}
+							const input = decodePrintableInput(data);
+							if (!input) return;
+							const key = input.toLowerCase();
+							const item = items.find((entry) => entry.key === key);
+							if (item) select(item);
+						},
+					};
+				},
+			),
 		),
 	);
 }

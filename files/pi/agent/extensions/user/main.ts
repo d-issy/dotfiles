@@ -14,6 +14,7 @@ import { createThinkingFeature } from "./features/thinking";
 import { createTmuxNoticeFeature } from "./features/tmux-notice";
 import { createToolFeature } from "./features/tool";
 import { createTurnMetricsFeature } from "./features/turn-metrics";
+import { installHerdrAgentStateBridge } from "./lib/herdr";
 
 function createFeatures(): readonly Feature[] {
 	return [
@@ -50,6 +51,7 @@ function assertFeatureDependencies(features: readonly Feature[]): void {
 
 export default function user(pi: ExtensionAPI): void {
 	if (!isUserExtensionEnabled(process.cwd())) return;
+	installHerdrAgentStateBridge(pi);
 
 	const services = createUserExtensionServices();
 	const features = createFeatures();
