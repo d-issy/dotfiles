@@ -8,9 +8,11 @@ type HerdrBlockedEvent = {
 type EventEmitter = Pick<ExtensionAPI["events"], "emit">;
 
 const HERDR_BLOCKED_EVENT = "herdr:blocked";
+const HERDR_ENV = "HERDR_ENV";
 
 let events: EventEmitter | undefined;
 let activeBlockers = 0;
+let installed = false;
 
 function emitBlocked(event: HerdrBlockedEvent): void {
 	events?.emit(HERDR_BLOCKED_EVENT, event);
@@ -23,12 +25,19 @@ function clearActiveBlockers(): void {
 	}
 }
 
+function isHerdrSession(): boolean {
+	return process.env[HERDR_ENV] === "1";
+}
+
 export function installHerdrAgentStateBridge(pi: ExtensionAPI): void {
+	if (!isHerdrSession()) return;
+	installed = true;
 	events = pi.events;
 	pi.on("session_shutdown", () => clearActiveBlockers());
 }
 
 export function beginHerdrBlocked(label: string): () => void {
+	if (!installed) return () => undefined;
 	let released = false;
 	activeBlockers += 1;
 	emitBlocked({ active: true, label });
@@ -55,4 +64,5 @@ export async function withHerdrBlocked<T>(
 export function resetHerdrAgentStateBridgeForTests(): void {
 	events = undefined;
 	activeBlockers = 0;
+	installed = false;
 }

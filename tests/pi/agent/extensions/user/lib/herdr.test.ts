@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import { afterEach, describe, it } from "vitest";
+import { afterEach, beforeEach, describe, it } from "vitest";
 import {
 	beginHerdrBlocked,
 	installHerdrAgentStateBridge,
@@ -30,9 +30,26 @@ function fakePi(events: EmittedEvent[]): ExtensionAPI {
 }
 
 describe("herdr agent state bridge", () => {
-	afterEach(() => resetHerdrAgentStateBridgeForTests());
+	beforeEach(() => {
+		delete process.env.HERDR_ENV;
+	});
 
-	it("reports blocked while a user prompt is pending", async () => {
+	afterEach(() => {
+		delete process.env.HERDR_ENV;
+		resetHerdrAgentStateBridgeForTests();
+	});
+
+	it("does not report state outside Herdr sessions", async () => {
+		const events: EmittedEvent[] = [];
+		installHerdrAgentStateBridge(fakePi(events));
+
+		await withHerdrBlocked("Question", async () => undefined);
+
+		assert.deepEqual(events, []);
+	});
+
+	it("reports blocked while a user prompt is pending in Herdr", async () => {
+		process.env.HERDR_ENV = "1";
 		const events: EmittedEvent[] = [];
 		installHerdrAgentStateBridge(fakePi(events));
 
@@ -58,6 +75,7 @@ describe("herdr agent state bridge", () => {
 	});
 
 	it("clears outstanding blocked reports on shutdown", () => {
+		process.env.HERDR_ENV = "1";
 		const events: EmittedEvent[] = [];
 		const pi = fakePi(events);
 		installHerdrAgentStateBridge(pi);
