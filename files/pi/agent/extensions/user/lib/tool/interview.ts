@@ -12,7 +12,6 @@ import {
 	visibleWidth,
 } from "@earendil-works/pi-tui";
 import { type Static, Type } from "typebox";
-import { withHerdrBlocked } from "../herdr";
 import type { ToolPolicy } from "../policy";
 import { notifyUserInputNeeded } from "../tmux-notice";
 import {
@@ -465,8 +464,8 @@ async function showQuestion(
 		options.otherSelected ?? Boolean(options.otherText),
 	);
 	void notifyUserInputNeeded();
-	const action = await withHerdrBlocked("Interview question", () =>
-		ctx.ui.custom<QuestionResult>((tui, theme, keybindings, done) => {
+	const action = await ctx.ui.custom<QuestionResult>(
+		(tui, theme, keybindings, done) => {
 			const border = new DynamicBorder((value) => theme.fg("accent", value));
 			let current = Math.min(options.initialIndex ?? 0, rows.length - 1);
 			const move = (delta: -1 | 1): void => {
@@ -545,7 +544,7 @@ async function showQuestion(
 					if (printable === " ") select();
 				},
 			};
-		}),
+		},
 	);
 	return (
 		action ?? { action: { type: "cancel" }, index: options.initialIndex ?? 0 }
@@ -566,19 +565,17 @@ async function showOtherInput(
 		.filter((line): line is string => line !== undefined)
 		.join("\n");
 	void notifyUserInputNeeded();
-	return withHerdrBlocked("Interview answer", () =>
-		ctx.ui.custom<string | undefined>((tui, _theme, keybindings, done) =>
-			createRefinableExtensionEditorComponent(
-				ctx,
-				tui,
-				keybindings,
-				title,
-				initialValue ?? "",
-				(value) => done(value),
-				() => done(undefined),
-				{},
-				{ notifyLabel: "an answer" },
-			),
+	return ctx.ui.custom<string | undefined>((tui, _theme, keybindings, done) =>
+		createRefinableExtensionEditorComponent(
+			ctx,
+			tui,
+			keybindings,
+			title,
+			initialValue ?? "",
+			(value) => done(value),
+			() => done(undefined),
+			{},
+			{ notifyLabel: "an answer" },
 		),
 	);
 }

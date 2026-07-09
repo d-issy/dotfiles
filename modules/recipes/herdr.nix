@@ -7,6 +7,8 @@
     repoSwitcher.includeParentDirectories = true;
   };
 
+  dot.xdg.configFile."herdr/agent-detection/pi.toml".source = true;
+
   dot.programs.herdr = {
     enable = true;
 
