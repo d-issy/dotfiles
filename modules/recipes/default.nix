@@ -64,6 +64,7 @@
     ./git.nix
     ./go.nix
     ./hammerspoon.nix
+    ./herdr.nix
     ./lazydocker.nix
     ./lazygit.nix
     ./make.nix

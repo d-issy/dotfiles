@@ -5,6 +5,7 @@
     ./fzf.nix
     ./gcloud.nix
     ./ghq.nix
+    ./herdr.nix
     ./mise.nix
     ./navi.nix
     ./scripts
