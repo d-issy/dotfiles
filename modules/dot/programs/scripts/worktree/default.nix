@@ -45,16 +45,7 @@ in
     };
 
     thinking = lib.mkOption {
-      type =
-        with lib.types;
-        nullOr (enum [
-          "off"
-          "minimal"
-          "low"
-          "medium"
-          "high"
-          "xhigh"
-        ]);
+      type = with lib.types; nullOr str;
       default = null;
       description = "Pi thinking level passed to worktree name generation. When null, no --thinking option is passed.";
     };
