@@ -88,6 +88,23 @@
           name = "dot-switch";
           runtimeInputs = [ home-manager.packages.${system}.default ];
           text = ''
+            if [ -f /etc/NIXOS ]; then
+              host="''${DOT_NIXOS_HOST:-$(hostname)}"
+              flake_ref=".#$host"
+
+              if ! nix eval ".#nixosConfigurations.$host.config.networking.hostName" >/dev/null 2>&1; then
+                if nix eval ".#nixosConfigurations.nixos.config.networking.hostName" >/dev/null 2>&1; then
+                  flake_ref=".#nixos"
+                else
+                  echo "error: nixosConfigurations.$host is not defined" >&2
+                  echo "hint: add it to flake.nix or set DOT_NIXOS_HOST=<name>" >&2
+                  exit 1
+                fi
+              fi
+
+              exec sudo /run/current-system/sw/bin/nixos-rebuild switch --flake "$flake_ref" "$@"
+            fi
+
             exec home-manager switch --flake ".#${homeConfigurationName}" "$@"
           '';
         };
@@ -111,6 +128,31 @@
           text = ''
             exec home-manager generations "$@"
           '';
+        };
+
+      mkExtendedLib =
+        pkgs:
+        pkgs.lib.extend (
+          _: _: {
+            hm = home-manager.lib.hm;
+          }
+        );
+
+      mkDotSpecialArgs =
+        pkgs:
+        let
+          extendedLib = mkExtendedLib pkgs;
+          files = ./files;
+        in
+        {
+          dot = {
+            root = ./.;
+            inherit files;
+          }
+          // (import ./modules/dot/builtins {
+            inherit pkgs files;
+            lib = extendedLib;
+          });
         };
 
       mkLintChecks = pkgs: {
@@ -158,30 +200,69 @@
         system: homeModule:
         let
           pkgs = mkPkgs system;
-          extendedLib = pkgs.lib.extend (
-            _: _: {
-              hm = home-manager.lib.hm;
-            }
-          );
-          files = ./files;
+          extendedLib = mkExtendedLib pkgs;
         in
         home-manager.lib.homeManagerConfiguration {
           inherit pkgs;
           lib = extendedLib;
-          extraSpecialArgs = {
-            dot = {
-              root = ./.;
-              inherit files;
-            }
-            // (import ./modules/dot/builtins {
-              inherit pkgs files;
-              lib = extendedLib;
-            });
-          };
+          extraSpecialArgs = mkDotSpecialArgs pkgs;
           modules = [
             homeModule
             nixvim.homeModules.nixvim
             ./modules/dot
+          ];
+        };
+
+      mkNixosConfiguration =
+        system:
+        let
+          pkgs = mkPkgs system;
+        in
+        nixpkgs.lib.nixosSystem {
+          inherit system;
+          specialArgs = mkDotSpecialArgs pkgs;
+          modules = [
+            { nixpkgs.pkgs = pkgs; }
+            {
+              networking.hostName = "nixos";
+
+              # Keep the generic NixOS configuration evaluable without
+              # machine-specific hardware settings. Real hosts can override
+              # these values in a hostname-specific configuration.
+              boot.loader.grub.enable = false;
+              fileSystems."/" = {
+                device = "none";
+                fsType = "tmpfs";
+              };
+
+              nix.settings.experimental-features = [
+                "nix-command"
+                "flakes"
+              ];
+
+              users.users.issy = {
+                isNormalUser = true;
+                extraGroups = [ "wheel" ];
+                shell = pkgs.zsh;
+              };
+
+              programs.zsh.enable = true;
+
+              system.stateVersion = "26.05";
+            }
+            home-manager.nixosModules.home-manager
+            {
+              home-manager = {
+                useGlobalPkgs = true;
+                useUserPackages = true;
+                extraSpecialArgs = mkDotSpecialArgs pkgs;
+                users.issy.imports = [
+                  ./modules/home/nixos.nix
+                  nixvim.homeModules.nixvim
+                  ./modules/dot
+                ];
+              };
+            }
           ];
         };
     in
@@ -245,6 +326,10 @@
         linux = mkHomeManagerConfiguration "x86_64-linux" ./modules/home/linux.nix;
         macos = mkHomeManagerConfiguration "aarch64-darwin" ./modules/home/macos.nix;
         macos_intel = mkHomeManagerConfiguration "x86_64-darwin" ./modules/home/macos.nix;
+      };
+
+      nixosConfigurations = {
+        nixos = mkNixosConfiguration "x86_64-linux";
       };
     };
 }
