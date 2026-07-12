@@ -37,14 +37,15 @@ Look for a PR template in the repository:
 
 Filename is case-insensitive.
 
-If a template exists, use its structure for the body. If not, use a concise format: title, summary, and key changes.
+If a template exists, use its structure for the body. If not, use only `## Summary` and `## Background` unless another section is necessary for reviewers.
 
 ### 3. Compose the Body
 
 Based on the diff and the template (if any), compose the pull request body.
 
 - If a template was found, follow its structure. The remaining rules still apply unless the template contradicts them.
-- If no template, include a summary and background at minimum.
+- If no template, include `## Summary` and `## Background`.
+- Do not add a `Changes` section merely to enumerate the diff. Add another section only when it provides reviewer context that does not fit the summary or background.
 - Write for reviewers. Do not describe fine-grained diffs that are obvious from the code.
 - Keep each line short and scannable. Use bullet points, not dense paragraphs.
 - Focus on **what** changed and **why**. The diff already shows **how**.
