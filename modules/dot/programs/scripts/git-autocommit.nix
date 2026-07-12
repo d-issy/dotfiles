@@ -350,16 +350,7 @@ in
     };
 
     thinking = lib.mkOption {
-      type =
-        with lib.types;
-        nullOr (enum [
-          "off"
-          "minimal"
-          "low"
-          "medium"
-          "high"
-          "xhigh"
-        ]);
+      type = with lib.types; nullOr str;
       default = null;
       description = "Pi thinking level passed to git-auto-commit. When null, no --thinking option is passed.";
     };
