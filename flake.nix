@@ -90,19 +90,18 @@
           text = ''
             if [ -f /etc/NIXOS ]; then
               host="''${DOT_NIXOS_HOST:-$(hostname)}"
-              flake_ref=".#$host"
 
-              if ! nix eval ".#nixosConfigurations.$host.config.networking.hostName" >/dev/null 2>&1; then
-                if nix eval ".#nixosConfigurations.nixos.config.networking.hostName" >/dev/null 2>&1; then
-                  flake_ref=".#nixos"
-                else
-                  echo "error: nixosConfigurations.$host is not defined" >&2
-                  echo "hint: add it to flake.nix or set DOT_NIXOS_HOST=<name>" >&2
+              # Only rebuild hosts that have an explicit NixOS configuration.
+              # An unmatched NixOS installation is managed by Home Manager.
+              if nix eval ".#nixosConfigurations.$host.config.networking.hostName" >/dev/null 2>&1; then
+                if [ ! -x /run/wrappers/bin/sudo ]; then
+                  echo "error: the NixOS sudo wrapper is unavailable" >&2
+                  echo "hint: repair/activate the NixOS system configuration first" >&2
                   exit 1
                 fi
-              fi
 
-              exec sudo /run/current-system/sw/bin/nixos-rebuild switch --flake "$flake_ref" "$@"
+                exec /run/wrappers/bin/sudo /run/current-system/sw/bin/nixos-rebuild switch --flake ".#$host" "$@"
+              fi
             fi
 
             exec home-manager switch --flake ".#${homeConfigurationName}" "$@"
