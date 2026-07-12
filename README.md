@@ -1,12 +1,14 @@
 # dotfiles
 
-d-issy's Nix Flakes + Home Manager dotfiles for Linux and macOS.
+d-issy's Nix Flakes + Home Manager dotfiles for Linux, macOS, and NixOS.
 
 ## Requirements
 
-- macOS Apple Silicon (`aarch64-darwin`)
-- macOS Intel (`x86_64-darwin`)
-- WSL2 / Linux (`x86_64-linux`)
+- One of the following environments:
+  - macOS Apple Silicon (`aarch64-darwin`)
+  - macOS Intel (`x86_64-darwin`)
+  - WSL2 / Linux (`x86_64-linux`)
+  - NixOS (`x86_64-linux`)
 - Nix with `nix-command` and `flakes` enabled
 
 ## Init
@@ -19,11 +21,12 @@ export NIX_CONFIG="extra-experimental-features = nix-command flakes"
 
 ## Switch
 
-`.#switch` automatically selects the matching Home Manager configuration for the current system.
+`.#switch` automatically selects the matching configuration for the current system.
 
 ```sh
 nix run .#switch
 ```
+
 
 ## Generations
 
