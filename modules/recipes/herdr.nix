@@ -33,6 +33,7 @@
             pane_gaps = true;
             show_agent_labels_on_pane_borders = true;
 
+            sound.enabled = false;
             toast.delivery = "herdr";
           };
 
