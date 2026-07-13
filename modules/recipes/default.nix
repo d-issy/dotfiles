@@ -69,17 +69,20 @@
     ./lazygit.nix
     ./make.nix
     ./mise.nix
+    ./mycli.nix
     ./navi.nix
     ./neovim
     ./nix.nix
     ./javascript.nix
     ./nushell.nix
+    ./pgcli.nix
     ./pi.nix
     ./python.nix
     ./scripts.nix
     ./starship.nix
     ./tm.nix
     ./tmux.nix
+    ./visidata.nix
     ./zed.nix
     ./zsh.nix
   ];
