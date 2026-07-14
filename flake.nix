@@ -50,8 +50,8 @@
               pythonPackagesExtensions = prev.pythonPackagesExtensions ++ [
                 (_: pythonPrev: {
                   seaborn = pythonPrev.seaborn.overridePythonAttrs (old: {
-                    # This overlap assertion depends on platform font metrics and
-                    # fails on Darwin even when the rendered labels are correct.
+                    # Temporary workaround for an upstream seaborn test failure on
+                    # Darwin. Remove once the test no longer depends on font metrics.
                     disabledTests =
                       (old.disabledTests or [ ])
                       ++ final.lib.optionals final.stdenv.hostPlatform.isDarwin [
