@@ -45,6 +45,22 @@
             builtins.elem (nixpkgs.lib.getName pkg) [
               "copilot-language-server"
             ];
+          overlays = [
+            (final: prev: {
+              pythonPackagesExtensions = prev.pythonPackagesExtensions ++ [
+                (_: pythonPrev: {
+                  seaborn = pythonPrev.seaborn.overridePythonAttrs (old: {
+                    # Font metrics make this assertion unreliable on Darwin.
+                    disabledTests =
+                      (old.disabledTests or [ ])
+                      ++ final.lib.optionals final.stdenv.hostPlatform.isDarwin [
+                        "test_ticklabels_overlap"
+                      ];
+                  });
+                })
+              ];
+            })
+          ];
         };
 
       mkToolPackages = pkgs: rec {
