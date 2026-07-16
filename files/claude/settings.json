@@ -39,7 +39,7 @@
       "Bash(rmdir:*)"
     ]
   },
-  "outputStyle": "Explanatory",
+  "outputStyle": "default",
   "includeGitInstructions": false,
   "autoMemoryEnabled": false,
   "env": {
