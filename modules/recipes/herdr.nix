@@ -18,7 +18,6 @@
         };
 
         settings = {
-          experimental.switch_ascii_input_source_in_prefix = true;
           onboarding = false;
           terminal.default_shell = "${pkgs.nushell}/bin/nu";
 
