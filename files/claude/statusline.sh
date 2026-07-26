@@ -22,10 +22,25 @@ format_tokens() {
   }'
 }
 
-# Format a Unix epoch (seconds) as local HH:MM. Tries BSD date (macOS) first,
-# then GNU date (Linux). Prints nothing if neither understands the input.
+# Format a Unix epoch (seconds) with a strftime format. Tries BSD date (macOS)
+# first, then GNU date (Linux). Prints nothing if neither understands the input.
+date_fmt() {
+	date -r "$1" "+$2" 2>/dev/null || date -d "@$1" "+$2" 2>/dev/null
+}
+
+# Local reset time as HH:MM, prefixed with the weekday when it is not today —
+# the 7d window resets days out, where a bare clock time is ambiguous.
+# The weekday is mapped by hand rather than via %a: LANG here is en_US, and
+# ja_JP.UTF-8 is not guaranteed to exist on Linux, so %a is not dependable.
 fmt_reset() {
-	date -r "$1" +%H:%M 2>/dev/null || date -d "@$1" +%H:%M 2>/dev/null
+	local wdays=(日 月 火 水 木 金 土) wday
+	if [[ "$(date_fmt "$1" %F)" == "$(date +%F)" ]]; then
+		date_fmt "$1" %H:%M
+	else
+		wday=$(date_fmt "$1" %w)
+		[[ -z "$wday" ]] && return
+		printf '%s %s' "${wdays[$wday]}" "$(date_fmt "$1" %H:%M)"
+	fi
 }
 
 # Render a usage-limit segment as "<label><remaining>%", colored by remaining.
@@ -52,6 +67,8 @@ usage_seg() {
 }
 
 MODEL=$(echo "$input" | jq -r '.model.display_name // "Unknown"')
+# "Opus 5 (1M context)" -> "Opus 5 (1M)"; the window size alone is unambiguous
+MODEL="${MODEL/ context)/)}"
 EFFORT=$(echo "$input" | jq -r '.effort.level // empty')
 CWD=$(echo "$input" | jq -r '.workspace.current_dir // "."')
 CWD_SHORT="${CWD##*/}"
