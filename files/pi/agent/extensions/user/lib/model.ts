@@ -39,10 +39,7 @@ export async function showModelSelector(
 				previousModel.id,
 			);
 		}
-		ctx.ui.notify(
-			`No API key for ${model.provider}/${model.id}`,
-			"warning",
-		);
+		ctx.ui.notify(`No API key for ${model.provider}/${model.id}`, "warning");
 		return;
 	}
 
