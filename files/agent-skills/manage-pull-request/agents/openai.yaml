@@ -1,0 +1,4 @@
+interface:
+  display_name: "Manage Pull Request"
+  short_description: "Pair with pull request publishing workflows"
+  default_prompt: "Use $manage-pull-request alongside the active pull request publishing workflow for the content, draft state, and preflight constraints."

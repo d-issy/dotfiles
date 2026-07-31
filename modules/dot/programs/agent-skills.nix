@@ -16,7 +16,7 @@ let
     target: skillName:
     lib.nameValuePair "${target}/${skillName}" {
       source = "agent-skills/${skillName}";
-      recursive = true;
+      recursive = false;
     };
 
   enabledSkills = lib.filterAttrs (_: skill: skill.enable) cfg.skills;

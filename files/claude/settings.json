@@ -18,6 +18,16 @@
       }
     ]
   },
+  "deniedMcpServers": [
+    { "serverName": "claude.ai Asana" },
+    { "serverName": "claude.ai Atlassian" },
+    { "serverName": "claude.ai Linear" },
+    { "serverName": "claude.ai monday.com" },
+    { "serverName": "claude.ai HubSpot" },
+    { "serverName": "claude.ai Intercom" },
+    { "serverName": "claude.ai Canva" },
+    { "serverName": "claude.ai Box" }
+  ],
   "permissions": {
     "allow": [
       "WebSearch",
