@@ -35,6 +35,10 @@ in
           updateImportsOnFileMove.enabled = "always";
           suggest.completeFunctionCalls = true;
           preferences.importModuleSpecifier = "non-relative";
+          tsserver = {
+            maxTsServerMemory = 8192;
+            useSyntaxServer = "never";
+          };
           inherit inlayHints;
         };
 
