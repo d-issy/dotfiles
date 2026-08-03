@@ -1,16 +1,18 @@
 { pkgs, ... }:
 
 let
+  statusLineConfig = ''tui.status_line=["model-with-reasoning","current-dir","context-remaining","weekly-limit"]'';
+
   codexStatusline = pkgs.writeShellApplication {
     name = "codex-statusline";
     text = ''
       case "''${1-}" in
         "" | exec | e | review | resume | archive | delete | unarchive | fork | mcp | sandbox)
-          exec codex --profile statusline "$@"
+          exec codex --config '${statusLineConfig}' "$@"
           ;;
         debug)
           if [[ "''${2-}" == "prompt-input" ]]; then
-            exec codex --profile statusline "$@"
+            exec codex --config '${statusLineConfig}' "$@"
           fi
           exec codex "$@"
           ;;
@@ -18,7 +20,7 @@ let
           exec codex "$@"
           ;;
         *)
-          exec codex --profile statusline "$@"
+          exec codex --config '${statusLineConfig}' "$@"
           ;;
       esac
     '';
@@ -29,8 +31,6 @@ in
     packages = [ codexStatusline ];
     shellAliases.codex = "codex-statusline";
   };
-
-  dot.home.file.".codex/statusline.config.toml".source = "codex/statusline.config.toml";
 
   home.file.".codex/hooks.json".text =
     builtins.toJSON {

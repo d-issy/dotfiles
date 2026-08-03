@@ -1,7 +1,0 @@
-[tui]
-status_line = [
-  "model-with-reasoning",
-  "current-dir",
-  "context-remaining",
-  "weekly-limit",
-]
