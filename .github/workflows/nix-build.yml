@@ -31,6 +31,7 @@ jobs:
             nix:
               - 'flake.lock'
               - '**/*.nix'
+              - '.github/workflows/nix-build.yml'
 
   home-manager-activation-package:
     name: Home Manager activationPackage (${{ matrix.config }})
