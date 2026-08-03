@@ -33,8 +33,34 @@ jobs:
               - '**/*.nix'
               - '.github/workflows/nix-build.yml'
 
-  home-manager-activation-package:
-    name: Home Manager activationPackage (${{ matrix.config }})
+  nix-flake-check:
+    name: Nix flake check (${{ matrix.config }})
+    runs-on: ${{ matrix.os }}
+    needs:
+      - changes
+    if: ${{ needs.changes.outputs.nix == 'true' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - config: linux
+            os: ubuntu-latest
+          - config: macos
+            os: macos-latest
+          - config: nixos
+            os: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: cachix/install-nix-action@630ae543ea3a38a9a4166f03376c02c50f408342 # v31.11.0
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+      - run: nix flake check
+
+  nix-build:
+    name: Nix build (${{ matrix.config }})
     runs-on: ${{ matrix.os }}
     needs:
       - changes
@@ -46,43 +72,8 @@ jobs:
           - config: linux
             os: ubuntu-latest
             attr: .#homeConfigurations.linux.activationPackage
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-      - uses: cachix/install-nix-action@630ae543ea3a38a9a4166f03376c02c50f408342 # v31.11.0
-        with:
-          extra_nix_config: |
-            experimental-features = nix-command flakes
-      - run: nix build ${{ matrix.attr }}
-
-  macos-flake-check:
-    name: Nix flake check (macos)
-    runs-on: macos-latest
-    needs:
-      - changes
-    if: ${{ needs.changes.outputs.nix == 'true' }}
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-      - uses: cachix/install-nix-action@630ae543ea3a38a9a4166f03376c02c50f408342 # v31.11.0
-        with:
-          extra_nix_config: |
-            experimental-features = nix-command flakes
-      - run: nix flake check
-
-  nixos-configuration:
-    name: NixOS configuration (${{ matrix.config }})
-    runs-on: ubuntu-latest
-    needs:
-      - changes
-    if: ${{ needs.changes.outputs.nix == 'true' }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
           - config: nixos
+            os: ubuntu-latest
             attr: .#nixosConfigurations.nixos.config.system.build.toplevel
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -99,9 +90,8 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - changes
-      - home-manager-activation-package
-      - macos-flake-check
-      - nixos-configuration
+      - nix-flake-check
+      - nix-build
     if: ${{ always() }}
     steps:
       - name: Verify all Nix jobs passed
