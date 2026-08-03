@@ -1,0 +1,4 @@
+interface:
+  display_name: "Copy to Clipboard"
+  short_description: "Copy text safely across supported platforms"
+  default_prompt: "Use $copy-to-clipboard to copy this text to my system clipboard safely."

@@ -8,6 +8,10 @@
     ];
 
     skills = {
+      copy-to-clipboard.enable = true;
+      delegate-to-agent.enable = true;
+      manage-agent-skills.enable = true;
+      manage-pull-request.enable = true;
       pi-agent-user-settings = {
         enable = true;
         agents.pi = true;
@@ -16,7 +20,6 @@
         enable = true;
         agents.pi = true;
       };
-      runbook.enable = true;
     };
   };
 }
