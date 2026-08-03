@@ -45,9 +45,6 @@ jobs:
           - config: linux
             os: ubuntu-latest
             attr: .#homeConfigurations.linux.activationPackage
-          - config: macos
-            os: macos-latest
-            attr: .#homeConfigurations.macos.activationPackage
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -57,6 +54,22 @@ jobs:
           extra_nix_config: |
             experimental-features = nix-command flakes
       - run: nix build ${{ matrix.attr }}
+
+  macos-flake-check:
+    name: Nix flake check (macos)
+    runs-on: macos-latest
+    needs:
+      - changes
+    if: ${{ needs.changes.outputs.nix == 'true' }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: cachix/install-nix-action@630ae543ea3a38a9a4166f03376c02c50f408342 # v31.11.0
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+      - run: nix flake check
 
   nixos-configuration:
     name: NixOS configuration (${{ matrix.config }})
@@ -86,10 +99,11 @@ jobs:
     needs:
       - changes
       - home-manager-activation-package
+      - macos-flake-check
       - nixos-configuration
     if: ${{ always() }}
     steps:
-      - name: Verify all Nix build jobs passed
+      - name: Verify all Nix jobs passed
         env:
           RESULTS: ${{ join(needs.*.result, ',') }}
         run: |
