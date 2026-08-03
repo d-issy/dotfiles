@@ -1,4 +1,10 @@
-{ config, pkgs, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  includeNeovim ? true,
+  ...
+}:
 
 {
   xdg.enable = true;
@@ -71,7 +77,9 @@
     ./mise.nix
     ./mycli.nix
     ./navi.nix
-    ./neovim
+  ]
+  ++ lib.optional includeNeovim ./neovim
+  ++ [
     ./nix.nix
     ./javascript.nix
     ./nushell.nix

@@ -45,9 +45,9 @@ jobs:
           - config: linux
             os: ubuntu-latest
             attr: .#homeConfigurations.linux.activationPackage
-          - config: macos
+          - config: macos (without Nixvim)
             os: macos-latest
-            attr: .#homeConfigurations.macos.activationPackage
+            attr: .#homeConfigurations.macos_ci.activationPackage
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:

@@ -213,7 +213,11 @@
       };
 
       mkHomeManagerConfiguration =
-        system: homeModule:
+        {
+          system,
+          homeModule,
+          includeNeovim ? true,
+        }:
         let
           pkgs = mkPkgs system;
           extendedLib = mkExtendedLib pkgs;
@@ -221,12 +225,14 @@
         home-manager.lib.homeManagerConfiguration {
           inherit pkgs;
           lib = extendedLib;
-          extraSpecialArgs = mkDotSpecialArgs pkgs;
+          extraSpecialArgs = (mkDotSpecialArgs pkgs) // {
+            inherit includeNeovim;
+          };
           modules = [
             homeModule
-            nixvim.homeModules.nixvim
             ./modules/dot
-          ];
+          ]
+          ++ extendedLib.optional includeNeovim nixvim.homeModules.nixvim;
         };
 
       mkNixosConfiguration =
@@ -271,7 +277,9 @@
               home-manager = {
                 useGlobalPkgs = true;
                 useUserPackages = true;
-                extraSpecialArgs = mkDotSpecialArgs pkgs;
+                extraSpecialArgs = (mkDotSpecialArgs pkgs) // {
+                  includeNeovim = true;
+                };
                 users.issy.imports = [
                   ./modules/home/nixos.nix
                   nixvim.homeModules.nixvim
@@ -339,9 +347,23 @@
       };
 
       homeConfigurations = {
-        linux = mkHomeManagerConfiguration "x86_64-linux" ./modules/home/linux.nix;
-        macos = mkHomeManagerConfiguration "aarch64-darwin" ./modules/home/macos.nix;
-        macos_intel = mkHomeManagerConfiguration "x86_64-darwin" ./modules/home/macos.nix;
+        linux = mkHomeManagerConfiguration {
+          system = "x86_64-linux";
+          homeModule = ./modules/home/linux.nix;
+        };
+        macos = mkHomeManagerConfiguration {
+          system = "aarch64-darwin";
+          homeModule = ./modules/home/macos.nix;
+        };
+        macos_ci = mkHomeManagerConfiguration {
+          system = "aarch64-darwin";
+          homeModule = ./modules/home/macos.nix;
+          includeNeovim = false;
+        };
+        macos_intel = mkHomeManagerConfiguration {
+          system = "x86_64-darwin";
+          homeModule = ./modules/home/macos.nix;
+        };
       };
 
       nixosConfigurations = {
