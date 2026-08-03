@@ -61,60 +61,34 @@ let
 
       herdr="''${HERDR_BIN_PATH:-${cfg.herdrPackage}/bin/herdr}"
 
-      if "$herdr" status server --json 2>/dev/null | jq -e '.running == true and .compatible == true' >/dev/null; then
-        if [ -n "$(${workspaceSwitcherCommand})" ]; then
-          selected=$(
-            ${workspaceSwitcherCommand} \
-              | ${fuzzyFinderCommand} \
-                --delimiter='\t' \
-                --with-nth=3 \
-                --header='Ctrl-C: repos/orgs' \
-                --bind="ctrl-c:reload(${repoSwitcherCommand})+change-header(Repos/orgs)"
-          )
-        else
-          selected=$(
-            ${repoSwitcherCommand} \
-              | ${fuzzyFinderCommand} \
-                --delimiter='\t' \
-                --with-nth=3 \
-                --header='Repos/orgs'
-          )
-        fi
+      server_is_ready() {
+        "$herdr" status server --json 2>/dev/null \
+          | jq -e '.running == true and .compatible == true' >/dev/null
+      }
 
-        if [ -z "$selected" ]; then
-          exit 0
-        fi
-
-        kind="$(printf '%s' "$selected" | cut -f 1)"
-        value="$(printf '%s' "$selected" | cut -f 2)"
-        case "$kind" in
-          workspace)
-            [ -n "$value" ] || exit 0
-            "$herdr" workspace focus "$value"
-            ;;
-          repo)
-            [ -n "$value" ] && [ -d "$value" ] || exit 0
-            label="$(printf '%s' "$selected" | cut -f 4-)"
-            [ -n "$label" ] || label="$(basename "$value")"
-            workspace_id="$($herdr workspace list | jq -r --arg label "$label" '.result.workspaces[] | select(.label == $label) | .workspace_id' | head -n 1)"
-            if [ -n "$workspace_id" ]; then
-              "$herdr" workspace focus "$workspace_id"
-            else
-              "$herdr" workspace create --cwd "$value" --label "$label" --focus
-            fi
-            ;;
-        esac
-
-        exec "$herdr"
+      server_running=false
+      if server_is_ready; then
+        server_running=true
       fi
 
-      selected=$(
-        ${repoSwitcherCommand} \
-          | ${fuzzyFinderCommand} \
-            --delimiter='\t' \
-            --with-nth=3 \
-            --header='Repos/orgs'
-      )
+      if "$server_running" && [ -n "$(${workspaceSwitcherCommand})" ]; then
+        selected=$(
+          ${workspaceSwitcherCommand} \
+            | ${fuzzyFinderCommand} \
+              --delimiter='\t' \
+              --with-nth=3 \
+              --header='Ctrl-C: repos/orgs' \
+              --bind="ctrl-c:reload(${repoSwitcherCommand})+change-header(Repos/orgs)"
+        )
+      else
+        selected=$(
+          ${repoSwitcherCommand} \
+            | ${fuzzyFinderCommand} \
+              --delimiter='\t' \
+              --with-nth=3 \
+              --header='Repos/orgs'
+        )
+      fi
 
       if [ -z "$selected" ]; then
         exit 0
@@ -123,10 +97,43 @@ let
       kind="$(printf '%s' "$selected" | cut -f 1)"
       value="$(printf '%s' "$selected" | cut -f 2)"
 
-      [ "$kind" = repo ] || exit 0
-      [ -n "$value" ] && [ -d "$value" ] || exit 0
+      case "$kind" in
+        workspace)
+          [ -n "$value" ] || exit 0
+          "$herdr" workspace focus "$value" >/dev/null
+          ;;
+        repo)
+          [ -n "$value" ] && [ -d "$value" ] || exit 0
+          label="$(printf '%s' "$selected" | cut -f 4-)"
+          [ -n "$label" ] || label="$(basename "$value")"
 
-      cd "$value"
+          if ! "$server_running"; then
+            cd "$value"
+            "$herdr" server </dev/null >/dev/null 2>&1 &
+
+            for _ in $(seq 1 50); do
+              if server_is_ready; then
+                server_running=true
+                break
+              fi
+              sleep 0.1
+            done
+
+            if ! "$server_running"; then
+              printf 'hr: timed out waiting for the Herdr server to start\n' >&2
+              exit 1
+            fi
+          fi
+
+          workspace_id="$($herdr workspace list | jq -r --arg label "$label" '.result.workspaces[] | select(.label == $label) | .workspace_id' | head -n 1)"
+          if [ -n "$workspace_id" ]; then
+            "$herdr" workspace focus "$workspace_id" >/dev/null
+          else
+            "$herdr" workspace create --cwd "$value" --label "$label" --focus >/dev/null
+          fi
+          ;;
+      esac
+
       exec "$herdr"
     '';
   };
