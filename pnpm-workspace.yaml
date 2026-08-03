@@ -2,3 +2,7 @@ allowBuilds:
   '@google/genai': false
   koffi: false
   protobufjs: false
+overrides:
+  "undici@<8.9.0": 8.9.0
+minimumReleaseAgeExclude:
+  - undici@8.9.0
