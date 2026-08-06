@@ -42,8 +42,8 @@ let
         target=$(
           tmux list-sessions -F '#S' 2>/dev/null \
             | ${fuzzyFinderCommand} \
-              --header='Ctrl-C: repos/orgs  Ctrl-D: delete' \
-              --bind="ctrl-c:reload(${repoSwitcherCommand})+change-header(Repos/orgs)" \
+              --header='Ctrl-R: repos/orgs  Ctrl-D: delete' \
+              --bind="ctrl-r:reload(${repoSwitcherCommand})+change-header(Repos/orgs)" \
               --bind="ctrl-d:execute(tmux kill-session -t {1})+reload(tmux list-sessions -F '#S' 2>/dev/null || true)"
         )
       else

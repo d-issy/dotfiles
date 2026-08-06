@@ -71,24 +71,15 @@ let
         server_running=true
       fi
 
-      if "$server_running" && [ -n "$(${workspaceSwitcherCommand})" ]; then
-        selected=$(
-          ${workspaceSwitcherCommand} \
-            | ${fuzzyFinderCommand} \
-              --delimiter='\t' \
-              --with-nth=3 \
-              --header='Ctrl-C: repos/orgs' \
-              --bind="ctrl-c:reload(${repoSwitcherCommand})+change-header(Repos/orgs)"
-        )
-      else
-        selected=$(
-          ${repoSwitcherCommand} \
-            | ${fuzzyFinderCommand} \
-              --delimiter='\t' \
-              --with-nth=3 \
-              --header='Repos/orgs'
-        )
-      fi
+      selected=$(
+        ${workspaceSwitcherCommand} \
+          | ${fuzzyFinderCommand} \
+            --delimiter='\t' \
+            --with-nth=3 \
+            --header='Ctrl-R: repos/orgs  Ctrl-D: delete' \
+            --bind="ctrl-r:reload(${repoSwitcherCommand})+change-header(Repos/orgs)" \
+            --bind="ctrl-d:execute($herdr workspace close {2} >/dev/null)+reload(${workspaceSwitcherCommand})"
+      )
 
       if [ -z "$selected" ]; then
         exit 0
@@ -104,7 +95,7 @@ let
           ;;
         repo)
           [ -n "$value" ] && [ -d "$value" ] || exit 0
-          label="$(printf '%s' "$selected" | cut -f 4-)"
+          label="$(printf '%s' "$selected" | cut -f 3-)"
           [ -n "$label" ] || label="$(basename "$value")"
 
           if ! "$server_running"; then
@@ -140,12 +131,12 @@ let
 in
 {
   options.dot.programs.scripts.hr = {
-    enable = lib.mkEnableOption "personal hr Herdr workspace selector command";
+    enable = lib.mkEnableOption "personal hr Herdr space selector command";
 
     commandName = lib.mkOption {
       type = lib.types.str;
       default = "hr";
-      description = "Command name for selecting Herdr workspaces/repositories and launching Herdr.";
+      description = "Command name for selecting Herdr spaces and repositories.";
     };
 
     herdrPackage = lib.mkOption {
