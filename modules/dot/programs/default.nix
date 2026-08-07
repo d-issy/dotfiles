@@ -2,6 +2,7 @@
   imports = [
     ./agent-skills.nix
     ./aws.nix
+    ./codex.nix
     ./fzf.nix
     ./gcloud.nix
     ./ghq.nix
