@@ -3,6 +3,7 @@
     ./agent-skills.nix
     ./aws.nix
     ./codex.nix
+    ./delta.nix
     ./fzf.nix
     ./gcloud.nix
     ./ghq.nix
