@@ -6,7 +6,7 @@ description: Always use together with any skill or workflow that drafts, creates
 # Manage Pull Request
 
 - When combined with a publishing skill, follow that skill for staging, commits, pushing, and creation mechanics. This skill's rules take precedence for the pull request title, body, draft state, and publication preflight checks.
-- Do not run `gh auth status` before the required GitHub operation. Diagnose authentication only after that operation fails for an authentication reason.
+- Before any GitHub CLI operation, make sure the environment has network access; request it when the sandbox requires approval. Do not run `gh auth status` as a preliminary network or authentication check. Perform the required GitHub operation first, then diagnose authentication with `gh auth status` only if it fails explicitly for an authentication reason. Treat connection or API reachability failures as network failures, not authentication failures. This rule takes precedence over a publishing workflow's conflicting preflight instruction.
 - Base the title and body on the relevant diff, match the language of existing pull requests and commits, and use the repository pull request template when present.
 - Keep the title to one line and state the intent.
 - Explain what changed and why, focusing on context reviewers need. Without a template, use `## Summary` and `## Background`.
