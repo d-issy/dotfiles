@@ -1,12 +1,16 @@
 ---
 name: manage-pull-request
-description: Always use alongside any workflow that creates, drafts, publishes, or updates a GitHub pull request; it enforces the PR title, body, draft state, and publication preflight rules. Do not use for reviewing someone else's pull request.
+description: Always use this skill alongside any skill or workflow that creates, drafts, publishes, updates, checks, or reviews a GitHub pull request.
 ---
 
 # Manage Pull Request
 
+- Determine the workflow mode before acting:
+  - For create, draft, publish, or update workflows, apply the management rules below.
+  - For check or review workflows, read the relevant PR metadata, description, diff, checks, comments, and reviews, then report findings only. Do not edit the working tree, commit, push, change PR metadata or state, resolve threads, or otherwise apply fixes. If implementation is needed, leave it for a separate change request.
+
 - When combined with a publishing skill, follow that skill for staging, commits, pushing, and creation mechanics. This skill's rules take precedence for the pull request title, body, draft state, and publication preflight checks.
-- Do not run `gh auth status` before the required GitHub operation. Diagnose authentication only after that operation fails for an authentication reason.
+- In every workflow mode, do not run `gh auth status` as the first GitHub operation or as a preflight probe. Start with the required GitHub operation, including review and check operations; run `gh auth status` only after that operation fails specifically because of authentication, and only to diagnose the failure.
 - Base the title and body on the relevant diff, match the language of existing pull requests and commits, and use the repository pull request template when present.
 - Keep the title to one line and state the intent.
 - Explain what changed and why, focusing on context reviewers need. Without a template, use `## Summary` and `## Background`.
