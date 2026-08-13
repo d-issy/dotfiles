@@ -1,4 +1,4 @@
 interface:
   display_name: "Manage Pull Request"
-  short_description: "Pair with pull request publishing workflows"
-  default_prompt: "Use $manage-pull-request alongside the active pull request publishing workflow for the content, draft state, and preflight constraints."
+  short_description: "Always apply to GitHub pull request workflows"
+  default_prompt: "Always use $manage-pull-request alongside any skill or workflow that creates, drafts, publishes, updates, checks, or reviews a GitHub pull request."
