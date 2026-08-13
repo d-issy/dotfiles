@@ -70,8 +70,6 @@ MODEL=$(echo "$input" | jq -r '.model.display_name // "Unknown"')
 # "Opus 5 (1M context)" -> "Opus 5 (1M)"; the window size alone is unambiguous
 MODEL="${MODEL/ context)/)}"
 EFFORT=$(echo "$input" | jq -r '.effort.level // empty')
-CWD=$(echo "$input" | jq -r '.workspace.current_dir // "."')
-CWD_SHORT="${CWD##*/}"
 
 TOTAL_INPUT_TOKENS=$(echo "$input" | jq -r '.context_window.total_input_tokens // 0')
 TOTAL_OUTPUT_TOKENS=$(echo "$input" | jq -r '.context_window.total_output_tokens // 0')
@@ -99,7 +97,7 @@ GIT_BRANCH=""
 if git rev-parse --git-dir >/dev/null 2>&1; then
 	BRANCH=$(git branch --show-current 2>/dev/null)
 	if [[ -n "$BRANCH" ]]; then
-		GIT_BRANCH="${DIM}:${RESET}${CYAN}${BRANCH}${RESET}"
+		GIT_BRANCH=" ${DIM}|${RESET} ${CYAN}${BRANCH}${RESET}"
 	fi
 fi
 
@@ -108,7 +106,7 @@ MODEL_DISPLAY="${MODEL}"
 if [[ -n "$EFFORT" ]]; then
 	MODEL_DISPLAY+="${DIM}:${RESET}${EFFORT}"
 fi
-OUTPUT="${MODEL_DISPLAY} ${DIM}|${RESET} $CWD_SHORT${GIT_BRANCH}"
+OUTPUT="${MODEL_DISPLAY}${GIT_BRANCH}"
 
 if [[ "$TOTAL_INPUT_TOKENS" != "0" || "$TOTAL_OUTPUT_TOKENS" != "0" ]]; then
 	OUTPUT+=" ${DIM}|${RESET} ${DIM}↑${RESET}${GREEN}${INPUT_K}${RESET} ${DIM}↓${RESET}${YELLOW}${OUTPUT_K}${RESET}"

@@ -1,4 +1,3 @@
-import { homedir } from "node:os";
 import type {
 	ExtensionAPI,
 	ExtensionContext,
@@ -8,12 +7,7 @@ import type {
 import type { Component, TUI } from "@earendil-works/pi-tui";
 import { truncateToWidth, visibleWidth } from "@earendil-works/pi-tui";
 import { colors, fg } from "../theme";
-import {
-	formatCount,
-	formatCwd,
-	formatPercent,
-	pickRemainingColor,
-} from "./format";
+import { formatCount, formatPercent, pickRemainingColor } from "./format";
 import type { FooterNoticeState } from "./notice";
 import type { RequestRender } from "./render-trigger";
 import { type LiveAgentUsageTracker, getAssistantTotals } from "./usage";
@@ -22,8 +16,6 @@ type FooterFactory = NonNullable<
 	Parameters<ExtensionUIContext["setFooter"]>[0]
 >;
 type FooterComponent = Component & { dispose?(): void };
-
-const HOME = homedir();
 
 export function createStatusBarFooter(
 	pi: ExtensionAPI,
@@ -39,11 +31,6 @@ export function createStatusBarFooter(
 	): FooterComponent => {
 		setRequestRender(() => tui.requestRender());
 
-		const cwdSegment =
-			ctx.cwd === HOME
-				? `${fg(colors.muted, "in ")}${fg(colors.positive, "HOME")}`
-				: fg(colors.positive, formatCwd(ctx.cwd));
-
 		const unsubscribeBranchChange = footerData.onBranchChange(() =>
 			tui.requestRender(),
 		);
@@ -55,8 +42,7 @@ export function createStatusBarFooter(
 
 		function renderLocation(): string {
 			const branch = footerData.getGitBranch();
-			if (!branch) return cwdSegment;
-			return `${cwdSegment}${fg(colors.muted, ":")}${fg(colors.accent, branch)}`;
+			return branch ? fg(colors.accent, branch) : "";
 		}
 
 		function renderContextUsage(): string {

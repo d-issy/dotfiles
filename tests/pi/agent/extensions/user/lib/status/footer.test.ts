@@ -24,6 +24,33 @@ function assistant(input: number, cacheRead: number): unknown {
 }
 
 describe("createStatusBarFooter", () => {
+	it("shows the branch without the current working directory", () => {
+		const pi = {
+			getThinkingLevel: () => "",
+		} as unknown as ExtensionAPI;
+		const ctx = {
+			cwd: "/repo",
+			model: { id: "model" },
+			getContextUsage: () => undefined,
+			sessionManager: { getBranch: () => [] },
+		} as unknown as ExtensionContext;
+		const footerData = {
+			onBranchChange: () => () => undefined,
+			getGitBranch: () => "main",
+			getExtensionStatuses: () => new Map(),
+		};
+		const footer = createStatusBarFooter(pi, ctx, () => undefined)(
+			{ requestRender: () => undefined } as never,
+			{} as never,
+			footerData as never,
+		);
+
+		const output = footer.render(200).join("\n");
+
+		assert.match(output, /main/u);
+		assert.doesNotMatch(output, /repo/u);
+	});
+
 	it("includes live in-flight agent cost in the footer", () => {
 		const pi = {
 			getThinkingLevel: () => "",
