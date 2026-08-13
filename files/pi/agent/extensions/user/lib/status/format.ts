@@ -1,9 +1,5 @@
-import { homedir } from "node:os";
-import { basename } from "node:path";
 import type { Color } from "../theme";
 import { colors } from "../theme";
-
-const HOME = homedir();
 
 export function formatCount(value: number): string {
 	if (!Number.isFinite(value) || value <= 0) return "0";
@@ -16,16 +12,6 @@ export function formatCount(value: number): string {
 
 export function formatPercent(value: number): string {
 	return `${value.toFixed(1)}%`;
-}
-
-export function formatCwd(cwd: string): string {
-	if (cwd === HOME) return "~";
-	const name = basename(cwd);
-	return name || cwd;
-}
-
-export function formatHomeCwdSegment(): string {
-	return HOME;
 }
 
 export function pickRemainingColor(remaining: number): Color {

@@ -2,7 +2,6 @@ import assert from "node:assert/strict";
 import { describe, it } from "vitest";
 import {
 	formatCount,
-	formatCwd,
 	formatPercent,
 	pickRemainingColor,
 } from "#pi-user/lib/status/format";
@@ -22,11 +21,6 @@ describe("status format helpers", () => {
 	it("formats percents with one decimal place", () => {
 		assert.equal(formatPercent(12), "12.0%");
 		assert.equal(formatPercent(12.34), "12.3%");
-	});
-
-	it("keeps cwd labels short", () => {
-		assert.equal(formatCwd("/tmp/example-project"), "example-project");
-		assert.equal(formatCwd("/"), "/");
 	});
 
 	it("selects remaining-context colors by threshold", () => {

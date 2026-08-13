@@ -9,7 +9,6 @@ _:
       model_auto_compact_token_limit = 265200;
       tui.status_line = [
         "model-with-reasoning"
-        "current-dir"
         "context-remaining"
         "weekly-limit"
       ];
