@@ -1,6 +1,6 @@
 ---
 name: manage-pull-request
-description: Always use together with any skill or workflow that drafts, creates, publishes, or updates a pull request. This companion skill owns the pull request title, body, draft state, and publication preflight prohibitions; it does not replace the publishing workflow. Do not use to review someone else's pull request.
+description: Use for creating, drafting, publishing, or updating GitHub pull requests; pair with the active publishing workflow to enforce the PR title, body, draft state, and publication preflight rules. Do not use for reviewing someone else's pull request.
 ---
 
 # Manage Pull Request
