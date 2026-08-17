@@ -16,7 +16,7 @@ local function float_term(cmd, opts)
   local buf = vim.api.nvim_create_buf(false, true)
   vim.bo[buf].bufhidden = "wipe"
 
-  vim.api.nvim_open_win(buf, true, {
+  local win = vim.api.nvim_open_win(buf, true, {
     relative = "editor",
     width = width,
     height = height,
@@ -26,10 +26,27 @@ local function float_term(cmd, opts)
     border = "rounded",
   })
 
-  vim.fn.termopen(cmd, {
-    cwd = opts.cwd,
-    env = opts.env,
-  })
+  local term_opts = {
+    on_exit = function()
+      vim.schedule(function()
+        if vim.api.nvim_win_is_valid(win) then
+          vim.api.nvim_win_close(win, true)
+        end
+      end)
+    end,
+  }
+  if opts.cwd then
+    term_opts.cwd = opts.cwd
+  end
+  if opts.env then
+    term_opts.env = vim.tbl_isempty(opts.env) and vim.empty_dict() or opts.env
+  end
+
+  if vim.tbl_isempty(term_opts) then
+    vim.fn.termopen(cmd)
+  else
+    vim.fn.termopen(cmd, term_opts)
+  end
   vim.cmd.startinsert()
 end
 
