@@ -31,6 +31,7 @@ description: Always use this skill alongside any skill or workflow that creates,
 ## Git and Branch Safety
 
 - Commit only task-related changes.
+- Do not add `Co-authored-by` or other author-attribution trailers unless explicitly requested.
 - Do not amend, rebase, or force-push unless explicitly requested.
 - Never push the repository's default branch.
 
