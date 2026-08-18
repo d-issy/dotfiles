@@ -75,6 +75,7 @@
     ./nix.nix
     ./javascript.nix
     ./nushell.nix
+    ./openspec.nix
     ./pgcli.nix
     ./pi.nix
     ./python.nix
