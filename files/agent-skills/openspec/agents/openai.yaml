@@ -1,0 +1,4 @@
+interface:
+  display_name: "OpenSpec"
+  short_description: "Plan and implement changes with OpenSpec"
+  default_prompt: "Use $openspec to plan and implement this change with OpenSpec."
