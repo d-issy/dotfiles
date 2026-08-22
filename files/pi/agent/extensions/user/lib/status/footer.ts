@@ -1,32 +1,49 @@
 import type {
-	ExtensionAPI,
 	ExtensionContext,
 	ExtensionUIContext,
 	ReadonlyFooterDataProvider,
 } from "@earendil-works/pi-coding-agent";
 import type { Component, TUI } from "@earendil-works/pi-tui";
 import { truncateToWidth, visibleWidth } from "@earendil-works/pi-tui";
-import { colors, fg } from "../theme";
-import { formatCount, formatPercent, pickRemainingColor } from "./format";
-import type { FooterNoticeState } from "./notice";
-import type { RequestRender } from "./render-trigger";
-import { type LiveAgentUsageTracker, getAssistantTotals } from "./usage";
+import { formatPercent, formatTokens, truncateMiddle } from "./format";
+import { getUsageTotals } from "./usage";
 
 type FooterFactory = NonNullable<
 	Parameters<ExtensionUIContext["setFooter"]>[0]
 >;
 type FooterComponent = Component & { dispose?(): void };
+type RequestRender = () => void;
+
+type UsageTotals = ReturnType<typeof getUsageTotals>;
+
+function joinParts(
+	parts: readonly (string | null | undefined)[],
+	separator: string,
+): string {
+	return parts.filter((part): part is string => Boolean(part)).join(separator);
+}
+
+function renderCacheHitRate(totals: UsageTotals): string {
+	if (
+		totals.latestCacheHitRate === undefined ||
+		(totals.cacheRead <= 0 && totals.cacheWrite <= 0)
+	) {
+		return "";
+	}
+	return `CH${formatPercent(totals.latestCacheHitRate)}`;
+}
+
+function renderCost(totals: UsageTotals): string {
+	return totals.cost > 0 ? `$${totals.cost.toFixed(3)}` : "";
+}
 
 export function createStatusBarFooter(
-	pi: ExtensionAPI,
 	ctx: ExtensionContext,
 	setRequestRender: (requestRender: RequestRender | undefined) => void,
-	notice?: FooterNoticeState,
-	liveAgentUsage?: LiveAgentUsageTracker,
 ): FooterFactory {
 	return (
 		tui: TUI,
-		_theme: Parameters<FooterFactory>[1],
+		theme: Parameters<FooterFactory>[1],
 		footerData: ReadonlyFooterDataProvider,
 	): FooterComponent => {
 		setRequestRender(() => tui.requestRender());
@@ -35,59 +52,33 @@ export function createStatusBarFooter(
 			tui.requestRender(),
 		);
 
-		function renderModel(): string {
-			const model = ctx.model?.id ?? "no-model";
-			return fg(colors.caution, `${model} ${pi.getThinkingLevel()}`);
-		}
+		function renderIdentity(): string {
+			const model = ctx.model;
+			if (!model) return "no-model";
 
-		function renderLocation(): string {
+			const thinking = model.reasoning
+				? (ctx.thinkingLevel ?? "off")
+				: undefined;
 			const branch = footerData.getGitBranch();
-			return branch ? fg(colors.accent, branch) : "";
+			return joinParts(
+				[`(${model.provider}) ${model.id}`, thinking, branch],
+				" · ",
+			);
 		}
 
 		function renderContextUsage(): string {
 			const usage = ctx.getContextUsage();
-			if (!usage?.tokens) return "";
+			const contextWindow =
+				usage?.contextWindow ?? ctx.model?.contextWindow ?? 0;
+			if (contextWindow <= 0) return "";
 
-			const remaining = Math.max(0, 100 - (usage.percent ?? 0));
-			const text = `${formatCount(usage.tokens)} (${formatPercent(remaining)})`;
-			return fg(pickRemainingColor(remaining), text);
-		}
-
-		function renderCacheHitRate(): string {
-			const totals = getAssistantTotals(ctx.sessionManager.getBranch());
-			if (totals.latestCacheHitRate === undefined) return "";
-			return fg(colors.muted, `CH${formatPercent(totals.latestCacheHitRate)}`);
-		}
-
-		function renderCost(): string {
-			const totals = getAssistantTotals(
-				ctx.sessionManager.getBranch(),
-				liveAgentUsage?.snapshot(),
-			);
-			if (totals.cost <= 0) return "";
-			return fg(colors.muted, `$${totals.cost.toFixed(3)}`);
-		}
-
-		function renderExtensionStatuses(): string {
-			return [...footerData.getExtensionStatuses().values()]
-				.filter(
-					(status): status is string =>
-						Boolean(status) && visibleWidth(status.trim()) > 0,
-				)
-				.join(" ");
-		}
-
-		function hasVisibleFocusStatus(): boolean {
-			const focus = footerData.getExtensionStatuses().get("focus");
-			return typeof focus === "string" && visibleWidth(focus.trim()) > 0;
-		}
-
-		function renderSessionStatus(separator: string): string {
-			const statusSeparator = hasVisibleFocusStatus() ? ` ${separator} ` : " ";
-			return [renderExtensionStatuses(), renderModel()]
-				.filter(Boolean)
-				.join(statusSeparator);
+			const tokens =
+				usage?.tokens == null ? "?" : formatTokens(Math.max(0, usage.tokens));
+			const percent =
+				usage?.percent == null
+					? "?"
+					: formatPercent(Math.max(0, usage.percent));
+			return `CTX ${tokens}/${formatTokens(contextWindow)} (${percent})`;
 		}
 
 		return {
@@ -97,23 +88,38 @@ export function createStatusBarFooter(
 			},
 			invalidate() {},
 			render(width: number): string[] {
-				const noticeMessage = notice?.current();
-				if (noticeMessage) {
-					return [truncateToWidth(fg(colors.muted, noticeMessage), width, "")];
-				}
-
-				const separator = fg(colors.muted, "·");
-				const left = [renderSessionStatus(separator), renderLocation()]
-					.filter(Boolean)
-					.join(` ${separator} `);
-				const right = [renderCacheHitRate(), renderCost(), renderContextUsage()]
-					.filter(Boolean)
-					.join("  ");
-				const gap = " ".repeat(
-					Math.max(1, width - visibleWidth(left) - visibleWidth(right)),
+				const identity = renderIdentity();
+				const left = theme.fg(
+					"muted",
+					truncateMiddle(identity, Math.max(1, width)),
+				);
+				const totals = getUsageTotals(ctx.sessionManager.getEntries());
+				const right = theme.fg(
+					"muted",
+					joinParts(
+						[
+							renderCacheHitRate(totals),
+							renderContextUsage(),
+							renderCost(totals),
+						],
+						" · ",
+					),
 				);
 
-				return [truncateToWidth(left + gap + right, width, "")];
+				const rightWidth = visibleWidth(right);
+				const availableLeft = width - rightWidth - 2;
+				if (rightWidth === 0) {
+					return [truncateToWidth(left, width, "")];
+				}
+				if (availableLeft <= 0) {
+					return [truncateToWidth(right, width, "")];
+				}
+
+				const fittedLeft = truncateToWidth(left, availableLeft, "");
+				const gap = " ".repeat(
+					Math.max(1, width - visibleWidth(fittedLeft) - rightWidth),
+				);
+				return [truncateToWidth(fittedLeft + gap + right, width, "")];
 			},
 		};
 	};

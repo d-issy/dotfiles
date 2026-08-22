@@ -1,8 +1,10 @@
 {
   "scripts": {
-    "lint": "tsc --noEmit",
-    "test": "vitest run",
-    "test:coverage": "vitest run --coverage"
+    "lint": "oxlint",
+    "typecheck": "tsc --noEmit",
+    "format:check": "oxfmt --check",
+    "test": "vitest run --passWithNoTests",
+    "test:coverage": "vitest run --passWithNoTests --coverage"
   },
   "imports": {
     "#pi-user/*": "./files/pi/agent/extensions/user/*.ts"

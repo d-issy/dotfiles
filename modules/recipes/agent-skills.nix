@@ -13,14 +13,6 @@
       manage-agent-skills.enable = true;
       manage-pull-request.enable = true;
       openspec.enable = true;
-      pi-agent-user-settings = {
-        enable = true;
-        agents.pi = true;
-      };
-      pi-customization = {
-        enable = true;
-        agents.pi = true;
-      };
     };
   };
 }
