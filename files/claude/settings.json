@@ -30,23 +30,23 @@
   ],
   "permissions": {
     "allow": [
-      "WebSearch",
-      "WebFetch(domain:developer.apple.com)",
-      "WebFetch(domain:docs.claude.com)",
-      "WebFetch(domain:github.com)",
       "Read(~/.claude/skills/**)"
     ],
     "deny": [
-      "Read(*.env)",
-      "Edit(*.env)",
-      "Read(*.envrc)",
-      "Edit(*.envrc)",
-      "Bash(git checkout:*)",
-      "Bash(sudo:*)"
+      "Read(.env)",
+      "Edit(.env)",
+      "Read(.env.*)",
+      "Edit(.env.*)",
+      "Read(.envrc)",
+      "Edit(.envrc)",
+      "Bash(sudo *)"
     ],
     "ask": [
-      "Bash(rm:*)",
-      "Bash(rmdir:*)"
+      "Bash(rm /*)",
+      "Bash(rm * /*)",
+      "Bash(rm ../*)",
+      "Bash(rm * ../*)",
+      "Bash(rmdir *)"
     ]
   },
   "outputStyle": "default",

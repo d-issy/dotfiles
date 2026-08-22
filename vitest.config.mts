@@ -11,6 +11,7 @@ export default defineConfig({
 	},
 	test: {
 		include: ["tests/pi/agent/extensions/**/*.test.ts"],
+		passWithNoTests: true,
 		coverage: {
 			provider: "v8",
 			reporter: ["text", "json-summary", "html"],

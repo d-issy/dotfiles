@@ -1,54 +1,27 @@
 import assert from "node:assert/strict";
 import type { SessionEntry } from "@earendil-works/pi-coding-agent";
 import { describe, it } from "vitest";
-import {
-	createLiveAgentUsageTracker,
-	getAssistantTotals,
-} from "#pi-user/lib/status/usage";
+import { getUsageTotals } from "#pi-user/lib/status/usage";
 
-describe("getAssistantTotals", () => {
-	it("sums assistant usage and ignores other entries", () => {
+describe("getUsageTotals", () => {
+	it("sums session usage and calculates the latest cache hit rate", () => {
 		const entries = [
-			{ type: "message", message: { role: "user" } },
-			{ type: "tool-call" },
-			{ type: "message", message: { role: "assistant" } },
 			{
 				type: "message",
 				message: {
-					role: "assistant",
-					usage: { input: 10, output: 20, cost: { total: 0.125 } },
+					role: "user",
+					content: [{ type: "text", text: "hello" }],
 				},
 			},
-			{
-				type: "message",
-				message: {
-					role: "assistant",
-					usage: { input: 2, output: undefined, cost: {} },
-				},
-			},
-		] as unknown as SessionEntry[];
-
-		assert.deepEqual(getAssistantTotals(entries), {
-			input: 12,
-			output: 20,
-			cacheRead: 0,
-			cacheWrite: 0,
-			cost: 0.125,
-			latestCacheHitRate: undefined,
-		});
-	});
-
-	it("tracks cache tokens and latest cache hit rate", () => {
-		const entries = [
 			{
 				type: "message",
 				message: {
 					role: "assistant",
 					usage: {
-						input: 50,
-						output: 10,
-						cacheRead: 25,
-						cacheWrite: 25,
+						input: 100,
+						output: 20,
+						cacheRead: 0,
+						cacheWrite: 50,
 						cost: { total: 0.01 },
 					},
 				},
@@ -56,227 +29,61 @@ describe("getAssistantTotals", () => {
 			{
 				type: "message",
 				message: {
-					role: "assistant",
+					role: "toolResult",
 					usage: {
-						input: 20,
-						output: 5,
-						cacheRead: 80,
+						input: 0,
+						output: 0,
+						cacheRead: 0,
 						cacheWrite: 0,
 						cost: { total: 0.02 },
 					},
 				},
 			},
-		] as unknown as SessionEntry[];
-
-		assert.deepEqual(getAssistantTotals(entries), {
-			input: 70,
-			output: 15,
-			cacheRead: 105,
-			cacheWrite: 25,
-			cost: 0.03,
-			latestCacheHitRate: 80,
-		});
-	});
-
-	it("includes live in-flight agent cost in the displayed total", () => {
-		const entries = [
 			{
 				type: "message",
 				message: {
 					role: "assistant",
-					usage: { input: 10, output: 20, cost: { total: 0.1 } },
-				},
-			},
-		] as unknown as SessionEntry[];
-
-		assert.deepEqual(getAssistantTotals(entries, new Map([["call-1", 0.23]])), {
-			input: 10,
-			output: 20,
-			cacheRead: 0,
-			cacheWrite: 0,
-			cost: 0.33,
-			latestCacheHitRate: undefined,
-		});
-	});
-
-	it("does not double count live agent cost once the final tool result exists", () => {
-		const entries = [
-			{
-				type: "message",
-				message: {
-					role: "assistant",
-					usage: { input: 10, output: 20, cost: { total: 0.1 } },
-				},
-			},
-			{
-				type: "message",
-				message: {
-					role: "toolResult",
-					toolCallId: "call-1",
-					toolName: "agent",
-					details: { usage: { cost: 0.23 } },
-				},
-			},
-		] as unknown as SessionEntry[];
-
-		assert.deepEqual(
-			getAssistantTotals(
-				entries,
-				new Map([
-					["call-1", 0.23],
-					["call-2", 0.04],
-				]),
-			),
-			{
-				input: 10,
-				output: 20,
-				cacheRead: 0,
-				cacheWrite: 0,
-				cost: 0.37,
-				latestCacheHitRate: undefined,
-			},
-		);
-	});
-
-	it("tracks live agent cost from tool execution updates and clears after tool result", () => {
-		const tracker = createLiveAgentUsageTracker();
-
-		assert.equal(
-			tracker.handleToolExecutionUpdate({
-				type: "tool_execution_update",
-				toolCallId: "call-1",
-				toolName: "agent",
-				partialResult: { details: { usage: { cost: 0.12 } } },
-			}),
-			true,
-		);
-		assert.deepEqual([...tracker.snapshot()], [["call-1", 0.12]]);
-		assert.equal(
-			tracker.handleToolExecutionUpdate({
-				type: "tool_execution_update",
-				toolCallId: "call-1",
-				toolName: "agent",
-				partialResult: { details: { usage: { cost: 0.12 } } },
-			}),
-			false,
-		);
-		assert.equal(
-			tracker.handleMessageEnd({
-				type: "message_end",
-				message: {
-					role: "toolResult",
-					toolCallId: "call-1",
-					toolName: "agent",
-				},
-			}),
-			true,
-		);
-		assert.deepEqual([...tracker.snapshot()], []);
-	});
-
-	it("includes agent tool result cost in the displayed total", () => {
-		const entries = [
-			{
-				type: "message",
-				message: {
-					role: "assistant",
-					usage: { input: 10, output: 20, cost: { total: 0.1 } },
-				},
-			},
-			{
-				type: "message",
-				message: {
-					role: "toolResult",
-					toolName: "agent",
-					details: {
-						usage: {
-							inputTokens: 100,
-							outputTokens: 20,
-							cacheReadTokens: 10,
-							cacheWriteTokens: 0,
-							totalTokens: 130,
-							cost: 0.23,
-						},
+					usage: {
+						input: 12_444,
+						output: 5_000,
+						cacheRead: 202_000,
+						cacheWrite: 0,
+						cost: { total: 0.021 },
 					},
 				},
 			},
 		] as unknown as SessionEntry[];
 
-		assert.deepEqual(getAssistantTotals(entries), {
-			input: 10,
-			output: 20,
-			cacheRead: 0,
-			cacheWrite: 0,
-			cost: 0.33,
-			latestCacheHitRate: undefined,
-		});
+		const totals = getUsageTotals(entries);
+		assert.equal(totals.input, 12_544);
+		assert.equal(totals.output, 5_020);
+		assert.equal(totals.cacheRead, 202_000);
+		assert.equal(totals.cacheWrite, 50);
+		assert.ok(Math.abs(totals.cost - 0.051) < Number.EPSILON);
+		assert.ok(
+			Math.abs((totals.latestCacheHitRate ?? 0) - 94.19708641883196) <
+				Number.EPSILON,
+		);
 	});
 
-	it("includes subagent result cost in the displayed total", () => {
+	it("includes usage from compaction and branch summaries", () => {
 		const entries = [
 			{
-				type: "message",
-				message: {
-					role: "assistant",
-					usage: { input: 10, output: 20, cost: { total: 0.1 } },
-				},
+				type: "compaction",
+				usage: { input: 1_000, output: 100, cost: { total: 0.03 } },
 			},
 			{
-				type: "message",
-				message: {
-					role: "toolResult",
-					toolName: "subagent",
-					details: {
-						results: [{ usage: { cost: 0.2 } }, { usage: { cost: 0.03 } }],
-					},
-				},
+				type: "branch_summary",
+				usage: { input: 2_000, output: 200, cost: { total: 0.04 } },
 			},
 		] as unknown as SessionEntry[];
 
-		assert.deepEqual(getAssistantTotals(entries), {
-			input: 10,
-			output: 20,
+		assert.deepEqual(getUsageTotals(entries), {
+			input: 3_000,
+			output: 300,
 			cacheRead: 0,
 			cacheWrite: 0,
-			cost: 0.33,
-			latestCacheHitRate: undefined,
-		});
-	});
-
-	it("ignores malformed and non-child-agent tool result costs", () => {
-		const entries = [
-			{
-				type: "message",
-				message: {
-					role: "toolResult",
-					toolName: "bash",
-					details: { results: [{ usage: { cost: 1 } }] },
-				},
-			},
-			{
-				type: "message",
-				message: {
-					role: "toolResult",
-					toolName: "subagent",
-					details: { results: [{ usage: { cost: "0.2" } }, {}] },
-				},
-			},
-			{
-				type: "message",
-				message: {
-					role: "toolResult",
-					toolName: "agent",
-					details: { usage: { cost: Number.NaN } },
-				},
-			},
-		] as unknown as SessionEntry[];
-
-		assert.deepEqual(getAssistantTotals(entries), {
-			input: 0,
-			output: 0,
-			cacheRead: 0,
-			cacheWrite: 0,
-			cost: 0,
+			cost: 0.07,
 			latestCacheHitRate: undefined,
 		});
 	});

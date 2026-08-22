@@ -1,10 +1,1 @@
-{
-  "app.thinking.cycle": [],
-  "app.tree.foldOrUp": ["ctrl+left", "alt+left", "alt+b"],
-  "app.tree.unfoldOrDown": ["ctrl+right", "alt+right", "alt+f"],
-  "tui.editor.cursorLeft": ["left"],
-  "tui.editor.cursorRight": ["right"],
-  "tui.input.newLine": ["shift+enter"],
-  "tui.select.down": ["down", "ctrl+n"],
-  "tui.select.up": ["up", "ctrl+p"]
-}
+{}
