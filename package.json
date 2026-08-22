@@ -2,6 +2,7 @@
   "scripts": {
     "lint": "oxlint",
     "typecheck": "tsc --noEmit",
+    "format": "oxfmt",
     "format:check": "oxfmt --check",
     "test": "vitest run --passWithNoTests",
     "test:coverage": "vitest run --passWithNoTests --coverage"
