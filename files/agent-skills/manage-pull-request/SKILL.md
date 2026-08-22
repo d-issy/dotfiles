@@ -1,8 +1,3 @@
----
-name: manage-pull-request
-description: Always use this skill alongside any skill or workflow that creates, drafts, publishes, updates, checks, or reviews a GitHub pull request.
----
-
 # Manage Pull Request
 
 ## Actions

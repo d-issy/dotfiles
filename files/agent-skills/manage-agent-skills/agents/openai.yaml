@@ -1,4 +1,0 @@
-interface:
-  display_name: "Manage Agent Skills"
-  short_description: "Maintain agent skills in this dotfiles repository"
-  default_prompt: "Use $manage-agent-skills to add or refine an agent skill in this repository."
