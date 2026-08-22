@@ -4,6 +4,7 @@ import type {
 	SessionEntry,
 } from "@earendil-works/pi-coding-agent";
 import { describe, it } from "vitest";
+import { supportsFast } from "#pi-user/features/fast";
 import { createStatusBarFooter } from "#pi-user/lib/status/footer";
 
 const ansiPattern = new RegExp(`${String.fromCharCode(27)}\\[[0-9;]*m`, "gu");
@@ -44,7 +45,7 @@ describe("createStatusBarFooter", () => {
 		const ctx = {
 			model: {
 				provider: "anthropic",
-				id: "claude-sonnet-4",
+				id: "claude-opus-5",
 				reasoning: true,
 				contextWindow: 1_100_000,
 			},
@@ -64,7 +65,7 @@ describe("createStatusBarFooter", () => {
 		};
 
 		const colors: string[] = [];
-		const footer = createStatusBarFooter(ctx, () => undefined)(
+		const footer = createStatusBarFooter(ctx, () => undefined, supportsFast)(
 			{ requestRender: () => undefined } as never,
 			{
 				fg: (color: string, text: string) => {
@@ -80,9 +81,15 @@ describe("createStatusBarFooter", () => {
 
 		assert.match(
 			output,
-			/^\(anthropic\) claude-sonnet-4 · high · main +CH94\.2% · CTX 46k\/1\.1M \(4\.2%\) · \$0\.021$/u,
+			/^\(anthropic\) claude-opus-5 high fast · main +CH94\.2% · CTX 46k\/1\.1M \(4\.2%\) · \$0\.021$/u,
 		);
 		assert.deepEqual(colors, ["muted", "muted"]);
 		assert.doesNotMatch(output, /↑|↓|R202k|W44k|auto|repo/u);
+
+		(ctx.model as { id: string }).id = "claude-sonnet-4";
+		assert.match(
+			plain(footer.render(120).join("\n")),
+			/^\(anthropic\) claude-sonnet-4 high · main /u,
+		);
 	});
 });

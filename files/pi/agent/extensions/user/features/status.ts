@@ -1,7 +1,18 @@
-import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import type {
+	ExtensionAPI,
+	ExtensionContext,
+} from "@earendil-works/pi-coding-agent";
 import { createStatusBarFooter } from "../lib/status";
 
-export function registerStatusFeature(pi: ExtensionAPI): void {
+type ModelIdentity = Pick<
+	NonNullable<ExtensionContext["model"]>,
+	"provider" | "id"
+>;
+
+export function registerStatusFeature(
+	pi: ExtensionAPI,
+	isFastEnabled: (model: ModelIdentity | undefined) => boolean,
+): void {
 	let requestRender: (() => void) | undefined;
 
 	const refresh = (): void => {
@@ -12,9 +23,13 @@ export function registerStatusFeature(pi: ExtensionAPI): void {
 		if (!ctx.hasUI || ctx.mode !== "tui") return;
 
 		ctx.ui.setFooter(
-			createStatusBarFooter(ctx, (nextRequestRender) => {
-				requestRender = nextRequestRender;
-			}),
+			createStatusBarFooter(
+				ctx,
+				(nextRequestRender) => {
+					requestRender = nextRequestRender;
+				},
+				isFastEnabled,
+			),
 		);
 	});
 

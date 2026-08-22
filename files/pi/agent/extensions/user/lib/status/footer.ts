@@ -13,6 +13,10 @@ type FooterFactory = NonNullable<
 >;
 type FooterComponent = Component & { dispose?(): void };
 type RequestRender = () => void;
+type ModelIdentity = Pick<
+	NonNullable<ExtensionContext["model"]>,
+	"provider" | "id"
+>;
 
 type UsageTotals = ReturnType<typeof getUsageTotals>;
 
@@ -40,6 +44,7 @@ function renderCost(totals: UsageTotals): string {
 export function createStatusBarFooter(
 	ctx: ExtensionContext,
 	setRequestRender: (requestRender: RequestRender | undefined) => void,
+	isFastEnabled: (model: ModelIdentity | undefined) => boolean = () => false,
 ): FooterFactory {
 	return (
 		tui: TUI,
@@ -59,11 +64,13 @@ export function createStatusBarFooter(
 			const thinking = model.reasoning
 				? (ctx.thinkingLevel ?? "off")
 				: undefined;
-			const branch = footerData.getGitBranch();
-			return joinParts(
-				[`(${model.provider}) ${model.id}`, thinking, branch],
-				" · ",
+			const fast = isFastEnabled(model) ? "fast" : undefined;
+			const identity = joinParts(
+				[`(${model.provider}) ${model.id}`, thinking, fast],
+				" ",
 			);
+			const branch = footerData.getGitBranch();
+			return joinParts([identity, branch], " · ");
 		}
 
 		function renderContextUsage(): string {
