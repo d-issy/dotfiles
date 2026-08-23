@@ -25,9 +25,11 @@ let
       name: ${builtins.toJSON skillName}
       description: ${builtins.toJSON skill.description}
       ${
-        lib.optionalString (agentName == "claude") ''
+        lib.optionalString (agentName != "codex") ''
           disable-model-invocation: ${lib.boolToString (!skill.invocation.model)}
-          user-invocable: ${lib.boolToString skill.invocation.user}
+          ${lib.optionalString (
+            agentName == "claude"
+          ) "user-invocable: ${lib.boolToString skill.invocation.user}"}
         ''
       }---
       ${builtins.readFile (dot.files + "/agent-skills/${skillName}/SKILL.md")}

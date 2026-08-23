@@ -32,6 +32,7 @@
 
         summary = "Plan and implement changes with OpenSpec";
         starterPrompt = "Use {skill} to plan and implement this change with OpenSpec.";
+        invocation.model = false;
       };
     };
   };
