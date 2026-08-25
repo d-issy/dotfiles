@@ -1,6 +1,8 @@
 _:
 
 {
+  dot.home.file.".codex/AGENTS.md".source = "codex/AGENTS.md";
+
   dot.programs.codex = {
     enable = true;
 

@@ -1,8 +1,3 @@
----
-name: openspec
-description: Use when planning or implementing a change with OpenSpec, including checking a change's status, applying its tasks, or validating its artifacts.
----
-
 # OpenSpec
 
 Use the OpenSpec artifacts as the plan and source of truth for the change.

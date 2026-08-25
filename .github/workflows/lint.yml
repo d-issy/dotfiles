@@ -135,8 +135,8 @@ jobs:
           restore-prefixes-first-match: nix-oxlint-${{ runner.os }}-
       - run: nix build .#checks.x86_64-linux.oxlint
 
-  tsc:
-    name: tsc
+  typecheck:
+    name: typecheck
     runs-on: ubuntu-latest
     needs:
       - changes
@@ -151,7 +151,7 @@ jobs:
           node-version: lts/*
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm lint
+      - run: pnpm typecheck
 
   actionlint:
     name: actionlint
@@ -203,7 +203,7 @@ jobs:
       - deadnix
       - statix
       - oxlint
-      - tsc
+      - typecheck
       - actionlint
       - zizmor
     if: ${{ always() }}

@@ -1,125 +1,95 @@
 import assert from "node:assert/strict";
 import type {
-	ExtensionAPI,
 	ExtensionContext,
+	SessionEntry,
 } from "@earendil-works/pi-coding-agent";
 import { describe, it } from "vitest";
+import { supportsFast } from "#pi-user/features/fast";
 import { createStatusBarFooter } from "#pi-user/lib/status/footer";
-import { createLiveAgentUsageTracker } from "#pi-user/lib/status/usage";
 
-function assistant(input: number, cacheRead: number): unknown {
+const ansiPattern = new RegExp(`${String.fromCharCode(27)}\\[[0-9;]*m`, "gu");
+
+function plain(value: string): string {
+	return value.replace(ansiPattern, "");
+}
+
+function assistant(input: number, cacheRead: number): SessionEntry {
 	return {
 		type: "message",
 		message: {
 			role: "assistant",
+			content: [],
 			usage: {
 				input,
-				output: 1,
+				output: 5_000,
 				cacheRead,
 				cacheWrite: 0,
-				cost: { total: 0.123 },
+				cost: {
+					input: 0,
+					output: 0,
+					cacheRead: 0,
+					cacheWrite: 0,
+					total: 0.021,
+				},
 			},
+			api: "anthropic-messages",
+			provider: "anthropic",
+			model: "claude-sonnet-4",
+			stopReason: "stop",
 		},
-	};
+	} as unknown as SessionEntry;
 }
 
 describe("createStatusBarFooter", () => {
-	it("shows the branch without the current working directory", () => {
-		const pi = {
-			getThinkingLevel: () => "",
-		} as unknown as ExtensionAPI;
+	it("shows only the configured identity and usage summary", () => {
 		const ctx = {
-			cwd: "/repo",
-			model: { id: "model" },
-			getContextUsage: () => undefined,
-			sessionManager: { getBranch: () => [] },
-		} as unknown as ExtensionContext;
-		const footerData = {
-			onBranchChange: () => () => undefined,
-			getGitBranch: () => "main",
-			getExtensionStatuses: () => new Map(),
-		};
-		const footer = createStatusBarFooter(pi, ctx, () => undefined)(
-			{ requestRender: () => undefined } as never,
-			{} as never,
-			footerData as never,
-		);
-
-		const output = footer.render(200).join("\n");
-
-		assert.match(output, /main/u);
-		assert.doesNotMatch(output, /repo/u);
-	});
-
-	it("includes live in-flight agent cost in the footer", () => {
-		const pi = {
-			getThinkingLevel: () => "",
-		} as unknown as ExtensionAPI;
-		const ctx = {
-			cwd: "/repo",
-			model: { id: "model" },
-			getContextUsage: () => undefined,
+			model: {
+				provider: "anthropic",
+				id: "claude-opus-5",
+				reasoning: true,
+				contextWindow: 1_100_000,
+			},
+			thinkingLevel: "high",
+			getContextUsage: () => ({
+				tokens: 46_200,
+				percent: 4.2,
+				contextWindow: 1_100_000,
+			}),
 			sessionManager: {
-				getBranch: () => [assistant(10, 0)],
+				getEntries: () => [assistant(12_444, 202_000)],
 			},
 		} as unknown as ExtensionContext;
 		const footerData = {
 			onBranchChange: () => () => undefined,
 			getGitBranch: () => "main",
-			getExtensionStatuses: () => new Map(),
 		};
-		const liveAgentUsage = createLiveAgentUsageTracker();
-		liveAgentUsage.handleToolExecutionUpdate({
-			type: "tool_execution_update",
-			toolCallId: "call-1",
-			toolName: "agent",
-			partialResult: { details: { usage: { cost: 0.2 } } },
-		});
 
-		const footer = createStatusBarFooter(
-			pi,
-			ctx,
-			() => undefined,
-			undefined,
-			liveAgentUsage,
-		)(
+		const colors: string[] = [];
+		const footer = createStatusBarFooter(ctx, () => undefined, supportsFast)(
 			{ requestRender: () => undefined } as never,
-			{} as never,
+			{
+				fg: (color: string, text: string) => {
+					colors.push(color);
+					return text;
+				},
+				bold: (text: string) => text,
+			} as never,
 			footerData as never,
 		);
 
-		const output = footer.render(200).join("\n");
+		const output = plain(footer.render(120).join("\n"));
 
-		assert.match(output, /\$0\.323/u);
-	});
-
-	it("scopes cache hit rate to the active branch like cost", () => {
-		const pi = {
-			getThinkingLevel: () => "",
-		} as unknown as ExtensionAPI;
-		const ctx = {
-			cwd: "/repo",
-			model: { id: "model" },
-			getContextUsage: () => undefined,
-			sessionManager: {
-				getEntries: () => [assistant(0, 100)],
-				getBranch: () => [assistant(10, 0)],
-			},
-		} as unknown as ExtensionContext;
-		const footerData = {
-			onBranchChange: () => () => undefined,
-			getGitBranch: () => "main",
-			getExtensionStatuses: () => new Map(),
-		};
-		const footer = createStatusBarFooter(pi, ctx, () => undefined)(
-			{ requestRender: () => undefined } as never,
-			{} as never,
-			footerData as never,
+		assert.match(
+			output,
+			/^\(anthropic\) claude-opus-5 high fast · main +CH94\.2% · CTX 46k\/1\.1M \(4\.2%\) · \$0\.021$/u,
 		);
+		assert.deepEqual(colors, ["muted", "muted"]);
+		assert.doesNotMatch(output, /↑|↓|R202k|W44k|auto|repo/u);
 
-		const output = footer.render(200).join("\n");
-
-		assert.match(output, /\$0\.123/u);
-		assert.doesNotMatch(output, /CH/u);
+		(ctx.model as { id: string }).id = "claude-sonnet-4";
+		assert.match(
+			plain(footer.render(120).join("\n")),
+			/^\(anthropic\) claude-sonnet-4 high · main /u,
+		);
 	});
 });

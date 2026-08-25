@@ -1,4 +1,0 @@
-interface:
-  display_name: "Manage Pull Request"
-  short_description: "Always apply to GitHub pull request workflows"
-  default_prompt: "Always use $manage-pull-request alongside any skill or workflow that creates, drafts, publishes, updates, checks, or reviews a GitHub pull request."

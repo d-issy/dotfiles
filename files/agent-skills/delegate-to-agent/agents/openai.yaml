@@ -1,4 +1,0 @@
-interface:
-  display_name: "Delegate to Agent"
-  short_description: "Delegate work through external agent CLIs"
-  default_prompt: "Use $delegate-to-agent to delegate this bounded task to another agent."
