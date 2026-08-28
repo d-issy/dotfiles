@@ -15,6 +15,7 @@
         gh-dash
         gh-f
         gh-notify
+        gh-stack
       ];
     };
 
