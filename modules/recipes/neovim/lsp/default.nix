@@ -16,6 +16,7 @@ in
     ./lua-ls.nix
     ./nixd.nix
     ./ruff.nix
+    ./rust-analyzer.nix
     ./typos-lsp.nix
     ./vtsls.nix
   ];
