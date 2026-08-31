@@ -6,7 +6,7 @@
     settings = {
       add_newline = false;
       scan_timeout = 10;
-      command_timeout = 100;
+      command_timeout = 1000;
 
       format = lib.strings.concatStringsSep "" [
         "$directory"
