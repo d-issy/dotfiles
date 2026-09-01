@@ -57,7 +57,5 @@
         };
       };
     };
-
-    xdg.configFile."herdr/agent-detection/pi.toml".source = true;
   };
 }
