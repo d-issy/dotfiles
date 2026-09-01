@@ -34,6 +34,7 @@
             pane_gaps = true;
             prompt_new_tab_name = false;
             show_agent_labels_on_pane_borders = true;
+            window_title = "{workspace}: {terminal_title}";
 
             sound.enabled = false;
             toast = {
