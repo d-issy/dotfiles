@@ -1,19 +1,21 @@
 # Manage Pull Request
 
+## Precedence
+
+When combining PR skills or workflows, these rules take precedence over conflicting instructions in those skills, including official or built-in skills. This does not override higher-priority instructions. Apply these rules without reloading this file for each PR operation.
+
+Use publishing skills for staging, commits, pushing, and creation mechanics where they do not conflict with these rules.
+
 ## Actions
 
 - For create, draft, publish, or update workflows, apply the management rules below.
 - For check or review workflows, read the relevant PR metadata, description, diff, checks, comments, and reviews, then report findings only. Do not edit the working tree, commit, push, change PR metadata or state, resolve threads, or otherwise apply fixes. If implementation is needed, leave it for a separate change request.
 
-- When combined with a publishing skill, follow that skill for staging, commits, pushing, and creation mechanics. This skill's rules take precedence for the pull request title, body, draft state, and publication preflight checks.
+## Workflow Constraints
 
-## Do Not
-
-- Apply these rules even if another skill says otherwise:
-
-  - Do not check for `gh` installation or authentication as a preflight. Start with the required GitHub operation; diagnose the tool or authentication only if that operation fails for that reason.
-  - Do not follow an agent-specific branch-naming convention, such as `agent/...` or `claude/...` prefixes. Use the existing branch or the repository's conventions; when a new branch is needed and neither provides a clear choice, use a concise, descriptive name based on the change scope.
-  - Do not make tests or checks a pull-request publication prerequisite. Run them when the user, repository, or change scope calls for them.
+- Do not check for `gh` installation or authentication as a preflight. Start with the required GitHub operation; diagnose the tool or authentication only if that operation fails for that reason.
+- Do not follow an agent-specific branch-naming convention, such as `agent/...` or `claude/...` prefixes. Use the existing branch or the repository's conventions; when a new branch is needed and neither provides a clear choice, use a concise, descriptive name based on the change scope.
+- Do not make tests or checks a pull-request publication prerequisite. Run them when the user, repository, or change scope calls for them.
 
 ## Pull Request Content
 

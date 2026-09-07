@@ -5,18 +5,7 @@ Keep half of the current Pi pane for Pi and delegate independent work to support
 ## Plan
 
 - Define a small set of independent roles based on the user's request. For each role, specify its unique name, preset, bounded task, and whether it may edit files.
-- Choose from these stable presets; each resolves its model family to the latest version at launch:
-  - `sol`: Codex Sol at medium reasoning.
-  - `sol-high`: Codex Sol at high reasoning.
-  - `terra`: Codex Terra at high reasoning.
-  - `luna`: Codex Luna at xhigh reasoning.
-  - `opus`: Claude Opus at high effort.
-  - `fable`: Claude Fable at medium effort.
-  - `fable-high`: Claude Fable at high effort.
-  - `grok`: Cursor Grok high-fast.
-  - `composer`: the latest standard Cursor Composer model.
-
-- Use `terra` (Codex Terra) for web research tasks.
+- Choose a preset from [Presets and layout](references/presets-and-layout.md). Use `terra` for web research tasks.
 
 ## Start
 
@@ -28,7 +17,7 @@ Keep half of the current Pi pane for Pi and delegate independent work to support
   ```
 
 - Use lowercase unique names matching `[a-z][a-z0-9_-]{0,31}`.
-- The command splits only the current Pi pane in half and keeps Pi focused. It chooses left/right for a wide pane or top/bottom for a tall pane, approximating terminal cells as twice as tall as wide (left/right when columns >= 2 × rows). The other half is divided equally among subagents along the perpendicular axis. It resolves current model versions, starts each agent, and returns their live status as JSON.
+- The command preserves Pi focus, resolves current model versions, starts each agent, and returns live status as JSON. See [layout details](references/presets-and-layout.md#layout).
 - Do not invoke raw pane split or resize commands for this workflow. If startup is partial, inspect `herdr-subagents status`; do not create another layout over it.
 
 ## Verify readiness
