@@ -56,16 +56,17 @@ function assistant(provider: string, model: string): AssistantMessage {
 
 describe("supportsFast", () => {
 	it.each([
-		"gpt-5.4",
-		"gpt-5.5",
+		"gpt-6-astra",
 		"gpt-5.6-luna",
 		"gpt-5.6-sol",
 		"gpt-5.6-terra",
+		"gpt-5.5",
+		"gpt-5.4",
 	])("supports %s through ChatGPT", (id) => {
 		assert.equal(supportsFast({ provider: "openai-codex", id }), true);
 	});
 
-	it.each(["claude-opus-4-8", "claude-opus-5"])(
+	it.each(["claude-opus-5", "claude-opus-4-8"])(
 		"supports %s through Anthropic",
 		(id) => {
 			assert.equal(supportsFast({ provider: "anthropic", id }), true);
@@ -86,22 +87,18 @@ describe("supportsFast", () => {
 });
 
 describe("enableFastPayload", () => {
-	it("adds the priority service tier to OpenAI Codex payloads", () => {
-		const payload = { model: "gpt-5.5", stream: true };
+	it.each(["gpt-6-astra", "gpt-5.5"])(
+		"adds the priority service tier to %s payloads",
+		(id) => {
+			const payload = { model: id, stream: true };
 
-		assert.deepEqual(
-			enableFastPayload(payload, {
-				provider: "openai-codex",
-				id: "gpt-5.5",
-			}),
-			{
-				model: "gpt-5.5",
-				stream: true,
-				service_tier: "priority",
-			},
-		);
-		assert.deepEqual(payload, { model: "gpt-5.5", stream: true });
-	});
+			assert.deepEqual(
+				enableFastPayload(payload, { provider: "openai-codex", id }),
+				{ model: id, stream: true, service_tier: "priority" },
+			);
+			assert.deepEqual(payload, { model: id, stream: true });
+		},
+	);
 
 	it("adds fast speed to Anthropic payloads", () => {
 		assert.deepEqual(
@@ -138,6 +135,23 @@ describe("adjustFastCost", () => {
 			cacheRead: 1.25,
 			cacheWrite: 0.625,
 			total: 9.375,
+		});
+		assert.equal(message.usage.cost.total, 3.75);
+	});
+
+	it("applies the Astra Fast multiplier", () => {
+		const message = assistant("openai-codex", "gpt-6-astra");
+		const adjusted = adjustFastCost(
+			message,
+			fastModel("openai-codex", "gpt-6-astra"),
+		);
+
+		assert.deepEqual(adjusted.usage.cost, {
+			input: 2,
+			output: 4,
+			cacheRead: 1,
+			cacheWrite: 0.5,
+			total: 7.5,
 		});
 		assert.equal(message.usage.cost.total, 3.75);
 	});

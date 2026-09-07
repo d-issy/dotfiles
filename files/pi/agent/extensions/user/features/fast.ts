@@ -5,13 +5,14 @@ import type {
 } from "@earendil-works/pi-coding-agent";
 
 const ANTHROPIC_FAST_BETA = "fast-mode-2026-02-01";
-const ANTHROPIC_FAST_MODEL_IDS = new Set(["claude-opus-4-8", "claude-opus-5"]);
+const ANTHROPIC_FAST_MODEL_IDS = new Set(["claude-opus-5", "claude-opus-4-8"]);
 const OPENAI_CODEX_FAST_MODEL_IDS = new Set([
-	"gpt-5.4",
-	"gpt-5.5",
+	"gpt-6-astra",
 	"gpt-5.6-luna",
 	"gpt-5.6-sol",
 	"gpt-5.6-terra",
+	"gpt-5.5",
+	"gpt-5.4",
 ]);
 
 type FastModel = NonNullable<ExtensionContext["model"]>;
