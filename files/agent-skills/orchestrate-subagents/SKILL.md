@@ -2,10 +2,9 @@
 
 Use Pi as the main agent in the left pane and delegate independent work to supported coding agents in an equally divided right-hand pane column.
 
-## Plan and confirm
+## Plan
 
-- The skill may identify a useful delegation opportunity, but it must not create panes or start agents until the user approves the proposed delegation for the current task.
-- Propose a small set of independent roles. For each role, show its unique name, preset, bounded task, and whether it may edit files. Ask the user to approve or revise the complete proposal.
+- Define a small set of independent roles based on the user's request. For each role, specify its unique name, preset, bounded task, and whether it may edit files.
 - Choose from these stable presets; each resolves its model family to the latest version at launch:
   - `sol`: Codex Sol at medium reasoning.
   - `sol-high`: Codex Sol at high reasoning.
@@ -16,12 +15,11 @@ Use Pi as the main agent in the left pane and delegate independent work to suppo
   - `fable-high`: Claude Fable at high effort.
   - `grok`: Cursor Grok high-fast.
   - `composer`: the latest standard Cursor Composer model.
-- Approval from an earlier task does not carry forward. Do not interpret general interest in subagents, skill installation, reload, or testing as approval for a new delegation.
 
 ## Start
 
 - This workflow requires Pi to be running inside Herdr and to be the only pane in the current tab.
-- After approval, start the complete layout in one call:
+- Start the complete layout in one call:
 
   ```sh
   herdr-subagents start architect=opus reviewer=sol-high researcher=grok
