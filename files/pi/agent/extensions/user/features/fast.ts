@@ -112,11 +112,22 @@ export function addAnthropicFastBeta(
 	headers[headerName] = features.join(",");
 }
 
-export function registerFastFeature(
-	pi: ExtensionAPI,
-): (model: ModelIdentity | undefined) => boolean {
+export interface FastController {
+	onChange?: () => void;
+	isEnabled: (model: ModelIdentity | undefined) => boolean;
+	setEnabled: (enabled: boolean, model: ModelIdentity | undefined) => void;
+}
+
+export function registerFastFeature(pi: ExtensionAPI): FastController {
 	let enabled = false;
 	let activeFastRequest: FastModel | undefined;
+	const controller: FastController = {
+		isEnabled: (model) => enabled && supportsFast(model),
+		setEnabled: (value, model) => {
+			enabled = value && supportsFast(model);
+			controller.onChange?.();
+		},
+	};
 
 	pi.registerCommand("fast", {
 		description: "Toggle Fast mode for supported models",
@@ -130,7 +141,7 @@ export function registerFastFeature(
 				return;
 			}
 
-			enabled = !enabled;
+			controller.setEnabled(!enabled, ctx.model);
 			ctx.ui.notify(`Fast mode ${enabled ? "enabled" : "disabled"}`, "info");
 		},
 	});
@@ -138,7 +149,7 @@ export function registerFastFeature(
 	pi.on("model_select", (event, ctx) => {
 		if (!enabled || supportsFast(event.model)) return;
 
-		enabled = false;
+		controller.setEnabled(false, event.model);
 		ctx.ui.notify("Fast mode disabled for the selected model", "info");
 	});
 
@@ -162,7 +173,7 @@ export function registerFastFeature(
 		return { message };
 	});
 
-	return (model) => enabled && supportsFast(model);
+	return controller;
 }
 
 export default registerFastFeature;
