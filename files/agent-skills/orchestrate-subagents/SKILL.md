@@ -1,6 +1,6 @@
 # Orchestrate Subagents
 
-Use Pi as the main agent in the left pane and delegate independent work to supported coding agents in an equally divided right-hand pane column.
+Keep half of the current Pi pane for Pi and delegate independent work to supported coding agents in the equally divided other half.
 
 ## Plan
 
@@ -18,7 +18,7 @@ Use Pi as the main agent in the left pane and delegate independent work to suppo
 
 ## Start
 
-- This workflow requires Pi to be running inside Herdr and to be the only pane in the current tab.
+- This workflow requires Pi to be running inside Herdr. Other panes in the current tab are preserved.
 - Start the complete layout in one call:
 
   ```sh
@@ -26,7 +26,7 @@ Use Pi as the main agent in the left pane and delegate independent work to suppo
   ```
 
 - Use lowercase unique names matching `[a-z][a-z0-9_-]{0,31}`.
-- The command keeps Pi focused on the left, creates an equal-width right column, divides that column equally among subagents, resolves current model versions, starts each agent, and returns their live status as JSON.
+- The command splits only the current Pi pane in half and keeps Pi focused. It chooses left/right for a wide pane or top/bottom for a tall pane, approximating terminal cells as twice as tall as wide (left/right when columns >= 2 × rows). The other half is divided equally among subagents along the perpendicular axis. It resolves current model versions, starts each agent, and returns their live status as JSON.
 - Do not invoke raw pane split or resize commands for this workflow. If startup is partial, inspect `herdr-subagents status`; do not create another layout over it.
 
 ## Verify readiness
@@ -41,8 +41,9 @@ Use Pi as the main agent in the left pane and delegate independent work to suppo
 
 - Give every subagent a bounded task, relevant context, constraints, and an explicit output format.
 - Parallelize research, analysis, and review. Do not allow multiple agents to edit the same working tree concurrently. Use one editing agent unless the user explicitly requests isolated worktrees.
-- Only after every intended agent passes the readiness inspection, send prompts by unique agent name with `herdr agent prompt`. Send all independent prompts before waiting so the work can run concurrently.
-- Wait with `herdr agent wait`, then inspect state and collect output with `herdr agent read --source recent-unwrapped`.
+- Only after every intended agent passes the readiness inspection, send prompts by unique agent name. Run independent `herdr agent prompt <name> <task> --wait --timeout 120000` calls concurrently (parallel tool calls or background shell jobs), then join all calls. Do not run these blocking calls in a sequential loop.
+- `prompt --wait` observes a state change after submission before waiting for a settled state. A separate `herdr agent wait` immediately after a nonblocking prompt can return the pre-task `idle` state; never treat that as completion.
+- After the concurrent calls settle, inspect state and collect output with `herdr agent read --source recent-unwrapped`. Verify that each output answers the submitted task. On timeout or `agent_prompt_stalled`, inspect state and output before retrying; do not submit duplicate tasks blindly. Use `herdr agent wait` for an already confirmed running task.
 - Treat `blocked` as requiring user input. Do not answer an approval or question on the user's behalf. Treat `unknown` as inconclusive, not complete.
 - Verify and synthesize subagent results rather than forwarding them uncritically.
 

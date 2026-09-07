@@ -29,7 +29,7 @@ let
       Presets:
         sol  sol-high  terra  luna  opus  fable  fable-high  grok  composer
 
-      Create and manage a right-hand column of equally sized Herdr subagent panes.
+      Split the current Pi pane in half and manage equally sized Herdr subagent panes.
       EOF
       }
 
@@ -200,14 +200,23 @@ let
         [ "$#" -le 10 ] || die "at most 10 subagents are supported"
         [ ! -e "$manifest" ] || die "a subagent manifest already exists; run cleanup first"
 
-        local current layout pane_count current_agent
+        local current layout current_agent pane_width pane_height main_direction agent_direction
         current="$("$herdr" pane current --current)"
         current_agent="$(printf '%s' "$current" | jq -r '.result.pane.agent // ""')"
         [ "$current_agent" = pi ] || die "the current pane must be running Pi"
 
         layout="$("$herdr" pane layout --current)"
-        pane_count="$(printf '%s' "$layout" | jq '.result.layout.panes | length')"
-        [ "$pane_count" -eq 1 ] || die "the current tab must contain only the Pi pane"
+        pane_width="$(printf '%s' "$layout" | jq -er --arg pane "$HERDR_PANE_ID" '.result.layout.panes[] | select(.pane_id == $pane) | .rect.width | select(. > 0)')"
+        pane_height="$(printf '%s' "$layout" | jq -er --arg pane "$HERDR_PANE_ID" '.result.layout.panes[] | select(.pane_id == $pane) | .rect.height | select(. > 0)')"
+        # Approximate terminal cells as twice as tall as they are wide.
+        # Split the longer visual axis, then divide the agent half perpendicularly.
+        if [ "$pane_width" -ge "$((pane_height * 2))" ]; then
+          main_direction=right
+          agent_direction=down
+        else
+          main_direction=down
+          agent_direction=right
+        fi
 
         local -a names=() presets=() kinds=() models=() efforts=() panes=() created=()
         local spec name preset existing resolved_kind resolved_model resolved_effort
@@ -237,14 +246,14 @@ let
 
         local split_result remaining_pane new_pane ratio index total
         total="''${#names[@]}"
-        split_result="$("$herdr" pane split --current --direction right --ratio 0.5 --cwd "$PWD" --no-focus)"
+        split_result="$("$herdr" pane split --pane "$HERDR_PANE_ID" --direction "$main_direction" --ratio 0.5 --cwd "$PWD" --no-focus)"
         remaining_pane="$(printf '%s' "$split_result" | jq -er '.result.pane.pane_id')"
         panes+=("$remaining_pane")
         created+=("$remaining_pane")
 
         for ((index=1; index < total; index++)); do
           ratio="$(awk -v remaining="$((total - index + 1))" 'BEGIN { printf "%.9f", 1 / remaining }')"
-          split_result="$("$herdr" pane split --pane "$remaining_pane" --direction down --ratio "$ratio" --cwd "$PWD" --no-focus)"
+          split_result="$("$herdr" pane split --pane "$remaining_pane" --direction "$agent_direction" --ratio "$ratio" --cwd "$PWD" --no-focus)"
           new_pane="$(printf '%s' "$split_result" | jq -er '.result.pane.pane_id')"
           panes+=("$new_pane")
           created+=("$new_pane")
@@ -324,33 +333,37 @@ let
           esac
         }
 
-        local start_failed=false start_output start_code started
-        for ((index=0; index < total; index++)); do
-          start_output=
-          start_code=
-          started=false
-
-          # A new shell may still be running direnv when its pane first appears.
+        start_agent_with_retry() {
+          local index="$1" start_output start_code
+          # Each pane independently waits for its shell/direnv to become ready.
           for _ in $(seq 1 150); do
             if start_output="$(start_agent_once "$index" 2>&1)"; then
-              started=true
-              break
+              return 0
             fi
-
             start_code="$(printf '%s' "$start_output" | jq -r '.error.code // ""' 2>/dev/null || true)"
             [ "$start_code" = "agent_pane_busy" ] || break
             sleep 0.2
           done
+          printf 'herdr-subagents: failed to start %s: %s\n' \
+            "''${names[$index]}" "$start_output" >&2
+          return 1
+        }
 
-          if "$started"; then
+        local start_failed=false
+        local -a start_pids=()
+        for ((index=0; index < total; index++)); do
+          start_agent_with_retry "$index" &
+          start_pids+=("$!")
+        done
+
+        # Only the parent writes the manifest; collect every worker even on failure.
+        for ((index=0; index < total; index++)); do
+          if wait "''${start_pids[$index]}"; then
             jq --arg name "''${names[$index]}" \
               '(.agents[] | select(.name == $name) | .started) = true' \
               "$manifest" | write_manifest
           else
-            printf 'herdr-subagents: failed to start %s: %s\n' \
-              "''${names[$index]}" "$start_output" >&2
             start_failed=true
-            break
           fi
         done
 
