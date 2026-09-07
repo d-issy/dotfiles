@@ -199,6 +199,7 @@ jobs:
     name: All Lint Passed
     runs-on: ubuntu-latest
     needs:
+      - changes
       - treefmt
       - deadnix
       - statix

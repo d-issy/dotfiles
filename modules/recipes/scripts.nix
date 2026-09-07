@@ -69,7 +69,6 @@
       tags = [ "worktree" ];
       variables = {
         pull_number = "${pkgs.gh}/bin/gh pr list --- --column 1 --delimiter '\\t'";
-        worktree_query = "${pkgs.git}/bin/git worktree list --porcelain | ${pkgs.gawk}/bin/awk '/^branch / { sub(\"refs/heads/\", \"\", $2); print $2 }'";
       };
       entries = [
         {
