@@ -22,6 +22,8 @@
       thinking = "low";
     };
 
+    herdrSubagents.enable = true;
+
     tmuxNotice = {
       enable = true;
       fallback = {
