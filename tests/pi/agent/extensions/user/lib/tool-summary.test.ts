@@ -189,7 +189,7 @@ describe("tool summaries (real Pi components)", () => {
 		expect(output).toContain("Check another directory.");
 	});
 
-	it("does not aggregate across thinking or other visible transcript entries", () => {
+	it("aggregates across thinking but not other visible transcript entries", () => {
 		const chat = container(
 			tool("read"),
 			assistant(undefined, "Considering options"),
@@ -197,7 +197,7 @@ describe("tool summaries (real Pi components)", () => {
 		);
 		chat.addChild(new Text("Notice", 0, 0));
 		chat.addChild(tool("ls"));
-		expect(summaries(chat)).toEqual([" ✓ read ×1", " ✓ grep ×1", " ✓ ls ×1"]);
+		expect(summaries(chat)).toEqual([" ✓ read ×1 · grep ×1", " ✓ ls ×1"]);
 	});
 
 	it("re-evaluates boundaries when a streaming assistant acquires text", () => {

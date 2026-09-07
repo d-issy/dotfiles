@@ -86,9 +86,18 @@ function renderSummary(
 		const pendingTool =
 			child instanceof ToolExecutionComponent &&
 			(child as unknown as { isPartial?: unknown }).isPartial === true;
-		const emptyAssistant =
-			child instanceof AssistantMessageComponent && childLines.length === 0;
-		if (!pendingTool && !emptyAssistant) flush();
+		const assistantWithoutVisibleMessage =
+			child instanceof AssistantMessageComponent &&
+			(childLines.length === 0 ||
+				(
+					child as unknown as {
+						lastMessage?: { content?: Array<{ type?: unknown }> };
+					}
+				).lastMessage?.content?.every(
+					(content) =>
+						content.type === "thinking" || content.type === "toolCall",
+				) === true);
+		if (!pendingTool && !assistantWithoutVisibleMessage) flush();
 		mouseChildren.push({ component: child, height: childLines.length });
 		for (const line of childLines) lines.push(line);
 	}
