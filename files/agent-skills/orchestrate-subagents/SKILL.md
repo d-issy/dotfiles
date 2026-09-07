@@ -16,13 +16,15 @@ Keep half of the current Pi pane for Pi and delegate independent work to support
   - `grok`: Cursor Grok high-fast.
   - `composer`: the latest standard Cursor Composer model.
 
+- Use `terra` (Codex Terra) for web research tasks.
+
 ## Start
 
 - This workflow requires Pi to be running inside Herdr. Other panes in the current tab are preserved.
 - Start the complete layout in one call:
 
   ```sh
-  herdr-subagents start architect=opus reviewer=sol-high researcher=grok
+  herdr-subagents start architect=opus reviewer=sol-high researcher=terra
   ```
 
 - Use lowercase unique names matching `[a-z][a-z0-9_-]{0,31}`.
