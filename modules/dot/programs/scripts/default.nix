@@ -7,6 +7,7 @@
 {
   imports = [
     ./git-autocommit.nix
+    ./herdr-subagents.nix
     ./hr.nix
     ./tm.nix
     ./tmux-notice
