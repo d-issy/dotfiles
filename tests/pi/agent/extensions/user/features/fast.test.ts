@@ -56,17 +56,17 @@ function assistant(provider: string, model: string): AssistantMessage {
 
 describe("supportsFast", () => {
 	it.each([
-		"gpt-5.4",
-		"gpt-5.5",
 		"gpt-6-astra",
 		"gpt-5.6-luna",
 		"gpt-5.6-sol",
 		"gpt-5.6-terra",
+		"gpt-5.5",
+		"gpt-5.4",
 	])("supports %s through ChatGPT", (id) => {
 		assert.equal(supportsFast({ provider: "openai-codex", id }), true);
 	});
 
-	it.each(["claude-opus-4-8", "claude-opus-5"])(
+	it.each(["claude-opus-5", "claude-opus-4-8"])(
 		"supports %s through Anthropic",
 		(id) => {
 			assert.equal(supportsFast({ provider: "anthropic", id }), true);
@@ -87,7 +87,7 @@ describe("supportsFast", () => {
 });
 
 describe("enableFastPayload", () => {
-	it.each(["gpt-5.5", "gpt-6-astra"])(
+	it.each(["gpt-6-astra", "gpt-5.5"])(
 		"adds the priority service tier to %s payloads",
 		(id) => {
 			const payload = { model: id, stream: true };
