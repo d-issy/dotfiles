@@ -58,7 +58,7 @@ describe("supportsFast", () => {
 	it.each([
 		"gpt-5.4",
 		"gpt-5.5",
-		"gpt-5.6-astra",
+		"gpt-6-astra",
 		"gpt-5.6-luna",
 		"gpt-5.6-sol",
 		"gpt-5.6-terra",
@@ -87,7 +87,7 @@ describe("supportsFast", () => {
 });
 
 describe("enableFastPayload", () => {
-	it.each(["gpt-5.5", "gpt-5.6-astra"])(
+	it.each(["gpt-5.5", "gpt-6-astra"])(
 		"adds the priority service tier to %s payloads",
 		(id) => {
 			const payload = { model: id, stream: true };
@@ -140,10 +140,10 @@ describe("adjustFastCost", () => {
 	});
 
 	it("applies the Astra Fast multiplier", () => {
-		const message = assistant("openai-codex", "gpt-5.6-astra");
+		const message = assistant("openai-codex", "gpt-6-astra");
 		const adjusted = adjustFastCost(
 			message,
-			fastModel("openai-codex", "gpt-5.6-astra"),
+			fastModel("openai-codex", "gpt-6-astra"),
 		);
 
 		assert.deepEqual(adjusted.usage.cost, {
