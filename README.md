@@ -19,12 +19,12 @@ cd ~/code/github.com/d-issy/dotfiles
 export NIX_CONFIG="extra-experimental-features = nix-command flakes"
 ```
 
-## Switch
+## Apply
 
-`.#switch` automatically selects the matching configuration for the current system.
+`.#apply` automatically selects the matching configuration for the current system.
 
 ```sh
-nix run .#switch
+nix run .#apply
 ```
 
 

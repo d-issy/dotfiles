@@ -1,11 +1,11 @@
 {
   config.dot.programs.navi.cheats.nix.sections = [
     {
-      tags = [ "nix switch" ];
+      tags = [ "nix apply" ];
       entries = [
         {
-          description = "switch home-manager configuration for this machine";
-          command = "nix run .#switch";
+          description = "apply home-manager configuration for this machine";
+          command = "nix run .#apply";
         }
       ];
     }
