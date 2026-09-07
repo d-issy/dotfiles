@@ -12,7 +12,7 @@ type ModelIdentity = Pick<
 export function registerStatusFeature(
 	pi: ExtensionAPI,
 	isFastEnabled: (model: ModelIdentity | undefined) => boolean,
-): void {
+): () => void {
 	let requestRender: (() => void) | undefined;
 
 	const refresh = (): void => {
@@ -39,6 +39,7 @@ export function registerStatusFeature(
 	pi.on("session_shutdown", () => {
 		requestRender = undefined;
 	});
+	return refresh;
 }
 
 export default registerStatusFeature;
