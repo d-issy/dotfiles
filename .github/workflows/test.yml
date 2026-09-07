@@ -33,6 +33,7 @@ jobs:
               - 'pnpm-lock.yaml'
               - 'pnpm-workspace.yaml'
               - 'tsconfig.json'
+              - 'vitest.config.mts'
               - '**/*.ts'
               - '.github/workflows/test.yml'
 

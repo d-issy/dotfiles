@@ -84,7 +84,6 @@
     ./tm.nix
     ./tmux.nix
     ./visidata.nix
-    ./zed.nix
     ./zsh.nix
   ];
 }

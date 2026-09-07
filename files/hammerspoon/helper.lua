@@ -24,7 +24,6 @@ Helper = (function()
       "com.apple.Terminal",
       "com.googlecode.iterm2",
       "com.jetbrains.intellij",
-      "com.microsoft.VSCode",
       "com.github.wez.wezterm",
       "org.alacritty",
     }, app)
