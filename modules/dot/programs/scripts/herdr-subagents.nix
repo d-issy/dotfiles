@@ -242,7 +242,9 @@ let
             "$herdr" pane close "''${created[$index]}" >/dev/null 2>&1 || true
           done
         }
-        trap rollback_layout ERR INT TERM
+        trap rollback_layout ERR
+        trap 'rollback_layout; exit 130' INT
+        trap 'rollback_layout; exit 143' TERM
 
         local split_result remaining_pane new_pane ratio index total
         total="''${#names[@]}"
@@ -386,7 +388,7 @@ let
         [ "$#" -eq 0 ] || die "cleanup accepts only --force"
         require_manifest
 
-        local panes agent_count index pane_id name pane agent_name status
+        local panes agent_count index pane_id name pane agent_name status started preserve_reason
         local closed_json preserved_json close_error
         panes="$("$herdr" pane list --workspace "$HERDR_WORKSPACE_ID")"
         agent_count="$(jq '.agents | length' "$manifest")"
@@ -405,13 +407,20 @@ let
 
           agent_name="$(printf '%s' "$pane" | jq -r '.agent // ""')"
           status="$(printf '%s' "$pane" | jq -r '.agent_status // "unknown"')"
-          if ! "$force" && [ -n "$agent_name" ] && [ "$status" != "idle" ] && [ "$status" != "done" ]; then
+          started="$(jq -r ".agents[$index].started" "$manifest")"
+          preserve_reason=
+          if [ "$started" != true ]; then
+            preserve_reason=start_failed
+          elif [ -n "$agent_name" ] && [ "$status" != "idle" ] && [ "$status" != "done" ]; then
+            preserve_reason="agent_$status"
+          fi
+          if ! "$force" && [ -n "$preserve_reason" ]; then
             preserved_json="$(
               jq -cn \
                 --argjson items "$preserved_json" \
                 --arg name "$name" \
                 --arg pane "$pane_id" \
-                --arg reason "agent_$status" \
+                --arg reason "$preserve_reason" \
                 '$items + [{name: $name, pane_id: $pane, reason: $reason}]'
             )"
             continue
