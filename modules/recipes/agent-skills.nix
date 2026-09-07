@@ -8,19 +8,10 @@
     ];
 
     skills = {
-      manage-agent-skills = {
-        enable = true;
-        name = "Manage Agent Skills";
-        description = "Use when adding, splitting, merging, or refining reusable agent skills under files/agent-skills in this dotfiles repository.";
-
-        summary = "Maintain agent skills in this dotfiles repository";
-        starterPrompt = "Use {skill} to add or refine an agent skill in this repository.";
-        invocation.model = false;
-      };
       manage-pull-request = {
         enable = true;
         name = "Manage Pull Request";
-        description = "Always use this skill alongside any skill or workflow that creates, drafts, publishes, updates, checks, or reviews a GitHub pull request.";
+        description = "Always use when creating, drafting, publishing, updating, checking, or reviewing GitHub pull requests alongside any other PR skill or workflow.";
 
         summary = "Always apply to GitHub pull request workflows";
         starterPrompt = "Always use {skill} alongside any skill or workflow that creates, drafts, publishes, updates, checks, or reviews a GitHub pull request.";

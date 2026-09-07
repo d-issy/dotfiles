@@ -22,38 +22,29 @@ For the default `spec-driven` schema, create these artifacts:
 
 Do not start implementation merely because `proposal`, `specs`, `design`, and `tasks` are present. All four must be coherent, and the user must explicitly request implementation. The workflow is iterative, so update the artifacts when implementation changes the understanding of the work.
 
+## Common artifact workflow
+
+- If `openspec/` is missing, ask for confirmation before running `openspec init --tools none`; never initialize it automatically.
+- Before editing, inspect the active change with `openspec list` and `openspec status --change <change>`.
+- For each artifact being created or revised, request its instructions explicitly:
+
+  ```sh
+  openspec instructions <artifact> --change <change>
+  ```
+
+  Use `proposal`, `specs`, `design`, or `tasks` as the artifact name. Read the returned instructions and existing dependencies before editing. For existing artifacts, the output may say `Create`; use it as guidance and update the file in place.
+- Recheck `openspec status --change <change>` after each artifact. Keep artifacts and task progress consistent with the work.
+
 ## Creating artifacts
 
-Use the CLI instructions to create artifacts one at a time. The artifact name is required; pass it explicitly when requesting instructions.
+Follow the artifact flow above, using the common workflow for each artifact. Once `tasks` is complete, report that the plan is ready and wait for the user's explicit implementation request. Only then use `openspec instructions apply --change <change>` to guide implementation.
 
-```sh
-openspec instructions proposal --change <change>
-openspec instructions specs --change <change>
-openspec instructions design --change <change>
-openspec instructions tasks --change <change>
-```
-
-Read the returned instructions and existing dependencies before creating or editing each artifact. Recheck `openspec status --change <change>` after each artifact. Once `tasks` is complete, report that the plan is ready and wait for the user's explicit implementation request. Only then use `openspec instructions apply --change <change>` to guide implementation.
-
-- If `openspec/` is missing, ask the user for confirmation before running `openspec init --tools none`; never initialize it automatically.
-- Before editing, inspect the active change with `openspec list` and `openspec status --change <change>`.
-- Keep the tasks and artifacts up to date while working.
-- Run `openspec validate <change>` after implementation.
+Run `openspec validate <change>` after implementation.
 
 ## Revising a change
 
-When correcting an existing change, do not recreate its artifacts. First inspect `openspec list` and `openspec status --change <change>`, then read the artifact being changed and its dependencies.
+When correcting an existing change, follow the common artifact workflow and update existing files rather than recreating them.
 
-- Before editing an existing artifact, get its artifact-specific instructions:
-
-  ```sh
-  openspec instructions proposal --change <change>
-  openspec instructions specs --change <change>
-  openspec instructions design --change <change>
-  openspec instructions tasks --change <change>
-  ```
-
-  Request only the artifact being revised. The CLI's output may say `Create` even when the artifact already exists; use it for format, dependency, and validation guidance, then update the existing file in place.
 - Update the artifact that no longer reflects the requested behavior or approach.
 - If `proposal` changes, review `specs`, `design`, and `tasks`.
 - If `specs` or `design` changes, review `tasks` and update its checklist.
