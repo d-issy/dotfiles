@@ -35,13 +35,17 @@ afterEach(() => {
 	resetCapabilitiesCache();
 });
 
-function tool(name: string, complete = true): ToolExecutionComponent {
+function tool(
+	name: string,
+	complete = true,
+	command = "printf 'running'",
+): ToolExecutionComponent {
 	const component = new ToolExecutionComponent(
 		name,
 		`call-${nextId++}`,
 		{
 			path: "example.ts",
-			command: "printf 'running'",
+			command,
 			pattern: "example",
 			oldText: "before",
 			newText: "after",
@@ -100,6 +104,26 @@ function summaries(chat: Container): string[] {
 }
 
 describe("tool summaries (real Pi components)", () => {
+	it("counts git read operations together and writes by subcommand across bash calls", () => {
+		const chat = container(
+			tool("bash", true, "git status; git diff; git log"),
+			tool("bash", true, "git show; git remote -v; git add a; git add b"),
+		);
+		expect(summaries(chat)).toEqual([" ✓ run ×2 (git-read op ×5, git add ×2)"]);
+		chat.addChild(assistant("Next group"));
+		chat.addChild(tool("bash", true, "ls x; ls y"));
+		expect(summaries(chat)[1]).toBe(" ✓ run ×1 (ls ×2)");
+	});
+
+	it("shows the three most recent operation categories with their total counts", () => {
+		const chat = container(
+			tool("bash", true, "ls a; cat b; pwd; git status; ls c"),
+		);
+		expect(summaries(chat)).toEqual([
+			" ✓ run ×1 (… pwd ×1, git-read op ×1, ls ×2)",
+		]);
+	});
+
 	it("combines all completed tool kinds without changing the component tree", () => {
 		const tools = [
 			tool("read"),
@@ -114,9 +138,9 @@ describe("tool summaries (real Pi components)", () => {
 			tool("custom"),
 		];
 		const chat = container(...tools);
-		expect(plainLines(chat)).toEqual([
+		expect(plainLines(chat, 160)).toEqual([
 			"",
-			" ✓ read ×2 · ls ×1 · find ×1 · grep ×1 · bash ×1 · edit ×1 · write ×1 · powershell ×1 · custom ×1",
+			" ✓ read ×2 · ls ×1 · find ×1 · grep ×1 · run ×1 (printf ×1) · edit ×1 · write ×1 · powershell ×1 · custom ×1",
 		]);
 		expect(chat.children).toEqual(tools);
 		expect(chat.children[0]).toBe(tools[0]);
@@ -152,7 +176,10 @@ describe("tool summaries (real Pi components)", () => {
 		vi.advanceTimersByTime(2999);
 		expect(plainLines(chat).join("\n")).toContain("printf 'running'");
 		vi.advanceTimersByTime(1);
-		expect(plainLines(chat)).toEqual(["", " ✓ read ×1 · bash ×1 · grep ×1"]);
+		expect(plainLines(chat)).toEqual([
+			"",
+			" ✓ read ×1 · run ×1 (printf ×1) · grep ×1",
+		]);
 		expect(vi.getTimerCount()).toBe(0);
 	});
 
@@ -200,7 +227,7 @@ describe("tool summaries (real Pi components)", () => {
 		expect(chat.render(100)).toEqual([
 			...thinking.render(100),
 			"",
-			" ✓ read ×1 · bash ×1 · grep ×1",
+			" ✓ read ×1 · run ×1 (printf ×1) · grep ×1",
 		]);
 	});
 
@@ -215,15 +242,30 @@ describe("tool summaries (real Pi components)", () => {
 		expect(plainLines(chat)).toEqual(["", " ✓ read ×1 · grep ×1"]);
 	});
 
-	it("marks failed or aborted calls instead of reporting success", () => {
-		const bash = tool("bash", false);
-		finish(bash, true);
-		vi.advanceTimersByTime(3000);
-		const chat = container(tool("read"), bash);
-		expect(plainLines(chat)).toEqual(["", " ✗ 1 failed · read ×1 · bash ×1"]);
-		bash.setExpanded(true);
-		expect(plainLines(chat).join("\n")).toContain("Command failed");
-	});
+	it.each(["bash", "read", "custom"])(
+		"keeps failed %s visible between thinking while summarizing only successes",
+		(name) => {
+			const failed = tool(name, false);
+			finish(failed, true);
+			const before = assistant(undefined, "Before failure");
+			const after = assistant(undefined, "After failure");
+			const chat = container(tool("read"), before, failed, after, tool("grep"));
+			const expected = (): string[] => [
+				...before.render(100),
+				...failed.render(100),
+				...after.render(100),
+				"",
+				" ✓ read ×1 · grep ×1",
+			];
+			expect(chat.render(100)).toEqual(expected());
+			vi.advanceTimersByTime(5000);
+			expect(chat.render(100)).toEqual(expected());
+			expect(plainLines(chat).join("\n")).toContain("Command failed");
+			expect(container(failed).render(100)).toEqual(failed.render(100));
+			failed.setExpanded(true);
+			expect(container(failed).render(100)).toEqual(failed.render(100));
+		},
+	);
 
 	it("ignores tool-only assistant rows but splits at assistant and user messages", () => {
 		const chat = container(
@@ -334,10 +376,10 @@ describe("tool summaries (real Pi components)", () => {
 		expect(summaries(chat)).toEqual([" ✓ read ×2"]);
 		chat.clear();
 		chat.addChild(tool("bash"));
-		expect(summaries(chat)).toEqual([" ✓ bash ×1"]);
+		expect(summaries(chat)).toEqual([" ✓ run ×1 (printf ×1)"]);
 		const resumed = container(tool("grep"), assistant(), tool("find"));
 		expect(summaries(resumed)).toEqual([" ✓ grep ×1 · find ×1"]);
-		expect(summaries(chat)).toEqual([" ✓ bash ×1"]);
+		expect(summaries(chat)).toEqual([" ✓ run ×1 (printf ×1)"]);
 	});
 
 	it("leaves the original display visible if Pi's private field contract changes", () => {
@@ -405,8 +447,9 @@ describe("tool summaries (real Pi components)", () => {
 		chat.render(80);
 		expect(second.fg).toHaveBeenCalledWith("success", " ✓ read ×1");
 		finish(read, true);
-		chat.render(80);
-		expect(second.fg).toHaveBeenCalledWith("error", " ✗ 1 failed · read ×1");
+		second.fg.mockClear();
+		expect(chat.render(80)).toEqual(read.render(80));
+		expect(second.fg).not.toHaveBeenCalled();
 	});
 
 	it("restores the original renderer on uninstall", () => {

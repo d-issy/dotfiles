@@ -1,3 +1,4 @@
+import { bashOperations } from "./bash-summary";
 import {
 	AssistantMessageComponent,
 	type Theme,
@@ -9,7 +10,7 @@ import {
 	truncateToWidth,
 } from "@earendil-works/pi-tui";
 
-type CompletedTool = { name: string; isError: boolean };
+type CompletedTool = { name: string; isError: boolean; command?: string };
 type SummaryTheme = Pick<Theme, "fg">;
 
 function completedTool(component: Component): CompletedTool | undefined {
@@ -18,6 +19,7 @@ function completedTool(component: Component): CompletedTool | undefined {
 	// Pi internals: read only. If these fields change, leave the row visible.
 	const row = component as unknown as {
 		toolName?: unknown;
+		args?: { command?: unknown };
 		expanded?: unknown;
 		isPartial?: unknown;
 		result?: { isError?: unknown };
@@ -30,7 +32,12 @@ function completedTool(component: Component): CompletedTool | undefined {
 	)
 		return;
 
-	return { name: row.toolName, isError: row.result.isError };
+	return {
+		name: row.toolName,
+		isError: row.result.isError,
+		command:
+			typeof row.args?.command === "string" ? row.args.command : undefined,
+	};
 }
 
 function renderSummary(
@@ -42,21 +49,27 @@ function renderSummary(
 	const lines: string[] = [];
 	const mouseChildren: Array<{ component: Component; height: number }> = [];
 	const counts = new Map<string, number>();
-	let failures = 0;
+	const operations = new Map<string, number>();
 	const previews: Array<{ component: Component; lines: string[] }> = [];
 
 	function flushSummary(): void {
 		if (counts.size === 0) return;
 		const tools = [...counts]
-			.map(([name, count]) => `${name} ×${count}`)
+			.map(([name, count]) => {
+				const recent = [...operations]
+					.slice(-3)
+					.map(([operation, total]) => `${operation} ×${total}`)
+					.join(", ");
+				const detail =
+					name === "bash" && recent
+						? ` (${operations.size > 3 ? "… " : ""}${recent})`
+						: "";
+				return `${name === "bash" ? "run" : name} ×${count}${detail}`;
+			})
 			.join(" · ");
-		const status = failures > 0 ? `✗ ${failures} failed ·` : "✓";
 		const summary = [
 			"",
-			truncateToWidth(
-				theme.fg(failures > 0 ? "error" : "success", ` ${status} ${tools}`),
-				width,
-			),
+			truncateToWidth(theme.fg("success", ` ✓ ${tools}`), width),
 		];
 		lines.push(...summary);
 		mouseChildren.push({
@@ -64,7 +77,7 @@ function renderSummary(
 			height: 2,
 		});
 		counts.clear();
-		failures = 0;
+		operations.clear();
 	}
 
 	function flush(): void {
@@ -81,9 +94,22 @@ function renderSummary(
 
 	for (const child of container.children) {
 		const tool = completedTool(child);
+		// Keep failures in the transcript, outside successful counts and bash previews.
+		if (tool?.isError) {
+			const childLines = child.render(width);
+			lines.push(...childLines);
+			mouseChildren.push({ component: child, height: childLines.length });
+			continue;
+		}
 		if (tool && !keepBashVisible(child)) {
 			counts.set(tool.name, (counts.get(tool.name) ?? 0) + 1);
-			if (tool.isError) failures++;
+			if (tool.name === "bash" && tool.command !== undefined) {
+				for (const operation of bashOperations(tool.command)) {
+					const total = (operations.get(operation) ?? 0) + 1;
+					operations.delete(operation);
+					operations.set(operation, total);
+				}
+			}
 			continue;
 		}
 
