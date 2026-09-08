@@ -24,12 +24,27 @@ WinManager = (function()
     local screen = win:screen():frame()
     local width = screen.w / (rect.w or 1)
     local height = screen.h / (rect.h or 1)
-    win:setFrameWithWorkarounds({
+    local frame = {
       x = screen.x + width * ((rect.x or 1) - 1) + MARGIN,
       y = screen.y + height * ((rect.y or 1) - 1) + MARGIN,
       w = width - MARGIN * 2,
       h = height - MARGIN * 2,
-    }, 0)
+    }
+    -- Enhanced accessibility can prevent apps from accepting frame changes.
+    local appElement = hs.axuielement.applicationElement(win:application())
+    local enhanced = appElement:attributeValue "AXEnhancedUserInterface"
+    if enhanced == true then
+      appElement:setAttributeValue("AXEnhancedUserInterface", false)
+    end
+    local ok, err = pcall(function()
+      win:setFrameWithWorkarounds(frame, 0)
+    end)
+    if enhanced == true then
+      appElement:setAttributeValue("AXEnhancedUserInterface", true)
+    end
+    if not ok then
+      error(err)
+    end
   end
 
   local findApplication = function(app)
