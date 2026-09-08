@@ -79,13 +79,13 @@
           ]);
       };
 
-      mkSwitchApp =
+      mkApplyApp =
         system: pkgs:
         let
           homeConfigurationName = homeConfigurationNames.${system};
         in
         pkgs.writeShellApplication {
-          name = "dot-switch";
+          name = "dot-apply";
           runtimeInputs = [ home-manager.packages.${system}.default ];
           text = ''
             if [ -f /etc/NIXOS ]; then
@@ -270,16 +270,16 @@
       let
         pkgs = mkPkgs system;
         toolPackages = mkToolPackages pkgs;
-        switchApp = mkSwitchApp system pkgs;
+        applyApp = mkApplyApp system pkgs;
         gcApp = mkGcApp system pkgs;
         generationsApp = mkGenerationsApp system pkgs;
       in
       {
         apps = {
-          switch = {
+          apply = {
             type = "app";
-            program = "${switchApp}/bin/dot-switch";
-            meta.description = "Switch to the Home Manager configuration for this host";
+            program = "${applyApp}/bin/dot-apply";
+            meta.description = "Apply the configuration for this host";
           };
 
           gc = {
@@ -299,7 +299,7 @@
 
         devShells.default = pkgs.mkShell {
           packages = toolPackages.devShell ++ [
-            switchApp
+            applyApp
             gcApp
             generationsApp
           ];
