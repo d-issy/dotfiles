@@ -23,6 +23,7 @@ let uninstall: () => void;
 let nextId = 0;
 
 beforeEach(() => {
+	vi.useFakeTimers();
 	initTheme("dark");
 	setCapabilities({ images: null, trueColor: false, hyperlinks: false });
 	uninstall = installToolSummary(() => theme);
@@ -51,7 +52,10 @@ function tool(name: string, complete = true): ToolExecutionComponent {
 		{ requestRender: vi.fn() } as unknown as TUI,
 		process.cwd(),
 	);
-	if (complete) finish(component);
+	if (complete) {
+		finish(component);
+		vi.advanceTimersByTime(3000);
+	}
 	return component;
 }
 
@@ -118,7 +122,7 @@ describe("tool summaries (real Pi components)", () => {
 		expect(chat.children[0]).toBe(tools[0]);
 	});
 
-	it("keeps queued and streaming bash visible, then folds it on completion", () => {
+	it("keeps bash visible until three seconds after completion", () => {
 		vi.useFakeTimers();
 		const bash = tool("bash", false);
 		const chat = container(tool("read"), bash, tool("grep"));
@@ -145,17 +149,68 @@ describe("tool summaries (real Pi components)", () => {
 		expect(plainLines(chat).join("\n")).toContain("streaming output");
 
 		finish(bash);
+		vi.advanceTimersByTime(2999);
+		expect(plainLines(chat).join("\n")).toContain("printf 'running'");
+		vi.advanceTimersByTime(1);
 		expect(plainLines(chat)).toEqual(["", " ✓ read ×1 · bash ×1 · grep ×1"]);
 		expect(vi.getTimerCount()).toBe(0);
+	});
+
+	it("requests a redraw when the bash grace period expires and cancels on uninstall", () => {
+		const bash = tool("bash", false);
+		const ui = (
+			bash as unknown as { ui: { requestRender: ReturnType<typeof vi.fn> } }
+		).ui;
+		finish(bash);
+		ui.requestRender.mockClear();
+		vi.advanceTimersByTime(2999);
+		expect(ui.requestRender).not.toHaveBeenCalled();
+		vi.advanceTimersByTime(1);
+		expect(ui.requestRender).toHaveBeenCalledOnce();
+		finish(tool("bash", false));
+		uninstall();
+		expect(vi.getTimerCount()).toBe(0);
+	});
+
+	it.each(["read", "edit", "write", "custom"])(
+		"hides pending %s unless expanded",
+		(name) => {
+			const row = tool(name, false);
+			const chat = container(row);
+			expect(chat.render(100)).toEqual([]);
+			row.setExpanded(true);
+			expect(chat.render(100)).toEqual(nativeRender.call(chat, 100));
+		},
+	);
+
+	it("places thinking before summaries and bash previews after them through the grace period", () => {
+		const bash = tool("bash", false);
+		const thinking = assistant(undefined, "Considering options");
+		const chat = container(tool("read"), bash, thinking, tool("grep"));
+		const expected = (): string[] => [
+			...thinking.render(100),
+			"",
+			" ✓ read ×1 · grep ×1",
+			...bash.render(100),
+		];
+		expect(chat.render(100)).toEqual(expected());
+		finish(bash);
+		expect(chat.render(100)).toEqual(expected());
+		vi.advanceTimersByTime(3000);
+		expect(chat.render(100)).toEqual([
+			...thinking.render(100),
+			"",
+			" ✓ read ×1 · bash ×1 · grep ×1",
+		]);
 	});
 
 	it("folds parallel calls as each finishes, not before", () => {
 		const read = tool("read", false);
 		const grep = tool("grep", false);
 		const chat = container(read, grep);
-		expect(chat.render(100)).toEqual(nativeRender.call(chat, 100));
+		expect(chat.render(100)).toEqual([]);
 		finish(grep);
-		expect(chat.render(100)).toEqual([...read.render(100), "", " ✓ grep ×1"]);
+		expect(chat.render(100)).toEqual(["", " ✓ grep ×1"]);
 		finish(read);
 		expect(plainLines(chat)).toEqual(["", " ✓ read ×1 · grep ×1"]);
 	});
@@ -163,6 +218,7 @@ describe("tool summaries (real Pi components)", () => {
 	it("marks failed or aborted calls instead of reporting success", () => {
 		const bash = tool("bash", false);
 		finish(bash, true);
+		vi.advanceTimersByTime(3000);
 		const chat = container(tool("read"), bash);
 		expect(plainLines(chat)).toEqual(["", " ✗ 1 failed · read ×1 · bash ×1"]);
 		bash.setExpanded(true);
@@ -190,29 +246,44 @@ describe("tool summaries (real Pi components)", () => {
 	});
 
 	it("aggregates across thinking but not other visible transcript entries", () => {
-		const chat = container(
-			tool("read"),
-			assistant(undefined, "Considering options"),
-			tool("grep"),
-		);
+		const thinking = assistant(undefined, "Considering options");
+		const chat = container(tool("read"), thinking, tool("grep"));
+		expect(chat.render(100)).toEqual([
+			...thinking.render(100),
+			"",
+			" ✓ read ×1 · grep ×1",
+		]);
 		chat.addChild(new Text("Notice", 0, 0));
 		chat.addChild(tool("ls"));
 		expect(summaries(chat)).toEqual([" ✓ read ×1 · grep ×1", " ✓ ls ×1"]);
 	});
 
-	it("re-evaluates boundaries when a streaming assistant acquires text", () => {
-		const message = assistant();
-		const chat = container(tool("read"), message, tool("grep"));
-		expect(summaries(chat)).toEqual([" ✓ read ×1 · grep ×1"]);
-		message.updateContent(
-			{
-				role: "assistant",
-				content: [{ type: "text", text: "Checking more" }],
-			} as AssistantMessage,
-			true,
+	it("separates groups when an assistant has both thinking and text", () => {
+		const chat = container(
+			tool("read"),
+			assistant("Checking more", "Considering options"),
+			tool("grep"),
 		);
 		expect(summaries(chat)).toEqual([" ✓ read ×1", " ✓ grep ×1"]);
+		expect(plainLines(chat).join("\n")).toContain("Checking more");
 	});
+
+	it.each([undefined, "Considering options"])(
+		"re-evaluates boundaries when a streaming assistant acquires text (thinking: %s)",
+		(thinking) => {
+			const message = assistant(undefined, thinking);
+			const chat = container(tool("read"), message, tool("grep"));
+			expect(summaries(chat)).toEqual([" ✓ read ×1 · grep ×1"]);
+			message.updateContent(
+				{
+					role: "assistant",
+					content: [{ type: "text", text: "Checking more" }],
+				} as AssistantMessage,
+				true,
+			);
+			expect(summaries(chat)).toEqual([" ✓ read ×1", " ✓ grep ×1"]);
+		},
+	);
 
 	it("uses the exact original rendering when expanded, including diffs and repeated toggles", () => {
 		const tools = [

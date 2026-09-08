@@ -37,55 +37,82 @@ function renderSummary(
 	container: Container,
 	width: number,
 	theme: SummaryTheme,
+	keepBashVisible: (component: Component) => boolean,
 ): string[] {
 	const lines: string[] = [];
 	const mouseChildren: Array<{ component: Component; height: number }> = [];
 	const counts = new Map<string, number>();
 	let failures = 0;
-	let summaryIndex: number | undefined;
+	const previews: Array<{ component: Component; lines: string[] }> = [];
 
-	function flush(): void {
-		if (summaryIndex === undefined) return;
+	function flushSummary(): void {
+		if (counts.size === 0) return;
 		const tools = [...counts]
 			.map(([name, count]) => `${name} ×${count}`)
 			.join(" · ");
 		const status = failures > 0 ? `✗ ${failures} failed ·` : "✓";
-		lines[summaryIndex] = truncateToWidth(
-			theme.fg(failures > 0 ? "error" : "success", ` ${status} ${tools}`),
-			width,
-		);
+		const summary = [
+			"",
+			truncateToWidth(
+				theme.fg(failures > 0 ? "error" : "success", ` ${status} ${tools}`),
+				width,
+			),
+		];
+		lines.push(...summary);
+		mouseChildren.push({
+			component: { render: () => summary, invalidate: () => undefined },
+			height: 2,
+		});
 		counts.clear();
 		failures = 0;
-		summaryIndex = undefined;
+	}
+
+	function flush(): void {
+		flushSummary();
+		for (const preview of previews) {
+			lines.push(...preview.lines);
+			mouseChildren.push({
+				component: preview.component,
+				height: preview.lines.length,
+			});
+		}
+		previews.length = 0;
 	}
 
 	for (const child of container.children) {
 		const tool = completedTool(child);
-		if (tool) {
-			if (summaryIndex === undefined) {
-				const start = lines.length;
-				lines.push("", "");
-				summaryIndex = lines.length - 1;
-				mouseChildren.push({
-					component: {
-						render: () => lines.slice(start, start + 2),
-						invalidate: () => undefined,
-					},
-					height: 2,
-				});
-			}
+		if (tool && !keepBashVisible(child)) {
 			counts.set(tool.name, (counts.get(tool.name) ?? 0) + 1);
 			if (tool.isError) failures++;
 			continue;
 		}
 
-		const childLines = child.render(width);
-		// Tool-only assistant messages render no lines. Visible messages (and
-		// other transcript entries) always separate groups. Pending tool rows
-		// stay untouched, while completed siblings share one summary.
+		const row = child as unknown as {
+			toolName?: unknown;
+			expanded?: unknown;
+			isPartial?: unknown;
+		};
 		const pendingTool =
+			child instanceof ToolExecutionComponent && row.isPartial === true;
+		if (
+			pendingTool &&
+			row.expanded === false &&
+			typeof row.toolName === "string" &&
+			row.toolName !== "bash"
+		)
+			continue;
+		const childLines = child.render(width);
+		// Keep collapsed bash previews after the summary, including the grace period.
+		if (
 			child instanceof ToolExecutionComponent &&
-			(child as unknown as { isPartial?: unknown }).isPartial === true;
+			row.toolName === "bash" &&
+			row.expanded === false &&
+			(pendingTool || keepBashVisible(child))
+		) {
+			previews.push({ component: child, lines: childLines });
+			continue;
+		}
+		// Thinking remains before the summary at the group end.
 		const assistantWithoutVisibleMessage =
 			child instanceof AssistantMessageComponent &&
 			(childLines.length === 0 ||
@@ -97,7 +124,12 @@ function renderSummary(
 					(content) =>
 						content.type === "thinking" || content.type === "toolCall",
 				) === true);
-		if (!pendingTool && !assistantWithoutVisibleMessage) flush();
+		if (
+			!pendingTool &&
+			!keepBashVisible(child) &&
+			!assistantWithoutVisibleMessage
+		)
+			flush();
 		mouseChildren.push({ component: child, height: childLines.length });
 		for (const line of childLines) lines.push(line);
 	}
@@ -114,24 +146,61 @@ function renderSummary(
 
 /**
  * Pi's transcript is a Container of message/tool components in both TUI modes.
- * Intercept only containers with completed, collapsed tool rows. Do not replace
+ * Intercept transcript containers. Do not replace
  * tools, mutate the component tree, or change individual renderers: expansion,
  * streaming, images and diffs continue to use Pi's original implementation.
  */
 export function installToolSummary(getTheme: () => SummaryTheme): () => void {
 	const originalRender = Container.prototype.render;
 	let active = true;
+	const deadlines = new WeakMap<Component, number>();
+	const timers = new Set<ReturnType<typeof setTimeout>>();
+	const originalUpdateResult = ToolExecutionComponent.prototype.updateResult;
+	function updateResult(
+		this: ToolExecutionComponent,
+		...args: Parameters<typeof originalUpdateResult>
+	): void {
+		originalUpdateResult.apply(this, args);
+		const row = this as unknown as {
+			toolName?: unknown;
+			ui?: { requestRender(): void };
+		};
+		if (
+			!active ||
+			row.toolName !== "bash" ||
+			args[1] === true ||
+			deadlines.has(this)
+		)
+			return;
+		deadlines.set(this, Date.now() + 3000);
+		const timer = setTimeout(() => {
+			timers.delete(timer);
+			row.ui?.requestRender();
+		}, 3000);
+		timers.add(timer);
+	}
+	function keepBashVisible(component: Component): boolean {
+		return (deadlines.get(component) ?? 0) > Date.now();
+	}
+	ToolExecutionComponent.prototype.updateResult = updateResult;
 
 	function render(this: Container, width: number): string[] {
-		if (!active || !this.children.some((child) => completedTool(child))) {
+		if (
+			!active ||
+			!this.children.some((child) => child instanceof ToolExecutionComponent)
+		) {
 			return originalRender.call(this, width);
 		}
-		return renderSummary(this, width, getTheme());
+		return renderSummary(this, width, getTheme(), keepBashVisible);
 	}
 
 	Container.prototype.render = render;
 	return () => {
 		active = false;
+		for (const timer of timers) clearTimeout(timer);
+		timers.clear();
+		if (ToolExecutionComponent.prototype.updateResult === updateResult)
+			ToolExecutionComponent.prototype.updateResult = originalUpdateResult;
 		// Do not remove another extension's wrapper installed after ours.
 		if (Container.prototype.render === render) {
 			Container.prototype.render = originalRender;
