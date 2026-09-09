@@ -15,21 +15,7 @@ WinManager = (function()
     return hs.window.frontmostWindow()
   end
 
-  local moveGrid = function(win, rect)
-    rect = rect or {}
-    win = win or currentWindow()
-    if not win then
-      return
-    end
-    local screen = win:screen():frame()
-    local width = screen.w / (rect.w or 1)
-    local height = screen.h / (rect.h or 1)
-    local frame = {
-      x = screen.x + width * ((rect.x or 1) - 1) + MARGIN,
-      y = screen.y + height * ((rect.y or 1) - 1) + MARGIN,
-      w = width - MARGIN * 2,
-      h = height - MARGIN * 2,
-    }
+  local setWindowFrame = function(win, frame)
     -- Enhanced accessibility can prevent apps from accepting frame changes.
     local appElement = hs.axuielement.applicationElement(win:application())
     local enhanced = appElement:attributeValue "AXEnhancedUserInterface"
@@ -45,6 +31,24 @@ WinManager = (function()
     if not ok then
       error(err)
     end
+  end
+
+  local moveGrid = function(win, rect)
+    rect = rect or {}
+    win = win or currentWindow()
+    if not win then
+      return
+    end
+    local screen = win:screen():frame()
+    local width = screen.w / (rect.w or 1)
+    local height = screen.h / (rect.h or 1)
+    local frame = {
+      x = screen.x + width * ((rect.x or 1) - 1) + MARGIN,
+      y = screen.y + height * ((rect.y or 1) - 1) + MARGIN,
+      w = width - MARGIN * 2,
+      h = height - MARGIN * 2,
+    }
+    setWindowFrame(win, frame)
   end
 
   local findApplication = function(app)
@@ -579,7 +583,7 @@ WinManager = (function()
       local frame = win:frame()
       frame.x = screen.x + (screen.w - frame.w) / 2
       frame.y = screen.y + (screen.h - frame.h) / 2
-      win:setFrameWithWorkarounds(frame, 0)
+      setWindowFrame(win, frame)
     end
   end
   M.toggleZoom = function()
