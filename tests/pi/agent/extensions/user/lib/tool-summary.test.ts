@@ -109,7 +109,9 @@ describe("tool summaries (real Pi components)", () => {
 			tool("bash", true, "git status; git diff; git log"),
 			tool("bash", true, "git show; git remote -v; git add a; git add b"),
 		);
-		expect(summaries(chat)).toEqual([" ✓ run ×2 (git-read op ×5, git add ×2)"]);
+		expect(summaries(chat)).toEqual([
+			" ✓ git-read op ×5 · run ×1 (git add ×2)",
+		]);
 		chat.addChild(assistant("Next group"));
 		chat.addChild(tool("bash", true, "ls x; ls y"));
 		expect(summaries(chat)[1]).toBe(" ✓ run ×1 (ls ×2)");
@@ -120,7 +122,39 @@ describe("tool summaries (real Pi components)", () => {
 			tool("bash", true, "ls a; cat b; pwd; git status; ls c"),
 		);
 		expect(summaries(chat)).toEqual([
-			" ✓ run ×1 (… pwd ×1, git-read op ×1, ls ×2)",
+			" ✓ run ×1 (pwd ×1, ls ×2) · read ×1 · git-read op ×1",
+		]);
+	});
+
+	it("keeps unlabeled operations inside run counts across mixed bash calls", () => {
+		const chat = container(
+			tool("read"),
+			tool("bash", true, "cat a; pnpm run build; gh pr list"),
+			tool("bash", true, "pnpm run build; rg foo a; unknown action"),
+		);
+		expect(summaries(chat)).toEqual([
+			" ✓ read ×2 · run ×2 (gh pr list ×1, pnpm run build ×2, unknown ×1) · grep ×1",
+		]);
+	});
+
+	it("summarizes loop bodies and omits noisy operations", () => {
+		const chat = container(
+			tool(
+				"bash",
+				true,
+				'for f in *.ts; do echo "$f"; cat "$f" | sort | uniq; pnpm test "$f"; done',
+			),
+		);
+		expect(summaries(chat)).toEqual([" ✓ read ×1 · run ×1 (pnpm test ×1)"]);
+	});
+
+	it("does not display script bodies or unsupported arguments in run details", () => {
+		const chat = container(
+			tool("bash", true, "python3 - <<PY\nprint('private body')\nPY"),
+			tool("bash", true, 'pnpm run build "$(cat private-file)"'),
+		);
+		expect(summaries(chat)).toEqual([
+			" ✓ run ×2 (python ×1, pnpm run build ×1)",
 		]);
 	});
 
@@ -140,7 +174,7 @@ describe("tool summaries (real Pi components)", () => {
 		const chat = container(...tools);
 		expect(plainLines(chat, 160)).toEqual([
 			"",
-			" ✓ read ×2 · ls ×1 · find ×1 · grep ×1 · run ×1 (printf ×1) · edit ×1 · write ×1 · powershell ×1 · custom ×1",
+			" ✓ read ×2 · ls ×1 · find ×1 · grep ×1 · edit ×1 · write ×1 · powershell ×1 · custom ×1",
 		]);
 		expect(chat.children).toEqual(tools);
 		expect(chat.children[0]).toBe(tools[0]);
@@ -176,10 +210,7 @@ describe("tool summaries (real Pi components)", () => {
 		vi.advanceTimersByTime(2999);
 		expect(plainLines(chat).join("\n")).toContain("printf 'running'");
 		vi.advanceTimersByTime(1);
-		expect(plainLines(chat)).toEqual([
-			"",
-			" ✓ read ×1 · run ×1 (printf ×1) · grep ×1",
-		]);
+		expect(plainLines(chat)).toEqual(["", " ✓ read ×1 · grep ×1"]);
 		expect(vi.getTimerCount()).toBe(0);
 	});
 
@@ -199,14 +230,32 @@ describe("tool summaries (real Pi components)", () => {
 		expect(vi.getTimerCount()).toBe(0);
 	});
 
-	it.each(["read", "edit", "write", "custom"])(
-		"hides pending %s unless expanded",
+	it.each(["read", "custom"])("hides pending %s unless expanded", (name) => {
+		const row = tool(name, false);
+		const chat = container(row);
+		expect(chat.render(100)).toEqual([]);
+		row.setExpanded(true);
+		expect(chat.render(100)).toEqual(nativeRender.call(chat, 100));
+	});
+
+	it.each(["edit", "write"])(
+		"shows pending %s and summarizes immediately on completion",
 		(name) => {
 			const row = tool(name, false);
-			const chat = container(row);
-			expect(chat.render(100)).toEqual([]);
+			const chat = container(tool("read"), row, tool("grep"));
+			expect(chat.render(100)).toEqual([
+				"",
+				" ✓ read ×1 · grep ×1",
+				...row.render(100),
+			]);
+			finish(row);
+			expect(plainLines(chat)).toEqual([
+				"",
+				` ✓ read ×1 · ${name} ×1 · grep ×1`,
+			]);
+			expect(vi.getTimerCount()).toBe(0);
 			row.setExpanded(true);
-			expect(chat.render(100)).toEqual(nativeRender.call(chat, 100));
+			expect(chat.render(100).join("\n")).toContain(row.render(100).join("\n"));
 		},
 	);
 
@@ -227,7 +276,7 @@ describe("tool summaries (real Pi components)", () => {
 		expect(chat.render(100)).toEqual([
 			...thinking.render(100),
 			"",
-			" ✓ read ×1 · run ×1 (printf ×1) · grep ×1",
+			" ✓ read ×1 · grep ×1",
 		]);
 	});
 
@@ -376,10 +425,10 @@ describe("tool summaries (real Pi components)", () => {
 		expect(summaries(chat)).toEqual([" ✓ read ×2"]);
 		chat.clear();
 		chat.addChild(tool("bash"));
-		expect(summaries(chat)).toEqual([" ✓ run ×1 (printf ×1)"]);
+		expect(summaries(chat)).toEqual([]);
 		const resumed = container(tool("grep"), assistant(), tool("find"));
 		expect(summaries(resumed)).toEqual([" ✓ grep ×1 · find ×1"]);
-		expect(summaries(chat)).toEqual([" ✓ run ×1 (printf ×1)"]);
+		expect(summaries(chat)).toEqual([]);
 	});
 
 	it("leaves the original display visible if Pi's private field contract changes", () => {

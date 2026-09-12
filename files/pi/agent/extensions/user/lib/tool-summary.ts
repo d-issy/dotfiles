@@ -1,4 +1,4 @@
-import { bashOperations } from "./bash-summary";
+import { bashOperationDetails } from "./bash-summary";
 import {
 	AssistantMessageComponent,
 	type Theme,
@@ -56,15 +56,12 @@ function renderSummary(
 		if (counts.size === 0) return;
 		const tools = [...counts]
 			.map(([name, count]) => {
+				if (name !== "bash") return `${name} ×${count}`;
 				const recent = [...operations]
 					.slice(-3)
 					.map(([operation, total]) => `${operation} ×${total}`)
 					.join(", ");
-				const detail =
-					name === "bash" && recent
-						? ` (${operations.size > 3 ? "… " : ""}${recent})`
-						: "";
-				return `${name === "bash" ? "run" : name} ×${count}${detail}`;
+				return `run ×${count}${recent ? ` (${operations.size > 3 ? "… " : ""}${recent})` : ""}`;
 			})
 			.join(" · ");
 		const summary = [
@@ -102,12 +99,24 @@ function renderSummary(
 			continue;
 		}
 		if (tool && !keepBashVisible(child)) {
-			counts.set(tool.name, (counts.get(tool.name) ?? 0) + 1);
-			if (tool.name === "bash" && tool.command !== undefined) {
-				for (const operation of bashOperations(tool.command)) {
-					const total = (operations.get(operation) ?? 0) + 1;
-					operations.delete(operation);
-					operations.set(operation, total);
+			if (tool.name !== "bash") {
+				counts.set(tool.name, (counts.get(tool.name) ?? 0) + 1);
+			} else {
+				let countedRun = false;
+				for (const { name, labeled } of bashOperationDetails(
+					tool.command ?? "",
+				)) {
+					if (labeled) {
+						counts.set(name, (counts.get(name) ?? 0) + 1);
+						continue;
+					}
+					if (!countedRun) {
+						counts.set("bash", (counts.get("bash") ?? 0) + 1);
+						countedRun = true;
+					}
+					const total = (operations.get(name) ?? 0) + 1;
+					operations.delete(name);
+					operations.set(name, total);
 				}
 			}
 			continue;
@@ -124,14 +133,16 @@ function renderSummary(
 			pendingTool &&
 			row.expanded === false &&
 			typeof row.toolName === "string" &&
-			row.toolName !== "bash"
+			row.toolName !== "bash" &&
+			row.toolName !== "edit" &&
+			row.toolName !== "write"
 		)
 			continue;
 		const childLines = child.render(width);
-		// Keep collapsed bash previews after the summary, including the grace period.
+		// Keep pending edit/write previews and bash previews after the summary.
 		if (
 			child instanceof ToolExecutionComponent &&
-			row.toolName === "bash" &&
+			["bash", "edit", "write"].includes(String(row.toolName)) &&
 			row.expanded === false &&
 			(pendingTool || keepBashVisible(child))
 		) {
