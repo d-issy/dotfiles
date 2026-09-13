@@ -3,7 +3,7 @@ type DisplayRule = {
 	label?: string;
 	name?: string; // Display name without promoting the command to a label.
 	hide?: "always" | "pipeline";
-	keepIf?: RegExp;
+	labelForArgs?: (args: string[]) => string;
 	depth?: number; // Includes the executable: 3 displays "gh pr list".
 	redirects?: Record<string, string>;
 	options?: Record<string, "flag" | "value">;
@@ -22,7 +22,11 @@ const commandDictionary: Record<string, DisplayRule> = {
 	python3: { name: "python" },
 	printf: { hide: "always" },
 	echo: { hide: "always" },
-	sed: { hide: "pipeline", keepIf: /^(?:-i.*|--in-place(?:=.*)?)$/u },
+	sed: {
+		label: "read",
+		labelForArgs: sedLabel,
+		redirects: { ">": "write", ">>": "edit" },
+	},
 	sort: { hide: "pipeline" },
 	uniq: { hide: "pipeline" },
 	wc: { hide: "pipeline" },
@@ -87,6 +91,30 @@ const commandDictionary: Record<string, DisplayRule> = {
 		},
 	},
 };
+
+// Inspect options, not script text or filenames that happen to contain "-i".
+function sedLabel(args: string[]): string {
+	for (let i = 0; i < args.length; i++) {
+		const arg = args[i]!;
+		if (arg === "--") break;
+		if (arg === "--in-place" || arg.startsWith("--in-place=")) return "edit";
+		if (arg === "--expression" || arg === "--file") {
+			i++;
+			continue;
+		}
+		if (arg.startsWith("--")) continue;
+		if (!arg.startsWith("-") || arg === "-") continue;
+		for (let j = 1; j < arg.length; j++) {
+			const option = arg[j];
+			if (option === "i") return "edit";
+			if (option === "e" || option === "f") {
+				if (j === arg.length - 1) i++;
+				break;
+			}
+		}
+	}
+	return "read";
+}
 
 // Only tokenize simple shell commands. Never execute or expand shell input.
 // Unsupported syntax falls back rather than attributing nested commands to reads.
@@ -193,7 +221,20 @@ function commands(source: string): Command[] | undefined {
 			i++;
 			continue;
 		}
-		if ("(){}".includes(char)) return;
+		// Keep simple brace alternatives as one word; display hints do not need
+		// their expanded paths. Shell groups and expansions with shell syntax
+		// still fall back, so nested commands cannot be mistaken for reads.
+		if (char === "{") {
+			const alternatives = source
+				.slice(i)
+				.match(/^\{[A-Za-z0-9_./*?:+-]*(?:,[A-Za-z0-9_./*?:+-]*)+\}/u)?.[0];
+			if (!alternatives) return;
+			word += alternatives;
+			started = true;
+			i += alternatives.length - 1;
+			continue;
+		}
+		if ("()}".includes(char)) return;
 		if (char === ">" || char === "<") {
 			// A descriptor immediately before a redirect is not a command argument.
 			if (/^\d+$/u.test(word)) {
@@ -317,9 +358,8 @@ function classify(
 	if (!initialRule) return name;
 	name = initialRule.name ?? name;
 	if (
-		(initialRule.hide === "always" ||
-			(initialRule.hide === "pipeline" && pipeline)) &&
-		!words.slice(index).some((arg) => initialRule.keepIf?.test(arg))
+		initialRule.hide === "always" ||
+		(initialRule.hide === "pipeline" && pipeline)
 	)
 		return;
 	let rule: DisplayRule = initialRule;
@@ -343,7 +383,7 @@ function classify(
 				args.every((arg) => rule?.labelOnlyArgs?.includes(arg)))
 		) {
 			markLabel();
-			return rule.label;
+			return rule.labelForArgs?.(args) ?? rule.label;
 		}
 		if (display.length >= depth) break;
 		// Only skip declared options; unknown ones stop deeper classification.

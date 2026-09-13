@@ -6,6 +6,54 @@ import {
 
 describe("bashOperations", () => {
 	it.each([
+		["sed -n '200,255p' file", "read"],
+		["sed 's/a/b/' file", "read"],
+		["sed -i 's/a/b/' file", "edit"],
+		["sed 's/a/b/' -i file", "edit"],
+		["sed 's/a/b/' file --in-place", "edit"],
+		["sed 's/a/b/' -- -i", "read"],
+		["sed -i.bak 's/a/b/' file", "edit"],
+		["sed -i '' 's/a/b/' file", "edit"],
+		["sed -ni 's/a/b/p' file", "edit"],
+		["sed --in-place=.bak 's/a/b/' file", "edit"],
+		["sed -e 's/a/b/' -i file", "edit"],
+		["sed -ne 's/a/b/p' -i file", "edit"],
+		["sed -e 's/-i/b/' file", "read"],
+		["sed -es/a/i/ file", "read"],
+		["sed -- 's/a/b/' -i", "read"],
+		["sed 's/a/b/' file > out", "write"],
+		["sed 's/a/b/' file >> out", "edit"],
+		["sed -n '1p' < file", "read"],
+	])("classifies sed options and redirects: %s", (command, name) => {
+		expect(bashOperationDetails(command)).toEqual([{ name, labeled: true }]);
+	});
+	it("preserves read labels across commands with brace-expanded path arguments", () => {
+		expect(
+			bashOperationDetails(
+				"cat src/client/components/DashboardFilterControls.tsx; sed -n '200,255p' src/client/components/ItemDropRateStats.tsx; rg -n -A45 '^\\.(metricTabs|listControls|backgroundSwitch|stateTabs|filterOptions|positionOptions)' src/client/components/{PositionTrendPlot,RoomRatingPanel,OverlayPreview,OverlayEditor,ItemDropRateStats}.module.css; head -65 src/client/storybook/buttonInventory.tsx; rg -n 'export const' src/client/storybook/buttonInventory.tsx; rg -n 'DashboardFilterBar|DashboardPeriodControls|DashboardCategoryControls' src/client --glob '!*.stories.tsx' --glob '!*.test.*'",
+			),
+		).toEqual([
+			{ name: "read", labeled: true },
+			{ name: "read", labeled: true },
+			{ name: "search", labeled: true },
+			{ name: "read", labeled: true },
+			{ name: "search", labeled: true },
+			{ name: "search", labeled: true },
+		]);
+	});
+	it.each([
+		["cat {a,b}.txt; cat c", ["read", "read"]],
+		["cat src/{a,b}.tsx | head", ["read", "read"]],
+		["cat {a,b} > output", ["write"]],
+		["cat a; { rm b; }", ["cat"]],
+		["cat {a,$(touch b)}", ["cat"]],
+		["cat {a,`touch b`}", ["cat"]],
+		["{cat,rm} a", ["bash"]],
+		["cat {a,b", ["cat"]],
+	])("handles brace arguments conservatively: %s", (command, expected) => {
+		expect(bashOperations(command)).toEqual(expected);
+	});
+	it.each([
 		["cat data.json | jq '.items'", ["read"]],
 		["jq '.items' data.json | head", ["read"]],
 		["jq '.items' data.json", ["jq"]],
@@ -85,11 +133,11 @@ describe("bashOperations", () => {
 		['for f in a b\ndo\ncat "$f" | sort | uniq\ndone', ["read"]],
 		["printf hello; echo world", []],
 		["echo hello | sort | uniq", []],
-		["cat a | sed 's/a/b/' | sort | uniq", ["read"]],
-		["sort a; uniq a; sed 's/a/b/' a", ["sort", "uniq", "sed"]],
-		["sort a && uniq a || sed x", ["sort", "uniq", "sed"]],
-		["cat a | sed -i.bak 's/a/b/' b", ["read", "sed"]],
-		["cat a | sed --in-place 's/a/b/' b", ["read", "sed"]],
+		["cat a | sed 's/a/b/' | sort | uniq", ["read", "read"]],
+		["sort a; uniq a; sed 's/a/b/' a", ["sort", "uniq", "read"]],
+		["sort a && uniq a || sed x", ["sort", "uniq", "read"]],
+		["cat a | sed -i.bak 's/a/b/' b", ["read", "edit"]],
+		["cat a | sed --in-place 's/a/b/' b", ["read", "edit"]],
 		["sort a | cat; uniq a", ["read", "uniq"]],
 		["for x in a; do cat x", ["bash"]],
 
