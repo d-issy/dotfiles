@@ -40,7 +40,6 @@ in
       (keymap [ "i" "s" ] "<C-k>" (raw ''
         function()
           if require("luasnip").expand_or_jumpable() then
-            require("util.copilot").off()
             require("luasnip").expand_or_jump()
           end
         end

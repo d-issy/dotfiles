@@ -189,11 +189,6 @@ in
               name = "git";
             }
             {
-              plugin = "CopilotChat.nvim";
-              icon = "";
-              color = "grey";
-            }
-            {
               plugin = "gitsigns.nvim";
               cat = "filetype";
               name = "git";

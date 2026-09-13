@@ -40,11 +40,6 @@
         system:
         import nixpkgs {
           inherit system;
-          config.allowUnfreePredicate =
-            pkg:
-            builtins.elem (nixpkgs.lib.getName pkg) [
-              "copilot-language-server"
-            ];
         };
 
       mkToolPackages = pkgs: rec {
