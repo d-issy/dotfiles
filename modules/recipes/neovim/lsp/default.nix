@@ -11,7 +11,6 @@ in
 {
   imports = [
     ./basedpyright.nix
-    ./copilot.nix
     ./gopls.nix
     ./lua-ls.nix
     ./nixd.nix

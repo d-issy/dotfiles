@@ -244,23 +244,12 @@ in
       BlinkCmpKind = {
         bg = palette.none;
       };
-      BlinkCmpKindCopilot = {
-        fg = "#6cc644";
-        bg = palette.none;
-      };
 
       ComplHint = {
         fg = palette.overlay2;
       };
       ComplHintMore = {
         fg = palette.sapphire;
-      };
-
-      CopilotSuggestion = {
-        fg = palette.overlay2;
-      };
-      CopilotAnnotation = {
-        fg = palette.overlay1;
       };
 
       Directory = {

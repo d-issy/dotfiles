@@ -2,7 +2,6 @@ _:
 
 {
   imports = [
-    ./ai.nix
     ./comment.nix
     ./conform.nix
     ./dap.nix
