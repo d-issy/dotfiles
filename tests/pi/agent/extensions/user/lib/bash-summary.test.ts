@@ -61,9 +61,9 @@ describe("bashOperations", () => {
 	);
 	it.each([
 		["wc -l file", [{ name: "wc", labeled: false }]],
-		["find . -name '*.ts' | wc -l", [{ name: "find", labeled: true }]],
+		["find . -name '*.ts' | wc -l", [{ name: "search", labeled: true }]],
 		["wc -l a | cat", [{ name: "read", labeled: true }]],
-		["find . -type f", [{ name: "find", labeled: true }]],
+		["find . -type f", [{ name: "search", labeled: true }]],
 		["find . -delete", [{ name: "find", labeled: false }]],
 		["find . -exec pwd \u005c\u005c;", [{ name: "find", labeled: false }]],
 		["find . -execdir pwd \u005c\u005c;", [{ name: "find", labeled: false }]],
@@ -80,7 +80,7 @@ describe("bashOperations", () => {
 		],
 		[
 			'for x in a b; do for y in c d; do rg "$x" "$y"; done; cat "$x"; done',
-			["grep", "read"],
+			["search", "read"],
 		],
 		['for f in a b\ndo\ncat "$f" | sort | uniq\ndone', ["read"]],
 		["printf hello; echo world", []],
@@ -111,14 +111,14 @@ describe("bashOperations", () => {
 		],
 		[
 			"/usr/bin/custom-tool a | rg foo | cat >b",
-			["custom-tool", "grep", "write"],
+			["custom-tool", "search", "write"],
 		],
 		["cat '>' '>>'", ["read"]],
 		["cat a>>b", ["edit"]],
 		["cat a> b | head", ["write", "read"]],
 
 		["cat a | head -n 10 | tail -n 2", ["read", "read", "read"]],
-		["rg pattern .; grep pattern a", ["grep", "grep"]],
+		["rg pattern .; grep pattern a", ["search", "search"]],
 		[
 			"pnpm lint; pnpm test; pnpm install",
 			["pnpm lint", "pnpm test", "pnpm install"],
