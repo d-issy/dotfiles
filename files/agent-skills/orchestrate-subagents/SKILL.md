@@ -4,7 +4,7 @@ Keep half of the current Pi pane for Pi and delegate independent work to support
 
 ## Plan
 
-- Define a small set of independent roles based on the user's request. For each role, specify its unique name, preset, bounded task, and whether it may edit files.
+- Define a small set of independent roles based on the user's request. For each role, specify its unique name, preset, bounded task, and whether it may edit files. For editing roles, assign explicit, non-overlapping ownership of files or clearly bounded sections and identify any dependencies before delegation.
 - Choose a preset from [Presets and layout](references/presets-and-layout.md). Use `terra` for web research tasks.
 
 ## Start
@@ -31,8 +31,9 @@ Keep half of the current Pi pane for Pi and delegate independent work to support
 ## Delegate and collect
 
 - Give every subagent a bounded task, relevant context, constraints, and an explicit output format.
-- Parallelize research, analysis, and review. Do not allow multiple agents to edit the same working tree concurrently. Use one editing agent unless the user explicitly requests isolated worktrees.
-- Only after every intended agent passes the readiness inspection, send prompts by unique agent name. Run independent `herdr agent prompt <name> <task> --wait --timeout 120000` calls concurrently (parallel tool calls or background shell jobs), then join all calls. Do not run these blocking calls in a sequential loop.
+- Parallelize research, analysis, review, and independent editing tasks. Multiple editing agents may work concurrently in the same working tree; do not limit the workflow to one editing agent merely because they share a working tree.
+- Give each editing agent explicit instructions limiting changes to its assigned files or sections and preserving other agents' changes. Agents must report needed changes outside their scope rather than making them. Delegate non-conflicting edits concurrently; sequence only overlapping or dependent work, assigning shared changes to a single owner.
+- Only after every intended agent passes the readiness inspection, send prompts by unique agent name. Run independent `herdr agent prompt <name> <task> --wait --timeout 600000` calls concurrently (parallel tool calls or background shell jobs), then join all calls. This allows up to 10 minutes of waiting per call and returns sooner when the agent settles; do not replace it with frequent short polling. Do not run these blocking calls in a sequential loop.
 - `prompt --wait` observes a state change after submission before waiting for a settled state. A separate `herdr agent wait` immediately after a nonblocking prompt can return the pre-task `idle` state; never treat that as completion.
 - After the concurrent calls settle, inspect state and collect output with `herdr agent read --source recent-unwrapped`. Verify that each output answers the submitted task. On timeout or `agent_prompt_stalled`, inspect state and output before retrying; do not submit duplicate tasks blindly. Use `herdr agent wait` for an already confirmed running task.
 - Treat `blocked` as requiring user input. Do not answer an approval or question on the user's behalf. Treat `unknown` as inconclusive, not complete.
