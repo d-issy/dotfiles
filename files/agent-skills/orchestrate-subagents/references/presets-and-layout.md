@@ -4,17 +4,17 @@
 
 - `pi`: Pi with `--no-session`, without model or reasoning overrides. Use for Pi testing.
 - Other presets resolve their model family to the latest version at launch:
-  - `sol`: Codex Sol at medium reasoning.
+  - `sol-medium`: Codex Sol at medium reasoning.
   - `sol-high`: Codex Sol at high reasoning.
-  - `terra`: Codex Terra at high reasoning.
-  - `luna`: Codex Luna at xhigh reasoning.
-  - `opus`: Claude Opus at high effort.
-  - `fable`: Claude Fable at medium effort.
-  - `fable-high`: Claude Fable at high effort.
+  - `terra-high`: Codex Terra at high reasoning.
+  - `luna-xhigh`: Codex Luna at xhigh reasoning.
+  - `opus-high`: Claude Opus at high effort.
+  - `fable-low`: Claude Fable at low effort.
+  - `fable-medium`: Claude Fable at medium effort.
   - `grok`: Cursor Grok high-fast.
   - `composer`: the latest standard Cursor Composer model.
 
-- Use `terra` (Codex Terra) for web research tasks.
+- Use `terra-high` (Codex Terra) for web research tasks.
 
 
 ## Layout
