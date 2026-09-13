@@ -56,14 +56,16 @@ function renderSummary(
 		if (counts.size === 0) return;
 		const tools = [...counts]
 			.map(([name, count]) => {
-				if (name !== "bash") return `${name} ×${count}`;
+				if (name !== "bash") return count === 1 ? name : `${name} ×${count}`;
 				const recent = [...operations]
 					.slice(-3)
-					.map(([operation, total]) => `${operation} ×${total}`)
+					.map(([operation, total]) =>
+						total === 1 ? operation : `${operation} ×${total}`,
+					)
 					.join(", ");
-				return `run ×${count}${recent ? ` (${operations.size > 3 ? "… " : ""}${recent})` : ""}`;
+				return `run (${operations.size > 3 ? "… " : ""}${recent})`;
 			})
-			.join(" · ");
+			.join(", ");
 		const summary = [
 			"",
 			truncateToWidth(theme.fg("success", ` ✓ ${tools}`), width),
@@ -100,7 +102,10 @@ function renderSummary(
 		}
 		if (tool && !keepBashVisible(child)) {
 			if (tool.name !== "bash") {
-				counts.set(tool.name, (counts.get(tool.name) ?? 0) + 1);
+				const name = ["grep", "find"].includes(tool.name)
+					? "search"
+					: tool.name;
+				counts.set(name, (counts.get(name) ?? 0) + 1);
 			} else {
 				let countedRun = false;
 				for (const { name, labeled } of bashOperationDetails(

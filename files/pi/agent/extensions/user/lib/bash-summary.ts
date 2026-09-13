@@ -28,13 +28,14 @@ const commandDictionary: Record<string, DisplayRule> = {
 	wc: { hide: "pipeline" },
 	jq: { hide: "pipeline" },
 	find: {
-		label: "find",
+		label: "search",
 		labelUnless:
 			/^-(?:exec|execdir|ok|okdir|delete|fprint|fprint0|fprintf|fls)$/u,
 	},
 	head: { label: "read" },
 	tail: { label: "read" },
-	rg: { label: "grep" },
+	rg: { label: "search" },
+	grep: { label: "search" },
 	cat: { label: "read", redirects: { ">": "write", ">>": "edit" } },
 	pnpm: {
 		depth: 2,
