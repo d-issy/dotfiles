@@ -2,7 +2,8 @@
 
 ## Presets
 
-- Choose from these stable presets; each resolves its model family to the latest version at launch:
+- `pi`: Pi without model or reasoning overrides; uses Pi's defaults. Use for Pi testing.
+- Other presets resolve their model family to the latest version at launch:
   - `sol`: Codex Sol at medium reasoning.
   - `sol-high`: Codex Sol at high reasoning.
   - `terra`: Codex Terra at high reasoning.

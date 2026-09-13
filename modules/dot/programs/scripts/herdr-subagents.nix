@@ -27,7 +27,7 @@ let
         herdr-subagents cleanup [--force]
 
       Presets:
-        sol  sol-high  terra  luna  opus  fable  fable-high  grok  composer
+        pi  sol  sol-high  terra  luna  opus  fable  fable-high  grok  composer
 
       Split the current Pi pane in half and manage equally sized Herdr subagent panes.
       EOF
@@ -140,6 +140,10 @@ let
         local preset="$1" latest_model
         resolved_effort=
         case "$preset" in
+          pi)
+            resolved_kind=pi
+            resolved_model=
+            ;;
           sol)
             resolved_kind=codex
             latest_codex_model sol
@@ -309,6 +313,11 @@ let
         start_agent_once() {
           local index="$1"
           case "''${kinds[$index]}" in
+            pi)
+              "$herdr" agent start "''${names[$index]}" \
+                --kind pi \
+                --pane "''${panes[$index]}"
+              ;;
             claude)
               "$herdr" agent start "''${names[$index]}" \
                 --kind claude \
