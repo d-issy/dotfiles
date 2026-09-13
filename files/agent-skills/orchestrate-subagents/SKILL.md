@@ -5,7 +5,7 @@ Keep half of Pi's pane for Pi; divide the other half equally among subagents. Re
 ## Plan
 
 - Assign each agent a unique name, preset, bounded task, and edit permission. Names must match `[a-z][a-z0-9_-]{0,31}`.
-- Choose from [Presets and layout](references/presets-and-layout.md); use `pi` for Pi testing (no model override), `terra-high` for web research.
+- Choose from [Presets and layout](references/presets-and-layout.md). Unless the user specifies an effort level, use the lowest available effort for the selected model family. Use `pi` for Pi testing (no model override), `terra-high` for web research.
 - Parallelize independent work, including edits in the same working tree. Assign editors non-overlapping files or sections; sequence overlapping or dependent tasks.
 
 ## Start
