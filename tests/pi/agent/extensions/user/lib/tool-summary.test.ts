@@ -104,6 +104,22 @@ function summaries(chat: Container): string[] {
 }
 
 describe("tool summaries (real Pi components)", () => {
+	it("summarizes sed reads, redirected writes, and in-place edits", () => {
+		const chat = container(
+			tool(
+				"bash",
+				true,
+				"sed -n '1p' a; sed 's/a/b/' a > b; sed -i 's/a/b/' c",
+			),
+		);
+		expect(summaries(chat)).toEqual([" ✓ read, write, edit"]);
+	});
+	it("keeps reads in the summary when another command uses brace-expanded paths", () => {
+		const chat = container(
+			tool("bash", true, "cat a; cat b; cat c; rg pattern src/{a,b}.css"),
+		);
+		expect(summaries(chat)).toEqual([" ✓ read ×3, search"]);
+	});
 	it("combines search tools and bash searches into one count", () => {
 		const chat = container(
 			tool("grep"),
