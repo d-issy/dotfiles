@@ -48,6 +48,7 @@ function renderSummary(
 ): string[] {
 	const lines: string[] = [];
 	const mouseChildren: Array<{ component: Component; height: number }> = [];
+	let hiddenThinkingSeen = false;
 	const counts = new Map<string, number>();
 	const operations = new Map<string, number>();
 	const previews: Array<{ component: Component; lines: string[] }> = [];
@@ -95,6 +96,7 @@ function renderSummary(
 		const tool = completedTool(child);
 		// Keep failures in the transcript, outside successful counts and bash previews.
 		if (tool?.isError) {
+			hiddenThinkingSeen = false;
 			const childLines = child.render(width);
 			lines.push(...childLines);
 			mouseChildren.push({ component: child, height: childLines.length });
@@ -143,7 +145,30 @@ function renderSummary(
 			row.toolName !== "write"
 		)
 			continue;
+		// Pi renders a hidden label per assistant message. Fold thinking-only
+		// messages across summarized tools, without hiding text or stop errors.
+		const assistantRow = child as unknown as {
+			hideThinkingBlock?: unknown;
+			lastMessage?: {
+				stopReason?: string;
+				content?: Array<{ type?: string; thinking?: string }>;
+			};
+		};
+		const hiddenThinkingOnly =
+			child instanceof AssistantMessageComponent &&
+			assistantRow.hideThinkingBlock === true &&
+			["stop", "toolUse"].includes(
+				assistantRow.lastMessage?.stopReason ?? "",
+			) &&
+			assistantRow.lastMessage?.content?.every(
+				(content) => content.type === "thinking" || content.type === "toolCall",
+			) === true &&
+			assistantRow.lastMessage.content.some(
+				(content) => content.type === "thinking" && content.thinking?.trim(),
+			);
+		if (hiddenThinkingOnly && hiddenThinkingSeen) continue;
 		const childLines = child.render(width);
+		if (hiddenThinkingOnly) hiddenThinkingSeen = true;
 		// Keep pending edit/write previews and bash previews after the summary.
 		if (
 			child instanceof ToolExecutionComponent &&
@@ -170,8 +195,10 @@ function renderSummary(
 			!pendingTool &&
 			!keepBashVisible(child) &&
 			!assistantWithoutVisibleMessage
-		)
+		) {
 			flush();
+			hiddenThinkingSeen = false;
+		}
 		mouseChildren.push({ component: child, height: childLines.length });
 		for (const line of childLines) lines.push(line);
 	}
