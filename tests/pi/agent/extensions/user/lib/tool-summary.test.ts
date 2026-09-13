@@ -290,6 +290,51 @@ describe("tool summaries (real Pi components)", () => {
 		]);
 	});
 
+	it("folds hidden thinking across tools and restores every block when shown", () => {
+		const first = assistant(undefined, "First thought");
+		const second = assistant(undefined, "Second thought");
+		const third = assistant(undefined, "After text");
+		for (const row of [first, second, third]) row.setHideThinkingBlock(true);
+		const chat = container(
+			first,
+			tool("read"),
+			second,
+			tool("grep"),
+			assistant("Next"),
+			third,
+		);
+		expect(
+			plainLines(chat).filter((line) => line.includes("Thinking...")),
+		).toHaveLength(2);
+		for (const row of [first, second, third]) row.setHideThinkingBlock(false);
+		const output = plainLines(chat).join("\n");
+		expect(output).toContain("First thought");
+		expect(output).toContain("Second thought");
+		expect(output).toContain("After text");
+		second.setHideThinkingBlock(true);
+		first.setHideThinkingBlock(true);
+		expect(
+			plainLines(chat).filter((line) => line.includes("Thinking...")),
+		).toHaveLength(1);
+	});
+
+	it("preserves stop errors on otherwise hidden thinking-only messages", () => {
+		const first = assistant(undefined, "First thought");
+		const failed = new AssistantMessageComponent(
+			{
+				role: "assistant",
+				content: [{ type: "thinking", thinking: "Incomplete" }],
+				stopReason: "length",
+			} as AssistantMessage,
+			true,
+		);
+		first.setHideThinkingBlock(true);
+		const chat = container(first, tool("read"), failed);
+		expect(plainLines(chat).join("\n")).toContain(
+			"Response was truncated before completion.",
+		);
+	});
+
 	it("folds parallel calls as each finishes, not before", () => {
 		const read = tool("read", false);
 		const grep = tool("grep", false);
