@@ -2,7 +2,7 @@
 
 ## Presets
 
-- `pi`: Pi without model or reasoning overrides; uses Pi's defaults. Use for Pi testing.
+- `pi`: Pi with `--no-session`, without model or reasoning overrides. Use for Pi testing.
 - Other presets resolve their model family to the latest version at launch:
   - `sol`: Codex Sol at medium reasoning.
   - `sol-high`: Codex Sol at high reasoning.

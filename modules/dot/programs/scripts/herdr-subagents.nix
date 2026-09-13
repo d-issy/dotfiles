@@ -316,7 +316,8 @@ let
             pi)
               "$herdr" agent start "''${names[$index]}" \
                 --kind pi \
-                --pane "''${panes[$index]}"
+                --pane "''${panes[$index]}" \
+                -- --no-session
               ;;
             claude)
               "$herdr" agent start "''${names[$index]}" \
