@@ -1,8 +1,17 @@
-_:
+{ pkgs, ... }:
 
 {
   programs.nixvim.plugins.copilot-lua = {
     enable = true;
+    # The v3.0.4 tag archive no longer matches the hash pinned in nixpkgs.
+    package = pkgs.vimPlugins.copilot-lua.overrideAttrs {
+      src = pkgs.fetchFromGitHub {
+        owner = "zbirenbaum";
+        repo = "copilot.lua";
+        rev = "9d391a02dc0281713cbb7c3bc87cdd38287b92eb";
+        hash = "sha256-kDQOm7/N6T7wOw1JlkcxNMnQrDE4oTRyGCZkvT8HZQw=";
+      };
+    };
     settings = {
       panel.enabled = false;
       suggestion = {
