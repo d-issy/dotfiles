@@ -184,7 +184,7 @@ importers:
     devDependencies:
       '@types/node':
         specifier: ^25.9.3
-        version: 25.9.6
+        version: 25.9.7
       '@vitest/coverage-v8':
         specifier: ^5.0.0
         version: 5.0.1(vitest@5.0.1)
@@ -193,7 +193,7 @@ importers:
         version: 7.0.2
       vitest:
         specifier: ^5.0.0
-        version: 5.0.1(@types/node@25.9.6)(@vitest/coverage-v8@5.0.1)(vite@8.2.2(@types/node@25.9.6)(jiti@2.7.0)(yaml@2.9.0))
+        version: 5.0.1(@types/node@25.9.7)(@vitest/coverage-v8@5.0.1)(vite@8.2.2(@types/node@25.9.7)(jiti@2.7.0)(yaml@2.9.0))
 
 packages:
 
@@ -626,8 +626,8 @@ packages:
   '@types/estree@1.0.9':
     resolution: {integrity: sha512-GhdPgy1el4/ImP05X05Uw4cw2/M93BCUmnEvWZNStlCzEKME4Fkk+YpoA5OiHNQmoS7Cafb8Xa3Pya8m1Qrzeg==}
 
-  '@types/node@25.9.6':
-    resolution: {integrity: sha512-JR6Q/PV5DKFvjrGFVqQJdeG0qvsqQQLDa3TzFrqVwhqRXqwNaxPo2KYCtCQXpOdIulCouKwT7a6in9nFthBAzw==}
+  '@types/node@25.9.7':
+    resolution: {integrity: sha512-Y+axoNWOFLvDNFxNbDA+kqqV05imHwTu5bZWWO6tQM3Y2NX1jvzUJkYlf4nYnMCnvu4wQBKW6Nr+ok6yHWA9aQ==}
 
   '@types/retry@0.12.0':
     resolution: {integrity: sha512-wWKOClTTiizcZhXnPY4wikVAwmdYHp8q6DmC+EJUzAMsycb7HB32Kh9RN4+0gExjmPmZSAQjgURXIGATPegAvA==}
@@ -1659,25 +1659,35 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.6.0
 
-  '@mariozechner/clipboard-darwin-arm64@0.3.9': {}
+  '@mariozechner/clipboard-darwin-arm64@0.3.9':
+    optional: true
 
-  '@mariozechner/clipboard-darwin-universal@0.3.9': {}
+  '@mariozechner/clipboard-darwin-universal@0.3.9':
+    optional: true
 
-  '@mariozechner/clipboard-darwin-x64@0.3.9': {}
+  '@mariozechner/clipboard-darwin-x64@0.3.9':
+    optional: true
 
-  '@mariozechner/clipboard-linux-arm64-gnu@0.3.9': {}
+  '@mariozechner/clipboard-linux-arm64-gnu@0.3.9':
+    optional: true
 
-  '@mariozechner/clipboard-linux-arm64-musl@0.3.9': {}
+  '@mariozechner/clipboard-linux-arm64-musl@0.3.9':
+    optional: true
 
-  '@mariozechner/clipboard-linux-riscv64-gnu@0.3.9': {}
+  '@mariozechner/clipboard-linux-riscv64-gnu@0.3.9':
+    optional: true
 
-  '@mariozechner/clipboard-linux-x64-gnu@0.3.9': {}
+  '@mariozechner/clipboard-linux-x64-gnu@0.3.9':
+    optional: true
 
-  '@mariozechner/clipboard-linux-x64-musl@0.3.9': {}
+  '@mariozechner/clipboard-linux-x64-musl@0.3.9':
+    optional: true
 
-  '@mariozechner/clipboard-win32-arm64-msvc@0.3.9': {}
+  '@mariozechner/clipboard-win32-arm64-msvc@0.3.9':
+    optional: true
 
-  '@mariozechner/clipboard-win32-x64-msvc@0.3.9': {}
+  '@mariozechner/clipboard-win32-x64-msvc@0.3.9':
+    optional: true
 
   '@mariozechner/clipboard@0.3.9':
     optionalDependencies:
@@ -1691,6 +1701,7 @@ snapshots:
       '@mariozechner/clipboard-linux-x64-musl': 0.3.9
       '@mariozechner/clipboard-win32-arm64-msvc': 0.3.9
       '@mariozechner/clipboard-win32-x64-msvc': 0.3.9
+    optional: true
 
   '@oxc-project/types@0.147.0': {}
 
@@ -1825,7 +1836,7 @@ snapshots:
 
   '@types/estree@1.0.9': {}
 
-  '@types/node@25.9.6':
+  '@types/node@25.9.7':
     dependencies:
       undici-types: 7.24.6
 
@@ -1901,7 +1912,7 @@ snapshots:
       obug: 2.1.4
       std-env: 4.2.0
       tinyrainbow: 3.1.1
-      vitest: 5.0.1(@types/node@25.9.6)(@vitest/coverage-v8@5.0.1)(vite@8.2.2(@types/node@25.9.6)(jiti@2.7.0)(yaml@2.9.0))
+      vitest: 5.0.1(@types/node@25.9.7)(@vitest/coverage-v8@5.0.1)(vite@8.2.2(@types/node@25.9.7)(jiti@2.7.0)(yaml@2.9.0))
 
   '@vitest/istanbul-lib-coverage@1.0.1': {}
 
@@ -1909,14 +1920,14 @@ snapshots:
     dependencies:
       '@vitest/istanbul-lib-coverage': 1.0.1
 
-  '@vitest/mocker@5.0.1(vite@8.2.2(@types/node@25.9.6)(jiti@2.7.0)(yaml@2.9.0))':
+  '@vitest/mocker@5.0.1(vite@8.2.2(@types/node@25.9.7)(jiti@2.7.0)(yaml@2.9.0))':
     dependencies:
       '@jridgewell/trace-mapping': 0.3.31
       '@vitest/spy': 5.0.1
       estree-walker: 3.0.3
       magic-string: 1.2.3
     optionalDependencies:
-      vite: 8.2.2(@types/node@25.9.6)(jiti@2.7.0)(yaml@2.9.0)
+      vite: 8.2.2(@types/node@25.9.7)(jiti@2.7.0)(yaml@2.9.0)
 
   '@vitest/spy@5.0.1': {}
 
@@ -2205,7 +2216,7 @@ snapshots:
       '@protobufjs/path': 1.1.2
       '@protobufjs/pool': 1.1.0
       '@protobufjs/utf8': 1.1.2
-      '@types/node': 25.9.6
+      '@types/node': 25.9.7
       long: 5.3.2
 
   retry@0.12.0: {}
@@ -2303,7 +2314,7 @@ snapshots:
 
   undici@8.9.0: {}
 
-  vite@8.2.2(@types/node@25.9.6)(jiti@2.7.0)(yaml@2.9.0):
+  vite@8.2.2(@types/node@25.9.7)(jiti@2.7.0)(yaml@2.9.0):
     dependencies:
       lightningcss: 1.33.0
       picomatch: 4.0.7
@@ -2311,15 +2322,15 @@ snapshots:
       rolldown: 1.2.6
       tinyglobby: 0.2.17
     optionalDependencies:
-      '@types/node': 25.9.6
+      '@types/node': 25.9.7
       fsevents: 2.3.3
       jiti: 2.7.0
       yaml: 2.9.0
 
-  vitest@5.0.1(@types/node@25.9.6)(@vitest/coverage-v8@5.0.1)(vite@8.2.2(@types/node@25.9.6)(jiti@2.7.0)(yaml@2.9.0)):
+  vitest@5.0.1(@types/node@25.9.7)(@vitest/coverage-v8@5.0.1)(vite@8.2.2(@types/node@25.9.7)(jiti@2.7.0)(yaml@2.9.0)):
     dependencies:
       '@types/chai': 5.2.3
-      '@vitest/mocker': 5.0.1(vite@8.2.2(@types/node@25.9.6)(jiti@2.7.0)(yaml@2.9.0))
+      '@vitest/mocker': 5.0.1(vite@8.2.2(@types/node@25.9.7)(jiti@2.7.0)(yaml@2.9.0))
       chai: 6.2.2
       es-module-lexer: 2.3.2
       expect-type: 1.4.0
@@ -2330,10 +2341,10 @@ snapshots:
       tinybench: 6.1.4
       tinyexec: 1.3.0
       tinyglobby: 0.2.17
-      vite: 8.2.2(@types/node@25.9.6)(jiti@2.7.0)(yaml@2.9.0)
+      vite: 8.2.2(@types/node@25.9.7)(jiti@2.7.0)(yaml@2.9.0)
       why-is-node-running: 2.3.0
     optionalDependencies:
-      '@types/node': 25.9.6
+      '@types/node': 25.9.7
       '@vitest/coverage-v8': 5.0.1(vitest@5.0.1)
     transitivePeerDependencies:
       - msw
