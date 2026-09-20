@@ -10,6 +10,7 @@ import {
 	Container,
 	type TUI,
 	Text,
+	type TuiMouseEvent,
 	resetCapabilitiesCache,
 	setCapabilities,
 	visibleWidth,
@@ -509,26 +510,27 @@ describe("tool summaries (real Pi components)", () => {
 	it("keeps Pi 0.85+ mouse hit regions aligned with compact output", () => {
 		const bash = tool("bash", false);
 		const chat = container(tool("read"), bash, tool("grep"));
-		const mouseContainer = Object.assign(chat, {
-			mouseLayout: undefined as
-				| {
-						width: number;
-						children: Array<{ component: Container; height: number }>;
-				  }
-				| undefined,
-		});
+		const handleMouse = vi.spyOn(bash, "handleMouse");
 		const output = chat.render(80);
-		const layout = mouseContainer.mouseLayout;
-		expect(layout?.width).toBe(80);
-		expect(layout?.children).toHaveLength(2);
-		expect(layout?.children[0]?.height).toBe(2);
-		expect(layout?.children[0]?.component.render(80)).toEqual(
-			output.slice(0, 2),
-		);
-		expect(layout?.children[1]?.component).toBe(bash);
-		expect(layout?.children[1]?.height).toBe(bash.render(80).length);
-		expect(layout?.children.reduce((sum, child) => sum + child.height, 0)).toBe(
-			output.length,
+		const mouseEvent = (y: number): TuiMouseEvent => ({
+			type: "press",
+			button: "left",
+			x: 0,
+			y,
+			screenX: 0,
+			screenY: y,
+			width: 80,
+			height: output.length,
+			shift: false,
+			alt: false,
+			ctrl: false,
+		});
+		expect(output).toHaveLength(2 + bash.render(80).length);
+		chat.handleMouse(mouseEvent(0));
+		expect(handleMouse).not.toHaveBeenCalled();
+		chat.handleMouse(mouseEvent(2));
+		expect(handleMouse).toHaveBeenCalledWith(
+			expect.objectContaining({ y: 0, height: bash.render(80).length }),
 		);
 	});
 
