@@ -509,14 +509,12 @@ describe("tool summaries (real Pi components)", () => {
 	it("keeps Pi 0.85+ mouse hit regions aligned with compact output", () => {
 		const bash = tool("bash", false);
 		const chat = container(tool("read"), bash, tool("grep"));
-		const mouseContainer = Object.assign(chat, {
-			mouseLayout: undefined as
-				| {
-						width: number;
-						children: Array<{ component: Container; height: number }>;
-				  }
-				| undefined,
-		});
+		const mouseContainer = chat as unknown as {
+			mouseLayout?: {
+				width: number;
+				children: Array<{ component: Container; height: number }>;
+			};
+		};
 		const output = chat.render(80);
 		const layout = mouseContainer.mouseLayout;
 		expect(layout?.width).toBe(80);

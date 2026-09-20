@@ -1,5 +1,6 @@
 allowBuilds:
   '@google/genai': false
+  esbuild: false
   koffi: false
   protobufjs: false
 overrides:
