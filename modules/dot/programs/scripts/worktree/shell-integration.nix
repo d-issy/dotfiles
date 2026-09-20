@@ -8,10 +8,14 @@
       let safe_pwd = ($caller_pwd | path dirname)
 
       cd $safe_pwd
-      with-env { WORKTREE_CD_FILE: $cd_file, WORKTREE_CALLER_PWD: $caller_pwd } {
-        do -i { ^${worktreeBin} ...$args }
-      }
-      let exit_code = $env.LAST_EXIT_CODE
+      let exit_code = (try {
+        with-env { WORKTREE_CD_FILE: $cd_file, WORKTREE_CALLER_PWD: $caller_pwd } {
+          ^${worktreeBin} ...$args
+        }
+        0
+      } catch {
+        $env.LAST_EXIT_CODE
+      })
       if ($cd_file | path exists) {
         let target = (open --raw $cd_file | str trim)
         if not ($target | is-empty) {
@@ -24,7 +28,7 @@
         cd $caller_pwd
       }
       if $exit_code != 0 {
-        return
+        error make { msg: $"worktree exited with status ($exit_code)" }
       }
     }
   '';

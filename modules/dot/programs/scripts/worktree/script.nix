@@ -847,14 +847,14 @@ in
   	backup_patch_paths "$source" "$backup_dir"
 
   	(cd "$source" && ${pkgs.patch}/bin/patch --batch --forward -p1 -R --reject-file="$reject" <"$patch") >/dev/null 2>&1 || patch_status=$?
-  	if [[ ! -s "$reject" ]]; then
+  	if [[ "$patch_status" -eq 0 && ! -s "$reject" ]]; then
   		${pkgs.coreutils}/bin/rm -rf "$backup_dir"
   		return 0
   	fi
 
   	restore_patch_paths "$source" "$backup_dir"
   	${pkgs.coreutils}/bin/rm -rf "$backup_dir"
-  	return "$patch_status"
+  	return 1
   }
 
   remove_original_patch_from_source() {
@@ -870,20 +870,27 @@ in
   	fi
 
   	if ${pkgs.git}/bin/git -C "$source" apply -R --check "$patch" >/dev/null 2>&1; then
-  		${pkgs.git}/bin/git -C "$source" apply -R "$patch"
+  		if ! ${pkgs.git}/bin/git -C "$source" apply -R "$patch"; then
+  			warn "Could not remove original staged changes from working tree safely. They remain staged in: $source"
+  			return 1
+  		fi
   	elif reverse_patch_with_gnu_patch "$source" "$patch"; then
   		:
   	else
-  		warn "Could not remove original staged changes from working tree safely. Removing them from index anyway: $source"
+  		warn "Could not remove original staged changes from working tree safely. They remain staged in: $source"
+  		return 1
   	fi
 
-  	${pkgs.git}/bin/git -C "$source" apply -R --cached "$patch"
+  	if ! ${pkgs.git}/bin/git -C "$source" apply -R --cached "$patch"; then
+  		warn "Could not remove original staged changes from index safely. Pending state remains for recovery: $source"
+  		return 1
+  	fi
   	printf '%sRemoved original staged changes from index.%s\n' "$GREEN" "$RESET"
   }
 
   cmd_create_finish() {
   	require_git_repo
-  	local state source patch ok=true
+  	local state source patch
   	state="$(find_state_for_current_target || true)"
   	[[ -n "$state" ]] || die "No pending create state for this worktree"
   	source="$(<"$state/source_path")"
@@ -893,14 +900,12 @@ in
   		patch="$state/patch"
   	fi
 
-  	remove_original_patch_from_source "$source" "$patch" || ok=false
-
-  	${pkgs.coreutils}/bin/rm -rf "$state"
-  	if [[ "$ok" == true ]]; then
-  		printf '%sFinished worktree create.%s\n' "$GREEN" "$RESET"
-  	else
-  		printf '%sFinished worktree create with warnings.%s\n' "$YELLOW" "$RESET"
+  	if ! remove_original_patch_from_source "$source" "$patch"; then
+  		warn "Pending create state is preserved at: $state"
+  		return 1
   	fi
+  	${pkgs.coreutils}/bin/rm -rf "$state"
+  	printf '%sFinished worktree create.%s\n' "$GREEN" "$RESET"
   }
 
   cmd_create() {
