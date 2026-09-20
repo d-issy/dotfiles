@@ -16,11 +16,13 @@ lib.hm.dag.entryAfter [ "writeBoundary" ] ''
 
   mkdir -p "$targetDir"
   if [ -f "$targetFile" ]; then
+    tmpFile="$(${pkgs.coreutils}/bin/mktemp "$targetFile.XXXXXX")"
     # Remove JSON comments (// ...) before parsing with jq
     ${pkgs.gnused}/bin/sed '/^[[:space:]]*\/\//d' "$targetFile" | \
-      ${pkgs.jq}/bin/jq -s '.[0] * .[1]' - <(printf '%s' ${lib.escapeShellArg overridesJson}) > "$targetFile.tmp"
-    mv "$targetFile.tmp" "$targetFile"
+      ${pkgs.jq}/bin/jq -s '.[0] * .[1]' - <(printf '%s' ${lib.escapeShellArg overridesJson}) > "$tmpFile"
+    ${pkgs.coreutils}/bin/chmod --reference="$targetFile" "$tmpFile"
+    mv "$tmpFile" "$targetFile"
   else
-    echo ${lib.escapeShellArg overridesJson} > "$targetFile"
+    (umask 077; echo ${lib.escapeShellArg overridesJson} > "$targetFile")
   fi
 ''
