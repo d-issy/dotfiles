@@ -52,21 +52,16 @@ export function getUsageTotals(entries: readonly SessionEntry[]): UsageTotals {
 	};
 
 	for (const entry of entries) {
-		if (!isRecord(entry)) continue;
-
-		if (entry.type === "message" && isRecord(entry.message)) {
-			if (
-				entry.message.role !== "assistant" &&
-				entry.message.role !== "toolResult"
-			) {
+		if (entry.type === "message") {
+			const message = entry.message;
+			if (message.role !== "assistant" && message.role !== "toolResult")
 				continue;
-			}
 
-			const usage = getUsage(entry.message);
+			const usage = getUsage(message);
 			if (!usage) continue;
 
 			addUsage(totals, usage);
-			if (entry.message.role !== "assistant") continue;
+			if (message.role !== "assistant") continue;
 
 			const promptTokens =
 				finiteNumber(usage.input) +
