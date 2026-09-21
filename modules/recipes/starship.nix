@@ -10,7 +10,6 @@
 
       format = lib.strings.concatStringsSep "" [
         "$directory"
-        "$localip"
         "$golang"
         "$nodejs"
         "$python"
@@ -39,10 +38,6 @@
       directory = {
         truncation_length = 5;
         truncation_symbol = "*";
-      };
-      localip = {
-        ssh_only = true;
-        disabled = false;
       };
       status = {
         format = "[$status](red) ";
