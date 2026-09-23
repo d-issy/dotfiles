@@ -57,6 +57,8 @@ function assistant(provider: string, model: string): AssistantMessage {
 describe("supportsFast", () => {
 	it.each([
 		"gpt-6-astra",
+		"gpt-6-luna",
+		"gpt-6-sol",
 		"gpt-5.6-luna",
 		"gpt-5.6-sol",
 		"gpt-5.6-terra",
@@ -66,7 +68,7 @@ describe("supportsFast", () => {
 		assert.equal(supportsFast({ provider: "openai-codex", id }), true);
 	});
 
-	it.each(["claude-opus-5", "claude-opus-4-8"])(
+	it.each(["claude-opus-5-5", "claude-opus-5", "claude-opus-4-8"])(
 		"supports %s through Anthropic",
 		(id) => {
 			assert.equal(supportsFast({ provider: "anthropic", id }), true);
@@ -87,7 +89,7 @@ describe("supportsFast", () => {
 });
 
 describe("enableFastPayload", () => {
-	it.each(["gpt-6-astra", "gpt-5.5"])(
+	it.each(["gpt-6-astra", "gpt-6-luna", "gpt-6-sol", "gpt-5.5"])(
 		"adds the priority service tier to %s payloads",
 		(id) => {
 			const payload = { model: id, stream: true };
@@ -100,15 +102,15 @@ describe("enableFastPayload", () => {
 		},
 	);
 
-	it("adds fast speed to Anthropic payloads", () => {
-		assert.deepEqual(
-			enableFastPayload(
-				{ model: "claude-opus-5" },
-				{ provider: "anthropic", id: "claude-opus-5" },
-			),
-			{ model: "claude-opus-5", speed: "fast" },
-		);
-	});
+	it.each(["claude-opus-5-5", "claude-opus-5"])(
+		"adds fast speed to %s payloads",
+		(id) => {
+			assert.deepEqual(
+				enableFastPayload({ model: id }, { provider: "anthropic", id }),
+				{ model: id, speed: "fast" },
+			);
+		},
+	);
 
 	it("does not modify a request for a different model", () => {
 		assert.equal(
