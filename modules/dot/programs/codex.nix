@@ -2,6 +2,7 @@
   config,
   lib,
   pkgs,
+  dot,
   ...
 }:
 
@@ -71,7 +72,7 @@ in
     hooks = lib.mkOption {
       type = lib.types.attrs;
       default = { };
-      description = "Codex hooks written to .codex/hooks.json.";
+      description = "Codex hooks merged into .codex/hooks.json.";
     };
   };
 
@@ -81,8 +82,12 @@ in
       shellAliases.codex = "codex-statusline";
     };
 
-    home.file.".codex/hooks.json" = lib.mkIf (cfg.hooks != { }) {
-      text = builtins.toJSON { inherit (cfg) hooks; } + "\n";
-    };
+    home.activation.codexHooks = lib.mkIf (cfg.hooks != { }) (
+      dot.mergeJson {
+        targetDir = "${config.home.homeDirectory}/.codex";
+        settingsFile = "hooks.json";
+        overrides = { inherit (cfg) hooks; };
+      }
+    );
   };
 }
