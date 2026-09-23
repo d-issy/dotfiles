@@ -27,7 +27,7 @@ let
         herdr-subagents cleanup [--force]
 
       Presets:
-        pi  sol-medium  sol-high  terra-high  luna-xhigh  opus-high  fable-low  fable-medium  grok  composer
+        pi  astra  sol  luna  opus  fable  grok  composer
 
       Split the current Pi pane in half and manage equally sized Herdr subagent panes.
       EOF
@@ -144,44 +144,33 @@ let
             resolved_kind=pi
             resolved_model=
             ;;
-          sol-medium)
+          astra)
+            resolved_kind=codex
+            latest_codex_model astra
+            resolved_model="$latest_model"
+            resolved_effort=low
+            ;;
+          sol)
             resolved_kind=codex
             latest_codex_model sol
             resolved_model="$latest_model"
             resolved_effort=medium
             ;;
-          sol-high)
-            resolved_kind=codex
-            latest_codex_model sol
-            resolved_model="$latest_model"
-            resolved_effort=high
-            ;;
-          terra-high)
-            resolved_kind=codex
-            latest_codex_model terra
-            resolved_model="$latest_model"
-            resolved_effort=high
-            ;;
-          luna-xhigh)
+          luna)
             resolved_kind=codex
             latest_codex_model luna
             resolved_model="$latest_model"
             resolved_effort=xhigh
             ;;
-          opus-high)
+          opus)
             resolved_kind=claude
             resolved_model=opus
-            resolved_effort=high
+            resolved_effort=medium
             ;;
-          fable-low)
+          fable)
             resolved_kind=claude
             resolved_model=fable
             resolved_effort=low
-            ;;
-          fable-medium)
-            resolved_kind=claude
-            resolved_model=fable
-            resolved_effort=medium
             ;;
           grok)
             resolved_kind=cursor
