@@ -50,6 +50,7 @@
     ]
   },
   "outputStyle": "default",
+  "feedbackDrafts": "off",
   "includeGitInstructions": false,
   "autoMemoryEnabled": false,
   "env": {
