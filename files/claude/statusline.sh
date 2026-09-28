@@ -9,10 +9,6 @@ RED='\033[31m'
 CYAN='\033[36m'
 RESET='\033[0m'
 
-format_k() {
-	awk -v n="$1" 'BEGIN { printf "%.1fK", n/1000 }'
-}
-
 format_tokens() {
 	awk -v n="$1" 'BEGIN {
     if (n == 1000000) { printf "1M" }
@@ -43,22 +39,22 @@ fmt_reset() {
 	fi
 }
 
-# Render a usage-limit segment as "<label><remaining>%", colored by remaining.
-# When not green (remaining < 50%) and a reset epoch is given, append "→HH:MM"
+# Render a usage-limit segment as "<label><used>%", colored by usage.
+# When not green (used > 50%) and a reset epoch is given, append "→HH:MM"
 # so the recovery time is visible exactly when the limit starts to matter.
 # Prints nothing when the percentage is absent (non-subscribers / pre-first-call).
 usage_seg() {
-	local used="$1" label="$2" reset="$3" remain color seg at
+	local used="$1" label="$2" reset="$3" color seg at
 	[[ -z "$used" ]] && return
-	remain=$(awk -v u="$used" 'BEGIN { printf "%.0f", 100 - u }')
-	if awk -v r="$remain" 'BEGIN { exit !(r >= 50) }'; then
+	used=$(awk -v u="$used" 'BEGIN { printf "%.0f", u }')
+	if awk -v u="$used" 'BEGIN { exit !(u <= 50) }'; then
 		color="$GREEN"
-	elif awk -v r="$remain" 'BEGIN { exit !(r >= 20) }'; then
+	elif awk -v u="$used" 'BEGIN { exit !(u <= 80) }'; then
 		color="$YELLOW"
 	else
 		color="$RED"
 	fi
-	seg="${DIM}${label}${RESET}${color}${remain}%${RESET}"
+	seg="${DIM}${label}${RESET}${color}${used}%${RESET}"
 	if [[ "$color" != "$GREEN" && -n "$reset" ]]; then
 		at=$(fmt_reset "$reset")
 		[[ -n "$at" ]] && seg+=" ${color}${at}${RESET}"
@@ -71,8 +67,6 @@ MODEL=$(echo "$input" | jq -r '.model.display_name // "Unknown"')
 MODEL="${MODEL/ context)/)}"
 EFFORT=$(echo "$input" | jq -r '.effort.level // empty')
 
-TOTAL_INPUT_TOKENS=$(echo "$input" | jq -r '.context_window.total_input_tokens // 0')
-TOTAL_OUTPUT_TOKENS=$(echo "$input" | jq -r '.context_window.total_output_tokens // 0')
 CONTEXT_SIZE=$(echo "$input" | jq -r '.context_window.context_window_size // 200000')
 
 # Current context usage (not cumulative totals)
@@ -81,10 +75,7 @@ CACHE_CREATE=$(echo "$input" | jq -r '.context_window.current_usage.cache_creati
 CACHE_READ=$(echo "$input" | jq -r '.context_window.current_usage.cache_read_input_tokens // 0')
 
 TOTAL_USED=$((CURRENT_INPUT + CACHE_CREATE + CACHE_READ))
-REMAINING=$(awk -v used="$TOTAL_USED" -v size="$CONTEXT_SIZE" 'BEGIN { printf "%.1f", 100 - (used * 100 / size) }')
-
-INPUT_K=$(format_k "$TOTAL_INPUT_TOKENS")
-OUTPUT_K=$(format_k "$TOTAL_OUTPUT_TOKENS")
+USED_PCT=$(awk -v used="$TOTAL_USED" -v size="$CONTEXT_SIZE" 'BEGIN { printf "%.1f", used * 100 / size }')
 
 # Usage limits (Pro/Max subscribers only, after the first API response)
 FIVE_HOUR_USED=$(echo "$input" | jq -r '.rate_limits.five_hour.used_percentage // empty')
@@ -108,21 +99,17 @@ if [[ -n "$EFFORT" ]]; then
 fi
 OUTPUT="${MODEL_DISPLAY}${GIT_BRANCH}"
 
-if [[ "$TOTAL_INPUT_TOKENS" != "0" || "$TOTAL_OUTPUT_TOKENS" != "0" ]]; then
-	OUTPUT+=" ${DIM}|${RESET} ${DIM}↑${RESET}${GREEN}${INPUT_K}${RESET} ${DIM}↓${RESET}${YELLOW}${OUTPUT_K}${RESET}"
-fi
-
 if [[ "$TOTAL_USED" != "0" ]]; then
 	USED_FMT=$(format_tokens "$TOTAL_USED")
-	# Color based on remaining context percentage
-	if awk -v r="$REMAINING" 'BEGIN { exit !(r >= 50) }'; then
+	# Color based on used context percentage
+	if awk -v u="$USED_PCT" 'BEGIN { exit !(u <= 50) }'; then
 		CTX_COLOR="$GREEN"
-	elif awk -v r="$REMAINING" 'BEGIN { exit !(r >= 20) }'; then
+	elif awk -v u="$USED_PCT" 'BEGIN { exit !(u <= 80) }'; then
 		CTX_COLOR="$YELLOW"
 	else
 		CTX_COLOR="$RED"
 	fi
-	OUTPUT+=" ${CTX_COLOR}${USED_FMT} (${REMAINING}%)${RESET}"
+	OUTPUT+=" ${DIM}|${RESET} ${CTX_COLOR}${USED_FMT}${RESET}${DIM}/$(format_tokens "$CONTEXT_SIZE")${RESET} ${CTX_COLOR}(${USED_PCT}%)${RESET}"
 fi
 
 FIVE_SEG=$(usage_seg "$FIVE_HOUR_USED" "5h " "$FIVE_HOUR_RESET")
