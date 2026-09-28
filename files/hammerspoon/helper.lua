@@ -26,6 +26,9 @@ Helper = (function()
       "com.jetbrains.intellij",
       "com.github.wez.wezterm",
       "org.alacritty",
+      "com.mitchellh.ghostty",
+      "com.stablyai.orca",
+      "com.microsoft.VSCode",
     }, app)
   end
 
