@@ -3,6 +3,7 @@ AutoReloader = hs.pathwatcher.new(os.getenv "HOME" .. "/.hammerspoon/", hs.reloa
 require "helper"
 require "winmanager"
 require "keybind"
+require "terminal-input"
 
 local screen = hs.screen.mainScreen():frame()
 local width, height, margin = 150, 32, 16
