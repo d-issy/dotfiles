@@ -41,6 +41,18 @@ function renderCost(totals: UsageTotals): string {
 	return totals.cost > 0 ? `$${totals.cost.toFixed(3)}` : "";
 }
 
+function renderContextUsage(ctx: ExtensionContext): string {
+	const usage = ctx.getContextUsage();
+	const contextWindow = usage?.contextWindow ?? ctx.model?.contextWindow ?? 0;
+	if (contextWindow <= 0) return "";
+
+	const tokens =
+		usage?.tokens == null ? "?" : formatTokens(Math.max(0, usage.tokens));
+	const percent =
+		usage?.percent == null ? "?" : formatPercent(Math.max(0, usage.percent));
+	return `CTX ${tokens}/${formatTokens(contextWindow)} (${percent})`;
+}
+
 export function createStatusBarFooter(
 	ctx: ExtensionContext,
 	setRequestRender: (requestRender: RequestRender | undefined) => void,
@@ -73,21 +85,6 @@ export function createStatusBarFooter(
 			return joinParts([identity, branch], " · ");
 		}
 
-		function renderContextUsage(): string {
-			const usage = ctx.getContextUsage();
-			const contextWindow =
-				usage?.contextWindow ?? ctx.model?.contextWindow ?? 0;
-			if (contextWindow <= 0) return "";
-
-			const tokens =
-				usage?.tokens == null ? "?" : formatTokens(Math.max(0, usage.tokens));
-			const percent =
-				usage?.percent == null
-					? "?"
-					: formatPercent(Math.max(0, usage.percent));
-			return `CTX ${tokens}/${formatTokens(contextWindow)} (${percent})`;
-		}
-
 		return {
 			dispose: () => {
 				setRequestRender(undefined);
@@ -106,7 +103,7 @@ export function createStatusBarFooter(
 					joinParts(
 						[
 							renderCacheHitRate(totals),
-							renderContextUsage(),
+							renderContextUsage(ctx),
 							renderCost(totals),
 						],
 						" · ",
