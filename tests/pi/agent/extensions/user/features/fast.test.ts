@@ -59,10 +59,56 @@ function assistant(provider: string, model: string): AssistantMessage {
 	};
 }
 
+describe("OpenAI provider migration", () => {
+	it.each([
+		"gpt-6.1-sol",
+		"gpt-6-astra",
+		"gpt-6-sol",
+		"gpt-6-luna",
+		"gpt-5.6-terra",
+		"gpt-5.6-sol",
+		"gpt-5.6-luna",
+		"gpt-5.5",
+		"gpt-5.4",
+	])("supports Fast for %s on OpenAI", (id) => {
+		const model = fastModel("openai", id);
+		assert.equal(supportsFast(model), true);
+		assert.deepEqual(enableFastPayload({ model: id }, model), {
+			model: id,
+			service_tier: "priority",
+		});
+		const message = assistant("openai", id);
+		const adjusted = adjustFastCost(message, model);
+		assert.equal(adjusted.usage.cost.input, id === "gpt-5.5" ? 2.5 : 2);
+	});
+
+	it("supports Astra Ultrafast on OpenAI without enabling it for Sol", () => {
+		const model = fastModel("openai", "gpt-6-astra");
+		assert.equal(supportsUltrafast(model), true);
+		assert.deepEqual(
+			enableFastPayload({ model: model.id }, model, "ultrafast"),
+			{ model: model.id, service_tier: "ultrafast" },
+		);
+		assert.equal(
+			adjustFastCost(assistant("openai", model.id), model, "ultrafast").usage
+				.cost.input,
+			6,
+		);
+		assert.equal(
+			supportsUltrafast({ provider: "openai", id: "gpt-6.1-sol" }),
+			false,
+		);
+		assert.equal(
+			supportsFast({ provider: "openai", id: "gpt-5.4-mini" }),
+			false,
+		);
+	});
+});
+
 describe("supportsFast", () => {
 	it.each([
-		"gpt-6-astra",
 		"gpt-6.1-sol",
+		"gpt-6-astra",
 		"gpt-6-sol",
 		"gpt-6-luna",
 		"gpt-5.6-terra",
@@ -86,7 +132,10 @@ describe("supportsFast", () => {
 			supportsFast({ provider: "openai-codex", id: "gpt-5.4-mini" }),
 			false,
 		);
-		assert.equal(supportsFast({ provider: "openai", id: "gpt-5.5" }), false);
+		assert.equal(
+			supportsFast({ provider: "openrouter", id: "gpt-5.5" }),
+			false,
+		);
 		assert.equal(
 			supportsFast({ provider: "anthropic", id: "claude-opus-4-7" }),
 			false,
@@ -112,7 +161,7 @@ describe("Ultrafast", () => {
 			undefined,
 			{ ...model, id: "gpt-6.1-sol" },
 			{ ...model, id: "gpt-6-luna" },
-			{ ...model, provider: "openai" },
+			{ ...model, provider: "openrouter" },
 			{ provider: "anthropic", id: "claude-opus-5-5" },
 		]) {
 			assert.equal(supportsUltrafast(unsupported), false);

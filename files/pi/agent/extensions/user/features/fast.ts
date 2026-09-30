@@ -10,9 +10,9 @@ const ANTHROPIC_FAST_MODEL_IDS = new Set([
 	"claude-opus-5",
 	"claude-opus-4-8",
 ]);
-const OPENAI_CODEX_FAST_MODEL_IDS = new Set([
-	"gpt-6-astra",
+const OPENAI_FAST_MODEL_IDS = new Set([
 	"gpt-6.1-sol",
+	"gpt-6-astra",
 	"gpt-6-sol",
 	"gpt-6-luna",
 	"gpt-5.6-terra",
@@ -32,37 +32,57 @@ function isRecord(value: unknown): value is RecordLike {
 	return typeof value === "object" && value !== null;
 }
 
-function supportsAnthropicFast(model: ModelIdentity | undefined): boolean {
-	return (
-		model?.provider === "anthropic" && ANTHROPIC_FAST_MODEL_IDS.has(model.id)
-	);
+interface SpeedProfile {
+	fastModels: ReadonlySet<string>;
+	ultrafastModels: ReadonlySet<string>;
+	fastMultiplier: (id: string) => number;
+	ultrafastMultiplier: number;
+	fastPayload: RecordLike;
 }
 
-function getFastCostMultiplier(
+const OPENAI_SPEED_PROFILE: SpeedProfile = {
+	fastModels: OPENAI_FAST_MODEL_IDS,
+	// GPT-6.1 Sol Ultrafast is announced for later; wait for published support and rates.
+	// https://learn.chatgpt.com/docs/models#gpt-61-sol
+	ultrafastModels: new Set(["gpt-6-astra"]),
+	fastMultiplier: (id) => (id === "gpt-5.5" ? 2.5 : 2),
+	ultrafastMultiplier: 6,
+	fastPayload: { service_tier: "priority" },
+};
+
+const SPEED_PROFILES: Readonly<Partial<Record<string, SpeedProfile>>> = {
+	openai: OPENAI_SPEED_PROFILE,
+	"openai-codex": OPENAI_SPEED_PROFILE,
+	anthropic: {
+		fastModels: ANTHROPIC_FAST_MODEL_IDS,
+		ultrafastModels: new Set(),
+		fastMultiplier: () => 2,
+		ultrafastMultiplier: 0,
+		fastPayload: { speed: "fast" },
+	},
+};
+
+function getSpeedProfile(
 	model: ModelIdentity | undefined,
-): number | undefined {
-	if (supportsAnthropicFast(model)) return 2;
-	if (
-		model?.provider !== "openai-codex" ||
-		!OPENAI_CODEX_FAST_MODEL_IDS.has(model.id)
-	) {
-		return undefined;
-	}
-	return model.id === "gpt-5.5" ? 2.5 : 2;
+	mode: SpeedMode = "fast",
+): SpeedProfile | undefined {
+	const profile = model && SPEED_PROFILES[model.provider];
+	return model &&
+		profile?.[mode === "fast" ? "fastModels" : "ultrafastModels"].has(model.id)
+		? profile
+		: undefined;
+}
+
+function supportsAnthropicFast(model: ModelIdentity | undefined): boolean {
+	return model?.provider === "anthropic" && supportsFast(model);
 }
 
 export function supportsFast(model: ModelIdentity | undefined): boolean {
-	return (
-		supportsAnthropicFast(model) ||
-		(model?.provider === "openai-codex" &&
-			OPENAI_CODEX_FAST_MODEL_IDS.has(model.id))
-	);
+	return getSpeedProfile(model) !== undefined;
 }
 
 export function supportsUltrafast(model: ModelIdentity | undefined): boolean {
-	// GPT-6.1 Sol Ultrafast is announced for later; enable it once support and rates are published.
-	// https://learn.chatgpt.com/docs/models#gpt-61-sol
-	return model?.provider === "openai-codex" && model.id === "gpt-6-astra";
+	return getSpeedProfile(model, "ultrafast") !== undefined;
 }
 
 export function enableFastPayload(
@@ -71,19 +91,15 @@ export function enableFastPayload(
 	mode: SpeedMode = "fast",
 ): unknown {
 	if (!isRecord(payload) || payload.model !== model?.id) return undefined;
-	if (mode === "ultrafast") {
-		return supportsUltrafast(model)
-			? { ...payload, service_tier: "ultrafast" }
-			: undefined;
-	}
-	if (supportsAnthropicFast(model)) return { ...payload, speed: "fast" };
-	if (
-		model?.provider === "openai-codex" &&
-		OPENAI_CODEX_FAST_MODEL_IDS.has(model.id)
-	) {
-		return { ...payload, service_tier: "priority" };
-	}
-	return undefined;
+	const profile = getSpeedProfile(model, mode);
+	return profile
+		? {
+				...payload,
+				...(mode === "ultrafast"
+					? { service_tier: "ultrafast" }
+					: profile.fastPayload),
+			}
+		: undefined;
 }
 
 export function adjustFastCost(
@@ -92,12 +108,11 @@ export function adjustFastCost(
 	mode: SpeedMode = "fast",
 ): AssistantMessage {
 	// Purchased-credit rates; included subscription usage has a separate multiplier.
+	const profile = getSpeedProfile(model, mode);
 	const multiplier =
 		mode === "ultrafast"
-			? supportsUltrafast(model)
-				? 6
-				: undefined
-			: getFastCostMultiplier(model);
+			? profile?.ultrafastMultiplier
+			: model && profile?.fastMultiplier(model.id);
 	if (
 		multiplier === undefined ||
 		message.provider !== model?.provider ||
