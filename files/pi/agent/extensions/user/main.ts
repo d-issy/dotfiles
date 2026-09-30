@@ -6,7 +6,7 @@ import { registerToolSummaryFeature } from "./features/tool-summary";
 
 export default function user(pi: ExtensionAPI): void {
 	const fast = registerFastFeature(pi);
-	fast.onChange = registerStatusFeature(pi, fast.isEnabled);
+	fast.onChange = registerStatusFeature(pi, fast.getMode);
 	registerModelSetsFeature(pi, fast);
 	registerToolSummaryFeature(pi);
 }

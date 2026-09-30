@@ -14,17 +14,22 @@ import {
 	matchesKey,
 	truncateToWidth,
 } from "@earendil-works/pi-tui";
-import { type FastController, supportsFast } from "./fast";
+import { type FastController, supportsFast, supportsUltrafast } from "./fast";
 
 export interface ModelSet {
 	provider: string;
 	model: string;
 	thinking: string;
 	fast: boolean;
+	ultrafast?: boolean;
+}
+
+function speedLabel(preset: ModelSet): string {
+	return preset.ultrafast ? " ultrafast" : preset.fast ? " fast" : "";
 }
 
 export function modelSetLabel(preset: ModelSet): string {
-	return `${preset.model} ${preset.thinking}${preset.fast ? " fast" : ""} (${preset.provider})`;
+	return `${preset.model} ${preset.thinking}${speedLabel(preset)} (${preset.provider})`;
 }
 
 export function sameModelSet(a: ModelSet, b: ModelSet): boolean {
@@ -32,7 +37,8 @@ export function sameModelSet(a: ModelSet, b: ModelSet): boolean {
 		a.provider === b.provider &&
 		a.model === b.model &&
 		a.thinking === b.thinking &&
-		a.fast === b.fast
+		a.fast === b.fast &&
+		Boolean(a.ultrafast) === Boolean(b.ultrafast)
 	);
 }
 
@@ -57,7 +63,9 @@ export function readModelSets(path: string): ModelSet[] {
 				p.model.length > 0 &&
 				typeof p.thinking === "string" &&
 				p.thinking.length > 0 &&
-				typeof p.fast === "boolean"
+				typeof p.fast === "boolean" &&
+				(p.ultrafast === undefined || typeof p.ultrafast === "boolean") &&
+				!(p.fast && p.ultrafast)
 			);
 		})
 	)
@@ -121,6 +129,7 @@ async function showPicker(
 				model: ctx.model.id,
 				thinking: pi.getThinkingLevel(),
 				fast: fast.isEnabled(ctx.model),
+				...(fast.getMode(ctx.model) === "ultrafast" ? { ultrafast: true } : {}),
 			}
 		: undefined;
 	const selected = await ctx.ui.custom<ModelSet | undefined>(
@@ -139,10 +148,11 @@ async function showPicker(
 				const candidates = sets.filter(
 					(p) =>
 						(!tokens.includes("fast") || p.fast) &&
-						(!tokens.includes("nofast") || !p.fast),
+						(!tokens.includes("ultrafast") || p.ultrafast) &&
+						(!tokens.includes("nofast") || (!p.fast && !p.ultrafast)),
 				);
 				const query = tokens
-					.filter((token) => token !== "fast" && token !== "nofast")
+					.filter((token) => !["fast", "ultrafast", "nofast"].includes(token))
 					.join(" ");
 				return fuzzyFilter(candidates, query, modelSetLabel);
 			};
@@ -186,7 +196,7 @@ async function showPicker(
 											? theme.fg("success", " ✓")
 											: "";
 									const isSelected = start + i === index;
-									const label = `${isSelected ? "→ " : "  "}${p.model} ${p.thinking}${p.fast ? " fast" : ""}`;
+									const label = `${isSelected ? "→ " : "  "}${p.model} ${p.thinking}${speedLabel(p)}`;
 									const provider = theme.fg("muted", `(${p.provider})`);
 									return truncateToWidth(
 										`${isSelected ? theme.fg("accent", label) : label} ${provider}${check}`,
@@ -295,6 +305,8 @@ async function showPicker(
 	if (!model) throw new Error(`Model unavailable: ${modelSetLabel(selected)}`);
 	if (selected.fast && !supportsFast(model))
 		throw new Error("Fast mode is not available for this model");
+	if (selected.ultrafast && !supportsUltrafast(model))
+		throw new Error("Ultrafast mode is not available for this model");
 	const thinking = getSupportedThinkingLevels(model).find(
 		(level) => level === selected.thinking,
 	);
@@ -303,5 +315,6 @@ async function showPicker(
 	if (!(await pi.setModel(model)))
 		throw new Error("Could not select model (check authentication)");
 	pi.setThinkingLevel(thinking);
-	fast.setEnabled(selected.fast, model);
+	if (selected.ultrafast) fast.setMode("ultrafast", model);
+	else fast.setEnabled(selected.fast, model);
 }

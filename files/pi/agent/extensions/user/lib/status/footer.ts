@@ -7,6 +7,7 @@ import type { Component, TUI } from "@earendil-works/pi-tui";
 import { truncateToWidth, visibleWidth } from "@earendil-works/pi-tui";
 import { formatPercent, formatTokens, truncateMiddle } from "./format";
 import { getUsageTotals } from "./usage";
+import type { SpeedMode } from "../../features/fast";
 
 type FooterFactory = NonNullable<
 	Parameters<ExtensionUIContext["setFooter"]>[0]
@@ -44,7 +45,9 @@ function renderCost(totals: UsageTotals): string {
 export function createStatusBarFooter(
 	ctx: ExtensionContext,
 	setRequestRender: (requestRender: RequestRender | undefined) => void,
-	isFastEnabled: (model: ModelIdentity | undefined) => boolean = () => false,
+	getSpeedMode: (
+		model: ModelIdentity | undefined,
+	) => SpeedMode | undefined = () => undefined,
 ): FooterFactory {
 	return (
 		tui: TUI,
@@ -64,9 +67,9 @@ export function createStatusBarFooter(
 			const thinking = model.reasoning
 				? (ctx.thinkingLevel ?? "off")
 				: undefined;
-			const fast = isFastEnabled(model) ? "fast" : undefined;
+			const speed = getSpeedMode(model);
 			const identity = joinParts(
-				[`(${model.provider}) ${model.id}`, thinking, fast],
+				[`(${model.provider}) ${model.id}`, thinking, speed],
 				" ",
 			);
 			const branch = footerData.getGitBranch();

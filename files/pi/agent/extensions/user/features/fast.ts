@@ -12,17 +12,19 @@ const ANTHROPIC_FAST_MODEL_IDS = new Set([
 ]);
 const OPENAI_CODEX_FAST_MODEL_IDS = new Set([
 	"gpt-6-astra",
-	"gpt-6-luna",
+	"gpt-6.1-sol",
 	"gpt-6-sol",
-	"gpt-5.6-luna",
-	"gpt-5.6-sol",
+	"gpt-6-luna",
 	"gpt-5.6-terra",
+	"gpt-5.6-sol",
+	"gpt-5.6-luna",
 	"gpt-5.5",
 	"gpt-5.4",
 ]);
 
 type FastModel = NonNullable<ExtensionContext["model"]>;
 type ModelIdentity = Pick<FastModel, "provider" | "id">;
+export type SpeedMode = "fast" | "ultrafast";
 
 type RecordLike = Record<string, unknown>;
 
@@ -57,11 +59,23 @@ export function supportsFast(model: ModelIdentity | undefined): boolean {
 	);
 }
 
+export function supportsUltrafast(model: ModelIdentity | undefined): boolean {
+	// GPT-6.1 Sol Ultrafast is announced for later; enable it once support and rates are published.
+	// https://learn.chatgpt.com/docs/models#gpt-61-sol
+	return model?.provider === "openai-codex" && model.id === "gpt-6-astra";
+}
+
 export function enableFastPayload(
 	payload: unknown,
 	model: ModelIdentity | undefined,
+	mode: SpeedMode = "fast",
 ): unknown {
 	if (!isRecord(payload) || payload.model !== model?.id) return undefined;
+	if (mode === "ultrafast") {
+		return supportsUltrafast(model)
+			? { ...payload, service_tier: "ultrafast" }
+			: undefined;
+	}
 	if (supportsAnthropicFast(model)) return { ...payload, speed: "fast" };
 	if (
 		model?.provider === "openai-codex" &&
@@ -75,8 +89,15 @@ export function enableFastPayload(
 export function adjustFastCost(
 	message: AssistantMessage,
 	model: FastModel | undefined,
+	mode: SpeedMode = "fast",
 ): AssistantMessage {
-	const multiplier = getFastCostMultiplier(model);
+	// Purchased-credit rates; included subscription usage has a separate multiplier.
+	const multiplier =
+		mode === "ultrafast"
+			? supportsUltrafast(model)
+				? 6
+				: undefined
+			: getFastCostMultiplier(model);
 	if (
 		multiplier === undefined ||
 		message.provider !== model?.provider ||
@@ -120,61 +141,101 @@ export function addAnthropicFastBeta(
 
 export interface FastController {
 	onChange?: () => void;
+	getMode: (model: ModelIdentity | undefined) => SpeedMode | undefined;
+	setMode: (
+		mode: SpeedMode | undefined,
+		model: ModelIdentity | undefined,
+	) => void;
 	isEnabled: (model: ModelIdentity | undefined) => boolean;
 	setEnabled: (enabled: boolean, model: ModelIdentity | undefined) => void;
 }
 
 export function registerFastFeature(pi: ExtensionAPI): FastController {
-	let enabled = false;
-	let activeFastRequest: FastModel | undefined;
+	let mode: SpeedMode | undefined;
+	let activeFastRequest: { model: FastModel; mode: SpeedMode } | undefined;
 	const controller: FastController = {
-		isEnabled: (model) => enabled && supportsFast(model),
-		setEnabled: (value, model) => {
-			enabled = value && supportsFast(model);
+		getMode: (model) => {
+			if (mode === "ultrafast")
+				return supportsUltrafast(model) ? mode : undefined;
+			return mode === "fast" && supportsFast(model) ? mode : undefined;
+		},
+		setMode: (value, model) => {
+			mode =
+				value === "ultrafast"
+					? supportsUltrafast(model)
+						? value
+						: undefined
+					: value === "fast" && supportsFast(model)
+						? value
+						: undefined;
 			controller.onChange?.();
 		},
+		isEnabled: (model) => controller.getMode(model) === "fast",
+		setEnabled: (value, model) =>
+			controller.setMode(value ? "fast" : undefined, model),
 	};
 
-	pi.registerCommand("fast", {
-		description: "Toggle Fast mode for supported models",
-		handler: async (args, ctx) => {
-			if (args.trim()) {
-				ctx.ui.notify("Usage: /fast", "warning");
-				return;
-			}
-			if (!supportsFast(ctx.model)) {
-				ctx.ui.notify("Fast mode is not available for this model", "warning");
-				return;
-			}
+	for (const speed of ["fast", "ultrafast"] as const) {
+		const label = speed === "fast" ? "Fast" : "Ultrafast";
+		pi.registerCommand(speed, {
+			description: `Toggle ${label} mode for supported models`,
+			handler: async (args, ctx) => {
+				if (args.trim()) {
+					ctx.ui.notify(`Usage: /${speed}`, "warning");
+					return;
+				}
+				if (
+					!(speed === "fast"
+						? supportsFast(ctx.model)
+						: supportsUltrafast(ctx.model))
+				) {
+					ctx.ui.notify(
+						`${label} mode is not available for this model`,
+						"warning",
+					);
+					return;
+				}
 
-			controller.setEnabled(!enabled, ctx.model);
-			ctx.ui.notify(`Fast mode ${enabled ? "enabled" : "disabled"}`, "info");
-		},
-	});
+				controller.setMode(mode === speed ? undefined : speed, ctx.model);
+				ctx.ui.notify(
+					`${label} mode ${mode === speed ? "enabled" : "disabled"}`,
+					"info",
+				);
+			},
+		});
+	}
 
 	pi.on("model_select", (event, ctx) => {
-		if (!enabled || supportsFast(event.model)) return;
+		if (!mode || controller.getMode(event.model)) return;
 
-		controller.setEnabled(false, event.model);
-		ctx.ui.notify("Fast mode disabled for the selected model", "info");
+		const label = mode === "fast" ? "Fast" : "Ultrafast";
+		controller.setMode(undefined, event.model);
+		ctx.ui.notify(`${label} mode disabled for the selected model`, "info");
 	});
 
 	pi.on("before_provider_request", (event, ctx) => {
-		if (!enabled || !supportsFast(ctx.model)) return;
-		const payload = enableFastPayload(event.payload, ctx.model);
-		if (payload !== undefined && ctx.model) activeFastRequest = ctx.model;
+		const requestMode = controller.getMode(ctx.model);
+		if (!requestMode) return;
+		const payload = enableFastPayload(event.payload, ctx.model, requestMode);
+		if (payload !== undefined && ctx.model)
+			activeFastRequest = { model: ctx.model, mode: requestMode };
 		return payload;
 	});
 
 	pi.on("before_provider_headers", (event, ctx) => {
-		if (!enabled || !supportsAnthropicFast(ctx.model)) return;
+		if (!controller.isEnabled(ctx.model) || !supportsAnthropicFast(ctx.model))
+			return;
 		addAnthropicFastBeta(event.headers);
 	});
 
 	pi.on("message_end", (event) => {
 		if (event.message.role !== "assistant" || !activeFastRequest) return;
 
-		const message = adjustFastCost(event.message, activeFastRequest);
+		const message = adjustFastCost(
+			event.message,
+			activeFastRequest.model,
+			activeFastRequest.mode,
+		);
 		activeFastRequest = undefined;
 		return { message };
 	});

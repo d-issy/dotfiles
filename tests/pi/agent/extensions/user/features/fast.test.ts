@@ -1,12 +1,17 @@
 import assert from "node:assert/strict";
 import type { AssistantMessage } from "@earendil-works/pi-ai";
-import type { ExtensionContext } from "@earendil-works/pi-coding-agent";
-import { describe, it } from "vitest";
+import type {
+	ExtensionAPI,
+	ExtensionContext,
+} from "@earendil-works/pi-coding-agent";
+import { describe, it, vi } from "vitest";
 import {
 	addAnthropicFastBeta,
 	adjustFastCost,
 	enableFastPayload,
+	registerFastFeature,
 	supportsFast,
+	supportsUltrafast,
 } from "#pi-user/features/fast";
 
 function fastModel(
@@ -57,11 +62,12 @@ function assistant(provider: string, model: string): AssistantMessage {
 describe("supportsFast", () => {
 	it.each([
 		"gpt-6-astra",
-		"gpt-6-luna",
+		"gpt-6.1-sol",
 		"gpt-6-sol",
-		"gpt-5.6-luna",
-		"gpt-5.6-sol",
+		"gpt-6-luna",
 		"gpt-5.6-terra",
+		"gpt-5.6-sol",
+		"gpt-5.6-luna",
 		"gpt-5.5",
 		"gpt-5.4",
 	])("supports %s through ChatGPT", (id) => {
@@ -85,11 +91,124 @@ describe("supportsFast", () => {
 			supportsFast({ provider: "anthropic", id: "claude-opus-4-7" }),
 			false,
 		);
+		assert.equal(
+			supportsFast({ provider: "anthropic", id: "claude-sonnet-5-5" }),
+			false,
+		);
+	});
+});
+
+describe("Ultrafast", () => {
+	it("supports only Astra through ChatGPT and sends the Ultrafast tier", () => {
+		const model = { provider: "openai-codex", id: "gpt-6-astra" };
+		assert.equal(supportsUltrafast(model), true);
+		const payload = { model: model.id, stream: true };
+		assert.deepEqual(enableFastPayload(payload, model, "ultrafast"), {
+			...payload,
+			service_tier: "ultrafast",
+		});
+		assert.equal("service_tier" in payload, false);
+		for (const unsupported of [
+			undefined,
+			{ ...model, id: "gpt-6.1-sol" },
+			{ ...model, id: "gpt-6-luna" },
+			{ ...model, provider: "openai" },
+			{ provider: "anthropic", id: "claude-opus-5-5" },
+		]) {
+			assert.equal(supportsUltrafast(unsupported), false);
+			assert.equal(
+				enableFastPayload(payload, unsupported, "ultrafast"),
+				undefined,
+			);
+		}
+		assert.equal(
+			enableFastPayload({ model: "gpt-6-sol" }, model, "ultrafast"),
+			undefined,
+		);
+	});
+
+	it("applies the sixfold purchased-credit rate without mutating usage", () => {
+		const message = assistant("openai-codex", "gpt-6-astra");
+		const adjusted = adjustFastCost(
+			message,
+			fastModel("openai-codex", "gpt-6-astra"),
+			"ultrafast",
+		);
+		assert.deepEqual(adjusted.usage.cost, {
+			input: 6,
+			output: 12,
+			cacheRead: 3,
+			cacheWrite: 1.5,
+			total: 22.5,
+		});
+		assert.equal(message.usage.cost.total, 3.75);
+		assert.equal(
+			adjustFastCost(
+				message,
+				fastModel("openai-codex", "gpt-6-sol"),
+				"ultrafast",
+			),
+			message,
+		);
+	});
+
+	it("toggles modes exclusively and keeps the request's rate after a mode change", async () => {
+		type Handler = (args: string, ctx: ExtensionContext) => Promise<void>;
+		type EventHandler = (
+			event: Record<string, unknown>,
+			ctx: ExtensionContext,
+		) => unknown;
+		const commands = new Map<string, Handler>();
+		const events = new Map<string, EventHandler>();
+		const pi = {
+			registerCommand: (name: string, command: { handler: Handler }) =>
+				commands.set(name, command.handler),
+			on: (name: string, handler: EventHandler) => events.set(name, handler),
+		} as unknown as ExtensionAPI;
+		const controller = registerFastFeature(pi);
+		const notify = vi.fn();
+		const ctx = {
+			model: fastModel("openai-codex", "gpt-6-astra"),
+			ui: { notify },
+		} as unknown as ExtensionContext;
+		await commands.get("fast")!("", ctx);
+		assert.equal(controller.getMode(ctx.model), "fast");
+		await commands.get("ultrafast")!("", ctx);
+		assert.equal(controller.getMode(ctx.model), "ultrafast");
+		assert.equal(controller.isEnabled(ctx.model), false);
+		assert.deepEqual(
+			events.get("before_provider_request")!(
+				{ payload: { model: ctx.model!.id } },
+				ctx,
+			),
+			{ model: "gpt-6-astra", service_tier: "ultrafast" },
+		);
+		await commands.get("fast")!("", ctx);
+		const result = events.get("message_end")!(
+			{ message: assistant("openai-codex", "gpt-6-astra") },
+			ctx,
+		) as { message: AssistantMessage };
+		assert.equal(result.message.usage.cost.total, 22.5);
+		await commands.get("ultrafast")!("", ctx);
+		await commands.get("ultrafast")!("", ctx);
+		assert.equal(controller.getMode(ctx.model), undefined);
+		await commands.get("ultrafast")!("", ctx);
+		events.get("model_select")!(
+			{ model: fastModel("openai-codex", "gpt-6-sol") },
+			ctx,
+		);
+		assert.equal(controller.getMode(ctx.model), undefined);
+		assert.match(notify.mock.calls.at(-1)![0], /Ultrafast mode disabled/u);
+		ctx.model = fastModel("openai-codex", "gpt-6-sol");
+		await commands.get("ultrafast")!("", ctx);
+		assert.match(notify.mock.calls.at(-1)![0], /not available/u);
+		await commands.get("ultrafast")!("on", ctx);
+		assert.equal(notify.mock.calls.at(-1)![0], "Usage: /ultrafast");
 	});
 });
 
 describe("enableFastPayload", () => {
-	it.each(["gpt-6-astra", "gpt-6-luna", "gpt-6-sol", "gpt-5.5"])(
+	it.each(["gpt-6-astra", "gpt-6.1-sol", "gpt-6-sol", "gpt-6-luna", "gpt-5.5"])(
 		"adds the priority service tier to %s payloads",
 		(id) => {
 			const payload = { model: id, stream: true };
@@ -141,22 +260,22 @@ describe("adjustFastCost", () => {
 		assert.equal(message.usage.cost.total, 3.75);
 	});
 
-	it("applies the Astra Fast multiplier", () => {
-		const message = assistant("openai-codex", "gpt-6-astra");
-		const adjusted = adjustFastCost(
-			message,
-			fastModel("openai-codex", "gpt-6-astra"),
-		);
+	it.each(["gpt-6-astra", "gpt-6.1-sol"])(
+		"applies the %s Fast multiplier",
+		(id) => {
+			const message = assistant("openai-codex", id);
+			const adjusted = adjustFastCost(message, fastModel("openai-codex", id));
 
-		assert.deepEqual(adjusted.usage.cost, {
-			input: 2,
-			output: 4,
-			cacheRead: 1,
-			cacheWrite: 0.5,
-			total: 7.5,
-		});
-		assert.equal(message.usage.cost.total, 3.75);
-	});
+			assert.deepEqual(adjusted.usage.cost, {
+				input: 2,
+				output: 4,
+				cacheRead: 1,
+				cacheWrite: 0.5,
+				total: 7.5,
+			});
+			assert.equal(message.usage.cost.total, 3.75);
+		},
+	);
 
 	it("applies the Anthropic Fast multiplier", () => {
 		const adjusted = adjustFastCost(

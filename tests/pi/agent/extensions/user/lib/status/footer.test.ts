@@ -65,7 +65,12 @@ describe("createStatusBarFooter", () => {
 		};
 
 		const colors: string[] = [];
-		const footer = createStatusBarFooter(ctx, () => undefined, supportsFast)(
+		let speed: "fast" | "ultrafast" = "fast";
+		const footer = createStatusBarFooter(
+			ctx,
+			() => undefined,
+			(model) => (supportsFast(model) ? speed : undefined),
+		)(
 			{ requestRender: () => undefined } as never,
 			{
 				fg: (color: string, text: string) => {
@@ -85,8 +90,16 @@ describe("createStatusBarFooter", () => {
 		);
 		assert.deepEqual(colors, ["muted", "muted"]);
 		assert.doesNotMatch(output, /↑|↓|R202k|W44k|auto|repo/u);
+		(ctx.model as { id: string; provider: string }).id = "gpt-6-astra";
+		(ctx.model as { provider: string }).provider = "openai-codex";
+		speed = "ultrafast";
+		assert.match(
+			plain(footer.render(120).join("\n")),
+			/^\(openai-codex\) gpt-6-astra high ultrafast · main /u,
+		);
 
 		(ctx.model as { id: string }).id = "claude-sonnet-4";
+		(ctx.model as { provider: string }).provider = "anthropic";
 		assert.match(
 			plain(footer.render(120).join("\n")),
 			/^\(anthropic\) claude-sonnet-4 high · main /u,
