@@ -6,6 +6,8 @@ import type {
 } from "@earendil-works/pi-coding-agent";
 import { describe, it, vi } from "vitest";
 import {
+	OPENROUTER_FAST_MODEL_IDS,
+	OPENROUTER_ULTRAFAST_MODEL_IDS,
 	addAnthropicFastBeta,
 	adjustFastCost,
 	enableFastPayload,
@@ -58,6 +60,115 @@ function assistant(provider: string, model: string): AssistantMessage {
 		timestamp: 0,
 	};
 }
+
+describe("gateway speed modes", () => {
+	it.each([...OPENROUTER_FAST_MODEL_IDS])(
+		"requests OpenRouter Priority for %s",
+		(id) => {
+			const model = fastModel("openrouter", id);
+			assert.equal(supportsFast(model), true);
+			assert.deepEqual(
+				enableFastPayload(
+					{ model: id, provider: { order: ["openai"] } },
+					model,
+				),
+				{
+					model: id,
+					provider: { order: ["openai"] },
+					service_tier: "priority",
+				},
+			);
+			const message = assistant("openrouter", id);
+			assert.equal(adjustFastCost(message, model), message);
+		},
+	);
+
+	it.each([...OPENROUTER_ULTRAFAST_MODEL_IDS])(
+		"requests OpenRouter Ultrafast for %s",
+		(id) => {
+			const model = fastModel("openrouter", id);
+			assert.equal(supportsUltrafast(model), true);
+			assert.deepEqual(enableFastPayload({ model: id }, model, "ultrafast"), {
+				model: id,
+				service_tier: "ultrafast",
+			});
+			const message = assistant("openrouter", id);
+			assert.equal(adjustFastCost(message, model, "ultrafast"), message);
+		},
+	);
+
+	it.each(["gpt-6-luna", "gpt-5.6-luna", "grok-4.7", "grok-4.6"])(
+		"forwards Priority for OpenCode Go %s",
+		(id) => {
+			const model = fastModel("opencode-go", id);
+			assert.equal(supportsFast(model), true);
+			assert.deepEqual(enableFastPayload({ model: id }, model), {
+				model: id,
+				service_tier: "priority",
+			});
+			assert.equal(supportsUltrafast(model), false);
+			const message = assistant("opencode-go", id);
+			assert.equal(adjustFastCost(message, model), message);
+		},
+	);
+
+	it("covers all audited gateway families without enabling unknown models or batch variants", () => {
+		assert.equal(OPENROUTER_FAST_MODEL_IDS.size, 49);
+		for (const id of [
+			"openai/gpt-6.1-sol-pro",
+			"anthropic/claude-opus-5.5",
+			"google/gemini-3.8-flash",
+			"x-ai/grok-4.7",
+			"deepseek/deepseek-v4.1-flash",
+			"z-ai/glm-5.3",
+			"moonshotai/kimi-k3",
+		])
+			assert.equal(supportsFast({ provider: "openrouter", id }), true);
+		for (const id of [
+			"openai/unknown",
+			"openai/gpt-6-luna:batch",
+			"anthropic/claude-opus-4.7",
+		])
+			assert.equal(supportsFast({ provider: "openrouter", id }), false);
+		assert.equal(
+			supportsUltrafast({ provider: "openrouter", id: "openai/gpt-6.1-sol" }),
+			false,
+		);
+		assert.equal(
+			supportsFast({ provider: "opencode-go", id: "gpt-6-astra" }),
+			false,
+		);
+	});
+
+	it("keeps gateway Fast and Ultrafast active through controller events", () => {
+		for (const [provider, id, mode] of [
+			["openrouter", "anthropic/claude-opus-5.5", "fast"],
+			["openrouter", "openai/gpt-6-astra", "ultrafast"],
+			["opencode-go", "gpt-6-luna", "fast"],
+		] as const) {
+			type EventHandler = (
+				event: Record<string, unknown>,
+				ctx: ExtensionContext,
+			) => unknown;
+			const handlers = new Map<string, EventHandler>();
+			const pi = {
+				registerCommand: vi.fn(),
+				on: (name: string, handler: EventHandler) =>
+					handlers.set(name, handler),
+			} as unknown as ExtensionAPI;
+			const model = fastModel(provider, id);
+			const controller = registerFastFeature(pi);
+			controller.setMode(mode, model);
+			assert.equal(controller.getMode(model), mode);
+			assert.deepEqual(
+				handlers.get("before_provider_request")!({ payload: { model: id } }, {
+					model,
+				} as ExtensionContext),
+				{ model: id, service_tier: mode === "fast" ? "priority" : "ultrafast" },
+			);
+		}
+	});
+});
 
 describe("OpenAI provider migration", () => {
 	it.each([

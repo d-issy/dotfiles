@@ -22,6 +22,65 @@ const OPENAI_FAST_MODEL_IDS = new Set([
 	"gpt-5.4",
 ]);
 
+// Audited against all 464 OpenRouter models' /endpoints on 2026-09-30.
+// https://openrouter.ai/docs/guides/features/service-tiers
+// Keep only models with explicit /fast, /priority, or /ultrafast endpoints.
+export const OPENROUTER_FAST_MODEL_IDS = new Set([
+	"anthropic/claude-opus-5.5",
+	"anthropic/claude-opus-5",
+	"anthropic/claude-opus-4.8",
+	"deepseek/deepseek-v4.1-flash",
+	"deepseek/deepseek-v4-flash-0731",
+	"google/gemini-3.8-flash",
+	"google/gemini-3.7-flash",
+	"google/gemini-3.6-flash",
+	"google/gemini-3.5-flash",
+	"google/gemini-3.5-flash-lite",
+	"google/gemini-3.1-pro-preview",
+	"google/gemini-3.1-flash-lite",
+	"google/gemini-3.1-flash-lite-preview",
+	"google/gemini-3-flash-preview",
+	"google/gemini-2.5-pro",
+	"google/gemini-2.5-pro-preview",
+	"google/gemini-2.5-flash",
+	"google/gemini-2.5-flash-image",
+	"google/gemini-2.5-flash-lite",
+	"moonshotai/kimi-k3",
+	"openai/gpt-6.1-sol-pro",
+	"openai/gpt-6.1-sol",
+	"openai/gpt-6-astra-pro",
+	"openai/gpt-6-astra",
+	"openai/gpt-6-sol-pro",
+	"openai/gpt-6-sol",
+	"openai/gpt-6-luna-pro",
+	"openai/gpt-6-luna",
+	"openai/gpt-5.6-terra-pro",
+	"openai/gpt-5.6-terra",
+	"openai/gpt-5.6-sol-pro",
+	"openai/gpt-5.6-sol",
+	"openai/gpt-5.6-luna-pro",
+	"openai/gpt-5.6-luna",
+	"openai/gpt-5.5",
+	"openai/gpt-5.4",
+	"openai/gpt-5.4-mini",
+	"openai/gpt-5.3-codex",
+	"openai/gpt-5.2",
+	"openai/gpt-5.1",
+	"x-ai/grok-4.7",
+	"x-ai/grok-4.6",
+	"x-ai/grok-4.5",
+	"x-ai/grok-4.3",
+	"x-ai/grok-4.20-multi-agent",
+	"x-ai/grok-4.20",
+	"x-ai/grok-build-0.1",
+	"z-ai/glm-5.3",
+	"z-ai/glm-5.2",
+]);
+export const OPENROUTER_ULTRAFAST_MODEL_IDS = new Set([
+	"openai/gpt-6-astra-pro",
+	"openai/gpt-6-astra",
+]);
+
 type FastModel = NonNullable<ExtensionContext["model"]>;
 type ModelIdentity = Pick<FastModel, "provider" | "id">;
 export type SpeedMode = "fast" | "ultrafast";
@@ -35,8 +94,8 @@ function isRecord(value: unknown): value is RecordLike {
 interface SpeedProfile {
 	fastModels: ReadonlySet<string>;
 	ultrafastModels: ReadonlySet<string>;
-	fastMultiplier: (id: string) => number;
-	ultrafastMultiplier: number;
+	fastMultiplier: (id: string) => number | undefined;
+	ultrafastMultiplier: number | undefined;
 	fastPayload: RecordLike;
 }
 
@@ -53,6 +112,24 @@ const OPENAI_SPEED_PROFILE: SpeedProfile = {
 const SPEED_PROFILES: Readonly<Partial<Record<string, SpeedProfile>>> = {
 	openai: OPENAI_SPEED_PROFILE,
 	"openai-codex": OPENAI_SPEED_PROFILE,
+	openrouter: {
+		fastModels: OPENROUTER_FAST_MODEL_IDS,
+		ultrafastModels: OPENROUTER_ULTRAFAST_MODEL_IDS,
+		// Routing can fall back off-tier; rates depend on the serving endpoint.
+		fastMultiplier: () => undefined,
+		ultrafastMultiplier: undefined,
+		fastPayload: { service_tier: "priority" },
+	},
+	"opencode-go": {
+		// Go forwards Responses request fields unchanged; upstream tier execution
+		// is not guaranteed. Do not assume OpenAI's rates for Go subscription usage.
+		// https://opencode.ai/docs/go/
+		fastModels: new Set(["gpt-6-luna", "gpt-5.6-luna", "grok-4.7", "grok-4.6"]),
+		ultrafastModels: new Set(),
+		fastMultiplier: () => undefined,
+		ultrafastMultiplier: undefined,
+		fastPayload: { service_tier: "priority" },
+	},
 	anthropic: {
 		fastModels: ANTHROPIC_FAST_MODEL_IDS,
 		ultrafastModels: new Set(),
