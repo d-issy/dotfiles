@@ -3,6 +3,7 @@ import type {
 	ExtensionContext,
 } from "@earendil-works/pi-coding-agent";
 import { createStatusBarFooter } from "../lib/status";
+import type { SpeedMode } from "./fast";
 
 type ModelIdentity = Pick<
 	NonNullable<ExtensionContext["model"]>,
@@ -11,7 +12,7 @@ type ModelIdentity = Pick<
 
 export function registerStatusFeature(
 	pi: ExtensionAPI,
-	isFastEnabled: (model: ModelIdentity | undefined) => boolean,
+	getSpeedMode: (model: ModelIdentity | undefined) => SpeedMode | undefined,
 ): () => void {
 	let requestRender: (() => void) | undefined;
 
@@ -28,7 +29,7 @@ export function registerStatusFeature(
 				(nextRequestRender) => {
 					requestRender = nextRequestRender;
 				},
-				isFastEnabled,
+				getSpeedMode,
 			),
 		);
 	});

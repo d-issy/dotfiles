@@ -6,7 +6,7 @@ import type {
 	ExtensionContext,
 } from "@earendil-works/pi-coding-agent";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type { FastController } from "#pi-user/features/fast";
+import type { FastController, SpeedMode } from "#pi-user/features/fast";
 import {
 	type ModelSet,
 	modelSetLabel,
@@ -51,6 +51,7 @@ async function picker(
 	keys: string[],
 	initial: ModelSet[] = [],
 	authenticated = true,
+	mode?: SpeedMode,
 ): Promise<{
 	sets: ModelSet[];
 	pi: ExtensionAPI;
@@ -80,7 +81,12 @@ async function picker(
 		setThinkingLevel: vi.fn(),
 		setModel: vi.fn(async () => authenticated),
 	} as unknown as ExtensionAPI;
-	const fast = { isEnabled: vi.fn(() => false), setEnabled: vi.fn() };
+	const fast = {
+		isEnabled: vi.fn(() => false),
+		setEnabled: vi.fn(),
+		getMode: vi.fn(() => mode),
+		setMode: vi.fn(),
+	};
 	const notify = vi.fn();
 	const ctx = {
 		hasUI: true,
@@ -175,6 +181,43 @@ describe("model sets", () => {
 		expect(result.fast.setEnabled).toHaveBeenCalledWith(
 			false,
 			expect.objectContaining({ id: astra.model }),
+		);
+	});
+	it("saves and restores Ultrafast separately from Fast", async () => {
+		const ultrafast = { ...astra, ultrafast: true };
+		const saved = await picker(["\x13", "\x1b"], [astra], true, "ultrafast");
+		expect(saved.sets).toEqual([astra, ultrafast]);
+		expect(modelSetLabel(ultrafast)).toBe(
+			"gpt-6-astra low ultrafast (openai-codex)",
+		);
+		expect(sameModelSet(astra, ultrafast)).toBe(false);
+		const selected = await picker(
+			["ultrafast", "\r"],
+			[astra, ultrafast, luna],
+		);
+		expect(selected.fast.setMode).toHaveBeenCalledWith(
+			"ultrafast",
+			expect.objectContaining({ id: astra.model }),
+		);
+		expect(selected.fast.setEnabled).not.toHaveBeenCalled();
+		const standard = await picker(["nofast", "\r"], [ultrafast, astra]);
+		expect(standard.fast.setEnabled).toHaveBeenCalledWith(
+			false,
+			expect.objectContaining({ id: astra.model }),
+		);
+	});
+	it("rejects contradictory modes and unsupported Ultrafast presets", async () => {
+		const path = join(directory(), "model-sets.json");
+		writeModelSets(path, [{ ...astra, fast: true, ultrafast: true }]);
+		expect(() => readModelSets(path)).toThrow("Invalid model sets");
+		const result = await picker(
+			["\r"],
+			[{ ...luna, fast: false, ultrafast: true }],
+		);
+		expect(result.pi.setModel).not.toHaveBeenCalled();
+		expect(result.notify).toHaveBeenCalledWith(
+			expect.stringContaining("Ultrafast mode is not available"),
+			"error",
 		);
 	});
 	it("confirms deletion and allows cancelling it", async () => {
