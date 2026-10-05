@@ -25,6 +25,12 @@ Use publishing skills for staging, commits, pushing, and creation mechanics wher
 - Do not describe code changes that are apparent from the diff. Explain why the change is needed and provide reviewer-relevant context; without a template, use `## Summary` and `## Background`.
 - Do not list routine work already handled by CI/CD, such as formatting, linting, tests, builds, or deployments. Mention it only when requested, required by the template, or when a notable result affects the review.
 
+## Images and Attachments
+
+- Upload images and videos with `gh pr create --attach` or `gh pr edit --attach`. Do not open a browser or use browser automation to attach files. If the CLI operation fails, diagnose the failure first; ask the user before switching to a browser.
+- For a new PR, include attachments in the creation command, for example: `gh pr create --draft --title "..." --body-file body.md --attach './screenshot.png#Screenshot description'`. For an existing PR, use `gh pr edit <number> --attach './screenshot.png#Screenshot description'`; without a body flag, this preserves the existing body and appends the attachment. Repeat `--attach` for multiple files.
+- To place an image within the body, reference the attached local file in Markdown, such as `![Screenshot description](./screenshot.png)`; `gh` rewrites that reference to the uploaded asset URL. If an attachment command exits non-zero, check the PR before retrying: successful uploads and PR creation or updates may already have been applied.
+
 ## Git and Branch Safety
 
 - Commit only task-related changes.
