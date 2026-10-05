@@ -2,7 +2,7 @@
   dot.programs.mise = {
     enable = true;
 
-    zshIntegration.enable = false;
+    zshIntegration.enable = true;
     nushellIntegration.enable = true;
 
     idiomaticVersionFiles = {
