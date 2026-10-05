@@ -104,7 +104,104 @@ function summaries(chat: Container): string[] {
 	return plainLines(chat).filter((line) => /^ [✓✗]/u.test(line));
 }
 
+function codemode(
+	calls: Array<{ name: string; args: string; status: string }>,
+	isError = false,
+	wait = true,
+): ToolExecutionComponent {
+	const component = tool("codemode", false);
+	component.updateResult({
+		content: [{ type: "text", text: "Script output" }],
+		details: { calls },
+		isError,
+	});
+	if (wait) vi.advanceTimersByTime(3000);
+	return component;
+}
+
 describe("tool summaries (real Pi components)", () => {
+	it("summarizes executed codemode calls with the existing command labels", () => {
+		const chat = container(
+			tool("read"),
+			codemode([
+				{ name: "read", args: '{"path":"a"}', status: "ok" },
+				{ name: "read", args: '{"path":"b"}', status: "ok" },
+				{ name: "grep", args: "{}", status: "ok" },
+				{
+					name: "bash",
+					args: JSON.stringify({ command: "rg foo .; pnpm test; git status" }),
+					status: "ok",
+				},
+				{ name: "edit", args: "{}", status: "ok" },
+				{ name: "write", args: "{}", status: "ok" },
+			]),
+		);
+		expect(summaries(chat)).toEqual([
+			" ✓ read ×3, search ×2, run (pnpm test), git-read op, edit, write",
+		]);
+	});
+
+	it.each(["error", "cancelled", "running"])(
+		"keeps codemode rows with %s nested calls visible",
+		(status) => {
+			const row = codemode([{ name: "read", args: "{}", status }]);
+			expect(container(row).render(100)).toEqual(row.render(100));
+		},
+	);
+
+	it("keeps failed scripts and missing call metadata visible", () => {
+		for (const row of [codemode([], true), codemode([]), tool("codemode")]) {
+			expect(container(row).render(100)).toEqual(row.render(100));
+		}
+	});
+
+	it("shows codemode output for exactly three seconds after completion", () => {
+		const row = codemode(
+			[{ name: "bash", args: '{"command":"pnpm test"}', status: "ok" }],
+			false,
+			false,
+		);
+		const chat = container(row);
+		expect(chat.render(100)).toEqual(row.render(100));
+		vi.advanceTimersByTime(2999);
+		expect(chat.render(100)).toEqual(row.render(100));
+		vi.advanceTimersByTime(1);
+		expect(summaries(chat)).toEqual([" ✓ run (pnpm test)"]);
+	});
+
+	it("keeps pending codemode visible and starts the timer only on completion", () => {
+		const row = tool("codemode", false);
+		const chat = container(row);
+		row.updateResult(
+			{ content: [{ type: "text", text: "Working" }], isError: false },
+			true,
+		);
+		vi.advanceTimersByTime(5000);
+		expect(chat.render(100)).toEqual(row.render(100));
+		row.updateResult({
+			content: [{ type: "text", text: "Done" }],
+			details: { calls: [{ name: "read", args: "{}", status: "ok" }] },
+			isError: false,
+		});
+		expect(chat.render(100)).toEqual(row.render(100));
+		vi.advanceTimersByTime(3000);
+		expect(summaries(chat)).toEqual([" ✓ read"]);
+	});
+
+	it("collapses truncated bash arguments instead of leaving codemode visible", () => {
+		const chat = container(
+			codemode([
+				{ name: "bash", args: '{"command":"pnpm test…', status: "ok" },
+			]),
+		);
+		expect(summaries(chat)).toEqual([" ✓ run (bash)"]);
+	});
+
+	it("preserves expanded codemode output", () => {
+		const row = codemode([{ name: "read", args: "{}", status: "ok" }]);
+		row.setExpanded(true);
+		expect(container(row).render(100)).toEqual(row.render(100));
+	});
 	it("summarizes sed reads, redirected writes, and in-place edits", () => {
 		const chat = container(
 			tool(

@@ -10,7 +10,40 @@ import {
 	truncateToWidth,
 } from "@earendil-works/pi-tui";
 
-type CompletedTool = { name: string; isError: boolean; command?: string };
+type ToolOperation = { name: string; command?: string };
+type CompletedTool = ToolOperation & {
+	isError: boolean;
+	calls?: ToolOperation[];
+};
+
+// Use executed calls, not script text: loops, variables and parallel calls
+// must reflect what actually ran. Truncated bash arguments use a generic run label.
+function codemodeCalls(details: unknown): ToolOperation[] | undefined {
+	if (!details || typeof details !== "object" || !("calls" in details)) return;
+	if (!Array.isArray(details.calls) || details.calls.length === 0) return;
+	const calls: ToolOperation[] = [];
+	for (const call of details.calls) {
+		if (!call || typeof call.name !== "string" || call.status !== "ok") return;
+		let command: string | undefined;
+		if (call.name === "bash") {
+			try {
+				const args: unknown = JSON.parse(call.args);
+				if (
+					!args ||
+					typeof args !== "object" ||
+					!("command" in args) ||
+					typeof args.command !== "string"
+				)
+					return;
+				command = args.command;
+			} catch {
+				command = "bash";
+			}
+		}
+		calls.push({ name: call.name, command });
+	}
+	return calls;
+}
 type SummaryTheme = Pick<Theme, "fg">;
 
 function completedTool(component: Component): CompletedTool | undefined {
@@ -22,7 +55,7 @@ function completedTool(component: Component): CompletedTool | undefined {
 		args?: { command?: unknown };
 		expanded?: unknown;
 		isPartial?: unknown;
-		result?: { isError?: unknown };
+		result?: { isError?: unknown; details?: unknown };
 	};
 	if (
 		typeof row.toolName !== "string" ||
@@ -32,7 +65,12 @@ function completedTool(component: Component): CompletedTool | undefined {
 	)
 		return;
 
+	const calls =
+		row.toolName === "codemode" ? codemodeCalls(row.result.details) : undefined;
+	if (row.toolName === "codemode" && !calls && !row.result.isError) return;
+
 	return {
+		calls,
 		name: row.toolName,
 		isError: row.result.isError,
 		command:
@@ -103,27 +141,29 @@ function renderSummary(
 			continue;
 		}
 		if (tool && !keepBashVisible(child)) {
-			if (tool.name !== "bash") {
-				const name = ["grep", "find"].includes(tool.name)
-					? "search"
-					: tool.name;
-				counts.set(name, (counts.get(name) ?? 0) + 1);
-			} else {
-				let countedRun = false;
-				for (const { name, labeled } of bashOperationDetails(
-					tool.command ?? "",
-				)) {
-					if (labeled) {
-						counts.set(name, (counts.get(name) ?? 0) + 1);
-						continue;
+			for (const operation of tool.calls ?? [tool]) {
+				if (operation.name !== "bash") {
+					const name = ["grep", "find"].includes(operation.name)
+						? "search"
+						: operation.name;
+					counts.set(name, (counts.get(name) ?? 0) + 1);
+				} else {
+					let countedRun = false;
+					for (const { name, labeled } of bashOperationDetails(
+						operation.command ?? "",
+					)) {
+						if (labeled) {
+							counts.set(name, (counts.get(name) ?? 0) + 1);
+							continue;
+						}
+						if (!countedRun) {
+							counts.set("bash", (counts.get("bash") ?? 0) + 1);
+							countedRun = true;
+						}
+						const total = (operations.get(name) ?? 0) + 1;
+						operations.delete(name);
+						operations.set(name, total);
 					}
-					if (!countedRun) {
-						counts.set("bash", (counts.get("bash") ?? 0) + 1);
-						countedRun = true;
-					}
-					const total = (operations.get(name) ?? 0) + 1;
-					operations.delete(name);
-					operations.set(name, total);
 				}
 			}
 			continue;
@@ -142,7 +182,8 @@ function renderSummary(
 			typeof row.toolName === "string" &&
 			row.toolName !== "bash" &&
 			row.toolName !== "edit" &&
-			row.toolName !== "write"
+			row.toolName !== "write" &&
+			row.toolName !== "codemode"
 		)
 			continue;
 		// Pi renders a hidden label per assistant message. Fold thinking-only
@@ -172,7 +213,7 @@ function renderSummary(
 		// Keep pending edit/write previews and bash previews after the summary.
 		if (
 			child instanceof ToolExecutionComponent &&
-			["bash", "edit", "write"].includes(String(row.toolName)) &&
+			["bash", "edit", "write", "codemode"].includes(String(row.toolName)) &&
 			row.expanded === false &&
 			(pendingTool || keepBashVisible(child))
 		) {
@@ -236,7 +277,7 @@ export function installToolSummary(getTheme: () => SummaryTheme): () => void {
 		};
 		if (
 			!active ||
-			row.toolName !== "bash" ||
+			!["bash", "codemode"].includes(String(row.toolName)) ||
 			args[1] === true ||
 			deadlines.has(this)
 		)
