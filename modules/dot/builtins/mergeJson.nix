@@ -8,14 +8,14 @@
 }:
 let
   desired = pkgs.writeText "managed-${settingsFile}" (builtins.toJSON overrides);
-  stateName = "${lib.removePrefix "." (builtins.baseNameOf targetDir)}-${settingsFile}";
+  stateName = "${lib.removePrefix "." (baseNameOf targetDir)}-${settingsFile}";
   filter = ''
     def missing: {"__dotfiles_merge_missing__": true};
     def reconcile($current; $previous; $desired):
-      if $previous == $desired then $current
+      if $previous == missing and $desired == missing then $current
       elif ($desired | type) == "object" and $desired != missing then
-        ($current | if type == "object" then . else {} end) as $base |
-        ($previous | if type == "object" then . else {} end) as $old |
+        ($current | if type == "object" and . != missing then . else {} end) as $base |
+        ($previous | if type == "object" and . != missing then . else {} end) as $old |
         reduce (($old | keys) + ($desired | keys) | unique[]) as $key ($base;
           reconcile(
             (if has($key) then .[$key] else missing end);
@@ -38,7 +38,7 @@ let
         reduce $old[] as $item ($base;
           if ($desired | index($item)) == null and index($item) != null then del(.[index($item)]) else . end) |
         reduce $desired[] as $item (.;
-          if ($old | index($item)) != null or index($item) != null then . else . + [$item] end)
+          if index($item) != null then . else . + [$item] end)
       else $desired end;
     reconcile($current[0]; $previous[0]; $desired[0])
   '';
