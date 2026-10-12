@@ -3,8 +3,6 @@ allowBuilds:
   esbuild: false
   koffi: false
   protobufjs: false
-overrides:
-  "undici@<8.9.0": 8.11.2
 minimumReleaseAgeExclude:
   - '@earendil-works/pi-agent-core@1.2.0'
   - '@earendil-works/pi-ai@1.2.0'
