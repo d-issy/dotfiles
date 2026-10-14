@@ -7,8 +7,6 @@ _:
     enable = true;
 
     settings = {
-      # 272,000 tokens × 97.5% (default: 95% = 258,400 tokens).
-      model_auto_compact_token_limit = 265200;
       tui.status_line = [
         "model-with-reasoning"
         "context-remaining"
