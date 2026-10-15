@@ -52,8 +52,16 @@ jobs:
               try {
                 const output = execFileSync('nix', [
                   'eval', '--json', '--no-write-lock-file',
-                  `./${revision}#homeConfigurations.${configuration}.config.home.packages`,
-                  '--apply', `packages: map (package: {
+                  `./${revision}#homeConfigurations.${configuration}.config`,
+                  '--apply', `config: let
+                    nixvim = config.programs.nixvim;
+                    packages = config.home.packages ++ (if nixvim.enable then
+                      [ nixvim.package ]
+                      ++ nixvim.extraPackages
+                      ++ nixvim.extraPackagesAfter
+                      ++ map (plugin: plugin.plugin or plugin) nixvim.build.plugins
+                    else []);
+                  in map (package: {
                     name = package.pname or (builtins.parseDrvName package.name).name;
                     version = package.version or (builtins.parseDrvName package.name).version;
                   }) packages`,
@@ -108,7 +116,7 @@ jobs:
               marker,
               '## Home Manager package changes',
               `Commit: ${process.env.HEAD_SHA}`,
-              'Compares `home.packages` in the PR base and head (not transitive dependencies).',
+              'Compares Home Manager packages, Neovim, Nixvim tools and plugins in the PR base and head.',
             ];
             const configurations = [['linux', 'Linux'], ['macos', 'macOS']];
             const changes = new Map();
