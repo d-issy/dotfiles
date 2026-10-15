@@ -59,12 +59,16 @@ jobs:
                       [ nixvim.package ]
                       ++ nixvim.extraPackages
                       ++ nixvim.extraPackagesAfter
-                      ++ map (plugin: plugin.plugin or plugin) nixvim.build.plugins
                     else []);
-                  in map (package: {
-                    name = package.pname or (builtins.parseDrvName package.name).name;
-                    version = package.version or (builtins.parseDrvName package.name).version;
-                  }) packages`,
+                    plugins = if nixvim.enable then
+                      map (plugin: plugin.plugin or plugin) nixvim.build.plugins
+                    else [];
+                    info = plugin: package: {
+                      inherit plugin;
+                      name = package.pname or (builtins.parseDrvName package.name).name;
+                      version = package.version or (builtins.parseDrvName package.name).version;
+                    };
+                  in map (info false) packages ++ map (info true) plugins`,
                 ], { encoding: 'utf8', maxBuffer: 4 * 1024 * 1024 });
                 packages[configuration][revision] = JSON.parse(output);
               } catch {
@@ -98,13 +102,15 @@ jobs:
               /[&<>"'`|*_[\]\\@\r\n]/g,
               (character) => `&#${character.charCodeAt(0)};`,
             );
-            const index = (items) => {
+            const index = (items, plugin) => {
               if (!Array.isArray(items)) throw new Error('Invalid package list');
               const result = new Map();
               for (const item of items) {
                 if (typeof item.name !== 'string' || typeof item.version !== 'string') {
                   throw new Error('Invalid package metadata');
                 }
+                if (typeof item.plugin !== 'boolean') throw new Error('Invalid package category');
+                if (item.plugin !== plugin) continue;
                 if (!result.has(item.name)) result.set(item.name, new Set());
                 result.get(item.name).add(item.version || '(version unknown)');
               }
@@ -119,7 +125,8 @@ jobs:
               'Compares Home Manager packages, Neovim, Nixvim tools and plugins in the PR base and head.',
             ];
             const configurations = [['linux', 'Linux'], ['macos', 'macOS']];
-            const changes = new Map();
+            const groups = [['packages', false], ['plugins', true]];
+            const changes = { packages: new Map(), plugins: new Map() };
             for (const [configuration, label] of configurations) {
               const revisions = packages[configuration];
               const failed = ['base', 'head'].filter((revision) => revisions[revision] === null);
@@ -127,34 +134,34 @@ jobs:
                 sections.push('', `⚠️ ${label}: evaluation failed (${failed.join(', ')}). No comparison available; see the workflow logs.`);
                 continue;
               }
-              const before = index(revisions.base);
-              const after = index(revisions.head);
-              const names = new Set([...before.keys(), ...after.keys()]);
-              for (const name of names) {
-                if (before.get(name) === after.get(name)) continue;
-                if (!changes.has(name)) changes.set(name, new Map());
-                const transitions = changes.get(name);
-                const key = JSON.stringify([before.get(name) ?? null, after.get(name) ?? null]);
-                if (!transitions.has(key)) transitions.set(key, []);
-                transitions.get(key).push(label);
+              for (const [group, plugin] of groups) {
+                const before = index(revisions.base, plugin);
+                const after = index(revisions.head, plugin);
+                const names = new Set([...before.keys(), ...after.keys()]);
+                for (const name of names) {
+                  if (before.get(name) === after.get(name)) continue;
+                  if (!changes[group].has(name)) changes[group].set(name, new Map());
+                  const transitions = changes[group].get(name);
+                  const key = JSON.stringify([before.get(name) ?? null, after.get(name) ?? null]);
+                  if (!transitions.has(key)) transitions.set(key, []);
+                  transitions.get(key).push(label);
+                }
               }
             }
-            sections.push('');
-            if (!changes.size) {
-              sections.push('No package version changes in the successfully evaluated configurations.');
-            } else {
+            // Share the size budget between the main and plugin tables.
+            let budget = 55000;
+            const renderTable = (entries) => {
               sections.push('| Package | Version |', '| --- | --- |');
-              // Stay below GitHub's comment size limit, even for unexpected metadata.
-              let budget = 55000;
               let omitted = 0;
               const version = (value) => value === null ? '—' : `\`${escape(value)}\``;
-              for (const name of [...changes.keys()].sort()) {
-                const lines = [...changes.get(name)].map(([key, labels]) => {
+              const displayName = (name) => name.replace(/-wrapper$/, '');
+              for (const name of [...entries.keys()].sort((a, b) => displayName(a).localeCompare(displayName(b)))) {
+                const lines = [...entries.get(name)].map(([key, labels]) => {
                   const [before, after] = JSON.parse(key);
                   const suffix = labels.length === configurations.length ? '' : ` (${labels.join(', ')})`;
                   return `${version(before)} → ${version(after)}${suffix}`;
                 });
-                const row = `| ${escape(name)} | ${lines.join('<br/>')} |`;
+                const row = `| ${escape(displayName(name))} | ${lines.join('<br/>')} |`;
                 if (row.length > budget) {
                   omitted++;
                   continue;
@@ -163,6 +170,16 @@ jobs:
                 budget -= row.length;
               }
               if (omitted) sections.push('', `${omitted} additional changes omitted (comment size limit).`);
+            };
+            sections.push('');
+            if (!changes.packages.size && !changes.plugins.size) {
+              sections.push('No package version changes in the successfully evaluated configurations.');
+            }
+            if (changes.packages.size) renderTable(changes.packages);
+            if (changes.plugins.size) {
+              sections.push('', '<details>', `<summary>Neovim plugins (${changes.plugins.size})</summary>`, '');
+              renderTable(changes.plugins);
+              sections.push('', '</details>');
             }
             const body = sections.join('\n');
             const { owner, repo } = context.repo;
