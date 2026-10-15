@@ -154,7 +154,7 @@ jobs:
               sections.push('| Package | Version |', '| --- | --- |');
               let omitted = 0;
               const version = (value) => value === null ? '—' : `\`${escape(value)}\``;
-              const displayName = (name) => name.replace(/-wrapper$/, '');
+              const displayName = (name) => name.replace(/-(?:wrapper|unwrapped)$/, '');
               for (const name of [...entries.keys()].sort((a, b) => displayName(a).localeCompare(displayName(b)))) {
                 const lines = [...entries.get(name)].map(([key, labels]) => {
                   const [before, after] = JSON.parse(key);
