@@ -156,11 +156,6 @@ jobs:
               }
               if (omitted) sections.push('', `${omitted} additional changes omitted (comment size limit).`);
             }
-            sections.push(
-              '',
-              '— = package added or removed. Packages without version metadata are marked as unknown.',
-              'Same-version rebuilds and changes inside package wrappers are not shown.',
-            );
             const body = sections.join('\n');
             const { owner, repo } = context.repo;
             const issue_number = context.issue.number;
