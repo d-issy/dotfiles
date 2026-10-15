@@ -6,7 +6,6 @@ d-issy's Nix Flakes + Home Manager dotfiles for Linux, macOS, and NixOS.
 
 - One of the following environments:
   - macOS Apple Silicon (`aarch64-darwin`)
-  - macOS Intel (`x86_64-darwin`)
   - WSL2 / Linux (`x86_64-linux`)
   - NixOS (`x86_64-linux`)
 - Nix with `nix-command` and `flakes` enabled

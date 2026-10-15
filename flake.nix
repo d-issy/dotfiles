@@ -26,13 +26,11 @@
     let
       supportedSystems = [
         "x86_64-linux"
-        "x86_64-darwin"
         "aarch64-darwin"
       ];
 
       homeConfigurationNames = {
         x86_64-linux = "linux";
-        x86_64-darwin = "macos_intel";
         aarch64-darwin = "macos";
       };
 
@@ -312,14 +310,12 @@
     // {
       packages = {
         inherit (home-manager.packages) x86_64-linux;
-        inherit (home-manager.packages) x86_64-darwin;
         inherit (home-manager.packages) aarch64-darwin;
       };
 
       homeConfigurations = {
         linux = mkHomeManagerConfiguration "x86_64-linux" ./modules/home/linux.nix;
         macos = mkHomeManagerConfiguration "aarch64-darwin" ./modules/home/macos.nix;
-        macos_intel = mkHomeManagerConfiguration "x86_64-darwin" ./modules/home/macos.nix;
       };
 
       nixosConfigurations = {
