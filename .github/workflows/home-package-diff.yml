@@ -110,28 +110,43 @@ jobs:
               `Commit: ${process.env.HEAD_SHA}`,
               'Compares `home.packages` in the PR base and head (not transitive dependencies).',
             ];
-            // Stay below GitHub's comment size limit, even for unexpected metadata.
-            let budget = 55000;
-            for (const configuration of ['linux', 'macos']) {
-              sections.push('', `### ${configuration}`, '');
+            const configurations = [['linux', 'Linux'], ['macos', 'macOS']];
+            const changes = new Map();
+            for (const [configuration, label] of configurations) {
               const revisions = packages[configuration];
               const failed = ['base', 'head'].filter((revision) => revisions[revision] === null);
               if (failed.length) {
-                sections.push(`⚠️ Evaluation failed (${failed.join(', ')}). No comparison available; see the workflow logs.`);
+                sections.push('', `⚠️ ${label}: evaluation failed (${failed.join(', ')}). No comparison available; see the workflow logs.`);
                 continue;
               }
               const before = index(revisions.base);
               const after = index(revisions.head);
-              const names = [...new Set([...before.keys(), ...after.keys()])].sort();
-              const changed = names.filter((name) => before.get(name) !== after.get(name));
-              if (!changed.length) {
-                sections.push('No package version changes.');
-                continue;
+              const names = new Set([...before.keys(), ...after.keys()]);
+              for (const name of names) {
+                if (before.get(name) === after.get(name)) continue;
+                if (!changes.has(name)) changes.set(name, new Map());
+                const transitions = changes.get(name);
+                const key = JSON.stringify([before.get(name) ?? null, after.get(name) ?? null]);
+                if (!transitions.has(key)) transitions.set(key, []);
+                transitions.get(key).push(label);
               }
-              sections.push('| Package | Before | After |', '| --- | --- | --- |');
+            }
+            sections.push('');
+            if (!changes.size) {
+              sections.push('No package version changes in the successfully evaluated configurations.');
+            } else {
+              sections.push('| Package | Version |', '| --- | --- |');
+              // Stay below GitHub's comment size limit, even for unexpected metadata.
+              let budget = 55000;
               let omitted = 0;
-              for (const name of changed) {
-                const row = `| ${escape(name)} | ${escape(before.get(name) ?? '—')} | ${escape(after.get(name) ?? '—')} |`;
+              const version = (value) => value === null ? '—' : `\`${escape(value)}\``;
+              for (const name of [...changes.keys()].sort()) {
+                const lines = [...changes.get(name)].map(([key, labels]) => {
+                  const [before, after] = JSON.parse(key);
+                  const suffix = labels.length === configurations.length ? '' : ` (${labels.join(', ')})`;
+                  return `${version(before)} → ${version(after)}${suffix}`;
+                });
+                const row = `| ${escape(name)} | ${lines.join('<br/>')} |`;
                 if (row.length > budget) {
                   omitted++;
                   continue;
@@ -141,11 +156,6 @@ jobs:
               }
               if (omitted) sections.push('', `${omitted} additional changes omitted (comment size limit).`);
             }
-            sections.push(
-              '',
-              '— = package added or removed. Packages without version metadata are marked as unknown.',
-              'Same-version rebuilds and changes inside package wrappers are not shown.',
-            );
             const body = sections.join('\n');
             const { owner, repo } = context.repo;
             const issue_number = context.issue.number;
