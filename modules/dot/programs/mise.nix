@@ -8,6 +8,8 @@
 let
   cfg = config.dot.programs.mise;
   tomlFormat = pkgs.formats.toml { };
+  nushellCacheDir = "${config.xdg.cacheHome}/mise";
+  nushellActivation = "${nushellCacheDir}/activate.nu";
 
   idiomaticVersionFileTools = {
     python.files = [ ".python-version" ];
@@ -81,13 +83,17 @@ in
         eval "$(${lib.getExe cfg.package} activate zsh)"
       '';
 
-      nushell.extraConfig = lib.mkIf (cfg.nushellIntegration.enable && cfg.package != null) ''
-        use ${
-          pkgs.runCommand "mise-nushell-config.nu" { } ''
-            ${lib.getExe cfg.package} activate nu > $out
-          ''
-        }
-      '';
+      nushell = lib.mkIf (cfg.nushellIntegration.enable && cfg.package != null) {
+        # Mise captures PATH and HOME when generating its activation script.
+        # Generate it before config.nu is parsed, using the live shell environment.
+        extraEnv = ''
+          mkdir ${builtins.toJSON nushellCacheDir}
+          ^${lib.getExe cfg.package} activate nu | save --force ${builtins.toJSON nushellActivation}
+        '';
+        extraConfig = ''
+          use ${builtins.toJSON nushellActivation}
+        '';
+      };
     };
   };
 }
