@@ -16,10 +16,10 @@ _:
           expandFocusedSidePanel = true;
           commitLogSize = 2;
           showUntrackedFiles = true;
-          authorColors = {
-            "*" = "#b7bdf8";
-          };
           theme = {
+            authorColors = {
+              "*" = "#b7bdf8";
+            };
             activeBorderColor = [
               "#f5a97f"
               "bold"
