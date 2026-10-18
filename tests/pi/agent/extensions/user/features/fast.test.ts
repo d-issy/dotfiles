@@ -113,10 +113,11 @@ describe("gateway speed modes", () => {
 	);
 
 	it("covers all audited gateway families without enabling unknown models or batch variants", () => {
-		assert.equal(OPENROUTER_FAST_MODEL_IDS.size, 49);
+		assert.equal(OPENROUTER_FAST_MODEL_IDS.size, 50);
 		for (const id of [
 			"openai/gpt-6.1-sol-pro",
 			"anthropic/claude-opus-5.5",
+			"google/gemini-4-argon",
 			"google/gemini-3.8-flash",
 			"x-ai/grok-4.7",
 			"deepseek/deepseek-v4.1-flash",
@@ -132,7 +133,7 @@ describe("gateway speed modes", () => {
 			assert.equal(supportsFast({ provider: "openrouter", id }), false);
 		assert.equal(
 			supportsUltrafast({ provider: "openrouter", id: "openai/gpt-6.1-sol" }),
-			false,
+			true,
 		);
 		assert.equal(
 			supportsFast({ provider: "opencode-go", id: "gpt-6-astra" }),
@@ -144,6 +145,8 @@ describe("gateway speed modes", () => {
 		for (const [provider, id, mode] of [
 			["openrouter", "anthropic/claude-opus-5.5", "fast"],
 			["openrouter", "openai/gpt-6-astra", "ultrafast"],
+			["openrouter", "openai/gpt-6.1-sol", "ultrafast"],
+			["openrouter", "google/gemini-4-argon", "fast"],
 			["opencode-go", "gpt-6-luna", "fast"],
 		] as const) {
 			type EventHandler = (
@@ -193,27 +196,30 @@ describe("OpenAI provider migration", () => {
 		assert.equal(adjusted.usage.cost.input, id === "gpt-5.5" ? 2.5 : 2);
 	});
 
-	it("supports Astra Ultrafast on OpenAI without enabling it for Sol", () => {
-		const model = fastModel("openai", "gpt-6-astra");
-		assert.equal(supportsUltrafast(model), true);
-		assert.deepEqual(
-			enableFastPayload({ model: model.id }, model, "ultrafast"),
-			{ model: model.id, service_tier: "ultrafast" },
-		);
-		assert.equal(
-			adjustFastCost(assistant("openai", model.id), model, "ultrafast").usage
-				.cost.input,
-			6,
-		);
-		assert.equal(
-			supportsUltrafast({ provider: "openai", id: "gpt-6.1-sol" }),
-			false,
-		);
-		assert.equal(
-			supportsFast({ provider: "openai", id: "gpt-5.4-mini" }),
-			false,
-		);
-	});
+	it.each(["gpt-6-astra", "gpt-6.1-sol"])(
+		"supports %s Ultrafast on OpenAI",
+		(id) => {
+			const model = fastModel("openai", id);
+			assert.equal(supportsUltrafast(model), true);
+			assert.deepEqual(
+				enableFastPayload({ model: model.id }, model, "ultrafast"),
+				{ model: model.id, service_tier: "ultrafast" },
+			);
+			assert.equal(
+				adjustFastCost(assistant("openai", model.id), model, "ultrafast").usage
+					.cost.input,
+				6,
+			);
+			assert.equal(
+				supportsUltrafast({ provider: "openai", id: "gpt-6-sol" }),
+				false,
+			);
+			assert.equal(
+				supportsFast({ provider: "openai", id: "gpt-5.4-mini" }),
+				false,
+			);
+		},
+	);
 });
 
 describe("supportsFast", () => {
@@ -259,58 +265,64 @@ describe("supportsFast", () => {
 });
 
 describe("Ultrafast", () => {
-	it("supports only Astra through ChatGPT and sends the Ultrafast tier", () => {
-		const model = { provider: "openai-codex", id: "gpt-6-astra" };
-		assert.equal(supportsUltrafast(model), true);
-		const payload = { model: model.id, stream: true };
-		assert.deepEqual(enableFastPayload(payload, model, "ultrafast"), {
-			...payload,
-			service_tier: "ultrafast",
-		});
-		assert.equal("service_tier" in payload, false);
-		for (const unsupported of [
-			undefined,
-			{ ...model, id: "gpt-6.1-sol" },
-			{ ...model, id: "gpt-6-luna" },
-			{ ...model, provider: "openrouter" },
-			{ provider: "anthropic", id: "claude-opus-5-5" },
-		]) {
-			assert.equal(supportsUltrafast(unsupported), false);
+	it.each(["gpt-6-astra", "gpt-6.1-sol"])(
+		"supports %s through ChatGPT and sends the Ultrafast tier",
+		(id) => {
+			const model = { provider: "openai-codex", id };
+			assert.equal(supportsUltrafast(model), true);
+			const payload = { model: model.id, stream: true };
+			assert.deepEqual(enableFastPayload(payload, model, "ultrafast"), {
+				...payload,
+				service_tier: "ultrafast",
+			});
+			assert.equal("service_tier" in payload, false);
+			for (const unsupported of [
+				undefined,
+				{ ...model, id: "gpt-6-sol" },
+				{ ...model, id: "gpt-6-luna" },
+				{ ...model, provider: "openrouter" },
+				{ provider: "anthropic", id: "claude-opus-5-5" },
+			]) {
+				assert.equal(supportsUltrafast(unsupported), false);
+				assert.equal(
+					enableFastPayload(payload, unsupported, "ultrafast"),
+					undefined,
+				);
+			}
 			assert.equal(
-				enableFastPayload(payload, unsupported, "ultrafast"),
+				enableFastPayload({ model: "gpt-6-sol" }, model, "ultrafast"),
 				undefined,
 			);
-		}
-		assert.equal(
-			enableFastPayload({ model: "gpt-6-sol" }, model, "ultrafast"),
-			undefined,
-		);
-	});
+		},
+	);
 
-	it("applies the sixfold purchased-credit rate without mutating usage", () => {
-		const message = assistant("openai-codex", "gpt-6-astra");
-		const adjusted = adjustFastCost(
-			message,
-			fastModel("openai-codex", "gpt-6-astra"),
-			"ultrafast",
-		);
-		assert.deepEqual(adjusted.usage.cost, {
-			input: 6,
-			output: 12,
-			cacheRead: 3,
-			cacheWrite: 1.5,
-			total: 22.5,
-		});
-		assert.equal(message.usage.cost.total, 3.75);
-		assert.equal(
-			adjustFastCost(
+	it.each(["gpt-6-astra", "gpt-6.1-sol"])(
+		"applies the sixfold purchased-credit rate for %s without mutating usage",
+		(id) => {
+			const message = assistant("openai-codex", id);
+			const adjusted = adjustFastCost(
 				message,
-				fastModel("openai-codex", "gpt-6-sol"),
+				fastModel("openai-codex", id),
 				"ultrafast",
-			),
-			message,
-		);
-	});
+			);
+			assert.deepEqual(adjusted.usage.cost, {
+				input: 6,
+				output: 12,
+				cacheRead: 3,
+				cacheWrite: 1.5,
+				total: 22.5,
+			});
+			assert.equal(message.usage.cost.total, 3.75);
+			assert.equal(
+				adjustFastCost(
+					message,
+					fastModel("openai-codex", "gpt-6-sol"),
+					"ultrafast",
+				),
+				message,
+			);
+		},
+	);
 
 	it("toggles modes exclusively and keeps the request's rate after a mode change", async () => {
 		type Handler = (args: string, ctx: ExtensionContext) => Promise<void>;

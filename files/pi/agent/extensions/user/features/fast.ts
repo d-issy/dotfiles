@@ -23,6 +23,7 @@ const OPENAI_FAST_MODEL_IDS = new Set([
 ]);
 
 // Audited against all 464 OpenRouter models' /endpoints on 2026-09-30.
+// Gemini 4 Argon Priority and GPT-6.1 Sol Ultrafast endpoints verified separately.
 // https://openrouter.ai/docs/guides/features/service-tiers
 // Keep only models with explicit /fast, /priority, or /ultrafast endpoints.
 export const OPENROUTER_FAST_MODEL_IDS = new Set([
@@ -31,6 +32,7 @@ export const OPENROUTER_FAST_MODEL_IDS = new Set([
 	"anthropic/claude-opus-4.8",
 	"deepseek/deepseek-v4.1-flash",
 	"deepseek/deepseek-v4-flash-0731",
+	"google/gemini-4-argon",
 	"google/gemini-3.8-flash",
 	"google/gemini-3.7-flash",
 	"google/gemini-3.6-flash",
@@ -77,6 +79,8 @@ export const OPENROUTER_FAST_MODEL_IDS = new Set([
 	"z-ai/glm-5.2",
 ]);
 export const OPENROUTER_ULTRAFAST_MODEL_IDS = new Set([
+	"openai/gpt-6.1-sol-pro",
+	"openai/gpt-6.1-sol",
 	"openai/gpt-6-astra-pro",
 	"openai/gpt-6-astra",
 ]);
@@ -101,9 +105,9 @@ interface SpeedProfile {
 
 const OPENAI_SPEED_PROFILE: SpeedProfile = {
 	fastModels: OPENAI_FAST_MODEL_IDS,
-	// GPT-6.1 Sol Ultrafast is announced for later; wait for published support and rates.
-	// https://learn.chatgpt.com/docs/models#gpt-61-sol
-	ultrafastModels: new Set(["gpt-6-astra"]),
+	// https://learn.chatgpt.com/api/docs/guides/ultrafast-mode
+	// https://learn.chatgpt.com/codex/agent-configuration/speed#ultrafast-mode
+	ultrafastModels: new Set(["gpt-6.1-sol", "gpt-6-astra"]),
 	fastMultiplier: (id) => (id === "gpt-5.5" ? 2.5 : 2),
 	ultrafastMultiplier: 6,
 	fastPayload: { service_tier: "priority" },
