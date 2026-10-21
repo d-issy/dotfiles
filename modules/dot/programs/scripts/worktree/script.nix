@@ -171,6 +171,7 @@ in
     - Never deletes the default branch.
     - Skips the current worktree.
     - Skips dirty worktrees unless -f/--force is used.
+    - Checks branches and removes worktrees in parallel (up to 4 at a time).
     - Shows targets before pruning.
 
   Options:
@@ -412,19 +413,41 @@ in
     [[ "$local_oid" == "$head_oid" ]]
   }
 
-  list_prune_branches() {
-  	local base="$1" branch
+  list_prune_branches() (
+  	local base="$1" branch tmpdir index=0 pid
+  	local pids=() results=()
+  	tmpdir="$(${pkgs.coreutils}/bin/mktemp -d)"
+  	trap '${pkgs.coreutils}/bin/rm -rf "$tmpdir"' EXIT
   	while IFS= read -r branch; do
   		[[ -n "$branch" ]] || continue
-  		if ${pkgs.git}/bin/git merge-base --is-ancestor "$branch" "$base" 2>/dev/null; then
-  			printf '%s\n' "$branch"
-      elif branch_upstream_gone "$branch"; then
-        if branch_patch_merged "$base" "$branch" || branch_github_pr_merged "$branch"; then
-          printf '%s\n' "$branch"
-        fi
+  		(
+  			if ${pkgs.git}/bin/git merge-base --is-ancestor "$branch" "$base" 2>/dev/null; then
+  				printf '%s\n' "$branch"
+  			elif branch_upstream_gone "$branch"; then
+  				if branch_patch_merged "$base" "$branch" || branch_github_pr_merged "$branch"; then
+  					printf '%s\n' "$branch"
+  				fi
+  			fi
+  		) >"$tmpdir/$index" &
+  		pids+=("$!")
+  		results+=("$tmpdir/$index")
+  		index=$((index + 1))
+  		if [[ "''${#pids[@]}" -eq 4 ]]; then
+  			for pid in "''${pids[@]}"; do
+  				wait "$pid"
+  			done
+  			${pkgs.coreutils}/bin/cat "''${results[@]}"
+  			pids=()
+  			results=()
   		fi
   	done < <(${pkgs.git}/bin/git for-each-ref --format='%(refname:short)' refs/heads)
-  }
+  	for pid in "''${pids[@]}"; do
+  		wait "$pid"
+  	done
+  	if [[ "''${#results[@]}" -gt 0 ]]; then
+  		${pkgs.coreutils}/bin/cat "''${results[@]}"
+  	fi
+  )
 
   validate_new_branch_and_path() {
   	local branch="$1" path="$2"
@@ -1531,25 +1554,66 @@ in
   	return 1
   }
 
-  prune_records() {
-  	local targets="$1" branch path dirty window cleaned
+  prune_records() (
+  	local targets="$1" branch path dirty window cleaned tmpdir pid index=0 failed=false
+  	local pids=()
+  	tmpdir="$(${pkgs.coreutils}/bin/mktemp -d)"
+  	trap '${pkgs.coreutils}/bin/rm -rf "$tmpdir"' EXIT
+
+  	# Only worktree removal runs concurrently. Branch deletion and saved-window
+  	# cleanup below both write the shared Git config and must stay serial.
+  	while IFS=$'\t' read -r branch path dirty window; do
+  		[[ -n "$branch" ]] || continue
+  		if [[ "$path" != - ]]; then
+  			(
+  				if remove_prune_worktree "$path" "$dirty"; then
+  					${pkgs.coreutils}/bin/touch "$tmpdir/$index.ok"
+  				fi
+  			) >"$tmpdir/$index.log" 2>&1 &
+  			pids+=("$!")
+  			if [[ "''${#pids[@]}" -eq 4 ]]; then
+  				for pid in "''${pids[@]}"; do
+  					wait "$pid" || true
+  				done
+  				pids=()
+  			fi
+  		fi
+  		index=$((index + 1))
+  	done <"$targets"
+  	for pid in "''${pids[@]}"; do
+  		wait "$pid" || true
+  	done
+
+  	index=0
   	while IFS=$'\t' read -r branch path dirty window; do
   		[[ -n "$branch" ]] || continue
   		cleaned="branch"
   		if [[ "$path" != - ]]; then
-  			remove_prune_worktree "$path" "$dirty" || die "Could not remove worktree for $branch: $path"
+  			${pkgs.coreutils}/bin/cat "$tmpdir/$index.log" >&2
+  			if [[ ! -f "$tmpdir/$index.ok" ]]; then
+  				warn "Could not remove worktree for $branch: $path"
+  				failed=true
+  				index=$((index + 1))
+  				continue
+  			fi
   			remove_pending_state_for_path "$path"
   			close_tmux_window_for_deleted_path "$path" "$(managed_repo_root)"
   			cleaned="''${cleaned}, worktree: $path"
   		fi
-  		${pkgs.git}/bin/git branch -D "$branch" >/dev/null || die "Could not delete branch: $branch"
+  		index=$((index + 1))
+  		if ! ${pkgs.git}/bin/git branch -D "$branch" >/dev/null; then
+  			warn "Could not delete branch: $branch"
+  			failed=true
+  			continue
+  		fi
   		unset_saved_window_for_branch "$branch"
   		if [[ "$window" != - ]]; then
   			cleaned="''${cleaned}, window: $window"
   		fi
   		printf '%sPruned:%s %s (%s)\n' "$GREEN" "$RESET" "$branch" "$cleaned"
   	done <"$targets"
-  }
+  	[[ "$failed" == false ]]
+  )
 
   cmd_prune() {
   	require_git_repo
