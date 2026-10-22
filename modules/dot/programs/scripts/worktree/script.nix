@@ -1555,52 +1555,50 @@ in
   }
 
   prune_records() (
-  	local targets="$1" branch path dirty window cleaned tmpdir pid index=0 failed=false
-  	local pids=()
+  	local targets="$1" branch path dirty window cleaned tmpdir index=0 failed=false
+  	local completed active=0 completion_fd
+  	local records=() pids=()
   	tmpdir="$(${pkgs.coreutils}/bin/mktemp -d)"
   	trap '${pkgs.coreutils}/bin/rm -rf "$tmpdir"' EXIT
+  	${pkgs.coreutils}/bin/mkfifo "$tmpdir/completed"
+  	exec {completion_fd}<>"$tmpdir/completed"
+  	while IFS= read -r branch; do
+  		[[ -n "$branch" ]] && records+=("$branch")
+  	done <"$targets"
 
-  	# Only worktree removal runs concurrently. Branch deletion and saved-window
-  	# cleanup below both write the shared Git config and must stay serial.
-  	while IFS=$'\t' read -r branch path dirty window; do
-  		[[ -n "$branch" ]] || continue
-  		if [[ "$path" != - ]]; then
+  	# Only worktree removal runs concurrently. Consume completion notifications
+  	# as they arrive; shared Git config updates and progress output stay serial.
+  	while [[ "$index" -lt "''${#records[@]}" || "$active" -gt 0 ]]; do
+  		while [[ "$index" -lt "''${#records[@]}" && "$active" -lt 4 ]]; do
+  			IFS=$'\t' read -r branch path dirty window <<<"''${records[$index]}"
   			(
-  				if remove_prune_worktree "$path" "$dirty"; then
+  				if [[ "$path" == - ]] || remove_prune_worktree "$path" "$dirty"; then
   					${pkgs.coreutils}/bin/touch "$tmpdir/$index.ok"
   				fi
+  				printf '%s\n' "$index" >&"$completion_fd"
   			) >"$tmpdir/$index.log" 2>&1 &
-  			pids+=("$!")
-  			if [[ "''${#pids[@]}" -eq 4 ]]; then
-  				for pid in "''${pids[@]}"; do
-  					wait "$pid" || true
-  				done
-  				pids=()
-  			fi
-  		fi
-  		index=$((index + 1))
-  	done <"$targets"
-  	for pid in "''${pids[@]}"; do
-  		wait "$pid" || true
-  	done
+  			pids[index]=$!
+  			active=$((active + 1))
+  			index=$((index + 1))
+  		done
 
-  	index=0
-  	while IFS=$'\t' read -r branch path dirty window; do
-  		[[ -n "$branch" ]] || continue
+  		IFS= read -r completed <&"$completion_fd"
+  		wait "''${pids[$completed]}" || true
+  		active=$((active - 1))
+  		IFS=$'\t' read -r branch path dirty window <<<"''${records[$completed]}"
+  		${pkgs.coreutils}/bin/cat "$tmpdir/$completed.log" >&2
+  		if [[ ! -f "$tmpdir/$completed.ok" ]]; then
+  			warn "Could not remove worktree for $branch: $path"
+  			failed=true
+  			continue
+  		fi
+
   		cleaned="branch"
   		if [[ "$path" != - ]]; then
-  			${pkgs.coreutils}/bin/cat "$tmpdir/$index.log" >&2
-  			if [[ ! -f "$tmpdir/$index.ok" ]]; then
-  				warn "Could not remove worktree for $branch: $path"
-  				failed=true
-  				index=$((index + 1))
-  				continue
-  			fi
   			remove_pending_state_for_path "$path"
   			close_tmux_window_for_deleted_path "$path" "$(managed_repo_root)"
   			cleaned="''${cleaned}, worktree: $path"
   		fi
-  		index=$((index + 1))
   		if ! ${pkgs.git}/bin/git branch -D "$branch" >/dev/null; then
   			warn "Could not delete branch: $branch"
   			failed=true
@@ -1611,7 +1609,8 @@ in
   			cleaned="''${cleaned}, window: $window"
   		fi
   		printf '%sPruned:%s %s (%s)\n' "$GREEN" "$RESET" "$branch" "$cleaned"
-  	done <"$targets"
+  	done
+  	exec {completion_fd}>&-
   	[[ "$failed" == false ]]
   )
 
