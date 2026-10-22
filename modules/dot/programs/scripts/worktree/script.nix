@@ -1577,7 +1577,7 @@ in
   				fi
   				printf '%s\n' "$index" >&"$completion_fd"
   			) >"$tmpdir/$index.log" 2>&1 &
-  			pids[$index]=$!
+  			pids[index]=$!
   			active=$((active + 1))
   			index=$((index + 1))
   		done
