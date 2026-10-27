@@ -36,6 +36,7 @@ in
       in
       {
         enable = true;
+        loadSessionVariables = true;
         shellAliases = home.shellAliases // alias;
         environmentVariables = home.sessionVariables // environments;
 
