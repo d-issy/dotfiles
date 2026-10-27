@@ -175,6 +175,7 @@ describe("gateway speed modes", () => {
 
 describe("OpenAI provider migration", () => {
 	it.each([
+		"gpt-6.1-terra",
 		"gpt-6.1-sol",
 		"gpt-6-astra",
 		"gpt-6-sol",
@@ -224,6 +225,7 @@ describe("OpenAI provider migration", () => {
 
 describe("supportsFast", () => {
 	it.each([
+		"gpt-6.1-terra",
 		"gpt-6.1-sol",
 		"gpt-6-astra",
 		"gpt-6-sol",
@@ -278,6 +280,7 @@ describe("Ultrafast", () => {
 			assert.equal("service_tier" in payload, false);
 			for (const unsupported of [
 				undefined,
+				{ ...model, id: "gpt-6.1-terra" },
 				{ ...model, id: "gpt-6-sol" },
 				{ ...model, id: "gpt-6-luna" },
 				{ ...model, provider: "openrouter" },
@@ -380,18 +383,22 @@ describe("Ultrafast", () => {
 });
 
 describe("enableFastPayload", () => {
-	it.each(["gpt-6-astra", "gpt-6.1-sol", "gpt-6-sol", "gpt-6-luna", "gpt-5.5"])(
-		"adds the priority service tier to %s payloads",
-		(id) => {
-			const payload = { model: id, stream: true };
+	it.each([
+		"gpt-6.1-terra",
+		"gpt-6-astra",
+		"gpt-6.1-sol",
+		"gpt-6-sol",
+		"gpt-6-luna",
+		"gpt-5.5",
+	])("adds the priority service tier to %s payloads", (id) => {
+		const payload = { model: id, stream: true };
 
-			assert.deepEqual(
-				enableFastPayload(payload, { provider: "openai-codex", id }),
-				{ model: id, stream: true, service_tier: "priority" },
-			);
-			assert.deepEqual(payload, { model: id, stream: true });
-		},
-	);
+		assert.deepEqual(
+			enableFastPayload(payload, { provider: "openai-codex", id }),
+			{ model: id, stream: true, service_tier: "priority" },
+		);
+		assert.deepEqual(payload, { model: id, stream: true });
+	});
 
 	it.each(["claude-opus-5-5", "claude-opus-5"])(
 		"adds fast speed to %s payloads",
@@ -432,7 +439,7 @@ describe("adjustFastCost", () => {
 		assert.equal(message.usage.cost.total, 3.75);
 	});
 
-	it.each(["gpt-6-astra", "gpt-6.1-sol"])(
+	it.each(["gpt-6.1-terra", "gpt-6-astra", "gpt-6.1-sol"])(
 		"applies the %s Fast multiplier",
 		(id) => {
 			const message = assistant("openai-codex", id);

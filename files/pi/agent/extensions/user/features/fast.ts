@@ -11,6 +11,7 @@ const ANTHROPIC_FAST_MODEL_IDS = new Set([
 	"claude-opus-4-8",
 ]);
 const OPENAI_FAST_MODEL_IDS = new Set([
+	"gpt-6.1-terra",
 	"gpt-6.1-sol",
 	"gpt-6-astra",
 	"gpt-6-sol",
