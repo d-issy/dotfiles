@@ -68,8 +68,8 @@ let
             | ${fuzzyFinderCommand} \
               --delimiter='\t' \
               --with-nth=3 \
-              --header='Ctrl-C: repos/orgs' \
-              --bind="ctrl-c:reload(${repoSwitcherCommand})+change-header(Repos/orgs)"
+              --header='Ctrl-R: repos/orgs' \
+              --bind="ctrl-r:reload(${repoSwitcherCommand})+change-header(Repos/orgs)"
         )
       else
         selected=$(
