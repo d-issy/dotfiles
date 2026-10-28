@@ -95,7 +95,7 @@ let
           ;;
         repo)
           [ -n "$value" ] && [ -d "$value" ] || exit 0
-          label="$(printf '%s' "$selected" | cut -f 3-)"
+          label="$(printf '%s' "$selected" | cut -f 4-)"
           [ -n "$label" ] || label="$(basename "$value")"
 
           if ! "$server_running"; then
