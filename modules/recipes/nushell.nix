@@ -43,7 +43,16 @@ in
         inherit nuConfig;
 
         extraEnv = ''
-          $env.PATH = ($env.PATH | prepend ($env.HOME | path join ".local" "bin"))
+          # Do not rely on system shell initialization, which macOS updates can reset.
+          $env.PATH = (
+            $env.PATH
+            | prepend [
+              ($env.HOME | path join ".local" "bin")
+              "${config.home.profileDirectory}/bin"
+              "/nix/var/nix/profiles/default/bin"
+            ]
+            | uniq
+          )
         '';
 
         extraConfig = ''
