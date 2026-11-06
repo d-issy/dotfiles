@@ -1,5 +1,8 @@
+import { randomUUID } from "node:crypto";
 import {
+	closeSync,
 	mkdirSync,
+	openSync,
 	readFileSync,
 	renameSync,
 	rmSync,
@@ -74,11 +77,14 @@ function withModelSetsLock<T>(path: string, action: () => T): T {
 }
 
 function writeUnlocked(path: string, sets: ModelSet[]): void {
-	const temporary = `${path}.${process.pid}.tmp`;
+	const temporary = `${path}.${process.pid}.${randomUUID()}.tmp`;
+	const file = openSync(temporary, "wx", 0o600);
 	try {
-		writeFileSync(temporary, `${JSON.stringify(sets, null, 2)}\n`, {
-			mode: 0o600,
-		});
+		try {
+			writeFileSync(file, `${JSON.stringify(sets, null, 2)}\n`);
+		} finally {
+			closeSync(file);
+		}
 		renameSync(temporary, path);
 	} finally {
 		rmSync(temporary, { force: true });
