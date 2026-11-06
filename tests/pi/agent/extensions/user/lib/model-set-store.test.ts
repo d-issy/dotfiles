@@ -1,5 +1,13 @@
 import { spawn } from "node:child_process";
-import { existsSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import {
+	existsSync,
+	lstatSync,
+	mkdtempSync,
+	readFileSync,
+	rmSync,
+	symlinkSync,
+	writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
@@ -22,6 +30,22 @@ afterEach(() => {
 });
 
 describe("model set storage", () => {
+	it("saves a private regular file without following a preexisting temporary symlink", () => {
+		const path = location();
+		const unrelated = join(path, "..", "unrelated-file");
+		const temporary = `${path}.${process.pid}.tmp`;
+		writeFileSync(unrelated, "keep this");
+		symlinkSync(unrelated, temporary);
+
+		writeModelSets(path, []);
+
+		expect(readFileSync(unrelated, "utf8")).toBe("keep this");
+		expect(readModelSets(path)).toEqual([]);
+		expect(lstatSync(path).isFile()).toBe(true);
+		expect(lstatSync(path).mode & 0o777).toBe(0o600);
+		expect(lstatSync(temporary).isSymbolicLink()).toBe(true);
+	});
+
 	it("serializes saves and deletes across independent Pi processes", async () => {
 		const path = location();
 		writeModelSets(path, [

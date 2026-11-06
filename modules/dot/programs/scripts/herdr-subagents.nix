@@ -46,6 +46,18 @@ let
         [ -n "''${HERDR_PANE_ID:-}" ] || die "HERDR_PANE_ID is not set"
       }
 
+      ensure_private_directory() {
+        local directory="$1"
+        if mkdir -m 700 -- "$directory" 2>/dev/null; then
+          return 0
+        fi
+        # Never trust pre-existing paths under a shared temporary directory.
+        [ ! -L "$directory" ] && [ -d "$directory" ] && [ -O "$directory" ] \
+          || die "state directory must be owned by the current user and not be a symlink: $directory"
+        [ "$(stat -c %a -- "$directory")" = 700 ] \
+          || die "state directory must have mode 700: $directory"
+      }
+
       init_manifest_path() {
         local runtime_root session_key context_key
         runtime_root="''${XDG_RUNTIME_DIR:-''${TMPDIR:-/tmp}}/herdr-subagents"
@@ -53,10 +65,13 @@ let
         context_key="$(printf '%s' "$HERDR_WORKSPACE_ID:$HERDR_TAB_ID:$HERDR_PANE_ID" | sha256sum | cut -c1-16)"
         state_dir="$runtime_root/$session_key"
         manifest="$state_dir/$context_key.json"
+        ensure_private_directory "$runtime_root"
+        ensure_private_directory "$state_dir"
       }
 
       require_manifest() {
-        [ -f "$manifest" ] || die "no subagent manifest exists for the current pane"
+        [ ! -L "$manifest" ] && [ -f "$manifest" ] \
+          || die "no regular subagent manifest exists for the current pane"
         jq -e \
           --arg workspace "$HERDR_WORKSPACE_ID" \
           --arg tab "$HERDR_TAB_ID" \
@@ -66,13 +81,14 @@ let
           || die "manifest does not belong to the current Herdr context"
       }
 
-      write_manifest() {
-        local next="$manifest.tmp"
+      write_manifest() (
+        local next
         umask 077
-        mkdir -p "$state_dir"
+        next="$(mktemp "$manifest.XXXXXX")"
+        trap 'rm -f -- "$next"' EXIT
         cat > "$next"
-        mv "$next" "$manifest"
-      }
+        mv -fT -- "$next" "$manifest"
+      )
 
       show_status() {
         local panes
@@ -191,7 +207,8 @@ let
       start_agents() {
         [ "$#" -gt 0 ] || die "start requires at least one NAME=PRESET argument"
         [ "$#" -le 10 ] || die "at most 10 subagents are supported"
-        [ ! -e "$manifest" ] || die "a subagent manifest already exists; run cleanup first"
+        [ ! -e "$manifest" ] && [ ! -L "$manifest" ] \
+          || die "a subagent manifest already exists; run cleanup first"
 
         local current layout current_agent pane_width pane_height main_direction agent_direction
         current="$("$herdr" pane current --current)"

@@ -292,6 +292,7 @@
           // {
             home-manager = self.homeConfigurations.${homeConfigurationNames.${system}}.activationPackage;
             worktree-regressions = import ./tests/shell { inherit pkgs; };
+            herdr-subagents-regressions = import ./tests/shell/herdr-subagents.nix { inherit pkgs; };
             neovim-regressions =
               pkgs.runCommand "neovim-regressions" { nativeBuildInputs = [ pkgs.neovim ]; }
                 ''
