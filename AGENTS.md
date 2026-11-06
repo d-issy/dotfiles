@@ -12,5 +12,5 @@ Per-tool recipe in `modules/recipes/[tool].nix`, config files in `files/[tool]/`
 - Format changed files with `nix fmt`
 - Choose verification based on the change scope:
   - Run `nix flake check` for Nix/Home Manager, flake, repository tooling, or GitHub Actions changes; it runs treefmt, deadnix, statix, oxlint, actionlint, and zizmor
-  - Run `pnpm lint` for TypeScript/JavaScript, `tsconfig`, or package/dependency changes that can affect TypeScript checking
-  - Run both when a change spans both scopes; neither is required for documentation-only changes unless they affect tooling or generated output
+  - Run `pnpm lint` and `pnpm typecheck` for TypeScript/JavaScript, `tsconfig`, or package/dependency changes that can affect TypeScript checking
+  - Run all applicable checks when a change spans both scopes; these checks are not required for documentation-only changes unless they affect tooling or generated output

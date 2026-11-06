@@ -55,13 +55,18 @@ function completedTool(component: Component): CompletedTool | undefined {
 		args?: { command?: unknown };
 		expanded?: unknown;
 		isPartial?: unknown;
-		result?: { isError?: unknown; details?: unknown };
+		result?: {
+			isError?: unknown;
+			details?: unknown;
+			content?: Array<{ type?: string }>;
+		};
 	};
 	if (
 		typeof row.toolName !== "string" ||
 		row.expanded !== false ||
 		row.isPartial !== false ||
-		typeof row.result?.isError !== "boolean"
+		typeof row.result?.isError !== "boolean" ||
+		row.result.content?.some((block) => block.type === "image")
 	)
 		return;
 

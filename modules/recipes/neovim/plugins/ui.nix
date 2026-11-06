@@ -59,7 +59,7 @@ in
         lazyLoad.settings.keys = [
           {
             __unkeyed-1 = "<leader>j";
-            __unkeyed-3.__raw = ''function() require("flash").jump() end'';
+            __unkeyed-2.__raw = ''function() require("flash").jump() end'';
             mode = [
               "n"
               "o"
@@ -69,7 +69,7 @@ in
           }
           {
             __unkeyed-1 = "<leader>J";
-            __unkeyed-3.__raw = ''function() require("flash").treesitter() end'';
+            __unkeyed-2.__raw = ''function() require("flash").treesitter() end'';
             mode = [
               "n"
               "o"

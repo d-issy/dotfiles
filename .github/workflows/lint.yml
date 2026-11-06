@@ -93,7 +93,7 @@ jobs:
         with:
           primary-key: nix-deadnix-${{ runner.os }}-${{ hashFiles('**/flake.lock') }}
           restore-prefixes-first-match: nix-deadnix-${{ runner.os }}-
-      - run: nix run nixpkgs#deadnix -- --fail .
+      - run: nix build .#checks.x86_64-linux.deadnix
 
   statix:
     name: statix
@@ -113,7 +113,7 @@ jobs:
         with:
           primary-key: nix-statix-${{ runner.os }}-${{ hashFiles('**/flake.lock') }}
           restore-prefixes-first-match: nix-statix-${{ runner.os }}-
-      - run: nix run nixpkgs#statix -- check .
+      - run: nix build .#checks.x86_64-linux.statix
 
   oxlint:
     name: oxlint
@@ -171,7 +171,7 @@ jobs:
         with:
           primary-key: nix-actionlint-${{ runner.os }}-${{ hashFiles('**/flake.lock') }}
           restore-prefixes-first-match: nix-actionlint-${{ runner.os }}-
-      - run: nix run nixpkgs#actionlint
+      - run: nix build .#checks.x86_64-linux.actionlint
 
   zizmor:
     name: zizmor
@@ -191,9 +191,7 @@ jobs:
         with:
           primary-key: nix-zizmor-${{ runner.os }}-${{ hashFiles('**/flake.lock') }}
           restore-prefixes-first-match: nix-zizmor-${{ runner.os }}-
-      - env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: nix run nixpkgs#zizmor -- .
+      - run: nix build .#checks.x86_64-linux.zizmor
 
   all-lint-passed:
     name: All Lint Passed

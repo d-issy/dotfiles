@@ -887,13 +887,13 @@ in
   		return 1
   	fi
 
-  	if ! ${pkgs.git}/bin/git -C "$source" apply -R --cached --check "$patch" >/dev/null 2>&1; then
+  	if ! ${pkgs.git}/bin/git -C "$source" apply -R --cached --unidiff-zero --check "$patch" >/dev/null 2>&1; then
   		warn "Could not remove original staged changes from index safely. They remain staged in: $source"
   		return 1
   	fi
 
-  	if ${pkgs.git}/bin/git -C "$source" apply -R --check "$patch" >/dev/null 2>&1; then
-  		if ! ${pkgs.git}/bin/git -C "$source" apply -R "$patch"; then
+  	if ${pkgs.git}/bin/git -C "$source" apply -R --unidiff-zero --check "$patch" >/dev/null 2>&1; then
+  		if ! ${pkgs.git}/bin/git -C "$source" apply -R --unidiff-zero "$patch"; then
   			warn "Could not remove original staged changes from working tree safely. They remain staged in: $source"
   			return 1
   		fi
@@ -904,7 +904,7 @@ in
   		return 1
   	fi
 
-  	if ! ${pkgs.git}/bin/git -C "$source" apply -R --cached "$patch"; then
+  	if ! ${pkgs.git}/bin/git -C "$source" apply -R --cached --unidiff-zero "$patch"; then
   		warn "Could not remove original staged changes from index safely. Pending state remains for recovery: $source"
   		return 1
   	fi
@@ -1100,6 +1100,16 @@ in
   	[[ -n "$branch" && "$branch" != "null" ]] || die "Could not resolve PR branch for #$number"
 
   	if [[ -d "$target/.git" || -f "$target/.git" ]]; then
+  		if ! fetch_pr_ref "$number" "$temp_ref"; then
+  			warn "Could not update PR #$number; switching only."
+  			open_path "$target" "$window"
+  			return
+  		fi
+  		if ! ${pkgs.git}/bin/git -C "$target" merge-base --is-ancestor HEAD "$temp_ref"; then
+  			warn "PR worktree has commits outside the fetched PR head; preserving them and switching only."
+  			open_path "$target" "$window"
+  			return
+  		fi
   		dirty=false
   		if [[ -n "$(${pkgs.git}/bin/git -C "$target" status --porcelain)" ]]; then
   			dirty=true
@@ -1117,12 +1127,9 @@ in
   			esac
   		fi
   		if [[ "$dirty" == false ]]; then
-  			if fetch_pr_ref "$number" "$temp_ref"; then
-  				${pkgs.git}/bin/git -C "$target" reset --hard "$temp_ref"
-  			else
-  				warn "Could not update PR #$number; switching only."
-  			fi
+  			${pkgs.git}/bin/git -C "$target" reset --hard "$temp_ref"
   		fi
+  		branch="$(${pkgs.git}/bin/git -C "$target" branch --show-current)"
   		set_saved_window_for_branch "$branch" "$window"
   		open_path "$target" "$window"
   		return
@@ -1134,6 +1141,9 @@ in
 
   	fetch_pr_ref "$number" "$temp_ref" || die "Could not fetch PR #$number"
   	if branch_exists "$branch"; then
+  		branch="worktree/pr-$number"
+  	fi
+  	if branch_exists "$branch"; then
   		existing_path="$(branch_checked_out_path "$branch")"
   		if [[ -n "$existing_path" ]]; then
   			warn "PR branch is already checked out at: $existing_path"
@@ -1141,6 +1151,8 @@ in
   			open_path "$existing_path" "$window"
   			return
   		fi
+  		${pkgs.git}/bin/git merge-base --is-ancestor "$branch" "$temp_ref" \
+  			|| die "Local branch $branch has commits outside the fetched PR head; preserving it. Rename it before retrying."
   		${pkgs.git}/bin/git branch -f "$branch" "$temp_ref"
   	else
   		${pkgs.git}/bin/git branch "$branch" "$temp_ref"
@@ -1470,6 +1482,15 @@ in
   				continue
   			fi
 
+  			if ${pkgs.git}/bin/git worktree list --porcelain | ${pkgs.gawk}/bin/awk -v target="$path" '
+          /^worktree / { path=substr($0, 10) }
+          /^locked( |$)/ && path == target { found=1 }
+          END { exit !found }
+        '; then
+  				printf '%s\t%s\t%s\n' "$branch" "locked worktree" "$path" >>"$skipped"
+  				continue
+  			fi
+
   			if [[ -n "$(${pkgs.git}/bin/git -C "$path" status --porcelain)" ]]; then
   				dirty=yes
   			else
@@ -1487,75 +1508,21 @@ in
   	done < <(list_prune_branches "$base")
   }
 
-  finish_prune_worktree_remove() {
-  	local path="$1" mode="$2"
-  	if [[ ! -e "$path" && ! -L "$path" ]]; then
-  		return 0
-  	fi
-
-  	warn "git worktree remove $mode returned success but left the path behind: $path"
-  	warn "Removing leftover worktree directory."
-  	${pkgs.coreutils}/bin/rm -rf -- "$path"
-  	[[ ! -e "$path" && ! -L "$path" ]]
-  }
-
   remove_prune_worktree() {
-  	local path="$1" dirty="$2" err force_err double_force_err
-  	err="$(${pkgs.coreutils}/bin/mktemp)"
-  	force_err="$(${pkgs.coreutils}/bin/mktemp)"
-  	double_force_err="$(${pkgs.coreutils}/bin/mktemp)"
-
-  	if [[ "$dirty" == yes ]]; then
-  		if ${pkgs.git}/bin/git worktree remove --force "$path" 2>"$force_err"; then
-  			if finish_prune_worktree_remove "$path" "--force"; then
-  				${pkgs.coreutils}/bin/rm -f "$err" "$force_err" "$double_force_err"
-  				return 0
-  			fi
-  		fi
-  	else
-  		if ${pkgs.git}/bin/git worktree remove "$path" 2>"$err"; then
-  			if finish_prune_worktree_remove "$path" "without force"; then
-  				${pkgs.coreutils}/bin/rm -f "$err" "$force_err" "$double_force_err"
-  				return 0
-  			fi
-  		fi
-  		warn "Could not remove clean-looking worktree without force: $path"
-  		warn "Retrying with --force."
-  		if ${pkgs.git}/bin/git worktree remove --force "$path" 2>"$force_err"; then
-  			if finish_prune_worktree_remove "$path" "--force"; then
-  				${pkgs.coreutils}/bin/rm -f "$err" "$force_err" "$double_force_err"
-  				return 0
-  			fi
-  		fi
+  	local path="$1" force="$2" args=()
+  	if [[ "$force" == true ]]; then
+  		args+=(--force)
   	fi
-
-  	warn "Retrying with --force --force for nested repositories: $path"
-  	if ${pkgs.git}/bin/git worktree remove --force --force "$path" 2>"$double_force_err"; then
-  		if finish_prune_worktree_remove "$path" "--force --force"; then
-  			${pkgs.coreutils}/bin/rm -f "$err" "$force_err" "$double_force_err"
-  			return 0
-  		fi
+  	# A single --force honors worktree locks; never escalate or bypass Git's refusal.
+  	${pkgs.git}/bin/git worktree remove "''${args[@]}" "$path" || return 1
+  	if [[ -e "$path" || -L "$path" ]]; then
+  		warn "git worktree remove left the path behind; preserving it: $path"
+  		return 1
   	fi
-
-  	printf 'git worktree remove failed for: %s\n' "$path" >&2
-  	if [[ -s "$err" ]]; then
-  		printf '\nwithout force:\n' >&2
-  		${pkgs.coreutils}/bin/cat "$err" >&2
-  	fi
-  	if [[ -s "$force_err" ]]; then
-  		printf '\nwith --force:\n' >&2
-  		${pkgs.coreutils}/bin/cat "$force_err" >&2
-  	fi
-  	if [[ -s "$double_force_err" ]]; then
-  		printf '\nwith --force --force:\n' >&2
-  		${pkgs.coreutils}/bin/cat "$double_force_err" >&2
-  	fi
-  	${pkgs.coreutils}/bin/rm -f "$err" "$force_err" "$double_force_err"
-  	return 1
   }
 
   prune_records() (
-  	local targets="$1" branch path dirty window cleaned tmpdir index=0 failed=false
+  	local targets="$1" force="$2" branch path dirty window cleaned tmpdir index=0 failed=false
   	local completed active=0 completion_fd
   	local records=() pids=()
   	tmpdir="$(${pkgs.coreutils}/bin/mktemp -d)"
@@ -1572,7 +1539,7 @@ in
   		while [[ "$index" -lt "''${#records[@]}" && "$active" -lt 4 ]]; do
   			IFS=$'\t' read -r branch path dirty window <<<"''${records[$index]}"
   			(
-  				if [[ "$path" == - ]] || remove_prune_worktree "$path" "$dirty"; then
+  				if [[ "$path" == - ]] || remove_prune_worktree "$path" "$force"; then
   					${pkgs.coreutils}/bin/touch "$tmpdir/$index.ok"
   				fi
   				printf '%s\n' "$index" >&"$completion_fd"
@@ -1658,7 +1625,7 @@ in
   		${pkgs.coreutils}/bin/rm -rf "$tmpdir"
   		return 0
   	fi
-  	prune_records "$targets"
+  	prune_records "$targets" "$force"
   	${pkgs.coreutils}/bin/rm -rf "$tmpdir"
   }
 

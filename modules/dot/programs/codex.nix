@@ -82,12 +82,10 @@ in
       shellAliases.codex = "codex-statusline";
     };
 
-    home.activation.codexHooks = lib.mkIf (cfg.hooks != { }) (
-      dot.mergeJson {
-        targetDir = "${config.home.homeDirectory}/.codex";
-        settingsFile = "hooks.json";
-        overrides = { inherit (cfg) hooks; };
-      }
-    );
+    home.activation.codexHooks = dot.mergeJson {
+      targetDir = "${config.home.homeDirectory}/.codex";
+      settingsFile = "hooks.json";
+      overrides = lib.optionalAttrs (cfg.hooks != { }) { inherit (cfg) hooks; };
+    };
   };
 }

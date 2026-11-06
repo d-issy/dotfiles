@@ -21,6 +21,9 @@ export NIX_CONFIG="extra-experimental-features = nix-command flakes"
 ## Apply
 
 `.#apply` automatically selects the matching configuration for the current system.
+On NixOS, it applies the Linux Home Manager configuration. The generic NixOS
+configuration is a CI fixture under `checks.x86_64-linux.nixos-home-manager`,
+not a deployable host configuration.
 
 ```sh
 nix run .#apply

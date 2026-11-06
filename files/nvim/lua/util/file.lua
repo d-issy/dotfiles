@@ -25,7 +25,7 @@ M.disable_futures_for_bigfile = function(buf)
       vim.schedule(function()
         local client = vim.lsp.get_client_by_id(args.data.client_id)
         if client then
-          client:buf_detach(buf)
+          vim.lsp.buf_detach_client(buf, client.id)
         end
       end)
     end,

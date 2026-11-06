@@ -33,10 +33,8 @@ _:
             defaultFgColor = [ "#cad3f5" ];
             searchingActiveBorderColor = [ "#eed49f" ];
           };
-          git = {
-            autoForwardBranches = "none";
-          };
         };
+        git.autoForwardBranches = "none";
         quitOnTopLevelReturn = true;
         keybinding = {
           universal = {

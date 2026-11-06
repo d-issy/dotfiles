@@ -74,7 +74,11 @@ export function getUsageTotals(entries: readonly SessionEntry[]): UsageTotals {
 			continue;
 		}
 
-		if (entry.type === "compaction" || entry.type === "branch_summary") {
+		if (
+			entry.type === "usage" ||
+			entry.type === "compaction" ||
+			entry.type === "branch_summary"
+		) {
 			const usage = getUsage(entry);
 			if (usage) addUsage(totals, usage);
 		}

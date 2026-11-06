@@ -32,7 +32,7 @@ return {
     m(1, "^Ar$", "from argparse "),
     m(1, "^It?$", "from collections.abc "),
     m(1, "^Mu?$", "from collections.abc "),
-    m(1, "^Or$", "from collections.abc "),
+    m(1, "^Or$", "from collections "),
     m(1, "^P$", "from pathlib "),
     m(1, "^[CS]$", "from collections.abc "),
     m(1, "^[FLOT]$", "from typing "),
@@ -117,7 +117,7 @@ return {
   postfix("?", { l("Optional[" .. l.POSTFIX_MATCH .. "]") }),
   postfix(".len", { l("len(" .. l.POSTFIX_MATCH .. ")") }),
   postfix(".str", { l("str(" .. l.POSTFIX_MATCH .. ")") }),
-  postfix(".int", { l("str(" .. l.POSTFIX_MATCH .. ")") }),
+  postfix(".int", { l("int(" .. l.POSTFIX_MATCH .. ")") }),
   postfix(".type", { l("type(" .. l.POSTFIX_MATCH .. ")") }),
   postfix(".not", { l("not(" .. l.POSTFIX_MATCH .. ")") }),
 }

@@ -28,7 +28,7 @@
         }
         {
           description = "compress to zip with compression level";
-          command = "zip -r <compression_level> <output>.zip <files>";
+          command = "zip -r -<compression_level> <output>.zip <files>";
         }
         {
           description = "extract zip";

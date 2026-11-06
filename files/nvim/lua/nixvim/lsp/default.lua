@@ -97,58 +97,6 @@ vim.keymap.set("i", "<C-Space>", function()
   vim.lsp.completion.get()
 end, { desc = "Trigger LSP completion" })
 
-local function apply_additional_edits(edits, bufnr, encoding)
-  if not edits or vim.tbl_isempty(edits) then
-    return
-  end
-  local needed = {}
-  for _, edit in ipairs(edits) do
-    local s = edit.range.start
-    local line = (vim.api.nvim_buf_get_lines(bufnr, s.line, s.line + 1, false) or {})[1] or ""
-    local fragment = vim.trim((edit.newText or ""):match "([^\n]+)" or "")
-    if fragment == "" or not line:find(fragment, 1, true) then
-      table.insert(needed, edit)
-    end
-  end
-  if #needed > 0 then
-    vim.lsp.util.apply_text_edits(needed, bufnr, encoding)
-  end
-end
-
-vim.api.nvim_create_autocmd("CompleteDone", {
-  callback = function(ev)
-    local completed = vim.v.completed_item
-    if not completed or vim.tbl_isempty(completed) then
-      return
-    end
-    local lsp_data = vim.tbl_get(completed, "user_data", "nvim", "lsp")
-    if not lsp_data then
-      return
-    end
-    local item = lsp_data.completion_item
-    if not item then
-      return
-    end
-    local client = vim.lsp.get_client_by_id(lsp_data.client_id)
-    if not client then
-      return
-    end
-
-    vim.defer_fn(function()
-      if item.additionalTextEdits and not vim.tbl_isempty(item.additionalTextEdits) then
-        apply_additional_edits(item.additionalTextEdits, ev.buf, client.offset_encoding)
-      elseif (client.server_capabilities.completionProvider or {}).resolveProvider then
-        client:request(vim.lsp.protocol.Methods.completionItem_resolve, item, function(err, resolved)
-          if err or not resolved then
-            return
-          end
-          apply_additional_edits(resolved.additionalTextEdits, ev.buf, client.offset_encoding)
-        end, ev.buf)
-      end
-    end, 50)
-  end,
-})
-
 vim.keymap.set({ "i", "s" }, "<C-s>", function()
   vim.lsp.buf.signature_help {
     border = "rounded",
