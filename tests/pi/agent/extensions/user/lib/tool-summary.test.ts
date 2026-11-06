@@ -120,6 +120,29 @@ function codemode(
 }
 
 describe("tool summaries (real Pi components)", () => {
+	it.each(["read", "codemode"])(
+		"keeps successful %s images visible after the grace period",
+		(name) => {
+			const row = tool(name, false);
+			row.updateResult({
+				isError: false,
+				content: [
+					{
+						type: "image",
+						mimeType: "image/png",
+						data: "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/dN8AAAAASUVORK5CYII=",
+					},
+				],
+				details: { calls: [{ name: "read", args: "{}", status: "ok" }] },
+			});
+			vi.advanceTimersByTime(3000);
+			const chat = container(tool("read"), row, tool("grep"));
+			const rendered = chat.render(100);
+			expect(rendered.join("\n")).toContain(row.render(100).join("\n"));
+			expect(plainLines(chat).join("\n")).toContain("[Image:");
+			expect(summaries(chat)).toEqual([" ✓ read", " ✓ search"]);
+		},
+	);
 	it("summarizes executed codemode calls with the existing command labels", () => {
 		const chat = container(
 			tool("read"),
@@ -565,7 +588,7 @@ describe("tool summaries (real Pi components)", () => {
 		}
 	});
 
-	it("hides inline images in the summary and restores the original image output on expansion", () => {
+	it("preserves inline images before and after expansion", () => {
 		setCapabilities({ images: "iterm2", trueColor: false, hyperlinks: false });
 		const read = tool("read", false);
 		read.updateResult({
@@ -579,7 +602,8 @@ describe("tool summaries (real Pi components)", () => {
 			isError: false,
 		});
 		const chat = container(read);
-		expect(plainLines(chat)).toEqual(["", " ✓ read"]);
+		expect(chat.render(80)).toEqual(nativeRender.call(chat, 80));
+		expect(chat.render(80).join("\n")).toContain("\x1b]1337;File=");
 		read.setExpanded(true);
 		expect(chat.render(80)).toEqual(nativeRender.call(chat, 80));
 		expect(chat.render(80).join("\n")).toContain("\x1b]1337;File=");

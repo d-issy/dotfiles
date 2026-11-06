@@ -1,5 +1,4 @@
-import { mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { join } from "node:path";
 import { getSupportedThinkingLevels } from "@earendil-works/pi-ai";
 import {
 	CustomEditor,
@@ -15,14 +14,16 @@ import {
 	truncateToWidth,
 } from "@earendil-works/pi-tui";
 import { type FastController, supportsFast, supportsUltrafast } from "./fast";
-
-export interface ModelSet {
-	provider: string;
-	model: string;
-	thinking: string;
-	fast: boolean;
-	ultrafast?: boolean;
-}
+import {
+	type ModelSet,
+	readModelSets,
+	updateModelSets,
+} from "../lib/model-set-store";
+export {
+	type ModelSet,
+	readModelSets,
+	writeModelSets,
+} from "../lib/model-set-store";
 
 function speedLabel(preset: ModelSet): string {
 	return preset.ultrafast ? " ultrafast" : preset.fast ? " fast" : "";
@@ -40,46 +41,6 @@ export function sameModelSet(a: ModelSet, b: ModelSet): boolean {
 		a.fast === b.fast &&
 		Boolean(a.ultrafast) === Boolean(b.ultrafast)
 	);
-}
-
-export function readModelSets(path: string): ModelSet[] {
-	let text: string;
-	try {
-		text = readFileSync(path, "utf8");
-	} catch (error) {
-		if ((error as NodeJS.ErrnoException).code === "ENOENT") return [];
-		throw error;
-	}
-	const value: unknown = JSON.parse(text);
-	if (
-		!Array.isArray(value) ||
-		!value.every((item: unknown) => {
-			if (!item || typeof item !== "object") return false;
-			const p = item as Record<string, unknown>;
-			return (
-				typeof p.provider === "string" &&
-				p.provider.length > 0 &&
-				typeof p.model === "string" &&
-				p.model.length > 0 &&
-				typeof p.thinking === "string" &&
-				p.thinking.length > 0 &&
-				typeof p.fast === "boolean" &&
-				(p.ultrafast === undefined || typeof p.ultrafast === "boolean") &&
-				!(p.fast && p.ultrafast)
-			);
-		})
-	)
-		throw new Error(`Invalid model sets file: ${path}`);
-	return value as ModelSet[];
-}
-
-export function writeModelSets(path: string, sets: ModelSet[]): void {
-	mkdirSync(dirname(path), { recursive: true });
-	const temporary = `${path}.${process.pid}.tmp`;
-	writeFileSync(temporary, `${JSON.stringify(sets, null, 2)}\n`, {
-		mode: 0o600,
-	});
-	renameSync(temporary, path);
 }
 
 export function registerModelSetsFeature(
@@ -155,10 +116,6 @@ async function showPicker(
 					.filter((token) => !["fast", "ultrafast", "nofast"].includes(token))
 					.join(" ");
 				return fuzzyFilter(candidates, query, modelSetLabel);
-			};
-			const update = (next: ModelSet[]): void => {
-				writeModelSets(path, next);
-				sets = next;
 			};
 			return {
 				get focused(): boolean {
@@ -246,10 +203,8 @@ async function showPicker(
 					try {
 						if (deleting) {
 							if (matchesKey(data, "enter")) {
-								update(
-									readModelSets(path).filter(
-										(p) => !sameModelSet(p, deleting!),
-									),
+								sets = updateModelSets(path, (latest) =>
+									latest.filter((p) => !sameModelSet(p, deleting!)),
 								);
 								deleting = undefined;
 								message = "Deleted";
@@ -261,14 +216,14 @@ async function showPicker(
 							if (!current) {
 								message = "No model selected";
 							} else {
-								const latest = readModelSets(path);
-								if (latest.some((p) => sameModelSet(p, current))) {
-									sets = latest;
-									message = "Already saved";
-								} else {
-									update([...latest, current]);
+								sets = updateModelSets(path, (latest) => {
+									if (latest.some((p) => sameModelSet(p, current))) {
+										message = "Already saved";
+										return latest;
+									}
 									message = "Saved current settings";
-								}
+									return [...latest, current];
+								});
 								input.setValue("");
 								index = sets.findIndex((p) => sameModelSet(p, current));
 							}

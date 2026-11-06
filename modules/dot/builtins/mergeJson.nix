@@ -48,6 +48,10 @@ lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     set -e
     targetDir=${lib.escapeShellArg targetDir}
     targetFile="$targetDir/${settingsFile}"
+    if [ -n "''${DRY_RUN+x}" ]; then
+      printf 'Would reconcile managed JSON settings in %s\n' "$targetFile"
+      exit 0
+    fi
     stateDir="''${XDG_STATE_HOME:-$HOME/.local/state}/dotfiles"
     stateFile="$stateDir/${stateName}"
     ${pkgs.coreutils}/bin/mkdir -p "$targetDir" "$stateDir"

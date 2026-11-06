@@ -52,10 +52,10 @@ WinManager = (function()
   end
 
   local findApplication = function(app)
-    if hs.fnutils.contains({ "string", "number" }, type(app)) then
-      app = hs.application.find(app)
-    elseif app == nil then
-      app = hs.application.open(app)
+    if type(app) == "string" then
+      return hs.application.find(app) or hs.application.open(app)
+    elseif type(app) == "number" then
+      return hs.application.find(app)
     end
     return app
   end
@@ -601,11 +601,11 @@ WinManager = (function()
 
   M.focusApplication = function(app)
     local fn = function()
-      app = findApplication(app)
-      if app == nil then
+      local application = findApplication(app)
+      if application == nil then
         return
       end
-      local win = mainWindow(app)
+      local win = mainWindow(application)
       if win == nil then
         return
       end

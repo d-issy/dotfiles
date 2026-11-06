@@ -249,7 +249,10 @@ export interface FastController {
 
 export function registerFastFeature(pi: ExtensionAPI): FastController {
 	let mode: SpeedMode | undefined;
-	let activeFastRequest: { model: FastModel; mode: SpeedMode } | undefined;
+	let awaitingTurnRequest = false;
+	let activeRequest:
+		| { model: FastModel; mode: SpeedMode | undefined }
+		| undefined;
 	const controller: FastController = {
 		getMode: (model) => {
 			if (mode === "ultrafast")
@@ -310,30 +313,59 @@ export function registerFastFeature(pi: ExtensionAPI): FastController {
 		ctx.ui.notify(`${label} mode disabled for the selected model`, "info");
 	});
 
+	function clearRequest(): void {
+		awaitingTurnRequest = false;
+		activeRequest = undefined;
+	}
+	function captureTurnRequest(model: FastModel | undefined): void {
+		if (!awaitingTurnRequest || !model) return;
+		activeRequest = { model, mode: controller.getMode(model) };
+		awaitingTurnRequest = false;
+	}
+	pi.on("turn_start", () => {
+		clearRequest();
+		awaitingTurnRequest = true;
+	});
+	pi.on("agent_end", clearRequest);
+	pi.on("session_start", clearRequest);
+	pi.on("session_shutdown", clearRequest);
+	pi.on("cache_warming_decision", (_event, ctx) => {
+		// Pi does not identify warming calls in its payload/header hooks, and
+		// warming has no message_end for tier cost correction. Stop it while a
+		// speed tier is selected or still serving an in-flight foreground request.
+		if (activeRequest?.mode || controller.getMode(ctx.model))
+			return { action: "stop" };
+	});
+
 	pi.on("before_provider_request", (event, ctx) => {
-		const requestMode = controller.getMode(ctx.model);
+		if (!isRecord(event.payload) || event.payload.model !== ctx.model?.id)
+			return;
+		// Cache warming reuses onPayload but has no assistant message_end. Only
+		// the first foreground hook after turn_start owns the response's rate.
+		// Keep that speed for retries even when the UI mode changes in flight.
+		captureTurnRequest(ctx.model);
+		const requestMode = activeRequest?.mode;
 		if (!requestMode) return;
 		const payload = enableFastPayload(event.payload, ctx.model, requestMode);
-		if (payload !== undefined && ctx.model)
-			activeFastRequest = { model: ctx.model, mode: requestMode };
 		return payload;
 	});
 
 	pi.on("before_provider_headers", (event, ctx) => {
-		if (!controller.isEnabled(ctx.model) || !supportsAnthropicFast(ctx.model))
-			return;
+		// Pi assembles authentication headers before building the payload on
+		// Anthropic; other providers may invoke these hooks in the reverse order.
+		captureTurnRequest(ctx.model);
+		const requestMode = activeRequest?.mode;
+		if (requestMode !== "fast" || !supportsAnthropicFast(ctx.model)) return;
 		addAnthropicFastBeta(event.headers);
 	});
 
 	pi.on("message_end", (event) => {
-		if (event.message.role !== "assistant" || !activeFastRequest) return;
+		if (event.message.role !== "assistant") return;
+		const request = activeRequest;
+		clearRequest();
+		if (!request?.mode) return;
 
-		const message = adjustFastCost(
-			event.message,
-			activeFastRequest.model,
-			activeFastRequest.mode,
-		);
-		activeFastRequest = undefined;
+		const message = adjustFastCost(event.message, request.model, request.mode);
 		return { message };
 	});
 

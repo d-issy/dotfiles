@@ -116,12 +116,27 @@ let
             fi
           fi
 
-          workspace_id="$($herdr workspace list | jq -r --arg label "$label" '.result.workspaces[] | select(.label == $label) | .workspace_id' | head -n 1)"
-          if [ -n "$workspace_id" ]; then
-            "$herdr" workspace focus "$workspace_id" >/dev/null
-          else
-            "$herdr" workspace create --cwd "$value" --label "$label" --focus >/dev/null
+          value="$(realpath "$value")"
+          workspaces="$("$herdr" workspace list)"
+          workspace_id="$(printf '%s' "$workspaces" | jq -r --arg path "$value" '
+            [.result.workspaces[] | select(.tokens.dot_repo_path == $path or .worktree.checkout_path == $path) | .workspace_id][0] // empty
+          ')"
+          if [ -z "$workspace_id" ]; then
+            # Adopt an existing workspace only when its pane cwd matches the repo.
+            while IFS= read -r candidate; do
+              if "$herdr" pane list --workspace "$candidate" \
+                | jq -e --arg path "$value" 'any(.result.panes[]?; .cwd == $path)' >/dev/null; then
+                workspace_id="$candidate"
+                break
+              fi
+            done < <(printf '%s' "$workspaces" | jq -r '.result.workspaces[] | select(.tokens.dot_repo_path == null) | .workspace_id')
           fi
+          if [ -z "$workspace_id" ]; then
+            created="$("$herdr" workspace create --cwd "$value" --label "$label" --focus)"
+            workspace_id="$(printf '%s' "$created" | jq -er '.result.workspace.workspace_id')"
+          fi
+          "$herdr" workspace report-metadata "$workspace_id" --source dotfiles --token "dot_repo_path=$value" >/dev/null
+          "$herdr" workspace focus "$workspace_id" >/dev/null
           ;;
       esac
 

@@ -22,7 +22,7 @@ function M.delete(buf)
 
   if vim.bo[buf].modified then
     local choice = vim.fn.confirm(("Save changes to %q?"):format(vim.fn.bufname()), "&Yes\n&No\n&Cancel")
-    if choice == 0 then -- Cancel
+    if choice == 0 or choice == 3 then -- Cancel
       return
     end
     if choice == 1 then -- Yes

@@ -205,7 +205,7 @@
           ];
         };
 
-      mkNixosConfiguration =
+      mkNixosCheckConfiguration =
         system:
         let
           pkgs = mkPkgs system;
@@ -218,9 +218,8 @@
             {
               networking.hostName = "nixos";
 
-              # Keep the generic NixOS configuration evaluable without
-              # machine-specific hardware settings. Real hosts can override
-              # these values in a hostname-specific configuration.
+              # CI fixture only: this has no machine-specific hardware settings
+              # and must never be exposed through nixosConfigurations.
               boot.loader.grub.enable = false;
               fileSystems."/" = {
                 device = "none";
@@ -288,7 +287,26 @@
           };
         };
 
-        checks = mkLintChecks pkgs;
+        checks =
+          mkLintChecks pkgs
+          // {
+            home-manager = self.homeConfigurations.${homeConfigurationNames.${system}}.activationPackage;
+            worktree-regressions = import ./tests/shell { inherit pkgs; };
+            neovim-regressions =
+              pkgs.runCommand "neovim-regressions" { nativeBuildInputs = [ pkgs.neovim ]; }
+                ''
+                  export HOME="$TMPDIR/home"
+                  export XDG_STATE_HOME="$TMPDIR/state"
+                  export XDG_CACHE_HOME="$TMPDIR/cache"
+                  export DOTFILES_ROOT=${./.}
+                  mkdir -p "$HOME"
+                  nvim --headless -u NONE -i NONE -l ${./tests/neovim/regressions.lua}
+                  touch "$out"
+                '';
+          }
+          // pkgs.lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
+            nixos-home-manager = (mkNixosCheckConfiguration system).config.system.build.toplevel;
+          };
 
         devShells.default = pkgs.mkShell {
           packages = toolPackages.devShell ++ [
@@ -318,8 +336,5 @@
         macos = mkHomeManagerConfiguration "aarch64-darwin" ./modules/home/macos.nix;
       };
 
-      nixosConfigurations = {
-        nixos = mkNixosConfiguration "x86_64-linux";
-      };
     };
 }

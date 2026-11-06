@@ -4,7 +4,7 @@ import type {
 	ExtensionAPI,
 	ExtensionContext,
 } from "@earendil-works/pi-coding-agent";
-import { describe, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
 	OPENROUTER_FAST_MODEL_IDS,
 	OPENROUTER_ULTRAFAST_MODEL_IDS,
@@ -163,6 +163,7 @@ describe("gateway speed modes", () => {
 			const controller = registerFastFeature(pi);
 			controller.setMode(mode, model);
 			assert.equal(controller.getMode(model), mode);
+			handlers.get("turn_start")!({}, { model } as ExtensionContext);
 			assert.deepEqual(
 				handlers.get("before_provider_request")!({ payload: { model: id } }, {
 					model,
@@ -351,6 +352,7 @@ describe("Ultrafast", () => {
 		await commands.get("ultrafast")!("", ctx);
 		assert.equal(controller.getMode(ctx.model), "ultrafast");
 		assert.equal(controller.isEnabled(ctx.model), false);
+		events.get("turn_start")!({}, ctx);
 		assert.deepEqual(
 			events.get("before_provider_request")!(
 				{ payload: { model: ctx.model!.id } },
@@ -422,6 +424,120 @@ describe("enableFastPayload", () => {
 });
 
 describe("adjustFastCost", () => {
+	it.each(["headers-first", "payload-first"])(
+		"pins Anthropic Fast across %s hooks and retries",
+		(order) => {
+			type Handler = (
+				event: Record<string, unknown>,
+				ctx: ExtensionContext,
+			) => unknown;
+			const handlers = new Map<string, Handler>();
+			const controller = registerFastFeature({
+				registerCommand: vi.fn(),
+				on: (name: string, handler: Handler) => handlers.set(name, handler),
+			} as unknown as ExtensionAPI);
+			const model = fastModel("anthropic", "claude-opus-5");
+			const ctx = { model } as ExtensionContext;
+			const headers: Record<string, string | null> = {};
+			const runHeaders = (): unknown =>
+				handlers.get("before_provider_headers")!({ headers }, ctx);
+			const runPayload = (): unknown =>
+				handlers.get("before_provider_request")!(
+					{ payload: { model: model.id } },
+					ctx,
+				);
+			controller.setMode("fast", model);
+			runHeaders();
+			expect(headers).toEqual({}); // idle warming has no Fast headers
+			handlers.get("turn_start")!({}, ctx);
+			let payload: unknown;
+			if (order === "headers-first") runHeaders();
+			else payload = runPayload();
+			controller.setMode(undefined, model);
+			if (order === "headers-first") payload = runPayload();
+			else runHeaders();
+			expect(headers["anthropic-beta"]).toContain("fast-mode-2026-02-01");
+			expect(payload).toEqual({ model: model.id, speed: "fast" });
+			runHeaders();
+			expect(runPayload()).toEqual({ model: model.id, speed: "fast" });
+			const result = handlers.get("message_end")!(
+				{ message: assistant(model.provider, model.id) },
+				ctx,
+			) as { message: AssistantMessage };
+			expect(result.message.usage.cost.total).toBe(7.5);
+			handlers.get("turn_start")!({}, ctx);
+			const nextHeaders = {};
+			handlers.get("before_provider_headers")!({ headers: nextHeaders }, ctx);
+			expect(nextHeaders).toEqual({});
+			expect(runPayload()).toBeUndefined();
+		},
+	);
+
+	it("isolates idle warming, preserves foreground retry speed, and clears state at turn boundaries", () => {
+		type Handler = (
+			event: Record<string, unknown>,
+			ctx: ExtensionContext,
+		) => unknown;
+		const handlers = new Map<string, Handler>();
+		const controller = registerFastFeature({
+			registerCommand: vi.fn(),
+			on: (name: string, handler: Handler) => handlers.set(name, handler),
+		} as unknown as ExtensionAPI);
+		const model = fastModel("openai-codex", "gpt-6-astra");
+		const ctx = { model } as ExtensionContext;
+		const emit = (name: string, event: Record<string, unknown> = {}): unknown =>
+			handlers.get(name)!(event, ctx);
+		const request = (): unknown =>
+			emit("before_provider_request", { payload: { model: model.id } });
+		const finish = (): { message: AssistantMessage } | undefined =>
+			emit("message_end", { message: assistant(model.provider, model.id) }) as
+				| { message: AssistantMessage }
+				| undefined;
+
+		expect(emit("cache_warming_decision")).toBeUndefined();
+		controller.setMode("fast", model);
+		expect(emit("cache_warming_decision")).toEqual({ action: "stop" });
+		expect(request()).toBeUndefined(); // idle warm stays at the standard tier
+		controller.setMode(undefined, model);
+		emit("turn_start");
+		expect(request()).toBeUndefined();
+		expect(finish()).toBeUndefined();
+
+		controller.setMode("ultrafast", model);
+		expect(emit("cache_warming_decision")).toEqual({ action: "stop" });
+		emit("turn_start");
+		expect(request()).toEqual({ model: model.id, service_tier: "ultrafast" });
+		controller.setMode(undefined, model);
+		expect(emit("cache_warming_decision")).toEqual({ action: "stop" });
+		// Retries retain the original tier after a UI change in flight.
+		expect(request()).toEqual({ model: model.id, service_tier: "ultrafast" });
+		expect(request()).toEqual({ model: model.id, service_tier: "ultrafast" });
+		expect(finish()?.message.usage.cost.total).toBe(22.5);
+		expect(emit("cache_warming_decision")).toBeUndefined();
+
+		controller.setMode(undefined, model);
+		emit("turn_start");
+		expect(request()).toBeUndefined();
+		controller.setMode("fast", model);
+		expect(request()).toBeUndefined(); // retry of a standard request
+		expect(finish()).toBeUndefined();
+		emit("turn_start");
+		expect(request()).toEqual({ model: model.id, service_tier: "priority" });
+		expect(finish()?.message.usage.cost.total).toBe(7.5);
+
+		for (const boundary of [
+			"turn_start",
+			"agent_end",
+			"session_start",
+			"session_shutdown",
+		]) {
+			emit("turn_start");
+			request();
+			emit(boundary);
+			expect(finish()).toBeUndefined();
+		}
+	});
+
 	it("applies the Codex Fast multiplier", () => {
 		const message = assistant("openai-codex", "gpt-5.5");
 		const adjusted = adjustFastCost(

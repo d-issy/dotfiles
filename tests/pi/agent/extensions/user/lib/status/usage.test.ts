@@ -4,6 +4,42 @@ import { describe, it } from "vitest";
 import { getUsageTotals } from "#pi-user/lib/status/usage";
 
 describe("getUsageTotals", () => {
+	it("counts background cache warming without replacing the latest assistant cache hit rate", () => {
+		const entries = [
+			{
+				type: "message",
+				message: {
+					role: "assistant",
+					usage: {
+						input: 10,
+						output: 2,
+						cacheRead: 90,
+						cacheWrite: 0,
+						cost: { total: 0.1 },
+					},
+				},
+			},
+			{
+				type: "usage",
+				kind: "cache_warm",
+				usage: {
+					input: 20,
+					output: 1,
+					cacheRead: 80,
+					cacheWrite: 50,
+					cost: { total: 0.25 },
+				},
+			},
+		] as unknown as SessionEntry[];
+		assert.deepEqual(getUsageTotals(entries), {
+			input: 30,
+			output: 3,
+			cacheRead: 170,
+			cacheWrite: 50,
+			cost: 0.35,
+			latestCacheHitRate: 90,
+		});
+	});
 	it("sums session usage and calculates the latest cache hit rate", () => {
 		const entries = [
 			{
