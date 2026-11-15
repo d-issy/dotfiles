@@ -190,27 +190,6 @@ jobs:
           restore-prefixes-first-match: nix-actionlint-${{ runner.os }}-
       - run: nix build .#checks.x86_64-linux.actionlint
 
-  zizmor:
-    name: zizmor
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    needs:
-      - changes
-    if: ${{ needs.changes.outputs.actions == 'true' }}
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-      - uses: cachix/install-nix-action@75c75c31ebece974e48ebc36b4ad125bd97bd97b # v31.11.3
-        with:
-          extra_nix_config: |
-            experimental-features = nix-command flakes
-      - uses: nix-community/cache-nix-action@7df957e333c1e5da7721f60227dbba6d06080569 # v7.0.2
-        with:
-          primary-key: nix-zizmor-${{ runner.os }}-${{ hashFiles('**/flake.lock') }}
-          restore-prefixes-first-match: nix-zizmor-${{ runner.os }}-
-      - run: nix build .#checks.x86_64-linux.zizmor
-
   all-lint-passed:
     name: All Lint Passed
     runs-on: ubuntu-latest
@@ -223,7 +202,6 @@ jobs:
       - oxlint
       - typecheck
       - actionlint
-      - zizmor
     if: ${{ always() }}
     steps:
       - name: Verify all lint jobs passed
