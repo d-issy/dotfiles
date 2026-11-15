@@ -1,7 +1,7 @@
 use chrono::{Datelike, Local, TimeZone, Timelike};
 use serde_json::Value;
 use std::io::Read;
-use std::process::Command;
+use std::process::{Command, Stdio};
 
 const DIM: &str = "\x1b[2m";
 const GREEN: &str = "\x1b[32m";
@@ -11,22 +11,47 @@ const CYAN: &str = "\x1b[36m";
 const RESET: &str = "\x1b[0m";
 
 const WEEKDAYS: [&str; 7] = ["日", "月", "火", "水", "木", "金", "土"];
+const DEFAULT_CONTEXT_SIZE: i64 = 200_000;
 
-fn format_tokens(n: i64) -> String {
-    if n == 1_000_000 {
-        "1M".to_string()
-    } else if n >= 1_000_000 {
-        let t = (n + 50_000) / 100_000;
-        format!("{}.{}M", t / 10, t % 10)
-    } else if n >= 1000 {
-        format!("{}K", (n + 500) / 1000)
-    } else {
-        n.to_string()
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum Level {
+    Ok,
+    Warn,
+    Critical,
+}
+
+impl Level {
+    fn from_thresholds(value: i64, ok_max: i64, warn_max: i64) -> Self {
+        if value <= ok_max {
+            Self::Ok
+        } else if value <= warn_max {
+            Self::Warn
+        } else {
+            Self::Critical
+        }
+    }
+
+    fn color(self) -> &'static str {
+        match self {
+            Self::Ok => GREEN,
+            Self::Warn => YELLOW,
+            Self::Critical => RED,
+        }
     }
 }
 
-/// Local reset time as HH:MM, prefixed with the weekday when it is not today.
-/// Returns None when the epoch is not representable.
+fn format_tokens(n: i64) -> String {
+    match n {
+        1_000_000 => "1M".to_string(),
+        1_000_001.. => {
+            let tenths = (n + 50_000) / 100_000;
+            format!("{}.{}M", tenths / 10, tenths % 10)
+        }
+        1000.. => format!("{}K", (n + 500) / 1000),
+        _ => n.to_string(),
+    }
+}
+
 fn fmt_reset<Tz: TimeZone>(reset: i64, now: i64, tz: &Tz) -> Option<String> {
     let at = tz.timestamp_opt(reset, 0).single()?;
     let today = tz.timestamp_opt(now, 0).single()?;
@@ -34,61 +59,58 @@ fn fmt_reset<Tz: TimeZone>(reset: i64, now: i64, tz: &Tz) -> Option<String> {
     if at.date_naive() == today.date_naive() {
         Some(clock)
     } else {
-        let wday = at.weekday().num_days_from_sunday() as usize;
-        Some(format!("{} {clock}", WEEKDAYS[wday]))
+        let weekday = WEEKDAYS[at.weekday().num_days_from_sunday() as usize];
+        Some(format!("{weekday} {clock}"))
     }
 }
 
-fn usage_seg<Tz: TimeZone>(
+struct UsageLimit {
+    label: &'static str,
     used: Option<i64>,
-    label: &str,
     reset: Option<i64>,
-    now: i64,
-    tz: &Tz,
-) -> String {
-    let Some(used) = used else {
-        return String::new();
-    };
-    let color = if used <= 50 {
-        GREEN
-    } else if used <= 80 {
-        YELLOW
-    } else {
-        RED
-    };
-    let mut seg = format!("{DIM}{label}{RESET}{color}{used}%{RESET}");
-    if color != GREEN
-        && let Some(at) = reset.and_then(|r| fmt_reset(r, now, tz))
-    {
-        seg.push_str(&format!(" {color}{at}{RESET}"));
-    }
-    seg
 }
 
-/// jq `//`: null, false and missing fall through to the default.
+impl UsageLimit {
+    fn render<Tz: TimeZone>(&self, now: i64, tz: &Tz) -> Option<String> {
+        let used = self.used?;
+        let level = Level::from_thresholds(used, 50, 80);
+        let color = level.color();
+        let label = self.label;
+        let mut seg = format!("{DIM}{label}{RESET}{color}{used}%{RESET}");
+        if level != Level::Ok
+            && let Some(at) = self.reset.and_then(|r| fmt_reset(r, now, tz))
+        {
+            seg.push_str(&format!(" {color}{at}{RESET}"));
+        }
+        Some(seg)
+    }
+}
+
+struct Status {
+    model: String,
+    effort: String,
+    context_size: i64,
+    context_used: i64,
+    five_hour: UsageLimit,
+    seven_day: UsageLimit,
+}
+
+/// jq's `//`: null, false and missing all fall through to the default.
 fn field<'a>(v: &'a Value, path: &[&str]) -> Option<&'a Value> {
-    let mut cur = v;
-    for key in path {
-        cur = cur.get(key)?;
-    }
-    match cur {
-        Value::Null | Value::Bool(false) => None,
-        other => Some(other),
-    }
+    path.iter()
+        .try_fold(v, |cur, key| cur.get(key))
+        .filter(|v| !matches!(v, Value::Null | Value::Bool(false)))
 }
 
-fn to_text(v: &Value) -> String {
+fn text(v: &Value) -> String {
     match v {
         Value::String(s) => s.clone(),
         other => other.to_string(),
     }
 }
 
-fn floor_int(v: Option<&Value>, default: i64) -> i64 {
-    match v.and_then(Value::as_f64) {
-        Some(f) => f.floor() as i64,
-        None => default,
-    }
+fn floor_int(v: Option<&Value>) -> Option<i64> {
+    v.and_then(Value::as_f64).map(|f| f.floor() as i64)
 }
 
 fn epoch(v: Option<&Value>) -> Option<i64> {
@@ -99,98 +121,102 @@ fn epoch(v: Option<&Value>) -> Option<i64> {
     }
 }
 
-fn render<Tz: TimeZone>(input: &str, branch: &str, now: i64, tz: &Tz) -> String {
-    // An unparsable document leaves every field empty, as the jq pipeline did.
-    let parsed: Option<Value> = serde_json::from_str(input).ok();
-    let (model, effort, context_size, current, used5, used7, reset5, reset7);
-    match &parsed {
-        Some(v) => {
-            model = field(v, &["model", "display_name"]).map_or("Unknown".to_string(), to_text);
-            effort = field(v, &["effort", "level"]).map_or(String::new(), to_text);
-            context_size = floor_int(
-                field(v, &["context_window", "context_window_size"]),
-                200_000,
-            );
-            let usage = |k: &str| floor_int(field(v, &["context_window", "current_usage", k]), 0);
-            current = usage("input_tokens")
-                + usage("cache_creation_input_tokens")
-                + usage("cache_read_input_tokens");
-            let pct = |k: &str| {
-                field(v, &["rate_limits", k, "used_percentage"])
-                    .and_then(Value::as_f64)
-                    .map(|f| f.round() as i64)
-            };
-            used5 = pct("five_hour");
-            used7 = pct("seven_day");
-            reset5 = epoch(field(v, &["rate_limits", "five_hour", "resets_at"]));
-            reset7 = epoch(field(v, &["rate_limits", "seven_day", "resets_at"]));
-        }
-        None => {
-            model = String::new();
-            effort = String::new();
-            context_size = 0;
-            current = 0;
-            used5 = None;
-            used7 = None;
-            reset5 = None;
-            reset7 = None;
-        }
-    }
-    let model = model.replacen(" context)", ")", 1);
-
-    let total_used = current;
-    let pct10 = if context_size > 0 {
-        (total_used * 1000 + context_size / 2) / context_size
-    } else {
-        0
-    };
-    let used_pct = format!("{}.{}", pct10 / 10, pct10 % 10);
-
-    let mut out = model;
-    if !effort.is_empty() {
-        out.push_str(&format!("{DIM}:{RESET}{effort}"));
-    }
-    if !branch.is_empty() {
-        out.push_str(&format!(" {DIM}|{RESET} {CYAN}{branch}{RESET}"));
-    }
-
-    if total_used != 0 {
-        let color = if pct10 <= 500 {
-            GREEN
-        } else if pct10 <= 800 {
-            YELLOW
-        } else {
-            RED
+impl Status {
+    /// With an unparsable document every field is empty, as the old jq pipeline left them.
+    fn empty() -> Self {
+        let limit = |label| UsageLimit {
+            label,
+            used: None,
+            reset: None,
         };
-        out.push_str(&format!(
-            " {DIM}|{RESET} {color}{}{RESET}{DIM}/{}{RESET} {color}({used_pct}%){RESET}",
-            format_tokens(total_used),
-            format_tokens(context_size),
-        ));
+        Self {
+            model: String::new(),
+            effort: String::new(),
+            context_size: 0,
+            context_used: 0,
+            five_hour: limit("5h "),
+            seven_day: limit("7d "),
+        }
     }
 
-    let five = usage_seg(used5, "5h ", reset5, now, tz);
-    let seven = usage_seg(used7, "7d ", reset7, now, tz);
-    if !five.is_empty() || !seven.is_empty() {
-        out.push_str(&format!(" {DIM}|{RESET}"));
-        if !five.is_empty() {
-            out.push(' ');
-            out.push_str(&five);
-        }
-        if !seven.is_empty() {
-            out.push(' ');
-            out.push_str(&seven);
+    fn from_json(v: &Value) -> Self {
+        let usage =
+            |key: &str| floor_int(field(v, &["context_window", "current_usage", key])).unwrap_or(0);
+        let limit = |label, key: &str| UsageLimit {
+            label,
+            used: field(v, &["rate_limits", key, "used_percentage"])
+                .and_then(Value::as_f64)
+                .map(|f| f.round() as i64),
+            reset: epoch(field(v, &["rate_limits", key, "resets_at"])),
+        };
+        Self {
+            model: field(v, &["model", "display_name"]).map_or("Unknown".to_string(), text),
+            effort: field(v, &["effort", "level"]).map_or(String::new(), text),
+            context_size: floor_int(field(v, &["context_window", "context_window_size"]))
+                .unwrap_or(DEFAULT_CONTEXT_SIZE),
+            context_used: usage("input_tokens")
+                + usage("cache_creation_input_tokens")
+                + usage("cache_read_input_tokens"),
+            five_hour: limit("5h ", "five_hour"),
+            seven_day: limit("7d ", "seven_day"),
         }
     }
-    out
+
+    fn parse(input: &str) -> Self {
+        serde_json::from_str(input)
+            .ok()
+            .map_or_else(Self::empty, |v| Self::from_json(&v))
+    }
+
+    fn used_tenths_of_percent(&self) -> i64 {
+        if self.context_size > 0 {
+            (self.context_used * 1000 + self.context_size / 2) / self.context_size
+        } else {
+            0
+        }
+    }
+
+    fn render<Tz: TimeZone>(&self, branch: &str, now: i64, tz: &Tz) -> String {
+        let mut out = self.model.replacen(" context)", ")", 1);
+        if !self.effort.is_empty() {
+            out.push_str(&format!("{DIM}:{RESET}{}", self.effort));
+        }
+        if !branch.is_empty() {
+            out.push_str(&format!(" {DIM}|{RESET} {CYAN}{branch}{RESET}"));
+        }
+
+        if self.context_used != 0 {
+            let tenths = self.used_tenths_of_percent();
+            let color = Level::from_thresholds(tenths, 500, 800).color();
+            out.push_str(&format!(
+                " {DIM}|{RESET} {color}{}{RESET}{DIM}/{}{RESET} {color}({}.{}%){RESET}",
+                format_tokens(self.context_used),
+                format_tokens(self.context_size),
+                tenths / 10,
+                tenths % 10,
+            ));
+        }
+
+        let limits: Vec<String> = [&self.five_hour, &self.seven_day]
+            .into_iter()
+            .filter_map(|limit| limit.render(now, tz))
+            .collect();
+        if !limits.is_empty() {
+            out.push_str(&format!(" {DIM}|{RESET} {}", limits.join(" ")));
+        }
+        out
+    }
+}
+
+fn render<Tz: TimeZone>(input: &str, branch: &str, now: i64, tz: &Tz) -> String {
+    Status::parse(input).render(branch, now, tz)
 }
 
 fn git_branch() -> String {
     Command::new("git")
         .args(["branch", "--show-current"])
-        .stderr(std::process::Stdio::null())
+        .stderr(Stdio::null())
         .output()
-        .ok()
         .map(|o| {
             String::from_utf8_lossy(&o.stdout)
                 .trim_end_matches('\n')
@@ -202,9 +228,11 @@ fn git_branch() -> String {
 fn main() {
     let mut raw = Vec::new();
     let _ = std::io::stdin().read_to_end(&mut raw);
-    let input = String::from_utf8_lossy(&raw);
     let now = chrono::Utc::now().timestamp();
-    println!("{}", render(&input, &git_branch(), now, &Local));
+    println!(
+        "{}",
+        render(&String::from_utf8_lossy(&raw), &git_branch(), now, &Local)
+    );
 }
 
 #[cfg(test)]
@@ -248,18 +276,45 @@ mod tests {
     fn usage_colors() {
         let now = 1_700_000_000;
         assert_eq!(
-            usage_seg(Some(50), "5h ", Some(now + 60), now, &Utc),
+            UsageLimit {
+                label: "5h ",
+                used: Some(50),
+                reset: Some(now + 60)
+            }
+            .render(now, &Utc)
+            .unwrap_or_default(),
             format!("{DIM}5h {RESET}{GREEN}50%{RESET}")
         );
         assert_eq!(
-            usage_seg(Some(51), "5h ", Some(now + 60), now, &Utc),
+            UsageLimit {
+                label: "5h ",
+                used: Some(51),
+                reset: Some(now + 60)
+            }
+            .render(now, &Utc)
+            .unwrap_or_default(),
             format!("{DIM}5h {RESET}{YELLOW}51%{RESET} {YELLOW}22:14{RESET}")
         );
         assert_eq!(
-            usage_seg(Some(81), "7d ", None, now, &Utc),
+            UsageLimit {
+                label: "7d ",
+                used: Some(81),
+                reset: None
+            }
+            .render(now, &Utc)
+            .unwrap_or_default(),
             format!("{DIM}7d {RESET}{RED}81%{RESET}")
         );
-        assert_eq!(usage_seg(None, "7d ", None, now, &Utc), "");
+        assert_eq!(
+            UsageLimit {
+                label: "7d ",
+                used: None,
+                reset: None
+            }
+            .render(now, &Utc)
+            .unwrap_or_default(),
+            ""
+        );
     }
 
     #[test]
