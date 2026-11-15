@@ -2,7 +2,7 @@
 
 let
   # procps-ng ps on Linux; macOS keeps the system BSD ps (procps does not support these options there).
-  ps = if pkgs.stdenv.isLinux then "${pkgs.procps}/bin/ps" else "ps";
+  ps = if pkgs.stdenv.hostPlatform.isLinux then "${pkgs.procps}/bin/ps" else "ps";
 in
 {
   # Print a pane's foreground command by argv[0] (kernel comm can be a version-named binary).
