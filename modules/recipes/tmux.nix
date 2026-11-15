@@ -40,7 +40,6 @@ in
       };
       popups = {
         sessionSelector.enable = true;
-        navi.enable = true;
       };
       sessionNavigation.enable = true;
       windowRename.enable = true;

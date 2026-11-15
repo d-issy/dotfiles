@@ -64,11 +64,15 @@
     };
   };
 
-  dot.programs.navi.cheats.worktree.sections = [
+  dot.programs.commandLibrary.groups.worktree.sections = [
     {
       tags = [ "worktree" ];
       variables = {
-        pull_number = "${config.programs.gh.package}/bin/gh pr list --- --column 1 --delimiter '\\t'";
+        pull_number = {
+          command = "${config.programs.gh.package}/bin/gh pr list";
+          column = 1;
+          delimiter = "\t";
+        };
       };
       entries = [
         {

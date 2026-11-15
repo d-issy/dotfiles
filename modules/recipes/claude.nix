@@ -15,9 +15,9 @@ in
   config = {
     home = {
       shellAliases = {
-        cld = "claude";
         cla = "claude --permission-mode auto";
         clc = "claude --continue";
+        clf = "claude --model fable --permission-mode auto";
         clr = "claude --resume";
       };
 

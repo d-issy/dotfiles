@@ -1,4 +1,4 @@
-_:
+{ config, ... }:
 
 {
   programs.git = {
@@ -205,4 +205,22 @@ _:
       ".worktree"
     ];
   };
+
+  dot.programs.commandLibrary.groups.git.sections = [
+    {
+      variables.branch = "${config.programs.git.package}/bin/git branch --format='%(refname:short)'";
+      entries = [
+        {
+          description = "show working tree status";
+          alias = "gs";
+          command = "git status";
+        }
+        {
+          description = "switch branch";
+          alias = "gsw";
+          command = "git switch <branch>";
+        }
+      ];
+    }
+  ];
 }

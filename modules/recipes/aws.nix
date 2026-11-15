@@ -20,20 +20,23 @@ in
       };
     };
 
-    dot.programs.navi.cheats.aws.sections =
+    dot.programs.commandLibrary.groups.aws.sections =
       lib.mkIf
         (config.dot.programs.aws.enable && config.dot.programs.aws.plugins.ssmSessionManager.enable)
         [
           {
             variables = {
               profile = "${aws} configure list-profiles";
-              target = lib.concatStringsSep " " [
-                "${aws} --profile <profile> ec2 describe-instances"
-                "--filters ${runningInstancesFilter}"
-                "--query ${instanceNameAndIdQuery}"
-                "--output text"
-                "--- --column 2 --fzf-overrides '--no-select-1'"
-              ];
+              target = {
+                command = lib.concatStringsSep " " [
+                  "${aws} --profile <profile> ec2 describe-instances"
+                  "--filters ${runningInstancesFilter}"
+                  "--query ${instanceNameAndIdQuery}"
+                  "--output text"
+                ];
+                column = 2;
+                selectOne = false;
+              };
             };
             entries = [
               {

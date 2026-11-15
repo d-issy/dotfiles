@@ -208,9 +208,6 @@ let
       (lib.optionalString cfg.keyBindings.windowRename.enable ''
         bind-key -T prefix ${cfg.keyBindings.windowRename.key} command-prompt -I "#W" -p "Window name:" 'if -F "#{==:%1,}" "set-window-option automatic-rename on" "rename-window \"%%%\""'
       '')
-      (lib.optionalString cfg.keyBindings.popups.navi.enable ''
-        bind-key -T prefix g display-popup -w '95%' -h '95%' -d "#{pane_current_path}" -E "nu --login -i -c 'nv'"
-      '')
       (lib.optionalString cfg.keyBindings.split.enable ''
         bind \" split-window -v -c '#{pane_current_path}'
         bind \' split-window -h -c '#{pane_current_path}'
@@ -322,7 +319,6 @@ in
       };
       popups = {
         sessionSelector.enable = lib.mkEnableOption "prefix+s session-selector popup";
-        navi.enable = lib.mkEnableOption "prefix+g navi popup";
       };
       sessionNavigation = {
         enable = lib.mkEnableOption "session next/previous key bindings";

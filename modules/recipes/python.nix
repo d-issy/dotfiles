@@ -2,8 +2,21 @@
 
 let
   pythonVariables = {
-    python_file = ''${pkgs.fd}/bin/fd -t f -e py --- --fzf-overrides "--no-select-1"'';
-    python_module = ''${pkgs.fd}/bin/fd -t f -e py | ${pkgs.gnused}/bin/sed -e 's|\.py$||' -e 's|/|.|g' --- --fzf-overrides "--no-select-1"'';
+    python_file = {
+      command = "${pkgs.fd}/bin/fd -t f -e py";
+      selectOne = false;
+    };
+    python_module = {
+      command = "${pkgs.fd}/bin/fd -t f -e py";
+      match = "^(.*)\\.py$";
+      replace = [
+        {
+          from = "/";
+          to = ".";
+        }
+      ];
+      selectOne = false;
+    };
   };
 in
 {
@@ -17,8 +30,9 @@ in
       uv.enable = false;
     };
 
-    dot.programs.navi.cheats.python.sections = [
+    dot.programs.commandLibrary.groups.python.sections = [
       {
+        when.commands = [ "python" ];
         variables = pythonVariables;
         entries = [
           {
@@ -33,6 +47,7 @@ in
       }
       {
         tags = [ "uv" ];
+        when.commands = [ "uv" ];
         variables = pythonVariables;
         entries = [
           {
