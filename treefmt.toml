@@ -1,5 +1,11 @@
 [global]
-excludes = ["*.lock", "node_modules/**", ".direnv/**", ".pnpm-store/**"]
+excludes = [
+  "*.lock",
+  "node_modules/**",
+  ".direnv/**",
+  ".pnpm-store/**",
+  "target/**",
+]
 
 [formatter.nix]
 command = "nixfmt"
@@ -9,6 +15,11 @@ includes = ["*.nix"]
 command = "oxfmt"
 options = ["--no-error-on-unmatched-pattern"]
 includes = ["*.ts", "*.mts"]
+
+[formatter.rust]
+command = "rustfmt"
+options = ["--edition", "2024"]
+includes = ["*.rs"]
 
 [formatter.sh]
 command = "shfmt"
