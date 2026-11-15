@@ -26,7 +26,18 @@
           "github"
         ];
         variables = {
-          subcommand = "${pkgs.coreutils}/bin/printf '%s\\n' auth browse codespace gist issue org pr project release repo";
+          subcommand.values = [
+            "auth"
+            "browse"
+            "codespace"
+            "gist"
+            "issue"
+            "org"
+            "pr"
+            "project"
+            "release"
+            "repo"
+          ];
           base_branch = "${config.programs.git.package}/bin/git branch --format='%(refname:short)'";
           pull_number = {
             command = "${config.programs.gh.package}/bin/gh pr list";

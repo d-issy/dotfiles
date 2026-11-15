@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+_:
 
 {
   config.dot.programs.commandLibrary.groups.just.sections = [
@@ -11,7 +11,10 @@
           ".justfile"
         ];
       };
-      variables.recipe = "just --summary | ${pkgs.coreutils}/bin/tr ' ' '\\n'";
+      variables.recipe = {
+        command = "just --summary";
+        separator = "\\s+";
+      };
       entries = [
         {
           description = "run just recipe";

@@ -21,10 +21,16 @@ import {
 	resolveCommand,
 } from "../../apps/command-library/src/resolve";
 
-function variable(
-	overrides: Partial<Variable> & { command: string },
-): Variable {
+function variable(overrides: Partial<Variable>): Variable {
 	return {
+		command: null,
+		values: [],
+		json: null,
+		separator: null,
+		match: null,
+		replace: [],
+		unique: false,
+		sort: false,
 		column: null,
 		headers: 0,
 		delimiter: null,

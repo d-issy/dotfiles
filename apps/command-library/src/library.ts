@@ -1,7 +1,20 @@
 import { readFileSync } from "node:fs";
 
+export interface Replacement {
+	from: string;
+	to: string;
+}
+
 export interface Variable {
-	command: string;
+	// Shell command producing candidates; null when `values` is used.
+	command: string | null;
+	values: string[];
+	json: string | null;
+	separator: string | null;
+	match: string | null;
+	replace: Replacement[];
+	unique: boolean;
+	sort: boolean;
 	column: number | null;
 	headers: number;
 	delimiter: string | null;

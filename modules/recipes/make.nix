@@ -11,7 +11,12 @@
           "makefile"
           "Makefile"
         ];
-        variables.target = ''${pkgs.gnumake}/bin/make -qp | ${pkgs.gawk}/bin/awk -F':' '/^[a-z0-9][^:]*\s*:([^=]|$)/ {print $1}' | ${pkgs.coreutils}/bin/sort -u'';
+        variables.target = {
+          command = "${pkgs.gnumake}/bin/make -qp";
+          match = "^([a-z0-9][^:\\s]*)\\s*:([^=]|$)";
+          unique = true;
+          sort = true;
+        };
         entries = [
           {
             description = "run make target";

@@ -1,3 +1,4 @@
+import { type Candidates, parseCandidates } from "./candidates";
 import {
 	type Item,
 	type Variable,
@@ -9,11 +10,11 @@ import {
 export interface Prompter {
 	// Runs a variable command and returns its stdout.
 	run(command: string): string;
-	// Lets the user pick lines; returns null when cancelled.
+	// Lets the user pick values; returns null when cancelled.
 	choose(
 		name: string,
 		variable: Variable,
-		lines: string[],
+		candidates: Candidates,
 		header: string,
 	): string[] | null;
 	// Asks for free text; returns null when cancelled.
@@ -25,20 +26,19 @@ class Cancelled extends Error {}
 function chooseValue(
 	name: string,
 	variable: Variable,
-	lines: string[],
+	candidates: Candidates,
 	header: string,
 	prompter: Prompter,
 ): string {
-	const candidates = lines.slice(variable.headers);
-	if (candidates.length === 0) {
+	if (candidates.values.length === 0) {
 		const value = prompter.input(name, header);
 		if (value === null) throw new Cancelled();
 		return value;
 	}
 	const selected =
-		variable.selectOne && candidates.length === 1
-			? candidates
-			: prompter.choose(name, variable, lines, header);
+		variable.selectOne && candidates.values.length === 1
+			? candidates.values
+			: prompter.choose(name, variable, candidates, header);
 	if (selected === null || selected.length === 0) throw new Cancelled();
 	return selected
 		.map((line) => extractColumn(line, variable.column, variable.delimiter))
@@ -63,14 +63,22 @@ export function resolveCommand(item: Item, prompter: Prompter): string | null {
 			return;
 		}
 		const nextStack = [...stack, name];
-		for (const dependency of placeholders(variable.command)) {
+		for (const dependency of placeholders(variable.command ?? "")) {
 			if (!nextStack.includes(dependency)) resolve(dependency, nextStack);
 		}
-		const output = prompter.run(substitute(variable.command, values));
-		const lines = output.split("\n").filter((line) => line.trim() !== "");
+		const output =
+			variable.command === null
+				? ""
+				: prompter.run(substitute(variable.command, values));
 		values.set(
 			name,
-			chooseValue(name, variable, lines, substitute(command, values), prompter),
+			chooseValue(
+				name,
+				variable,
+				parseCandidates(variable, output),
+				substitute(command, values),
+				prompter,
+			),
 		);
 	};
 

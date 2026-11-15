@@ -12,8 +12,64 @@ let
   variableModule = lib.types.submodule {
     options = {
       command = lib.mkOption {
-        type = lib.types.str;
-        description = "Shell command whose output lines are the candidates. May reference other <placeholders>.";
+        type = lib.types.nullOr lib.types.str;
+        default = null;
+        description = "Command whose output provides the candidates. May reference other <placeholders>.";
+      };
+
+      values = lib.mkOption {
+        type = lib.types.listOf lib.types.str;
+        default = [ ];
+        description = "Static candidates used instead of a command.";
+      };
+
+      json = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = null;
+        description = "Read candidates from JSON output with a path such as `changes[].name` (`[]` expands arrays).";
+      };
+
+      separator = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = null;
+        description = "Regex splitting the output into candidates. Defaults to newlines.";
+      };
+
+      match = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = null;
+        description = "Regex keeping only matching candidates; the first capture group, if any, becomes the candidate.";
+      };
+
+      replace = lib.mkOption {
+        type = lib.types.listOf (
+          lib.types.submodule {
+            options = {
+              from = lib.mkOption {
+                type = lib.types.str;
+                description = "Regex to replace in each candidate.";
+              };
+              to = lib.mkOption {
+                type = lib.types.str;
+                description = "Replacement text.";
+              };
+            };
+          }
+        );
+        default = [ ];
+        description = "Replacements applied in order to each candidate.";
+      };
+
+      unique = lib.mkOption {
+        type = lib.types.bool;
+        default = false;
+        description = "Drop duplicate candidates.";
+      };
+
+      sort = lib.mkOption {
+        type = lib.types.bool;
+        default = false;
+        description = "Sort candidates.";
       };
 
       column = lib.mkOption {

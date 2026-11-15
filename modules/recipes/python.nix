@@ -7,7 +7,14 @@ let
       selectOne = false;
     };
     python_module = {
-      command = "${pkgs.fd}/bin/fd -t f -e py | ${pkgs.gnused}/bin/sed -e 's|\\.py$||' -e 's|/|.|g'";
+      command = "${pkgs.fd}/bin/fd -t f -e py";
+      match = "^(.*)\\.py$";
+      replace = [
+        {
+          from = "/";
+          to = ".";
+        }
+      ];
       selectOne = false;
     };
   };

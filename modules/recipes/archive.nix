@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ lib, pkgs, ... }:
 
 {
   config.dot.programs.commandLibrary.groups.archive.sections = [
@@ -11,7 +11,7 @@
         files = "${pkgs.coreutils}/bin/ls";
         tar_archived_files = "${pkgs.fd}/bin/fd -t f -e gz -e bz2 -e xz";
         zip_file = "${pkgs.fd}/bin/fd -t f -e zip";
-        compression_level = "${pkgs.coreutils}/bin/seq 0 9";
+        compression_level.values = map toString (lib.range 0 9);
       };
       entries = [
         {

@@ -6,7 +6,10 @@
   dot.programs.commandLibrary.groups.openspec.sections = [
     {
       tags = [ "openspec" ];
-      variables.change = "openspec list --json | jq -r '.changes[].name' | fzf --height 40% --reverse";
+      variables.change = {
+        command = "openspec list --json";
+        json = "changes[].name";
+      };
       entries = [
         {
           description = "OpenSpec status";

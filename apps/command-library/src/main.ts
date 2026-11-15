@@ -125,12 +125,16 @@ function prompter(config: Config): Prompter {
 			});
 			return result.stdout ?? "";
 		},
-		choose(name, variable, lines, header) {
+		choose(name, variable, candidates, header) {
 			const args = base(name, header);
-			if (variable.headers > 0)
-				args.push("--header-lines", String(variable.headers));
+			if (candidates.headers.length > 0)
+				args.push("--header-lines", String(candidates.headers.length));
 			if (variable.multi) args.push("--multi");
-			const { code, stdout } = fzf(config, args, lines.join("\n"));
+			const { code, stdout } = fzf(
+				config,
+				args,
+				[...candidates.headers, ...candidates.values].join("\n"),
+			);
 			if (code !== 0) return null;
 			return stdout.split("\n").filter((line) => line !== "");
 		},
