@@ -31,6 +31,8 @@ export interface Entry {
 export interface When {
 	paths: string[];
 	files: string[];
+	// Also look for `files` in parent directories (e.g. just's justfile).
+	searchParents: boolean;
 	commands: string[];
 }
 
@@ -89,6 +91,18 @@ function isUnder(cwd: string, directory: string): boolean {
 	return cwd === base || cwd.startsWith(`${base}/`);
 }
 
+function searchDirectories(cwd: string, parents: boolean): string[] {
+	if (!parents) return [cwd];
+	const directories: string[] = [];
+	let current = cwd.replace(/\/+$/u, "");
+	while (current !== "") {
+		directories.push(current);
+		current = current.slice(0, current.lastIndexOf("/"));
+	}
+	directories.push("");
+	return directories;
+}
+
 // A section is active when every configured condition holds: the cwd is under
 // one of `paths`, one of `files` exists in the cwd, and all `commands` exist.
 export function isActive(section: Section, env: Environment): boolean {
@@ -101,7 +115,9 @@ export function isActive(section: Section, env: Environment): boolean {
 		return false;
 	if (
 		when.files.length > 0 &&
-		!when.files.some((file) => env.exists(`${env.cwd}/${file}`))
+		!searchDirectories(env.cwd, when.searchParents).some((directory) =>
+			when.files.some((file) => env.exists(`${directory}/${file}`)),
+		)
 	)
 		return false;
 	return when.commands.every((command) => env.hasCommand(command));

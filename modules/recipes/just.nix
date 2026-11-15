@@ -10,6 +10,7 @@ _:
           "Justfile"
           ".justfile"
         ];
+        searchParents = true;
       };
       variables.recipe = {
         command = "just --summary";

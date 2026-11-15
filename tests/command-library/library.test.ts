@@ -265,7 +265,13 @@ function scopedSection(when: Partial<NonNullable<Section["when"]>>): Section {
 		tags: ["t"],
 		variables: {},
 		entries: [{ description: "d", alias: null, command: "c" }],
-		when: { paths: [], files: [], commands: [], ...when },
+		when: {
+			paths: [],
+			files: [],
+			searchParents: false,
+			commands: [],
+			...when,
+		},
 	};
 }
 
@@ -300,6 +306,33 @@ describe("when conditions", () => {
 			isActive(scopedSection({ files: ["justfile", "Makefile"] }), env),
 		).toBe(true);
 		expect(isActive(scopedSection({ files: ["justfile"] }), env)).toBe(false);
+	});
+
+	it("searches parent directories only when asked", () => {
+		const parentEnv: Environment = {
+			...env,
+			exists: (path) =>
+				path === "/home/me/code/github.com/d-issy/dotfiles/justfile",
+		};
+		expect(isActive(scopedSection({ files: ["justfile"] }), parentEnv)).toBe(
+			false,
+		);
+		expect(
+			isActive(
+				scopedSection({ files: ["justfile"], searchParents: true }),
+				parentEnv,
+			),
+		).toBe(true);
+		const rootEnv: Environment = {
+			...env,
+			exists: (path) => path === "/justfile",
+		};
+		expect(
+			isActive(
+				scopedSection({ files: ["justfile"], searchParents: true }),
+				rootEnv,
+			),
+		).toBe(true);
 	});
 
 	it("requires every command", () => {

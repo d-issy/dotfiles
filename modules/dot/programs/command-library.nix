@@ -153,6 +153,12 @@ let
           description = "Activate only when one of these files exists in the current directory. No restriction when empty.";
         };
 
+        searchParents = lib.mkOption {
+          type = lib.types.bool;
+          default = false;
+          description = "Also look for `files` in parent directories.";
+        };
+
         commands = lib.mkOption {
           type = lib.types.listOf lib.types.str;
           default = [ ];
