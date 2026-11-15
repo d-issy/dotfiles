@@ -1,10 +1,19 @@
-{ config, ... }:
+{ config, pkgs, ... }:
 
 let
   # Entries that run this repository's flake apps.
   dotfiles.paths = [ "${config.dot.programs.ghq.root}/github.com/d-issy/dotfiles" ];
 in
 {
+  config.home = {
+    packages = [ (import ../../apps/agent-sessions { inherit pkgs; }) ];
+    shellAliases = {
+      # Follow the active profile even when direnv keeps an older devShell on PATH.
+      agent-session = "${config.home.profileDirectory}/bin/dot-agent-sessions";
+      as = "agent-session";
+    };
+  };
+
   config.dot.programs.commandLibrary.groups.nix.sections = [
     {
       tags = [ "nix apply" ];

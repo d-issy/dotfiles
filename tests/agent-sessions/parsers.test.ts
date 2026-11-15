@@ -14,6 +14,7 @@ import {
 	parseCodexRecord,
 } from "../../apps/agent-sessions/src/codex";
 import {
+	filterSessions,
 	sessionRows,
 	sessionRuntime,
 	toRows,
@@ -199,6 +200,50 @@ const session = (
 	updatedAt,
 	logPath: "",
 	parentKey,
+});
+
+describe("filterSessions", () => {
+	it("hides idle sessions by default and can show them", () => {
+		const sessions: Session[] = [
+			session("idle-main", 1),
+			{ ...session("running-main", 2), status: "running" },
+			{ ...session("waiting-main", 3), status: "waiting" },
+			{ ...session("unknown-main", 4), status: "unknown" },
+			{ ...session("ended-main", 5), status: "ended" },
+			session("idle-child", 6, "idle-main"),
+			{ ...session("ended-child", 7, "missing"), status: "ended" },
+			{ ...session("waiting-child", 8, "idle-main"), status: "waiting" },
+		];
+		expect(filterSessions(sessions).map(({ key }) => key)).toEqual([
+			"running-main",
+			"waiting-main",
+			"unknown-main",
+			"ended-main",
+			"ended-child",
+			"waiting-child",
+		]);
+		expect(filterSessions(sessions, true)).toEqual(sessions);
+	});
+
+	it("keeps descendants in the tree when their idle main session is hidden", () => {
+		const sessions = [
+			session("main", 1),
+			{ ...session("child", 2, "main"), status: "running" as const },
+			{ ...session("grandchild", 3, "child"), status: "waiting" as const },
+		];
+		const rows = sessionRows(toRows(filterSessions(sessions)));
+		expect(
+			rows.map(({ session: rowSession, depth }) => [rowSession.key, depth]),
+		).toEqual([
+			["child", 0],
+			["grandchild", 1],
+		]);
+	});
+
+	it("leaves no rows for an idle main session and its idle child", () => {
+		const sessions = [session("main", 1), session("child", 2, "main")];
+		expect(toRows(filterSessions(sessions))).toEqual([]);
+	});
 });
 
 describe("toRows", () => {

@@ -199,11 +199,13 @@ export function renderSessionRow(
 	return parts.join("");
 }
 
-export function renderEmpty(windowMs: number): string[] {
+export function renderEmpty(windowMs: number, hiddenIdle = 0): string[] {
 	return [
 		"",
 		style.dim(
-			`  No live Claude sessions or Codex sessions active in the last ${formatAge(windowMs)}.`,
+			hiddenIdle > 0
+				? `  ${hiddenIdle} idle session${hiddenIdle === 1 ? "" : "s"} hidden. Press i to show.`
+				: `  No live Claude sessions or Codex sessions active in the last ${formatAge(windowMs)}.`,
 		),
 	];
 }

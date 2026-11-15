@@ -1,6 +1,7 @@
 import { projectName } from "./render";
 import {
 	discoverSessions,
+	filterSessions,
 	sessionRows,
 	sessionRuntime,
 	toRows,
@@ -11,26 +12,30 @@ import { Tui } from "./tui";
 const USAGE = `dot-agent-sessions - watch Claude Code and Codex sessions live
 
 Usage:
-  dot-agent-sessions [--window DURATION] [--list]
+  dot-agent-sessions [--window DURATION] [--show-idle] [--list]
 
 Options:
   -w, --window DURATION  Include Codex sessions updated within DURATION
                          (e.g. 30m, 2h, 1d). Default: 2h.
   -l, --list             Print the session list once and exit.
+  -i, --show-idle        Include idle sessions (hidden by default).
   -h, --help             Show this help.
 
-Running Claude Code sessions and their subagents are always listed; finished
+The list refreshes every 2 seconds. Press i to toggle idle sessions;
+running subagents and sessions waiting for input stay visible. Finished Claude
 subagents stay for 10 minutes. Select a session and press enter to follow its
-log in real time.`;
+log in real time (updated every 300ms).`;
 
 function fail(message: string): never {
 	process.stderr.write(`dot-agent-sessions: ${message}\n${USAGE}\n`);
 	process.exit(2);
 }
 
-function printList(windowMs: number): void {
+function printList(windowMs: number, showIdle: boolean): void {
 	const now = Date.now();
-	const rows = sessionRows(toRows(discoverSessions(windowMs, now)));
+	const rows = sessionRows(
+		toRows(filterSessions(discoverSessions(windowMs, now), showIdle)),
+	);
 	for (const { session, tree } of rows) {
 		const columns = [
 			session.agent,
@@ -49,6 +54,7 @@ function printList(windowMs: number): void {
 function main(argv: string[]): void {
 	let windowMs = 2 * 3_600_000;
 	let list = false;
+	let showIdle = false;
 	for (let index = 0; index < argv.length; index += 1) {
 		const arg = argv[index] ?? "";
 		if (arg === "-h" || arg === "--help") {
@@ -57,6 +63,8 @@ function main(argv: string[]): void {
 		}
 		if (arg === "-l" || arg === "--list") {
 			list = true;
+		} else if (arg === "-i" || arg === "--show-idle") {
+			showIdle = true;
 		} else if (arg === "-w" || arg === "--window") {
 			const parsed = parseDuration(argv[index + 1] ?? "");
 			if (parsed === undefined)
@@ -68,10 +76,10 @@ function main(argv: string[]): void {
 		}
 	}
 	if (list || !process.stdout.isTTY || !process.stdin.isTTY) {
-		printList(windowMs);
+		printList(windowMs, showIdle);
 		return;
 	}
-	new Tui(windowMs).start();
+	new Tui(windowMs, showIdle).start();
 }
 
 main(process.argv.slice(2));

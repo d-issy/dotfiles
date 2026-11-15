@@ -76,6 +76,14 @@ export function sessionRows(rows: Row[]): SessionRow[] {
 	return rows.filter((row): row is SessionRow => row.kind === "session");
 }
 
+/** Hide idle sessions, including subagents whose main session is hidden. */
+export function filterSessions(
+	sessions: Session[],
+	showIdle = false,
+): Session[] {
+	return sessions.filter((session) => showIdle || session.status !== "idle");
+}
+
 export function discoverSessions(
 	windowMs: number,
 	now = Date.now(),
