@@ -265,6 +265,7 @@
         applyApp = mkApplyApp system pkgs;
         gcApp = mkGcApp system pkgs;
         generationsApp = mkGenerationsApp system pkgs;
+        agentSessionsApp = import ./apps/agent-sessions { inherit pkgs; };
       in
       {
         apps = {
@@ -285,6 +286,12 @@
             program = "${generationsApp}/bin/dot-generations";
             meta.description = "List Home Manager generations";
           };
+
+          agent-sessions = {
+            type = "app";
+            program = "${agentSessionsApp}/bin/dot-agent-sessions";
+            meta.description = "Watch Claude Code and Codex sessions live";
+          };
         };
 
         checks =
@@ -293,6 +300,7 @@
             home-manager = self.homeConfigurations.${homeConfigurationNames.${system}}.activationPackage;
             worktree-regressions = import ./tests/shell { inherit pkgs; };
             herdr-subagents-regressions = import ./tests/shell/herdr-subagents.nix { inherit pkgs; };
+            agent-sessions = agentSessionsApp;
             neovim-regressions =
               pkgs.runCommand "neovim-regressions" { nativeBuildInputs = [ pkgs.neovim ]; }
                 ''
@@ -314,6 +322,7 @@
             applyApp
             gcApp
             generationsApp
+            agentSessionsApp
           ];
         };
 
