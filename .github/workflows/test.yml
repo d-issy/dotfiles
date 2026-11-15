@@ -71,6 +71,9 @@ jobs:
             herdr-subagents:
               - *rust-shared
               - 'apps/herdr-subagents/**'
+            tmux-notice:
+              - *rust-shared
+              - 'apps/tmux-notice/**'
             worktree:
               - *rust-shared
               - 'apps/worktree/**'
