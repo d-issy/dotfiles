@@ -28,20 +28,3 @@ not a deployable host configuration.
 ```sh
 nix run .#apply
 ```
-
-
-## Generations
-
-`.#generations` lists Home Manager generations.
-
-```sh
-nix run .#generations
-```
-
-## GC
-
-`.#gc` expires Home Manager generations older than 7 days and runs `nix store gc`.
-
-```sh
-nix run .#gc
-```
