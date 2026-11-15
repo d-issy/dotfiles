@@ -12,6 +12,7 @@ import {
 	type Row,
 	type SessionRow,
 	discoverSessions,
+	filterSessions,
 	parseRecord,
 	sessionRows,
 	toRows,
@@ -59,6 +60,7 @@ export class Tui {
 	/** Selectable rows; `selected` indexes into this list. */
 	private sessions: SessionRow[] = [];
 	private selected = 0;
+	private hiddenIdle = 0;
 	private log: LogView | undefined;
 	private timers: NodeJS.Timeout[] = [];
 	private pendingInput = "";
@@ -67,6 +69,7 @@ export class Tui {
 
 	constructor(
 		private readonly windowMs: number,
+		private showIdle = false,
 		private readonly out: NodeJS.WriteStream = process.stdout,
 		private readonly input: NodeJS.ReadStream = process.stdin,
 	) {}
@@ -134,7 +137,10 @@ export class Tui {
 
 	private refresh(): void {
 		const current = this.sessions[this.selected]?.session.key;
-		this.rows = toRows(discoverSessions(this.windowMs));
+		const discovered = discoverSessions(this.windowMs);
+		const visible = filterSessions(discovered, this.showIdle);
+		this.hiddenIdle = discovered.length - visible.length;
+		this.rows = toRows(visible);
 		this.sessions = sessionRows(this.rows);
 		const index = this.sessions.findIndex((row) => row.session.key === current);
 		this.selected = Math.max(
@@ -143,8 +149,8 @@ export class Tui {
 		);
 		if (this.log) {
 			const key = this.log.session.key;
-			const latest = this.sessions.find((row) => row.session.key === key);
-			if (latest) this.log.session = latest.session;
+			const latest = discovered.find((session) => session.key === key);
+			if (latest) this.log.session = latest;
 		}
 		this.draw();
 	}
@@ -237,7 +243,10 @@ export class Tui {
 				return;
 			case "j":
 			case "\u001B[B":
-				this.selected = Math.min(this.sessions.length - 1, this.selected + 1);
+				this.selected = Math.max(
+					0,
+					Math.min(this.sessions.length - 1, this.selected + 1),
+				);
 				return;
 			case "k":
 			case "\u001B[A":
@@ -250,6 +259,10 @@ export class Tui {
 				this.selected = Math.max(0, this.sessions.length - 1);
 				return;
 			case "r":
+				this.refresh();
+				return;
+			case "i":
+				this.showIdle = !this.showIdle;
 				this.refresh();
 				return;
 			case "\r":
@@ -317,7 +330,7 @@ export class Tui {
 			this.sessions.filter((row) => row.session.status === status).length;
 		const header = style.bold(
 			truncate(
-				`Agent sessions · ${this.sessions.length} total · ${count("running")} running · ${count("waiting") + count("idle")} awaiting input`,
+				`Agent sessions · ${this.sessions.length} shown · ${count("running")} running · ${count("waiting") + count("idle")} awaiting input${this.hiddenIdle > 0 ? ` · ${this.hiddenIdle} idle hidden` : ""}`,
 				width,
 			),
 		);
@@ -330,7 +343,7 @@ export class Tui {
 		);
 		const rows =
 			this.rows.length === 0
-				? renderEmpty(this.windowMs)
+				? renderEmpty(this.windowMs, this.hiddenIdle)
 				: this.rows
 						.slice(start, start + body)
 						.map((row) =>
@@ -340,7 +353,7 @@ export class Tui {
 						);
 		const footer = style.dim(
 			truncate(
-				`↑↓/jk select · enter open log · r refresh · q quit · window ${formatAge(this.windowMs)}`,
+				`↑↓/jk select · enter log · i idle: ${this.showIdle ? "shown" : "hidden"} · r refresh · q quit · window ${formatAge(this.windowMs)}`,
 				width,
 			),
 		);
