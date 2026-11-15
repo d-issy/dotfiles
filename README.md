@@ -10,14 +10,6 @@ d-issy's Nix Flakes + Home Manager dotfiles for Linux, macOS, and NixOS.
   - NixOS (`x86_64-linux`)
 - Nix with `nix-command` and `flakes` enabled
 
-## Prerequisites
-
-Nix does not install these on macOS; install them manually:
-
-- [Ghostty](https://ghostty.org/) (`package = null` in `modules/recipes/ghostty.nix`)
-- [Hammerspoon](https://www.hammerspoon.org/) (config deployed to `~/.hammerspoon`)
-- Fonts: 0xProto, UDEV Gothic 35, Hack Nerd Font Mono (Ghostty and WezTerm), and Cica (WezTerm); Hiragino Kaku Gothic ProN and YuGothic ship with macOS
-
 ## Init
 
 ```sh
@@ -37,6 +29,7 @@ not a deployable host configuration.
 nix run .#apply
 ```
 
+
 ## Generations
 
 `.#generations` lists Home Manager generations.
@@ -51,15 +44,4 @@ nix run .#generations
 
 ```sh
 nix run .#gc
-```
-
-## Development
-
-```sh
-nix develop      # dev shell with the tooling
-nix fmt          # format
-nix flake check  # lint and regression checks
-pnpm lint        # oxlint
-pnpm typecheck
-pnpm test
 ```
