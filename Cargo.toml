@@ -4,6 +4,7 @@ members = [
   "apps/claude-statusline",
   "apps/command-library",
   "apps/git-autocommit",
+  "apps/herdr-subagents",
 ]
 
 [workspace.package]
