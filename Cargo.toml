@@ -2,6 +2,7 @@
 resolver = "3"
 members = [
   "apps/claude-statusline",
+  "apps/command-library",
   "apps/git-autocommit",
 ]
 

@@ -26,13 +26,6 @@ export default defineConfig({
 					include: ["tests/agent-sessions/**/*.test.ts"],
 				},
 			},
-			{
-				extends: true,
-				test: {
-					name: "command-library",
-					include: ["tests/command-library/**/*.test.ts"],
-				},
-			},
 		],
 		coverage: {
 			provider: "v8",
