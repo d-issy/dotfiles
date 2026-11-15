@@ -82,7 +82,7 @@ in
   config = lib.mkIf cfg.enable {
     home = {
       packages = [ codexWrapper ];
-      shellAliases.codex = "codex-statusline";
+      shellAliases.codex = "${config.home.profileDirectory}/bin/codex-statusline";
     };
 
     home.activation.codexHooks = dot.mergeJson {

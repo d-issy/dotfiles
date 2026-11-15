@@ -72,7 +72,7 @@ let
   '';
 in
 {
-  paneNotice = pkgs.writeShellScript "tmux-pane-notice" ''
+  paneNotice = pkgs.writeShellScriptBin "tmux-pane-notice" ''
     target_pane=''${1-}
     notice_scope=''${2-}
     pane_label=''${3-}
@@ -115,7 +115,7 @@ in
     fi
   '';
 
-  sessions = pkgs.writeShellScript "tmux-status-sessions" ''
+  sessions = pkgs.writeShellScriptBin "tmux-status-sessions" ''
     current_session_id=''${1-}
     client_width=''${2:-0}
     session_windows=''${3:-1}
@@ -184,7 +184,7 @@ in
     printf '%s' "$output"
   '';
 
-  windowNotices = pkgs.writeShellScript "tmux-status-window-notices" ''
+  windowNotices = pkgs.writeShellScriptBin "tmux-status-window-notices" ''
     target_window=''${1-}
     [ -n "$target_window" ] || exit 0
 

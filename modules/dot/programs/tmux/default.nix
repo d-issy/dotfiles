@@ -8,9 +8,14 @@
 let
   cfg = config.dot.programs.tmux;
   paneCommand = import ./pane-command.nix { inherit pkgs; };
-  statusCommands = import ./status-commands.nix { inherit config pkgs; };
+  statusCommandPackages = import ./status-commands.nix { inherit config pkgs; };
+  statusCommands = {
+    paneNotice = "${config.home.profileDirectory}/bin/tmux-pane-notice";
+    sessions = "${config.home.profileDirectory}/bin/tmux-status-sessions";
+    windowNotices = "${config.home.profileDirectory}/bin/tmux-status-window-notices";
+  };
   tmuxNoticeCfg = config.dot.programs.scripts.tmuxNotice;
-  tmuxNoticeCommand = "${tmuxNoticeCfg.package}/bin/tmux-notice";
+  tmuxNoticeCommand = "${config.home.profileDirectory}/bin/tmux-notice";
 
   borderToggle = ''if -F "#{==:#{window_panes},1}" "setw pane-border-status off" "setw pane-border-status ${cfg.paneBorder.title.position}"'';
   activeBorderToggle = ''if -F "#{==:#{window_panes},1}" "setw pane-active-border-style '${cfg.paneBorder.activeStyleWhenSinglePane}'" "setw pane-active-border-style '${cfg.paneBorder.activeStyle}'"'';
@@ -83,7 +88,7 @@ let
 
   statusPaneCommand =
     if cfg.status.paneForegroundCommand.enable then
-      "#(${paneCommand.command} #{pane_tty})"
+      "#(${config.home.profileDirectory}/bin/tmux-pane-cmd #{pane_tty})"
     else
       "#{pane_current_command}";
 
@@ -199,7 +204,7 @@ let
         set -g extended-keys-format csi-u
       '')
       (lib.optionalString cfg.keyBindings.popups.sessionSelector.enable ''
-        bind-key -T prefix s display-popup -E "${config.dot.programs.scripts.tm.package}/bin/${config.dot.programs.scripts.tm.commandName}"
+        bind-key -T prefix s display-popup -E "${config.home.profileDirectory}/bin/${config.dot.programs.scripts.tm.commandName}"
       '')
       (lib.optionalString cfg.keyBindings.sessionNavigation.enable ''
         bind-key -T prefix ${cfg.keyBindings.sessionNavigation.nextKey} switch-client -n
@@ -512,7 +517,11 @@ in
       }
     ];
 
-    home.packages = [ cfg.package ];
+    home.packages = [
+      cfg.package
+      paneCommand.command
+    ]
+    ++ lib.attrValues statusCommandPackages;
 
     xdg.configFile."tmux/tmux.conf".text = generatedConfig;
 

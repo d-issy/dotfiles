@@ -125,7 +125,7 @@ let
   repoSwitcherKeybind = {
     key = cfg.repoSwitcher.key;
     type = "pane";
-    command = "${repoSwitcher}/bin/${cfg.repoSwitcher.commandName}";
+    command = "${config.home.profileDirectory}/bin/${cfg.repoSwitcher.commandName}";
     description = "open repo workspace";
   };
 

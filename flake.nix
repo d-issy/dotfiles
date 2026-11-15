@@ -301,12 +301,8 @@
           };
 
         devShells.default = pkgs.mkShell {
-          packages = toolPackages.devShell ++ [
-            applyApp
-            gcApp
-            generationsApp
-            agentSessionsApp
-          ];
+          # Run repository apps with nix run so direnv cannot keep stale copies on PATH.
+          packages = toolPackages.devShell;
         };
 
         formatter = pkgs.writeShellApplication {

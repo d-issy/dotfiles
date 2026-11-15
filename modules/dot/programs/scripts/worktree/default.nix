@@ -31,7 +31,7 @@ let
 
   shellIntegration = import ./shell-integration.nix {
     inherit pkgs;
-    worktreeBin = "${worktree}/bin/worktree";
+    worktreeBin = "${config.home.profileDirectory}/bin/worktree";
   };
 in
 {
