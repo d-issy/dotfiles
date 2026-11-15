@@ -28,6 +28,8 @@ jobs:
       fmt: ${{ steps.filter.outputs.fmt }}
       nix: ${{ steps.filter.outputs.nix }}
       node: ${{ steps.filter.outputs.node }}
+      # JSON list of the Cargo workspace members whose files changed.
+      crates: ${{ steps.rust.outputs.changes }}
       actions: ${{ steps.filter.outputs.actions }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -43,6 +45,7 @@ jobs:
               - '.oxfmtrc.json'
               - 'stylua.toml'
               - '**/*.nix'
+              - '**/*.rs'
               - '**/*.ts'
               - '**/*.mts'
               - '**/*.json'
@@ -65,6 +68,31 @@ jobs:
             actions:
               - '.github/workflows/**'
               - '.github/actions/**'
+      - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
+        id: rust
+        with:
+          # Filter names are Cargo workspace members (see Cargo.toml).
+          filters: |
+            agent-sessions:
+              - &rust-shared
+                - '.github/workflows/lint.yml'
+                - 'flake.lock'
+                - 'Cargo.toml'
+                - 'Cargo.lock'
+                - 'apps/rust-*.nix'
+              - 'apps/agent-sessions/**'
+            claude-statusline:
+              - *rust-shared
+              - 'apps/claude-statusline/**'
+            command-library:
+              - *rust-shared
+              - 'apps/command-library/**'
+            git-autocommit:
+              - *rust-shared
+              - 'apps/git-autocommit/**'
+            herdr-subagents:
+              - *rust-shared
+              - 'apps/herdr-subagents/**'
 
   treefmt:
     name: treefmt
@@ -169,6 +197,33 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm typecheck
 
+  clippy:
+    name: clippy (${{ matrix.crate }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs:
+      - changes
+    if: ${{ needs.changes.outputs.crates != '[]' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        crate: ${{ fromJSON(needs.changes.outputs.crates) }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: cachix/install-nix-action@75c75c31ebece974e48ebc36b4ad125bd97bd97b # v31.11.3
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+      - uses: nix-community/cache-nix-action@7df957e333c1e5da7721f60227dbba6d06080569 # v7.0.2
+        with:
+          primary-key: nix-clippy-${{ runner.os }}-${{ hashFiles('**/flake.lock', 'Cargo.lock') }}
+          restore-prefixes-first-match: nix-clippy-${{ runner.os }}-
+      - run: nix build -L ".#checks.x86_64-linux.rust-clippy-$CRATE"
+        env:
+          CRATE: ${{ matrix.crate }}
+
   actionlint:
     name: actionlint
     runs-on: ubuntu-latest
@@ -201,6 +256,7 @@ jobs:
       - statix
       - oxlint
       - typecheck
+      - clippy
       - actionlint
     if: ${{ always() }}
     steps:

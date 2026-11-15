@@ -27,6 +27,8 @@ jobs:
     outputs:
       # JSON list of the Vitest projects whose files changed.
       projects: ${{ steps.filter.outputs.changes }}
+      # JSON list of the Cargo workspace members whose files changed.
+      crates: ${{ steps.rust.outputs.changes }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -46,14 +48,31 @@ jobs:
                 - '.github/workflows/test.yml'
               - 'files/pi/**/*.ts'
               - 'tests/pi/**/*.ts'
+      - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
+        id: rust
+        with:
+          # Filter names are Cargo workspace members (see Cargo.toml).
+          filters: |
             agent-sessions:
-              - *shared
-              - 'apps/agent-sessions/**/*.ts'
-              - 'tests/agent-sessions/**/*.ts'
+              - &rust-shared
+                - '.github/workflows/test.yml'
+                - 'flake.lock'
+                - 'Cargo.toml'
+                - 'Cargo.lock'
+                - 'apps/rust-*.nix'
+              - 'apps/agent-sessions/**'
+            claude-statusline:
+              - *rust-shared
+              - 'apps/claude-statusline/**'
             command-library:
-              - *shared
-              - 'apps/command-library/**/*.ts'
-              - 'tests/command-library/**/*.ts'
+              - *rust-shared
+              - 'apps/command-library/**'
+            git-autocommit:
+              - *rust-shared
+              - 'apps/git-autocommit/**'
+            herdr-subagents:
+              - *rust-shared
+              - 'apps/herdr-subagents/**'
 
   test:
     name: pnpm test (${{ matrix.project }})
@@ -80,6 +99,33 @@ jobs:
         env:
           PROJECT: ${{ matrix.project }}
 
+  cargo-test:
+    name: cargo test (${{ matrix.crate }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs:
+      - changes
+    if: ${{ needs.changes.outputs.crates != '[]' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        crate: ${{ fromJSON(needs.changes.outputs.crates) }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: cachix/install-nix-action@75c75c31ebece974e48ebc36b4ad125bd97bd97b # v31.11.3
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+      - uses: nix-community/cache-nix-action@7df957e333c1e5da7721f60227dbba6d06080569 # v7.0.2
+        with:
+          primary-key: nix-cargo-test-${{ runner.os }}-${{ hashFiles('**/flake.lock', 'Cargo.lock') }}
+          restore-prefixes-first-match: nix-cargo-test-${{ runner.os }}-
+      - run: nix build -L ".#checks.x86_64-linux.rust-test-$CRATE"
+        env:
+          CRATE: ${{ matrix.crate }}
+
   all-test-passed:
     name: All Test Passed
     runs-on: ubuntu-latest
@@ -87,6 +133,7 @@ jobs:
     needs:
       - changes
       - test
+      - cargo-test
     if: ${{ always() }}
     steps:
       - name: Verify all test jobs passed

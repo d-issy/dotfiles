@@ -37,6 +37,9 @@ jobs:
             nix:
               - 'flake.lock'
               - '**/*.nix'
+              - 'Cargo.toml'
+              - 'Cargo.lock'
+              - 'apps/**'
               - 'files/**'
               - 'tests/**'
               - 'treefmt.toml'
@@ -70,7 +73,7 @@ jobs:
             experimental-features = nix-command flakes
       - uses: nix-community/cache-nix-action@7df957e333c1e5da7721f60227dbba6d06080569 # v7.0.2
         with:
-          primary-key: nix-flake-check-${{ runner.os }}-${{ hashFiles('flake.lock') }}
+          primary-key: nix-flake-check-${{ runner.os }}-${{ hashFiles('flake.lock', 'Cargo.lock') }}
           restore-prefixes-first-match: nix-flake-check-${{ runner.os }}-
       - run: nix flake check
 
