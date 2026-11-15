@@ -14,7 +14,7 @@ _:
 
     local tmpdir = vim.env.TMPDIR
     if not is_writable_directory(tmpdir) then
-      vim.env.TMPDIR = (vim.uv or vim.loop).os_tmpdir()
+      vim.env.TMPDIR = vim.uv.os_tmpdir()
     end
   '';
 }

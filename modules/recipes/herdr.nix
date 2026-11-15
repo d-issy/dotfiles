@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ config, lib, ... }:
 
 {
   dot = {
@@ -19,7 +19,7 @@
 
         settings = {
           onboarding = false;
-          terminal.default_shell = "${pkgs.nushell}/bin/nu";
+          terminal.default_shell = lib.getExe config.programs.nushell.package;
 
           keys = {
             prefix = "ctrl+q";

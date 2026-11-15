@@ -4,9 +4,10 @@ local M = {}
 local log = require "util.log"
 
 -- Check if autoformat is enabled
+--- @param buf? number defaults to the current buffer
 --- @return boolean
-function M.enabled()
-  local buf = vim.api.nvim_get_current_buf()
+function M.enabled(buf)
+  buf = buf or vim.api.nvim_get_current_buf()
 
   local g = vim.g.autoformat
   local b = vim.b[buf].autoformat
@@ -20,13 +21,13 @@ function M.enabled()
 end
 
 -- Toggle autoformat
---- @param buf? boolean
-function M.toggle(buf)
+--- @param buffer_local? boolean
+function M.toggle(buffer_local)
   local autoformat = not M.enabled()
   local msg = autoformat and "enabled" or "disabled"
   local level = autoformat and "info" or "warn"
 
-  if buf then
+  if buffer_local then
     vim.b.autoformat = autoformat
     log.with(level, msg, "Autoformat (buffer) ")
   else

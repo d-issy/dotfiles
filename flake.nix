@@ -67,7 +67,7 @@
           ++ linter
           ++ lsp
           ++ (with pkgs; [
-            nodejs
+            nodejs_24
             pnpm
           ]);
       };
@@ -81,23 +81,7 @@
           name = "dot-apply";
           runtimeInputs = [ home-manager.packages.${system}.default ];
           text = ''
-            if [ -f /etc/NIXOS ]; then
-              host="''${DOT_NIXOS_HOST:-$(hostname)}"
-
-              # Only rebuild hosts that have an explicit NixOS configuration.
-              # An unmatched NixOS installation is managed by Home Manager.
-              if nix eval ".#nixosConfigurations.$host.config.networking.hostName" >/dev/null 2>&1; then
-                if [ ! -x /run/wrappers/bin/sudo ]; then
-                  echo "error: the NixOS sudo wrapper is unavailable" >&2
-                  echo "hint: repair/activate the NixOS system configuration first" >&2
-                  exit 1
-                fi
-
-                exec /run/wrappers/bin/sudo /run/current-system/sw/bin/nixos-rebuild switch --flake ".#$host" "$@"
-              fi
-            fi
-
-            exec home-manager switch --flake ".#${homeConfigurationName}" "$@"
+            exec home-manager switch --flake "${self}#${homeConfigurationName}" "$@"
           '';
         };
 
@@ -138,7 +122,6 @@
         in
         {
           dot = {
-            root = ./.;
             inherit files;
           }
           // (import ./modules/dot/builtins {
@@ -206,13 +189,13 @@
         };
 
       mkNixosCheckConfiguration =
-        system:
+        system: pkgs:
         let
-          pkgs = mkPkgs system;
+          dotSpecialArgs = mkDotSpecialArgs pkgs;
         in
         nixpkgs.lib.nixosSystem {
           inherit system;
-          specialArgs = mkDotSpecialArgs pkgs;
+          specialArgs = dotSpecialArgs;
           modules = [
             { nixpkgs.pkgs = pkgs; }
             {
@@ -246,7 +229,7 @@
               home-manager = {
                 useGlobalPkgs = true;
                 useUserPackages = true;
-                extraSpecialArgs = mkDotSpecialArgs pkgs;
+                extraSpecialArgs = dotSpecialArgs;
                 users.issy.imports = [
                   ./modules/home/nixos.nix
                   nixvim.homeModules.nixvim
@@ -306,7 +289,7 @@
                 '';
           }
           // pkgs.lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
-            nixos-home-manager = (mkNixosCheckConfiguration system).config.system.build.toplevel;
+            nixos-home-manager = (mkNixosCheckConfiguration system pkgs).config.system.build.toplevel;
           };
 
         devShells.default = pkgs.mkShell {

@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ config, lib, ... }:
 
 let
   colors = {
@@ -14,11 +14,11 @@ in
     enable = true;
 
     terminal = "tmux-256color";
-    shell = "${pkgs.zsh}/bin/zsh";
-    defaultCommand = "${pkgs.nushell}/bin/nu";
+    shell = lib.getExe config.programs.zsh.package;
+    defaultCommand = lib.getExe config.programs.nushell.package;
 
     baseIndex = 1;
-    historyLimit = 9999999;
+    historyLimit = 100000;
     keyMode = "vi";
     mouse = true;
     prefix = "C-q";

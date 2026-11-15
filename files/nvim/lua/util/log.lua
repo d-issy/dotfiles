@@ -22,22 +22,4 @@ function M.with(level, msg, title)
   vim.notify(msg, M.levels[level], { title = title })
 end
 
---- @param msg string
---- @param title? string
-function M.info(msg, title)
-  M.with("info", msg, title)
-end
-
---- @param msg string
---- @param title? string
-function M.warn(msg, title)
-  M.with("warn", msg, title)
-end
-
---- @param msg string
---- @param title? string
-function M.error(msg, title)
-  M.with("error", msg, title)
-end
-
 return M

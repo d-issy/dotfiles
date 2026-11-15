@@ -1,11 +1,13 @@
 import { randomUUID } from "node:crypto";
 import {
 	closeSync,
+	fsyncSync,
 	mkdirSync,
 	openSync,
 	readFileSync,
 	renameSync,
 	rmSync,
+	statSync,
 	writeFileSync,
 } from "node:fs";
 import { dirname, join } from "node:path";
@@ -26,7 +28,12 @@ export function readModelSets(path: string): ModelSet[] {
 		if ((error as NodeJS.ErrnoException).code === "ENOENT") return [];
 		throw error;
 	}
-	const value: unknown = JSON.parse(text);
+	let value: unknown;
+	try {
+		value = JSON.parse(text);
+	} catch (error) {
+		throw new Error(`Invalid model sets file: ${path}`, { cause: error });
+	}
 	if (
 		!Array.isArray(value) ||
 		!value.every((item: unknown) => {
@@ -49,6 +56,41 @@ export function readModelSets(path: string): ModelSet[] {
 	return value as ModelSet[];
 }
 
+const STALE_LOCK_MS = 30_000;
+
+function processAlive(pid: number): boolean {
+	try {
+		process.kill(pid, 0);
+		return true;
+	} catch (error) {
+		return (error as NodeJS.ErrnoException).code !== "ESRCH";
+	}
+}
+
+// A lock is stale when its owner died, or when it outlived any real save
+// (covers PID reuse and a crash before the owner file was written).
+function lockIsStale(lock: string): boolean {
+	try {
+		if (Date.now() - statSync(lock).mtimeMs > STALE_LOCK_MS) return true;
+		const pid = Number(readFileSync(join(lock, "owner"), "utf8"));
+		return Number.isInteger(pid) && pid > 0 && !processAlive(pid);
+	} catch {
+		// Lock released, or owner not written yet: not provably stale.
+		return false;
+	}
+}
+
+function removeStaleLock(lock: string): void {
+	// Rename first so only one waiter claims the stale directory.
+	const claimed = `${lock}.stale.${process.pid}.${randomUUID()}`;
+	try {
+		renameSync(lock, claimed);
+	} catch {
+		return;
+	}
+	rmSync(claimed, { recursive: true, force: true });
+}
+
 // Hold one cross-process lock around read/modify/write, including the rename.
 function withModelSetsLock<T>(path: string, action: () => T): T {
 	mkdirSync(dirname(path), { recursive: true });
@@ -61,6 +103,10 @@ function withModelSetsLock<T>(path: string, action: () => T): T {
 			break;
 		} catch (error) {
 			if ((error as NodeJS.ErrnoException).code !== "EEXIST") throw error;
+		}
+		if (lockIsStale(lock)) {
+			removeStaleLock(lock);
+			continue;
 		}
 		if (Date.now() >= deadline)
 			throw new Error(
@@ -82,6 +128,7 @@ function writeUnlocked(path: string, sets: ModelSet[]): void {
 	try {
 		try {
 			writeFileSync(file, `${JSON.stringify(sets, null, 2)}\n`);
+			fsyncSync(file);
 		} finally {
 			closeSync(file);
 		}

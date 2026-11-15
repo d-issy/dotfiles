@@ -7,6 +7,7 @@ local array = require "util.array"
 --- @class util.terminal.CmdOptions
 --- @field cwd? string
 --- @field env? table<string,string>
+--- @field on_exit? fun(job_id: integer, code: integer, event: string) float terminal only
 local function float_term(cmd, opts)
   local width = math.floor(vim.o.columns * 0.9)
   local height = math.floor(vim.o.lines * 0.8)
@@ -27,12 +28,16 @@ local function float_term(cmd, opts)
   })
 
   local term_opts = {
-    on_exit = function()
+    term = true,
+    on_exit = function(...)
       vim.schedule(function()
         if vim.api.nvim_win_is_valid(win) then
           vim.api.nvim_win_close(win, true)
         end
       end)
+      if opts.on_exit then
+        opts.on_exit(...)
+      end
     end,
   }
   if opts.cwd then
@@ -42,11 +47,7 @@ local function float_term(cmd, opts)
     term_opts.env = vim.tbl_isempty(opts.env) and vim.empty_dict() or opts.env
   end
 
-  if vim.tbl_isempty(term_opts) then
-    vim.fn.termopen(cmd)
-  else
-    vim.fn.termopen(cmd, term_opts)
-  end
+  vim.fn.jobstart(cmd, term_opts)
   vim.cmd.startinsert()
 end
 
@@ -59,6 +60,9 @@ function M.run(cmd, opts)
 
   if tmux.is_enabled() then
     tmux.popup(cmd, opts)
+    if opts.on_exit then
+      opts.on_exit()
+    end
   else
     float_term(cmd, opts)
   end

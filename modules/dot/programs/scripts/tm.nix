@@ -24,12 +24,13 @@ let
           done || true
         ''}
       } | sort -u | while IFS= read -r repo; do
+        [ -n "$repo" ] || continue
         printf 'repo\t%s\t%s\n' "$repo" "$repo"
       done
     '';
   };
 
-  repoSwitcherCommand = "${repoSwitcherTargets}/bin/tm-repo-switcher-targets | sort -u";
+  repoSwitcherCommand = "${repoSwitcherTargets}/bin/tm-repo-switcher-targets";
 
   sessionSwitcherTargets = pkgs.writeShellApplication {
     name = "tm-session-switcher-targets";
@@ -51,8 +52,6 @@ let
       cfg.tmuxPackage
     ];
     text = ''
-      set -u
-
       if tmux has-session 2>/dev/null; then
         selected=$(
           ${sessionSwitcherCommand} \
@@ -61,12 +60,12 @@ let
               --header='Ctrl-R: repos/orgs  Ctrl-D: delete' \
               --bind="ctrl-r:reload(${repoSwitcherCommand})+change-header(Repos/orgs)" \
               --bind="ctrl-d:execute(tmux kill-session -t {2})+reload(${sessionSwitcherCommand})"
-        )
+        ) || exit 0
       else
         selected=$(
           ${repoSwitcherCommand} \
             | ${fuzzyFinderCommand} --delimiter='\t' --with-nth=3 --header='Repos/orgs'
-        )
+        ) || exit 0
       fi
 
       if [ -z "$selected" ]; then

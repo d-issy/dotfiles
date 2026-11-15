@@ -16,7 +16,7 @@ in
     plugins = {
       bufferline = {
         enable = true;
-        lazyLoad.settings.event = [ "BufReadPost" ];
+        lazyLoad.settings.event = [ "DeferredUIEnter" ];
         settings.options = {
           diagnostics = "nvim_lsp";
           diagnostics_indicator = ''
@@ -37,12 +37,12 @@ in
 
       dropbar = {
         enable = true;
-        lazyLoad.settings.event = [ "BufReadPost" ];
+        lazyLoad.settings.event = [ "DeferredUIEnter" ];
       };
 
       noice = {
         enable = true;
-        lazyLoad.settings.event = [ "BufReadPost" ];
+        lazyLoad.settings.event = [ "DeferredUIEnter" ];
         settings = {
           cmdline.view = "cmdline";
           lsp = {
@@ -83,7 +83,7 @@ in
 
       which-key = {
         enable = true;
-        lazyLoad.settings.keys = [ "<leader>?" ];
+        lazyLoad.settings.event = [ "DeferredUIEnter" ];
         settings = {
           preset = "helix";
           triggers = [
@@ -124,16 +124,16 @@ in
                   group = "terminal";
                 }
                 {
-                  __unkeyed-1 = "<leader>a";
-                  group = "ai";
-                }
-                {
                   __unkeyed-1 = "<leader>b";
                   group = "buffer";
                 }
                 {
                   __unkeyed-1 = "<leader>c";
                   group = "code";
+                }
+                {
+                  __unkeyed-1 = "<leader>d";
+                  group = "debug";
                 }
                 {
                   __unkeyed-1 = "<leader>f";
@@ -164,11 +164,6 @@ in
           ];
           icons.rules = [
             {
-              pattern = "ai";
-              icon = "󰭆";
-              color = "grey";
-            }
-            {
               pattern = "blame";
               cat = "filetype";
               name = "git";
@@ -198,11 +193,6 @@ in
               icon = "󰛔 ";
               color = "blue";
             }
-            {
-              plugin = "mini.files";
-              cat = "filetype";
-              name = "netrw";
-            }
           ];
           win.border = "rounded";
         };
@@ -210,8 +200,6 @@ in
 
       nui.enable = true;
     };
-
-    extraPlugins = [ ];
 
     keymaps = [
       (keymap "n" "<leader>bp" "<cmd>BufferLineTogglePin<cr>" "Toggle Pin")

@@ -1,4 +1,13 @@
-AutoReloader = hs.pathwatcher.new(os.getenv "HOME" .. "/.hammerspoon/", hs.reload):start()
+AutoReloader = hs.pathwatcher
+  .new(os.getenv "HOME" .. "/.hammerspoon/", function(paths)
+    for _, path in ipairs(paths) do
+      if path:match "%.lua$" then
+        hs.reload()
+        return
+      end
+    end
+  end)
+  :start()
 
 require "helper"
 require "winmanager"

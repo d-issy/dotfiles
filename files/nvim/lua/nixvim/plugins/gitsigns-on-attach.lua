@@ -26,7 +26,7 @@ map("n", "<leader>ghd", gs.diffthis, "Diff This")
 map("n", "<leader>ghp", gs.preview_hunk_inline, "Preview Hunk Inline")
 map({ "n", "v" }, "<leader>ghr", ":Gitsigns reset_hunk<CR>", "Reset Hunk")
 map({ "n", "v" }, "<leader>ghs", ":Gitsigns stage_hunk<CR>", "Stage Hunk")
-map("n", "<leader>ghu", gs.undo_stage_hunk, "Undo Stage Hunk")
+map("n", "<leader>ghu", gs.stage_hunk, "Unstage Hunk (toggles on staged hunks)")
 map({ "o", "x" }, "ih", ":<C-U>Gitsigns select_hunk<CR>", "GitSigns Select Hunk")
 map("n", "<leader>ghb", function()
   gs.blame_line { full = true }

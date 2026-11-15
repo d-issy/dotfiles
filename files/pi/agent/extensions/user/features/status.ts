@@ -1,14 +1,6 @@
-import type {
-	ExtensionAPI,
-	ExtensionContext,
-} from "@earendil-works/pi-coding-agent";
-import { createStatusBarFooter } from "../lib/status";
-import type { SpeedMode } from "./fast";
-
-type ModelIdentity = Pick<
-	NonNullable<ExtensionContext["model"]>,
-	"provider" | "id"
->;
+import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import type { ModelIdentity, SpeedMode } from "./fast";
+import { createStatusBarFooter } from "../lib/status/footer";
 
 export function registerStatusFeature(
 	pi: ExtensionAPI,
@@ -42,5 +34,3 @@ export function registerStatusFeature(
 	});
 	return refresh;
 }
-
-export default registerStatusFeature;

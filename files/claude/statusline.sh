@@ -1,21 +1,26 @@
-#!/bin/bash
+#!/usr/bin/env bash
 input=$(cat)
 
 # Colors
-DIM='\033[2m'
-GREEN='\033[32m'
-YELLOW='\033[33m'
-RED='\033[31m'
-CYAN='\033[36m'
-RESET='\033[0m'
+DIM=$'\033[2m'
+GREEN=$'\033[32m'
+YELLOW=$'\033[33m'
+RED=$'\033[31m'
+CYAN=$'\033[36m'
+RESET=$'\033[0m'
 
 format_tokens() {
-	awk -v n="$1" 'BEGIN {
-    if (n == 1000000) { printf "1M" }
-    else if (n >= 1000000) { printf "%.1fM", n/1000000 }
-    else if (n >= 1000) { printf "%.0fK", n/1000 }
-    else { printf "%d", n }
-  }'
+	local n="$1" t
+	if ((n == 1000000)); then
+		printf '1M'
+	elif ((n >= 1000000)); then
+		t=$(((n + 50000) / 100000))
+		printf '%d.%dM' $((t / 10)) $((t % 10))
+	elif ((n >= 1000)); then
+		printf '%dK' $(((n + 500) / 1000))
+	else
+		printf '%d' "$n"
+	fi
 }
 
 # Format a Unix epoch (seconds) with a strftime format. Tries BSD date (macOS)
@@ -46,10 +51,10 @@ fmt_reset() {
 usage_seg() {
 	local used="$1" label="$2" reset="$3" color seg at
 	[[ -z "$used" ]] && return
-	used=$(awk -v u="$used" 'BEGIN { printf "%.0f", u }')
-	if awk -v u="$used" 'BEGIN { exit !(u <= 50) }'; then
+	# $used is already rounded to an integer by jq
+	if ((used <= 50)); then
 		color="$GREEN"
-	elif awk -v u="$used" 'BEGIN { exit !(u <= 80) }'; then
+	elif ((used <= 80)); then
 		color="$YELLOW"
 	else
 		color="$RED"
@@ -59,37 +64,47 @@ usage_seg() {
 		at=$(fmt_reset "$reset")
 		[[ -n "$at" ]] && seg+=" ${color}${at}${RESET}"
 	fi
-	printf '%b' "$seg"
+	printf '%s' "$seg"
 }
 
-MODEL=$(echo "$input" | jq -r '.model.display_name // "Unknown"')
+# One jq call for every field; the unit separator keeps empty fields in place
+# (tab is IFS whitespace, so `read` would collapse empty tab-separated fields).
+IFS=$'\x1f' read -r MODEL EFFORT CONTEXT_SIZE CURRENT_INPUT CACHE_CREATE CACHE_READ \
+	FIVE_HOUR_USED SEVEN_DAY_USED FIVE_HOUR_RESET SEVEN_DAY_RESET < <(
+		jq -r '[
+		(.model.display_name // "Unknown"),
+		(.effort.level // ""),
+		(.context_window.context_window_size // 200000 | floor),
+		(.context_window.current_usage.input_tokens // 0 | floor),
+		(.context_window.current_usage.cache_creation_input_tokens // 0 | floor),
+		(.context_window.current_usage.cache_read_input_tokens // 0 | floor),
+		(.rate_limits.five_hour.used_percentage | if . == null then "" else round end),
+		(.rate_limits.seven_day.used_percentage | if . == null then "" else round end),
+		(.rate_limits.five_hour.resets_at // ""),
+		(.rate_limits.seven_day.resets_at // "")
+	] | map(tostring) | join("\u001f")' <<<"$input"
+	)
 # "Opus 5 (1M context)" -> "Opus 5 (1M)"; the window size alone is unambiguous
 MODEL="${MODEL/ context)/)}"
-EFFORT=$(echo "$input" | jq -r '.effort.level // empty')
-
-CONTEXT_SIZE=$(echo "$input" | jq -r '.context_window.context_window_size // 200000')
 
 # Current context usage (not cumulative totals)
-CURRENT_INPUT=$(echo "$input" | jq -r '.context_window.current_usage.input_tokens // 0')
-CACHE_CREATE=$(echo "$input" | jq -r '.context_window.current_usage.cache_creation_input_tokens // 0')
-CACHE_READ=$(echo "$input" | jq -r '.context_window.current_usage.cache_read_input_tokens // 0')
-
 TOTAL_USED=$((CURRENT_INPUT + CACHE_CREATE + CACHE_READ))
-USED_PCT=$(awk -v used="$TOTAL_USED" -v size="$CONTEXT_SIZE" 'BEGIN { printf "%.1f", used * 100 / size }')
+# Used percentage in tenths, rounded; a zero context size cannot be divided by
+if ((CONTEXT_SIZE > 0)); then
+	PCT10=$(((TOTAL_USED * 1000 + CONTEXT_SIZE / 2) / CONTEXT_SIZE))
+else
+	PCT10=0
+fi
+USED_PCT="$((PCT10 / 10)).$((PCT10 % 10))"
 
 # Usage limits (Pro/Max subscribers only, after the first API response)
-FIVE_HOUR_USED=$(echo "$input" | jq -r '.rate_limits.five_hour.used_percentage // empty')
-SEVEN_DAY_USED=$(echo "$input" | jq -r '.rate_limits.seven_day.used_percentage // empty')
-FIVE_HOUR_RESET=$(echo "$input" | jq -r '.rate_limits.five_hour.resets_at // empty')
-SEVEN_DAY_RESET=$(echo "$input" | jq -r '.rate_limits.seven_day.resets_at // empty')
+# FIVE_HOUR_USED / SEVEN_DAY_USED / *_RESET are empty when absent.
 
 # Git branch
 GIT_BRANCH=""
-if git rev-parse --git-dir >/dev/null 2>&1; then
-	BRANCH=$(git branch --show-current 2>/dev/null)
-	if [[ -n "$BRANCH" ]]; then
-		GIT_BRANCH=" ${DIM}|${RESET} ${CYAN}${BRANCH}${RESET}"
-	fi
+BRANCH=$(git branch --show-current 2>/dev/null)
+if [[ -n "$BRANCH" ]]; then
+	GIT_BRANCH=" ${DIM}|${RESET} ${CYAN}${BRANCH}${RESET}"
 fi
 
 # Build output
@@ -99,12 +114,12 @@ if [[ -n "$EFFORT" ]]; then
 fi
 OUTPUT="${MODEL_DISPLAY}${GIT_BRANCH}"
 
-if [[ "$TOTAL_USED" != "0" ]]; then
+if ((TOTAL_USED != 0)); then
 	USED_FMT=$(format_tokens "$TOTAL_USED")
 	# Color based on used context percentage
-	if awk -v u="$USED_PCT" 'BEGIN { exit !(u <= 50) }'; then
+	if ((PCT10 <= 500)); then
 		CTX_COLOR="$GREEN"
-	elif awk -v u="$USED_PCT" 'BEGIN { exit !(u <= 80) }'; then
+	elif ((PCT10 <= 800)); then
 		CTX_COLOR="$YELLOW"
 	else
 		CTX_COLOR="$RED"
@@ -120,4 +135,4 @@ if [[ -n "$FIVE_SEG" || -n "$SEVEN_SEG" ]]; then
 	[[ -n "$SEVEN_SEG" ]] && OUTPUT+=" ${SEVEN_SEG}"
 fi
 
-echo -e "$OUTPUT"
+printf '%s\n' "$OUTPUT"

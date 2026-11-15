@@ -83,6 +83,8 @@ new_repo prune
 repo=$PWD
 locked="$test_root/locked"
 git worktree add -qb locked "$locked"
+git -C "$locked" commit -q --allow-empty -m 'locked work'
+git merge -q --ff-only locked
 git worktree lock --reason 'Keep this checkout' "$locked"
 targets="$test_root/targets"
 skipped="$test_root/skipped"
@@ -112,6 +114,69 @@ clean="$test_root/clean"
 git worktree add -qb clean "$clean"
 remove_prune_worktree "$clean" false
 [[ ! -e "$clean" ]]
+
+# A branch that never moved since creation is not evidence of a merge.
+fresh="$test_root/fresh"
+git worktree add -qb fresh "$fresh"
+git commit -q --allow-empty -m 'main moves on'
+assert_equal '' "$(list_prune_branches HEAD | grep -x fresh || true)" 'prune skips a never-committed branch'
+git -C "$fresh" commit -q --allow-empty -m 'fresh work'
+git merge -q --no-edit fresh
+assert_equal fresh "$(list_prune_branches HEAD | grep -x fresh || true)" 'prune keeps merged branches with commits prunable'
+
+# prune requires confirmation unless --yes is given.
+new_repo prune-confirm
+git worktree add -qb merged "$test_root/prune-confirm.merged"
+git -C "$test_root/prune-confirm.merged" commit -q --allow-empty -m 'merged work'
+git merge -q --ff-only merged
+export WORKTREE_TTY="$test_root/answer"
+printf 'n\n' >"$WORKTREE_TTY"
+if (cmd_prune) >/dev/null 2>&1; then
+	echo 'Declined prune must not succeed' >&2
+	exit 1
+fi
+git show-ref --verify --quiet refs/heads/merged
+[[ -d "$test_root/prune-confirm.merged" ]]
+: >"$WORKTREE_TTY"
+if (cmd_prune) >/dev/null 2>&1; then
+	echo 'Prune without an answer must not succeed' >&2
+	exit 1
+fi
+git show-ref --verify --quiet refs/heads/merged
+printf 'y\n' >"$WORKTREE_TTY"
+(cmd_prune) >/dev/null 2>&1
+if git show-ref --verify --quiet refs/heads/merged; then
+	echo 'Confirmed prune should delete the branch' >&2
+	exit 1
+fi
+git worktree add -qb merged2 "$test_root/prune-confirm.merged2"
+git -C "$test_root/prune-confirm.merged2" commit -q --allow-empty -m 'merged work'
+git merge -q --ff-only merged2
+: >"$WORKTREE_TTY"
+(cmd_prune --yes) >/dev/null 2>&1
+if git show-ref --verify --quiet refs/heads/merged2; then
+	echo 'prune --yes should delete without prompting' >&2
+	exit 1
+fi
+unset WORKTREE_TTY
+
+# rename moves the worktree first and restores it if the branch rename fails.
+new_repo rename
+repo=$PWD
+git worktree add -qb old-name "$test_root/rename-old"
+cd "$test_root/rename-old"
+git branch taken
+if (cmd_rename taken) >/dev/null 2>&1; then
+	echo 'Renaming onto an existing branch must fail' >&2
+	exit 1
+fi
+[[ -d "$test_root/rename-old" ]]
+assert_equal old-name "$(git -C "$test_root/rename-old" branch --show-current)" 'failed rename keeps the branch'
+(cmd_rename new-name) >/dev/null 2>&1
+new_dir="$(repo_sibling_path_for_branch new-name)"
+[[ -d "$new_dir" && ! -e "$test_root/rename-old" ]]
+assert_equal new-name "$(git -C "$new_dir" branch --show-current)" 'rename updates branch and directory'
+cd "$repo"
 
 new_repo cleanup
 repo=$PWD

@@ -10,9 +10,12 @@
     "esModuleInterop": true,
     "isolatedModules": true,
     "verbatimModuleSyntax": true,
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true
   },
   "include": [
+    "vitest.config.mts",
     "files/pi/agent/extensions/**/*.ts",
     "tests/pi/agent/extensions/**/*.ts"
   ]

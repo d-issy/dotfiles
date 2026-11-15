@@ -12,7 +12,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "tmux-notice on claude-wait"
+            "command": "tmux-notice on claude-wait >/dev/null 2>&1 || true"
           }
         ]
       }
@@ -34,9 +34,13 @@
     ],
     "deny": [
       "Read(.env)",
+      "Read(**/.env)",
       "Edit(.env)",
+      "Edit(**/.env)",
       "Read(.env.*)",
+      "Read(**/.env.*)",
       "Edit(.env.*)",
+      "Edit(**/.env.*)",
       "Read(.envrc)",
       "Edit(.envrc)",
       "Bash(sudo *)"
@@ -46,7 +50,13 @@
       "Bash(rm * /*)",
       "Bash(rm ../*)",
       "Bash(rm * ../*)",
-      "Bash(rmdir *)"
+      "Bash(rm -rf ~*)",
+      "Bash(rm * ~*)",
+      "Bash(rmdir *)",
+      "Bash(git push --force*)",
+      "Bash(git push * --force*)",
+      "Bash(git reset --hard*)",
+      "Bash(git clean *)"
     ]
   },
   "outputStyle": "default",

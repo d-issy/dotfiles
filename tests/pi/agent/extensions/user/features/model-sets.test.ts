@@ -1,4 +1,4 @@
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type {
@@ -8,13 +8,15 @@ import type {
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { FastController, SpeedMode } from "#pi-user/features/fast";
 import {
-	type ModelSet,
 	modelSetLabel,
-	readModelSets,
 	registerModelSetsFeature,
 	sameModelSet,
-	writeModelSets,
 } from "#pi-user/features/model-sets";
+import {
+	type ModelSet,
+	readModelSets,
+	writeModelSets,
+} from "#pi-user/lib/model-set-store";
 
 const location = vi.hoisted(() => ({ directory: "" }));
 vi.mock("@earendil-works/pi-coding-agent", async (original) => ({
@@ -88,6 +90,7 @@ async function picker(
 		setMode: vi.fn(),
 	};
 	const notify = vi.fn();
+	let settled = false;
 	const ctx = {
 		hasUI: true,
 		mode: "tui",
@@ -131,6 +134,7 @@ async function picker(
 					component.handleInput?.(key);
 					component.render(100);
 				}
+				settled = true;
 				return result;
 			},
 		},
@@ -141,7 +145,7 @@ async function picker(
 	editor.handleInput("\x04");
 	expect(forwarded.mock.calls).toEqual([["\x13"], ["\x04"]]);
 	editor.handleInput("\x10");
-	await new Promise((resolve) => setImmediate(resolve));
+	await vi.waitFor(() => expect(settled).toBe(true), { interval: 5 });
 	return { sets: readModelSets(path), pi, fast, notify, shortcuts };
 }
 
@@ -150,14 +154,6 @@ describe("model sets", () => {
 		expect(modelSetLabel(astra)).toBe("gpt-6-astra low (openai-codex)");
 		expect(modelSetLabel(luna)).toBe("gpt-5.6-luna xhigh fast (openai-codex)");
 		expect(sameModelSet(astra, { ...astra, fast: true })).toBe(false);
-	});
-	it("persists settings and refuses malformed files", () => {
-		const path = join(directory(), "model-sets.json");
-		expect(readModelSets(path)).toEqual([]);
-		writeModelSets(path, [astra, luna]);
-		expect(readModelSets(path)).toEqual([astra, luna]);
-		writeFileSync(path, '[{"provider":3}]');
-		expect(() => readModelSets(path)).toThrow("Invalid model sets");
 	});
 	it("saves without duplicates and preserves editor shortcuts without global registrations", async () => {
 		const result = await picker(["\x13", "\x13", "\x1b"]);

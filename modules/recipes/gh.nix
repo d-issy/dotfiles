@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ config, pkgs, ... }:
 
 {
   config = {
@@ -27,10 +27,9 @@
         ];
         variables = {
           subcommand = "${pkgs.coreutils}/bin/printf '%s\\n' auth browse codespace gist issue org pr project release repo";
-          base_branch = "${pkgs.git}/bin/git branch --format='%(refname:short)'";
-          branch = "${pkgs.git}/bin/git branch --format='%(refname:short)'";
-          pull_number = "${pkgs.gh}/bin/gh pr list --- --column 1 --delimiter '\\t'";
-          pull_numbers = "${pkgs.gh}/bin/gh pr list --- --column 1 --delimiter '\\t' --multi";
+          base_branch = "${config.programs.git.package}/bin/git branch --format='%(refname:short)'";
+          pull_number = "${config.programs.gh.package}/bin/gh pr list --- --column 1 --delimiter '\\t'";
+          pull_numbers = "${config.programs.gh.package}/bin/gh pr list --- --column 1 --delimiter '\\t' --multi";
         };
         entries = [
           {
@@ -42,7 +41,7 @@
             command = "gh browse <target>";
           }
           {
-            description = "open repogistory settings";
+            description = "open repository settings";
             command = "gh browse --settings";
           }
           {

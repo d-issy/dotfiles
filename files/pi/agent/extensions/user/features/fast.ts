@@ -3,6 +3,7 @@ import type {
 	ExtensionAPI,
 	ExtensionContext,
 } from "@earendil-works/pi-coding-agent";
+import { type RecordLike, isRecord } from "../lib/record";
 
 const ANTHROPIC_FAST_BETA = "fast-mode-2026-02-01";
 const ANTHROPIC_FAST_MODEL_IDS = new Set([
@@ -87,14 +88,8 @@ export const OPENROUTER_ULTRAFAST_MODEL_IDS = new Set([
 ]);
 
 type FastModel = NonNullable<ExtensionContext["model"]>;
-type ModelIdentity = Pick<FastModel, "provider" | "id">;
+export type ModelIdentity = Pick<FastModel, "provider" | "id">;
 export type SpeedMode = "fast" | "ultrafast";
-
-type RecordLike = Record<string, unknown>;
-
-function isRecord(value: unknown): value is RecordLike {
-	return typeof value === "object" && value !== null;
-}
 
 interface SpeedProfile {
 	fastModels: ReadonlySet<string>;
@@ -139,7 +134,7 @@ const SPEED_PROFILES: Readonly<Partial<Record<string, SpeedProfile>>> = {
 		fastModels: ANTHROPIC_FAST_MODEL_IDS,
 		ultrafastModels: new Set(),
 		fastMultiplier: () => 2,
-		ultrafastMultiplier: 0,
+		ultrafastMultiplier: undefined,
 		fastPayload: { speed: "fast" },
 	},
 };
@@ -371,5 +366,3 @@ export function registerFastFeature(pi: ExtensionAPI): FastController {
 
 	return controller;
 }
-
-export default registerFastFeature;

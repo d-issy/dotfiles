@@ -185,7 +185,7 @@ let
         set-hook -g after-select-pane[${toString tmuxNoticeCfg.clearOnSelect.hookIndex}] 'run-shell -b "${tmuxNoticeCommand} clear --pane -t \"#{pane_id}\""'
         set-hook -g after-select-window[${toString tmuxNoticeCfg.clearOnSelect.hookIndex}] 'run-shell -b "${tmuxNoticeCommand} clear --pane -t \"#{pane_id}\""'
         set-hook -g client-session-changed[${toString tmuxNoticeCfg.clearOnSelect.hookIndex}] 'run-shell -b "${tmuxNoticeCommand} clear --pane -t \"#{pane_id}\""'
-        set-hook -g client-attached[${toString tmuxNoticeCfg.clearOnSelect.hookIndex}] 'run-shell -b "${tmuxNoticeCommand} clear --pane"'
+        set-hook -g client-attached[${toString tmuxNoticeCfg.clearOnSelect.hookIndex}] 'run-shell -b "${tmuxNoticeCommand} clear --pane -t \"#{pane_id}\""'
       '';
 
   generatedConfig = lib.concatStringsSep "\n" (
@@ -199,7 +199,7 @@ let
         set -g extended-keys-format csi-u
       '')
       (lib.optionalString cfg.keyBindings.popups.sessionSelector.enable ''
-        bind-key -T prefix s display-popup -E "nu --login -i -c '${config.dot.programs.scripts.tm.commandName}'"
+        bind-key -T prefix s display-popup -E "${config.dot.programs.scripts.tm.package}/bin/${config.dot.programs.scripts.tm.commandName}"
       '')
       (lib.optionalString cfg.keyBindings.sessionNavigation.enable ''
         bind-key -T prefix ${cfg.keyBindings.sessionNavigation.nextKey} switch-client -n
@@ -503,6 +503,19 @@ in
   };
 
   config = lib.mkIf cfg.enable {
+    assertions = [
+      {
+        assertion =
+          cfg.plugins.catppuccin.enable
+          || !(
+            cfg.status.windowNotice.enable
+            || cfg.status.sessionList.enable
+            || cfg.status.paneForegroundCommand.enable
+          );
+        message = "dot.programs.tmux.status.{windowNotice,sessionList,paneForegroundCommand} are only rendered by the catppuccin status config; enable dot.programs.tmux.plugins.catppuccin or disable them.";
+      }
+    ];
+
     home.packages = [ cfg.package ];
 
     xdg.configFile."tmux/tmux.conf".text = generatedConfig;

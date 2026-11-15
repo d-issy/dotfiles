@@ -9,24 +9,22 @@ _:
         name = "d-issy";
         email = "12374694+d-issy@users.noreply.github.com";
       };
-      color = {
-        ui = "auto";
-        diff = true;
-      };
       init.defaultBranch = "main";
       commit.verbose = true;
-      push.default = "current";
+      push = {
+        default = "current";
+        autoSetupRemote = true;
+      };
       pull = {
         ff = "only";
         rebase = false;
         autostash = true;
       };
-      merge.conflictstyle = "diff3";
+      merge.conflictstyle = "zdiff3";
       rebase.autostash = true;
       fetch.prune = true;
       core = {
         quotePath = false;
-        ignorecase = false;
         autocrlf = false;
       };
       url."git@github.com:".insteadOf = "https://github.com/";
@@ -58,7 +56,6 @@ _:
       ".apdisk"
       ".com.apple.timemachine.donotpresent"
       ".fseventsd"
-      "Icon"
       "Network Trash Folder"
       "Temporary Items"
       ""
@@ -78,30 +75,25 @@ _:
       "*.dmg"
       "*.egg"
       "*.gem"
-      "*.gz"
       "*.gzip"
       "*.iso"
-      "*.jar"
       "*.lzma"
       "*.msi"
       "*.msm"
       "*.msp"
       "*.rar"
       "*.rpm"
-      "*.tar"
       "*.tgz"
       "*.txz"
       "*.xar"
       "*.xpi"
       "*.xz"
-      "*.zip"
       ""
       "### Backup ###"
       "*.bak"
       "*.gho"
       "*.ori"
       "*.orig"
-      "*.tmp"
       ""
       "### Dropbox ###"
       ".dropbox"
@@ -119,13 +111,12 @@ _:
       "*.mltbx"
       "*.m~"
       "*.slxc"
-      "codegen/"
       "helpsearch*/"
       "octave-workspace"
       "sccprj/"
       "slprj/"
       ""
-      "### MicrosoftOffice ###"
+      "### MicrosoftOffice / NetBeans ###"
       "**/nbproject/Makefile-*.mk"
       "**/nbproject/Package-*.bash"
       "**/nbproject/private/"
@@ -137,16 +128,12 @@ _:
       "*.~vsd*"
       ".nb-gradle/"
       "Backup of *.doc*"
-      "build/"
-      "nbbuild/"
-      "nbdist/"
-      "test-results/"
       "~$*.doc*"
       "~$*.ppt*"
       "~$*.xls*"
       ""
       "### Vim ###"
-      "!*.svg  # comment out if you don't need vector files"
+      "!*.svg"
       ".netrwhist"
       "Session.vim"
       "Sessionx.vim"

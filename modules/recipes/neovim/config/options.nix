@@ -8,9 +8,6 @@ _:
     };
 
     opts = {
-      encoding = "utf-8";
-      fileencoding = "utf-8";
-
       ignorecase = true;
       smartcase = true;
 
@@ -44,7 +41,6 @@ _:
       splitbelow = true;
       splitkeep = "cursor";
       splitright = true;
-      termguicolors = true;
       title = true;
       wildmode = [
         "longest:full"
@@ -76,7 +72,7 @@ _:
 
       foldlevel = 99;
       smoothscroll = true;
-      foldexpr = "v:lua.require'util.fold'.expr()";
+      foldexpr = "v:lua.vim.treesitter.foldexpr()";
       foldmethod = "expr";
       foldtext = "";
     };

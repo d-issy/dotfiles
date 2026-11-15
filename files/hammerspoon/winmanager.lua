@@ -82,7 +82,8 @@ WinManager = (function()
       x = Helper.clamp(f.x + block.x, screen.x + MARGIN, screen.x + screen.w - f.w - MARGIN),
       y = Helper.clamp(f.y + block.y, MARGIN + screen.y, screen.h - f.h - MARGIN + screen.y),
     }
-    win:setTopLeft(diff)
+    f.x, f.y = diff.x, diff.y
+    setWindowFrame(win, f)
   end
 
   local setWindowSizeDiff = function(win, diff)
@@ -98,7 +99,7 @@ WinManager = (function()
     }
     frame.x = Helper.clamp(f.x, screen.x + MARGIN, screen.x + screen.w - (frame.w + MARGIN))
     frame.y = Helper.clamp(f.y, MARGIN + screen.y, screen.h - (frame.h + MARGIN) + screen.y)
-    win:setFrameWithWorkarounds(frame)
+    setWindowFrame(win, frame)
   end
 
   -- Accessibility queries happen on window events, never while navigating the list.
@@ -149,7 +150,7 @@ WinManager = (function()
   end
 
   local displayKeys = {}
-  local windowKeys = "asdfghlwer"
+  local windowKeys = "asdfghlwertyuiopzxcvbnm"
   local state, choices, page, selected = "arrange", {}, 1, 1
   local overlays = {}
   local choiceKeys = {}
@@ -285,7 +286,7 @@ WinManager = (function()
       local rows = math.min(count, #choices - first + 1)
       choiceKeys = {}
       local labels = {}
-      local available = "asdfghlwertyuiopzxcvbnm"
+      local available = windowKeys
       -- Reserve initials first so fallback keys cannot steal another app's initial.
       for i = first, first + rows - 1 do
         local initial = choices[i].appName:sub(1, 1):lower()
@@ -445,12 +446,24 @@ WinManager = (function()
       end)
     elseif key == "w" then
       state, choices, page, selected = "windows", {}, 1, 1
-      for _, entry in pairs(windowCache) do
-        table.insert(choices, entry)
+      local seen = {}
+      for _, win in ipairs(M._.windowFilter:getWindows(filter.sortByFocusedLast)) do
+        local entry = windowCache[win:id()]
+        if entry and not seen[entry.id] then
+          seen[entry.id] = true
+          table.insert(choices, entry)
+        end
       end
-      table.sort(choices, function(a, b)
+      local rest = {}
+      for id, entry in pairs(windowCache) do
+        if not seen[id] then
+          table.insert(rest, entry)
+        end
+      end
+      table.sort(rest, function(a, b)
         return a.id < b.id
       end)
+      table.move(rest, 1, #rest, #choices + 1, choices)
     elseif key == "m" then
       state = "adjust"
     end
@@ -458,6 +471,10 @@ WinManager = (function()
   end
 
   M._.arrangeMode = hs.eventtap.new({ hs.eventtap.event.types.keyDown }, function(event)
+    local flags = event:getFlags()
+    if flags.cmd or flags.ctrl then
+      return false
+    end
     local key = hs.keycodes.map[event:getKeyCode()]
     if not key then
       return true
@@ -507,7 +524,7 @@ WinManager = (function()
       openSection(key)
       return true
     end
-    if event:getFlags().shift then
+    if flags.shift then
       key = string.upper(key)
     end
     local positions = { h = { x = -SCALE }, j = { y = SCALE }, k = { y = -SCALE }, l = { x = SCALE } }
@@ -584,12 +601,6 @@ WinManager = (function()
       frame.x = screen.x + (screen.w - frame.w) / 2
       frame.y = screen.y + (screen.h - frame.h) / 2
       setWindowFrame(win, frame)
-    end
-  end
-  M.toggleZoom = function()
-    local win = currentWindow()
-    if win then
-      win:toggleZoom()
     end
   end
   M.toggleFullScreen = function()

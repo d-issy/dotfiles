@@ -57,8 +57,6 @@ let
       cfg.ghqPackage
     ];
     text = ''
-      set -u
-
       herdr="''${HERDR_BIN_PATH:-${cfg.herdrPackage}/bin/herdr}"
 
       server_is_ready() {
@@ -79,7 +77,7 @@ let
             --header='Ctrl-R: repos/orgs  Ctrl-D: delete' \
             --bind="ctrl-r:reload(${repoSwitcherCommand})+change-header(Repos/orgs)" \
             --bind="ctrl-d:execute($herdr workspace close {2} >/dev/null)+reload(${workspaceSwitcherCommand})"
-      )
+      ) || exit 0
 
       if [ -z "$selected" ]; then
         exit 0

@@ -63,6 +63,7 @@ in
           lua = [ "stylua" ];
           rust = [ "rustfmt" ];
           sh = [ "shfmt" ];
+          toml = [ "taplo" ];
           proto = [ "buf" ];
 
           javascript.__raw = jsTsFormatter;

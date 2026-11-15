@@ -28,18 +28,12 @@
     ];
   };
 
-  dot = {
-    xdg.configFile."wezterm/wezterm.lua".source = true;
-  };
-
   programs = {
     home-manager.enable = true;
     zoxide.enable = true;
     direnv = {
       enable = true;
       nix-direnv.enable = true;
-      enableZshIntegration = true;
-      enableNushellIntegration = true;
     };
   };
 
@@ -84,6 +78,7 @@
     ./tm.nix
     ./tmux.nix
     ./visidata.nix
+    ./wezterm.nix
     ./zsh.nix
   ];
 }

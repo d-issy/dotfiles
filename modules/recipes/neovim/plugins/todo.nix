@@ -5,7 +5,10 @@ _:
     enable = true;
 
     lazyLoad.settings = {
-      event = [ "BufReadPost" ];
+      event = [
+        "BufReadPost"
+        "BufNewFile"
+      ];
       keys = [
         {
           __unkeyed-1 = "]t";

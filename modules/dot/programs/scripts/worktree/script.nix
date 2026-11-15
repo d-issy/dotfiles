@@ -46,7 +46,7 @@ in
     worktree switch [<query>]
     worktree switch --pr [<number>]
     worktree rename [<new-branch>]
-    worktree prune [-f|--force]
+    worktree prune [-f|--force] [-y|--yes]
     worktree delete [--keep-branch]
     worktree delete [--keep-branch] --current
     worktree delete [--keep-branch] .
@@ -157,6 +157,8 @@ in
     worktree prune
     worktree prune -f
     worktree prune --force
+    worktree prune -y
+    worktree prune --yes
 
   Deletes local branches already merged into the base branch, and removes their
   worktrees when present.
@@ -172,10 +174,13 @@ in
     - Skips the current worktree.
     - Skips dirty worktrees unless -f/--force is used.
     - Checks branches and removes worktrees in parallel (up to 4 at a time).
-    - Shows targets before pruning.
+    - Skips branches that were never committed to since creation.
+    - Shows targets and asks for confirmation ([y/N], read from /dev/tty)
+      before pruning.
 
   Options:
     -f, --force  Also delete dirty merged worktrees.
+    -y, --yes    Skip the confirmation prompt (for scripts).
     -h, --help   Show this help.
   EOF
   }
@@ -413,6 +418,14 @@ in
     [[ "$local_oid" == "$head_oid" ]]
   }
 
+  # True when the branch has never moved since creation (single reflog entry),
+  # so a tip that is an ancestor of the base is not evidence of a merge.
+  branch_never_moved() {
+  	local count
+  	count="$(${pkgs.git}/bin/git reflog show --format=%H "refs/heads/$1" 2>/dev/null | ${pkgs.coreutils}/bin/wc -l || true)"
+  	[[ "''${count//[[:space:]]/}" == 1 ]]
+  }
+
   list_prune_branches() (
   	local base="$1" branch tmpdir index=0 pid
   	local pids=() results=()
@@ -422,7 +435,9 @@ in
   		[[ -n "$branch" ]] || continue
   		(
   			if ${pkgs.git}/bin/git merge-base --is-ancestor "$branch" "$base" 2>/dev/null; then
-  				printf '%s\n' "$branch"
+  				if ! branch_never_moved "$branch" || branch_upstream_gone "$branch"; then
+  					printf '%s\n' "$branch"
+  				fi
   			elif branch_upstream_gone "$branch"; then
   				if branch_patch_merged "$base" "$branch" || branch_github_pr_merged "$branch"; then
   					printf '%s\n' "$branch"
@@ -511,6 +526,16 @@ in
   	${pkgs.coreutils}/bin/cat "$tmpfile"
   }
 
+  # Print a git diff for LLM naming only: secret/noise paths excluded, size capped.
+  naming_diff() {
+  	local out
+  	out="$(${pkgs.git}/bin/git diff "$@" -- . \
+  		':(exclude,glob)**/.env*' ':(exclude,glob)**/*.pem' ':(exclude,glob)**/*.key' \
+  		':(exclude,glob)**/*.lock' ':(exclude,glob)**/package-lock.json' \
+  		':(exclude,glob)**/pnpm-lock.yaml' ':(exclude,glob)**/flake.lock' 2>/dev/null || true)"
+  	printf '%s\n' "''${out:0:204800}"
+  }
+
   generate_names_from_input() {
   	local mode="$1"
   	local prompt output branch window
@@ -530,9 +555,9 @@ in
   Staged changes:'
   		output=$({
   			printf '%s\n\n' "$prompt"
-  			${pkgs.git}/bin/git diff --cached --stat
+  			naming_diff --cached --stat
   			printf '\n'
-  			${pkgs.git}/bin/git diff --cached
+  			naming_diff --cached
   		} | run_pi_from_stdin)
   	else
   		prompt='Generate a new git branch name and short tmux window name from the current repository changes.
@@ -550,13 +575,13 @@ in
   Current changes:'
   		output=$({
   			printf '%s\n\n' "$prompt"
-  			${pkgs.git}/bin/git diff --stat HEAD
+  			naming_diff --stat HEAD
   			printf '\n'
-  			${pkgs.git}/bin/git diff HEAD
+  			naming_diff HEAD
   			printf '\n'
-  			${pkgs.git}/bin/git diff --cached --stat
+  			naming_diff --cached --stat
   			printf '\n'
-  			${pkgs.git}/bin/git diff --cached
+  			naming_diff --cached
   		} | run_pi_from_stdin)
   	fi
 
@@ -618,7 +643,7 @@ in
   }
 
   is_inside_tmux() {
-  	[[ -n "''${TMUX:-}" ]] && command -v ${pkgs.tmux}/bin/tmux >/dev/null 2>&1
+  	[[ -n "''${TMUX:-}" ]]
   }
 
   tmux_window_for_path() {
@@ -869,7 +894,7 @@ in
   	reject="$backup_dir/reject"
   	backup_patch_paths "$source" "$backup_dir"
 
-  	(cd "$source" && ${pkgs.patch}/bin/patch --batch --forward -p1 -R --reject-file="$reject" <"$patch") >/dev/null 2>&1 || patch_status=$?
+  	(cd "$source" && ${pkgs.patch}/bin/patch --batch --forward --fuzz=0 -p1 -R --reject-file="$reject" <"$patch") >/dev/null 2>&1 || patch_status=$?
   	if [[ "$patch_status" -eq 0 && ! -s "$reject" ]]; then
   		${pkgs.coreutils}/bin/rm -rf "$backup_dir"
   		return 0
@@ -971,6 +996,8 @@ in
   	if has_staged_changes; then
   		patch="$(${pkgs.coreutils}/bin/mktemp)"
   		cleanup_patch="$(${pkgs.coreutils}/bin/mktemp)"
+  		# shellcheck disable=SC2064
+  		trap "${pkgs.coreutils}/bin/rm -f '$patch' '$cleanup_patch'" EXIT
   		${pkgs.git}/bin/git diff --cached --binary >"$patch"
   		${pkgs.git}/bin/git diff --cached --binary -U0 >"$cleanup_patch"
   		generated="$(generate_names_from_input staged)"
@@ -1065,10 +1092,8 @@ in
   		printed=true
   		printf '%sPR worktree%s\n\n' "$BLUE" "$RESET"
   		printf 'PR: #%s\n' "$pr_number"
-  		if command -v ${pkgs.gh}/bin/gh >/dev/null 2>&1; then
-  			${pkgs.gh}/bin/gh pr view "$pr_number" --json number,title,state,headRefName,updatedAt \
-  				--jq '"Title: \(.title)\nState: \(.state)\nBranch: \(.headRefName)\nUpdated: \(.updatedAt)"' 2>/dev/null || true
-  		fi
+  		${pkgs.gh}/bin/gh pr view "$pr_number" --json number,title,state,headRefName,updatedAt \
+  			--jq '"Title: \(.title)\nState: \(.state)\nBranch: \(.headRefName)\nUpdated: \(.updatedAt)"' 2>/dev/null || true
   		if [[ -n "$(${pkgs.git}/bin/git status --porcelain)" ]]; then
   			printf 'Local changes: yes\n'
   		else
@@ -1089,7 +1114,6 @@ in
 
   open_pr_worktree() {
   	require_git_repo
-  	command -v ${pkgs.gh}/bin/gh >/dev/null 2>&1 || die "gh CLI not found"
   	local number="$1" info branch target temp_ref dirty response existing_path window
   	window="pr-$number"
   	target="$(repo_sibling_path_for_pr "$number")"
@@ -1107,6 +1131,7 @@ in
   		fi
   		if ! ${pkgs.git}/bin/git -C "$target" merge-base --is-ancestor HEAD "$temp_ref"; then
   			warn "PR worktree has commits outside the fetched PR head; preserving them and switching only."
+  			${pkgs.git}/bin/git update-ref -d "$temp_ref"
   			open_path "$target" "$window"
   			return
   		fi
@@ -1129,6 +1154,7 @@ in
   		if [[ "$dirty" == false ]]; then
   			${pkgs.git}/bin/git -C "$target" reset --hard "$temp_ref"
   		fi
+  		${pkgs.git}/bin/git update-ref -d "$temp_ref"
   		branch="$(${pkgs.git}/bin/git -C "$target" branch --show-current)"
   		set_saved_window_for_branch "$branch" "$window"
   		open_path "$target" "$window"
@@ -1147,6 +1173,7 @@ in
   		existing_path="$(branch_checked_out_path "$branch")"
   		if [[ -n "$existing_path" ]]; then
   			warn "PR branch is already checked out at: $existing_path"
+  			${pkgs.git}/bin/git update-ref -d "$temp_ref"
   			set_saved_window_for_branch "$branch" "$window"
   			open_path "$existing_path" "$window"
   			return
@@ -1157,13 +1184,13 @@ in
   	else
   		${pkgs.git}/bin/git branch "$branch" "$temp_ref"
   	fi
+  	${pkgs.git}/bin/git update-ref -d "$temp_ref"
   	${pkgs.git}/bin/git worktree add "$target" "$branch"
   	set_saved_window_for_branch "$branch" "$window"
   	open_path "$target" "$window"
   }
 
   select_pr_number() {
-  	command -v ${pkgs.gh}/bin/gh >/dev/null 2>&1 || die "gh CLI not found"
   	local selected
   	selected="$(${pkgs.gh}/bin/gh pr list --limit 100 --json number,title,headRefName \
   		--jq '.[] | "#\(.number)\t\(.title)\t\(.headRefName)"' |
@@ -1206,6 +1233,7 @@ in
 
   	if [[ "$pr" == true ]]; then
   		[[ -n "''${pr_number:-}" ]] || pr_number="$(select_pr_number)"
+  		[[ "$pr_number" =~ ^[0-9]+$ ]] || die "PR number must be numeric: $pr_number"
   		open_pr_worktree "$pr_number"
   		return
   	fi
@@ -1320,6 +1348,21 @@ in
   	fi
   	if [[ -n "$(${pkgs.git}/bin/git -C "$path" status --porcelain)" ]]; then
   		printf '%sWorktree has local changes. They will be discarded.%s\n\n' "$YELLOW" "$RESET" >/dev/tty
+  	fi
+  	if [[ "$keep_branch" == false ]]; then
+  		local exclude=() unique base upstream
+  		base="$(default_base_ref)"
+  		if ${pkgs.git}/bin/git rev-parse --verify --quiet "$base^{commit}" >/dev/null; then
+  			exclude+=("$base")
+  		fi
+  		upstream="$(${pkgs.git}/bin/git rev-parse --verify --quiet "$branch@{upstream}" 2>/dev/null || true)"
+  		if [[ -n "$upstream" ]]; then
+  			exclude+=("$upstream")
+  		fi
+  		unique="$(${pkgs.git}/bin/git log --oneline "refs/heads/$branch" --not "''${exclude[@]}" 2>/dev/null || true)"
+  		if [[ -n "$unique" ]]; then
+  			printf '%sBranch has commits not found in the base or upstream. They will be lost:%s\n%s\n\n' "$YELLOW" "$RESET" "$unique" >/dev/tty
+  		fi
   	fi
   	printf '%sBranch:%s %s\n' "$BLUE" "$RESET" "$branch" >/dev/tty
   	printf '%sPath:%s %s\n' "$BLUE" "$RESET" "$path" >/dev/tty
@@ -1539,10 +1582,11 @@ in
   		while [[ "$index" -lt "''${#records[@]}" && "$active" -lt 4 ]]; do
   			IFS=$'\t' read -r branch path dirty window <<<"''${records[$index]}"
   			(
+  				# Always notify the parent, even if this worker exits early.
+  				trap 'printf "%s\n" "$index" >&"$completion_fd"' EXIT
   				if [[ "$path" == - ]] || remove_prune_worktree "$path" "$force"; then
   					${pkgs.coreutils}/bin/touch "$tmpdir/$index.ok"
   				fi
-  				printf '%s\n' "$index" >&"$completion_fd"
   			) >"$tmpdir/$index.log" 2>&1 &
   			pids[index]=$!
   			active=$((active + 1))
@@ -1583,7 +1627,7 @@ in
 
   cmd_prune() {
   	require_git_repo
-  	local force=false base tmpdir targets skipped target_count skipped_count
+  	local force=false yes=false base tmpdir targets skipped target_count skipped_count response
   	while [[ $# -gt 0 ]]; do
   		case "$1" in
   		-h | --help)
@@ -1592,6 +1636,10 @@ in
   			;;
   		-f | --force)
   			force=true
+  			shift
+  			;;
+  		-y | --yes)
+  			yes=true
   			shift
   			;;
   		*)
@@ -1603,6 +1651,8 @@ in
   	base="$(default_base_ref)"
   	${pkgs.git}/bin/git rev-parse --verify --quiet "$base^{commit}" >/dev/null || die "Could not resolve prune base: $base"
   	tmpdir="$(${pkgs.coreutils}/bin/mktemp -d)"
+  	# shellcheck disable=SC2064
+  	trap "${pkgs.coreutils}/bin/rm -rf '$tmpdir'" EXIT
   	targets="$tmpdir/targets"
   	skipped="$tmpdir/skipped"
 
@@ -1625,8 +1675,18 @@ in
   		${pkgs.coreutils}/bin/rm -rf "$tmpdir"
   		return 0
   	fi
+  	if [[ "$yes" == false ]]; then
+  		printf '\n'
+  		response=""
+  		if ! read -r -p "Prune $target_count branch(es)? [y/N] " response <"''${WORKTREE_TTY:-/dev/tty}"; then
+  			die "Cancelled"
+  		fi
+  		case "$response" in
+  		[Yy] | [Yy][Ee][Ss]) ;;
+  		*) die "Cancelled" ;;
+  		esac
+  	fi
   	prune_records "$targets" "$force"
-  	${pkgs.coreutils}/bin/rm -rf "$tmpdir"
   }
 
   cmd_delete() {
@@ -1713,9 +1773,12 @@ in
   		die "Path already exists: $new_path"
   	fi
 
-  	${pkgs.git}/bin/git branch -m "$old_branch" "$new_branch"
-  	set_saved_window_for_branch "$new_branch" "$new_window"
   	${pkgs.git}/bin/git worktree move "$root" "$new_path"
+  	if ! ${pkgs.git}/bin/git -C "$new_path" branch -m "$old_branch" "$new_branch"; then
+  		${pkgs.git}/bin/git -C "$new_path" worktree move "$new_path" "$root" || warn "Could not move worktree back to: $root"
+  		die "Could not rename branch; worktree left at: $root"
+  	fi
+  	set_saved_window_for_branch "$new_branch" "$new_window"
   	update_pending_state_after_rename "$root" "$new_path" "$new_branch" "$new_window"
 
   	if is_inside_tmux; then

@@ -70,11 +70,7 @@ let
   );
 
   tmuxNoticeScript = import ./script.nix {
-    inherit
-      configFile
-      lib
-      pkgs
-      ;
+    inherit configFile lib;
   };
 
   tmuxNotice = pkgs.writeShellApplication {
@@ -90,7 +86,12 @@ in
   options.dot.programs.scripts.tmuxNotice = {
     enable = lib.mkEnableOption "tmux pane notice command";
 
-    tmuxPackage = lib.mkPackageOption pkgs "tmux" { };
+    tmuxPackage = lib.mkOption {
+      type = lib.types.package;
+      default = config.dot.programs.tmux.package;
+      defaultText = lib.literalExpression "config.dot.programs.tmux.package";
+      description = "tmux package used by tmux-notice.";
+    };
 
     fallback = lib.mkOption {
       type = noticeType;

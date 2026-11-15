@@ -1,4 +1,5 @@
 import type { SessionEntry } from "@earendil-works/pi-coding-agent";
+import { isRecord } from "../record";
 
 export type UsageTotals = {
 	input: number;
@@ -9,8 +10,6 @@ export type UsageTotals = {
 	latestCacheHitRate: number | undefined;
 };
 
-type RecordLike = Record<string, unknown>;
-
 type UsageLike = {
 	input?: unknown;
 	output?: unknown;
@@ -18,10 +17,6 @@ type UsageLike = {
 	cacheWrite?: unknown;
 	cost?: unknown;
 };
-
-function isRecord(value: unknown): value is RecordLike {
-	return typeof value === "object" && value !== null;
-}
 
 function finiteNumber(value: unknown): number {
 	return typeof value === "number" && Number.isFinite(value) ? value : 0;

@@ -8,7 +8,6 @@ in
     autoGroups = {
       highlight_yank.clear = true;
       close_with_q.clear = true;
-      bigfile.clear = true;
       terminal_open.clear = true;
     };
 
@@ -31,27 +30,12 @@ in
           "neotest-output"
           "neotest-output-panel"
           "neotest-summary"
-          "notify"
           "qf"
         ];
         callback = raw ''
           function(event)
             vim.bo[event.buf].buflisted = false
             vim.keymap.set("n", "q", "<cmd>close<cr>", { buf = event.buf, silent = true })
-          end
-        '';
-      }
-      {
-        event = "BufReadPre";
-        group = "bigfile";
-        pattern = "*";
-        callback = raw ''
-          function(event)
-            local file_util = require "util.file"
-            local buf = event.buf
-            if file_util.is_big(buf) then
-              file_util.disable_futures_for_bigfile(buf)
-            end
           end
         '';
       }

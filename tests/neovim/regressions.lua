@@ -71,63 +71,39 @@ test("quit can still remove a truly empty unnamed buffer", function()
   assert(not vim.api.nvim_buf_is_loaded(buf))
 end)
 
-test("big-file handling detaches the LSP client", function()
-  local buf = new_buffer { "big-file content" }
-  local get_client, detach = vim.lsp.get_client_by_id, vim.lsp.buf_detach_client
-  local detached
-  vim.lsp.get_client_by_id = function(id)
-    assert(id == 42)
-    return { id = id }
-  end
-  vim.lsp.buf_detach_client = function(target, id)
-    detached = { target, id }
-  end
-  require("util.file").disable_futures_for_bigfile(buf)
-  vim.api.nvim_exec_autocmds("LspAttach", { buffer = buf, data = { client_id = 42 } })
-  assert(
-    vim.wait(1000, function()
-      return detached ~= nil
-    end),
-    "LSP client was not detached"
-  )
-  vim.lsp.get_client_by_id, vim.lsp.buf_detach_client = get_client, detach
-  assert(vim.deep_equal(detached, { buf, 42 }))
+test("autoformat is checked against the given buffer", function()
+  local current = new_buffer { "current" }
+  local other = vim.api.nvim_create_buf(true, false)
+  local format = require "util.format"
+  vim.g.autoformat = nil
+  vim.b[other].autoformat = false
+  assert(format.enabled(current), "current buffer should default to enabled")
+  assert(not format.enabled(other), "buffer-local setting of a non-current buffer was ignored")
+  vim.b[other].autoformat = nil
+  vim.b[current].autoformat = false
+  assert(not format.enabled(), "current buffer setting was ignored without an argument")
+  assert(format.enabled(other), "current buffer setting leaked into another buffer")
 end)
 
-test("completion leaves native additional edits applied exactly once", function()
-  local buf = new_buffer { "package main", "", "func main() {}" }
-  dofile(root .. "/files/nvim/lua/nixvim/lsp/default.lua")
-  local edits = {
-    {
-      range = { start = { line = 0, character = 12 }, ["end"] = { line = 0, character = 12 } },
-      newText = '\n\nimport "fmt"',
-    },
-  }
-  local completed, get_client = vim.v.completed_item, vim.lsp.get_client_by_id
-  vim.lsp.get_client_by_id = function()
-    return { offset_encoding = "utf-16" }
+test("buffer deletion saves and names the target buffer, not the current one", function()
+  local dir = vim.fn.tempname()
+  vim.fn.mkdir(dir, "p")
+  local current = new_buffer { "current" }
+  local target = vim.api.nvim_create_buf(true, false)
+  vim.api.nvim_buf_set_name(target, dir .. "/target.txt")
+  vim.api.nvim_buf_set_lines(target, 0, -1, false, { "target content" })
+  vim.api.nvim_set_current_buf(current)
+  local confirm, prompt = vim.fn.confirm, nil
+  vim.fn.confirm = function(message)
+    prompt = message
+    return 1
   end
-  vim.api.nvim_set_vvar("completed_item", {
-    user_data = { nvim = { lsp = { client_id = 42, completion_item = { additionalTextEdits = edits } } } },
-  })
-  -- Native LSP completion applies these edits before CompleteDone listeners finish.
-  vim.lsp.util.apply_text_edits(edits, buf, "utf-16")
-  vim.api.nvim_exec_autocmds("CompleteDone", { buffer = buf })
-  vim.wait(100, function()
-    return false
-  end)
-  vim.api.nvim_set_vvar("completed_item", completed)
-  vim.lsp.get_client_by_id = get_client
-  assert(
-    vim.deep_equal(vim.api.nvim_buf_get_lines(buf, 0, -1, false), {
-      "package main",
-      "",
-      'import "fmt"',
-      "",
-      "func main() {}",
-    }),
-    "completion applied additional edits more than once"
-  )
+  require("util.buffer").delete(target)
+  vim.fn.confirm = confirm
+  assert(prompt and prompt:find("target.txt", 1, true), "prompt named the wrong buffer: " .. tostring(prompt))
+  assert(vim.deep_equal(vim.fn.readfile(dir .. "/target.txt"), { "target content" }), "target buffer was not written")
+  assert(not vim.api.nvim_buf_is_loaded(target))
+  assert(vim.api.nvim_buf_is_loaded(current) and vim.api.nvim_get_current_buf() == current)
 end)
 
 test("application shortcuts survive unavailable applications and app restarts", function()

@@ -10,26 +10,4 @@ M.is_big = function(buf)
   return file_size > 1572864 -- 1.5MB
 end
 
---- Disable features for big file
---- @param buf? number
-M.disable_futures_for_bigfile = function(buf)
-  buf = buf or vim.api.nvim_get_current_buf()
-
-  -- syntax off
-  vim.bo[buf].syntax = "off"
-
-  -- disable lsp
-  vim.api.nvim_create_autocmd("LspAttach", {
-    buf = buf,
-    callback = function(args)
-      vim.schedule(function()
-        local client = vim.lsp.get_client_by_id(args.data.client_id)
-        if client then
-          vim.lsp.buf_detach_client(buf, client.id)
-        end
-      end)
-    end,
-  })
-end
-
 return M

@@ -24,10 +24,6 @@ vim.api.nvim_create_autocmd("LspAttach", {
       vim.lsp.completion.enable(true, client.id, args.buf, { autotrigger = true })
     end
 
-    if client:supports_method(vim.lsp.protocol.Methods.textDocument_inlineCompletion, args.buf) then
-      vim.lsp.inline_completion.enable(true, { bufnr = args.buf })
-    end
-
     if client:supports_method(vim.lsp.protocol.Methods.textDocument_signatureHelp) then
       local provider = client.server_capabilities.signatureHelpProvider or {}
       local chars = {}
@@ -62,7 +58,10 @@ vim.api.nvim_create_autocmd("LspAttach", {
       end
 
       if next(chars) then
+        local group = vim.api.nvim_create_augroup(("lsp-signature-%d-%d"):format(args.buf, client.id), { clear = true })
+
         vim.api.nvim_create_autocmd("InsertCharPre", {
+          group = group,
           buf = args.buf,
           callback = function()
             local ch = vim.v.char
@@ -75,6 +74,7 @@ vim.api.nvim_create_autocmd("LspAttach", {
         })
 
         vim.api.nvim_create_autocmd("TextChangedI", {
+          group = group,
           buf = args.buf,
           callback = function()
             if not sig_win() then
@@ -90,6 +90,12 @@ vim.api.nvim_create_autocmd("LspAttach", {
         })
       end
     end
+  end,
+})
+
+vim.api.nvim_create_autocmd("LspDetach", {
+  callback = function(args)
+    pcall(vim.api.nvim_del_augroup_by_name, ("lsp-signature-%d-%d"):format(args.buf, args.data.client_id))
   end,
 })
 
@@ -119,11 +125,8 @@ vim.keymap.set("i", "<Tab>", function()
   if vim.fn.pumvisible() == 1 then
     return "<C-n>"
   end
-  if vim.lsp.inline_completion.get() then
-    return ""
-  end
   return "<Tab>"
-end, { expr = true, desc = "Next completion item or accept inline completion" })
+end, { expr = true, desc = "Next completion item" })
 
 vim.keymap.set("i", "<S-Tab>", function()
   if vim.fn.pumvisible() == 1 then

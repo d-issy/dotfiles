@@ -34,10 +34,4 @@ function M.conds.line_start(line, matcher)
   return line == matcher
 end
 
---- @param line string
---- @param matcher string
-function M.conds.line_start_whitespace(line, matcher)
-  return line:match("^%s*" .. matcher) ~= nil
-end
-
 return M

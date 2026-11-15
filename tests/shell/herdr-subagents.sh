@@ -114,6 +114,13 @@ expect_refused start analyst=pi
 cmp "$victim.original" "$victim" || fail 'changed a symlinked manifest target'
 [[ -L "$manifest" ]] || fail 'replaced the symlinked manifest'
 
+new_case concurrent-start
+mkdir -m 700 "$runtime_root" "$state_dir"
+mkdir -m 700 "$manifest.lock"
+expect_refused start analyst=pi
+[[ -d "$manifest.lock" ]] || fail 'removed a lock owned by another start'
+[[ ! -e "$manifest" ]] || fail 'wrote a manifest while another start held the lock'
+
 new_case lifecycle
 "$HERDR_SUBAGENTS_SCRIPT" help >/dev/null
 victim="$test_root/temporary-victim"

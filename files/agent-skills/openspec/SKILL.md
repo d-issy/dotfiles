@@ -20,7 +20,7 @@ For the default `spec-driven` schema, create these artifacts:
 - `design`: describe the technical approach and important implementation decisions.
 - `tasks`: turn the agreed proposal, specs, and design into a concrete implementation checklist.
 
-Do not start implementation merely because `proposal`, `specs`, `design`, and `tasks` are present. All four must be coherent, and the user must explicitly request implementation. The workflow is iterative, so update the artifacts when implementation changes the understanding of the work.
+Do not start implementation merely because `proposal`, `specs`, `design`, and `tasks` are present, or when revising a change. All four must be coherent, and the user must explicitly request implementation; this applies to every step below. The workflow is iterative, so update the artifacts when implementation changes the understanding of the work.
 
 ## Common artifact workflow
 
@@ -37,7 +37,7 @@ Do not start implementation merely because `proposal`, `specs`, `design`, and `t
 
 ## Creating artifacts
 
-Follow the artifact flow above, using the common workflow for each artifact. Once `tasks` is complete, report that the plan is ready and wait for the user's explicit implementation request. Only then use `openspec instructions apply --change <change>` to guide implementation.
+Follow the artifact flow above, using the common workflow for each artifact. Once `tasks` is complete, report that the plan is ready. Once implementation is requested, use `openspec instructions apply --change <change>` to guide implementation.
 
 Run `openspec validate <change>` after implementation.
 
@@ -52,7 +52,7 @@ When correcting an existing change, follow the common artifact workflow and upda
 - For spec deltas, use `ADDED`, `MODIFIED`, or `REMOVED`. A `MODIFIED` requirement must keep the existing requirement name and include its complete updated text and scenarios; do not rewrite the entire main spec.
 - Keep `tasks.md` as a living checklist. Preserve completed tasks as `[x]`, and add only the unchecked implementation, test, or documentation tasks required by the revised delta. Do not regenerate or reset the whole task list.
 - If the requested spec now matches code that is already implemented, update the delta to describe the shipped behavior and keep the related tasks complete; do not invent new implementation tasks.
-- If the requested spec requires behavior not yet implemented, add the remaining tasks as unchecked. If the user has already explicitly requested implementation for this change (for example, by saying `apply`), continue implementing those tasks; otherwise wait for an explicit implementation request.
+- If the requested spec requires behavior not yet implemented, add the remaining tasks as unchecked. If the user has already explicitly requested implementation for this change (for example, by saying `apply`), continue implementing those tasks.
 - Keep implementation and task progress consistent with the artifacts.
 - Recheck `openspec status --change <change>` after the revision and run `openspec validate <change>` before implementation or archiving.
 

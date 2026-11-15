@@ -129,11 +129,13 @@ let
     description = "open repo workspace";
   };
 
-  settings = lib.recursiveUpdate cfg.settings {
-    keys.command =
-      (lib.attrByPath [ "keys" "command" ] [ ] cfg.settings)
-      ++ lib.optional cfg.repoSwitcher.enable repoSwitcherKeybind;
-  };
+  settings =
+    if cfg.repoSwitcher.enable then
+      lib.recursiveUpdate cfg.settings {
+        keys.command = (lib.attrByPath [ "keys" "command" ] [ ] cfg.settings) ++ [ repoSwitcherKeybind ];
+      }
+    else
+      cfg.settings;
 in
 {
   options.dot.programs.herdr = {

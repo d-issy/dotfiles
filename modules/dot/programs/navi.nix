@@ -8,6 +8,8 @@
 let
   cfg = config.dot.programs.navi;
 
+  yamlFormat = pkgs.formats.yaml { };
+
   mkDescriptionText = description: lib.optionalString (description != "") " ${description}";
 
   mkAliasText = alias: lib.optionalString (alias != null) " :: ${alias}";
@@ -58,11 +60,7 @@ in
   options.dot.programs.navi = {
     enable = lib.mkEnableOption "navi";
 
-    package = lib.mkOption {
-      type = lib.types.nullOr lib.types.package;
-      default = null;
-      description = "navi package to install. When null, pkgs.navi is used only if navi is enabled.";
-    };
+    package = lib.mkPackageOption pkgs "navi" { };
 
     enableShellAliases = lib.mkOption {
       type = lib.types.bool;
@@ -75,7 +73,7 @@ in
     nushellIntegration.enable = lib.mkEnableOption "nushell integration";
 
     settings = lib.mkOption {
-      type = lib.types.attrs;
+      inherit (yamlFormat) type;
       default = { };
       description = "Settings written to navi/config.yaml.";
     };
@@ -151,15 +149,13 @@ in
 
   config = lib.mkIf cfg.enable (
     let
-      package = if cfg.package == null then pkgs.navi else cfg.package;
-      yamlFormat = pkgs.formats.yaml { };
-      settings = lib.recursiveUpdate {
-        cheats.paths = [ managedCheatsPath ];
-      } cfg.settings;
+      inherit (cfg) package;
+      settings = lib.recursiveUpdate cfg.settings {
+        cheats.paths = (cfg.settings.cheats.paths or [ ]) ++ [ managedCheatsPath ];
+      };
     in
     {
       home.packages = [ package ];
-      home.sessionVariables.NAVI_PATH = managedCheatsPath;
 
       programs.zsh.initContent = lib.mkIf cfg.zshIntegration.enable ''
         eval "$(${package}/bin/navi widget zsh)"
@@ -167,7 +163,7 @@ in
 
       programs.nushell.extraConfig = lib.mkIf cfg.nushellIntegration.enable ''
         export def nv [] {
-          let cmd = navi --print | complete | get "stdout" | str trim
+          let cmd = ^${package}/bin/navi --print | complete | get "stdout" | str trim
           match ($cmd | is-empty) {
             true => { return }
             false => {
@@ -183,9 +179,9 @@ in
           let input = (commandline)
 
           match ($input | is-empty) {
-            true => {navi --print | complete | get "stdout"}
+            true => {^${package}/bin/navi --print | complete | get "stdout"}
             false => {
-              let replacement = (navi --print --query $input --best-match | complete | get "stdout" | str trim)
+              let replacement = (^${package}/bin/navi --print --query $input --best-match | complete | get "stdout" | str trim)
 
               match ($replacement | str trim | is-empty) {
                 false => $replacement

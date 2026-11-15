@@ -14,13 +14,13 @@ in
   options.dot.languages.javascript = {
     enable = lib.mkEnableOption "JavaScript/TypeScript development";
 
-    node = dot.mkEnablablePackageOption "Node.js" "nodejs_24";
+    node = dot.mkEnableablePackageOption "Node.js" "nodejs_24";
 
     npm.enable = lib.mkEnableOption "npm";
-    yarn = dot.mkEnablablePackageOption "Yarn" "yarn";
-    pnpm = dot.mkEnablablePackageOption "pnpm" "pnpm";
-    bun = dot.mkEnablablePackageOption "Bun" "bun";
-    deno = dot.mkEnablablePackageOption "Deno" "deno";
+    yarn = dot.mkEnableablePackageOption "Yarn" "yarn";
+    pnpm = dot.mkEnableablePackageOption "pnpm" "pnpm";
+    bun = dot.mkEnableablePackageOption "Bun" "bun";
+    deno = dot.mkEnableablePackageOption "Deno" "deno";
   };
 
   config = lib.mkIf cfg.enable {
@@ -33,18 +33,13 @@ in
         ++ lib.optional cfg.deno.enable cfg.deno.package;
       sessionVariables =
         lib.optionalAttrs cfg.npm.enable {
-          NPM_CONFIG_USERCONFIG = "${config.home.homeDirectory}/.npmrc";
+          NPM_CONFIG_PREFIX = npmPrefix;
         }
         // lib.optionalAttrs cfg.pnpm.enable {
           PNPM_HOME = pnpmHome;
         };
       sessionPath =
         lib.optional cfg.npm.enable "${npmPrefix}/bin" ++ lib.optional cfg.pnpm.enable "${pnpmHome}/bin";
-      file.".npmrc" = lib.mkIf cfg.npm.enable {
-        text = ''
-          prefix=${npmPrefix}
-        '';
-      };
     };
   };
 }

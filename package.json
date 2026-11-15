@@ -1,11 +1,13 @@
 {
+  "private": true,
   "scripts": {
-    "lint": "oxlint",
+    "lint": "oxlint --deny-warnings",
     "typecheck": "tsc --noEmit",
     "format": "oxfmt",
     "format:check": "oxfmt --check",
-    "test": "vitest run --passWithNoTests",
-    "test:coverage": "vitest run --passWithNoTests --coverage"
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "check": "pnpm lint && pnpm typecheck && pnpm test"
   },
   "imports": {
     "#pi-user/*": "./files/pi/agent/extensions/user/*.ts"
@@ -13,8 +15,7 @@
   "peerDependencies": {
     "@earendil-works/pi-ai": "*",
     "@earendil-works/pi-coding-agent": "*",
-    "@earendil-works/pi-tui": "*",
-    "typebox": "*"
+    "@earendil-works/pi-tui": "*"
   },
   "devDependencies": {
     "@types/node": "^26.0.0",

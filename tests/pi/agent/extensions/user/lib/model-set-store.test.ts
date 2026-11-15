@@ -1,22 +1,36 @@
-import { spawn } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import {
 	existsSync,
 	lstatSync,
+	mkdirSync,
 	mkdtempSync,
 	readFileSync,
 	rmSync,
 	symlinkSync,
+	utimesSync,
 	writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
-import { pathToFileURL } from "node:url";
-import { afterEach, describe, expect, it } from "vitest";
+import { join } from "node:path";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
 	readModelSets,
 	updateModelSets,
 	writeModelSets,
 } from "#pi-user/lib/model-set-store";
+
+const fixedUuid = vi.hoisted(() => ({
+	value: undefined as string | undefined,
+}));
+vi.mock("node:crypto", async (original) => {
+	const actual = await original<typeof import("node:crypto")>();
+	return {
+		...actual,
+		randomUUID: (): `${string}-${string}-${string}-${string}-${string}` =>
+			(fixedUuid.value ??
+				actual.randomUUID()) as `${string}-${string}-${string}-${string}-${string}`,
+	};
+});
 
 const directories: string[] = [];
 function location(): string {
@@ -25,25 +39,34 @@ function location(): string {
 	return join(directory, "model-sets.json");
 }
 afterEach(() => {
+	fixedUuid.value = undefined;
 	for (const directory of directories.splice(0))
 		rmSync(directory, { recursive: true, force: true });
 });
 
 describe("model set storage", () => {
-	it("saves a private regular file without following a preexisting temporary symlink", () => {
+	it("saves a private regular file", () => {
 		const path = location();
-		const unrelated = join(path, "..", "unrelated-file");
-		const temporary = `${path}.${process.pid}.tmp`;
-		writeFileSync(unrelated, "keep this");
-		symlinkSync(unrelated, temporary);
-
 		writeModelSets(path, []);
-
-		expect(readFileSync(unrelated, "utf8")).toBe("keep this");
 		expect(readModelSets(path)).toEqual([]);
 		expect(lstatSync(path).isFile()).toBe(true);
 		expect(lstatSync(path).mode & 0o777).toBe(0o600);
+	});
+
+	it("refuses to follow a preexisting temporary symlink", () => {
+		const path = location();
+		const unrelated = join(path, "..", "unrelated-file");
+		fixedUuid.value = "fixed-uuid";
+		const temporary = `${path}.${process.pid}.fixed-uuid.tmp`;
+		writeFileSync(unrelated, "keep this");
+		symlinkSync(unrelated, temporary);
+
+		expect(() => writeModelSets(path, [])).toThrow(/EEXIST/u);
+
+		expect(readFileSync(unrelated, "utf8")).toBe("keep this");
+		expect(existsSync(path)).toBe(false);
 		expect(lstatSync(temporary).isSymbolicLink()).toBe(true);
+		expect(existsSync(`${path}.lock`)).toBe(false);
 	});
 
 	it("serializes saves and deletes across independent Pi processes", async () => {
@@ -51,8 +74,9 @@ describe("model set storage", () => {
 		writeModelSets(path, [
 			{ provider: "test", model: "remove", thinking: "off", fast: false },
 		]);
-		const module = pathToFileURL(
-			resolve("files/pi/agent/extensions/user/lib/model-set-store.ts"),
+		const module = new URL(
+			"../../../../../../files/pi/agent/extensions/user/lib/model-set-store.ts",
+			import.meta.url,
 		).href;
 		const script = `
 import { updateModelSets } from ${JSON.stringify(module)};
@@ -119,5 +143,26 @@ process.stdin.destroy();
 		).toThrow("cancelled");
 		expect(existsSync(`${path}.lock`)).toBe(false);
 		expect(updateModelSets(path, (latest) => latest)).toEqual([]);
+	});
+
+	it("recovers a lock whose owner process has died", () => {
+		const path = location();
+		const finished = spawnSync(process.execPath, ["-e", ""]);
+		const lock = `${path}.lock`;
+		mkdirSync(lock);
+		writeFileSync(join(lock, "owner"), String(finished.pid));
+		writeModelSets(path, []);
+		expect(readModelSets(path)).toEqual([]);
+		expect(existsSync(lock)).toBe(false);
+	});
+
+	it("recovers an old lock that has no readable owner", () => {
+		const path = location();
+		const lock = `${path}.lock`;
+		mkdirSync(lock);
+		const old = new Date(Date.now() - 120_000);
+		utimesSync(lock, old, old);
+		writeModelSets(path, []);
+		expect(existsSync(lock)).toBe(false);
 	});
 });
