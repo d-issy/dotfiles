@@ -6,8 +6,6 @@
 }:
 
 ''
-  set -euo pipefail
-
   config_file=${lib.escapeShellArg configFile}
 
   usage() {
@@ -334,9 +332,9 @@
     local title="$3"
     local name="$4"
     local rendered="$template"
-    rendered="''${rendered//\{icon\}/$icon}"
-    rendered="''${rendered//\{title\}/$title}"
-    rendered="''${rendered//\{name\}/$name}"
+    rendered="''${rendered//\{icon\}/"$icon"}"
+    rendered="''${rendered//\{title\}/"$title"}"
+    rendered="''${rendered//\{name\}/"$name"}"
     printf '%s' "$rendered"
   }
 
@@ -362,12 +360,18 @@
     notice_json=$(notice_config "$name")
     current_title=$(get_pane_title "$pane")
     title=$(notice_title "$notice_json" "$current_title" "$name")
-    first_icon=$(${pkgs.jq}/bin/jq -r 'if ((.icons // []) | length) > 0 then .icons[0] else "•" end' <<<"$notice_json")
-    icons=$(${pkgs.jq}/bin/jq -r 'if ((.icons // []) | length) > 0 then .icons | join("|") else "•" end' <<<"$notice_json")
-    session_notification_indicator_color=$(${pkgs.jq}/bin/jq -r '.sessionNotificationIndicatorColor // ""' <<<"$notice_json")
-    pane_title_enabled=$(${pkgs.jq}/bin/jq -r '.paneTitle.enable // false' <<<"$notice_json")
-    pane_title_template=$(${pkgs.jq}/bin/jq -r '.paneTitle.template // "{icon} {title}"' <<<"$notice_json")
-    pane_title_restore=$(${pkgs.jq}/bin/jq -r '.paneTitle.restoreOnClear // true' <<<"$notice_json")
+    IFS=$'\037' read -r first_icon icons session_notification_indicator_color pane_title_enabled pane_title_template pane_title_restore < <(
+      ${pkgs.jq}/bin/jq -r '
+        [
+          (if ((.icons // []) | length) > 0 then .icons[0] else "•" end),
+          (if ((.icons // []) | length) > 0 then .icons | join("|") else "•" end),
+          (.sessionNotificationIndicatorColor // ""),
+          (.paneTitle.enable // false),
+          (.paneTitle.template // "{icon} {title}"),
+          (.paneTitle.restoreOnClear // true)
+        ] | map(tostring) | join("\u001f")
+      ' <<<"$notice_json"
+    )
 
     if [[ "$(get_tmux_option "$pane" "@tmux_notice_has_original_title")" != "1" ]]; then
       set_tmux_option "$pane" "@tmux_notice_original_title" "$current_title"

@@ -1,5 +1,11 @@
 { pkgs, ... }:
 
+let
+  pythonVariables = {
+    python_file = ''${pkgs.fd}/bin/fd -t f -e py --- --fzf-overrides "--no-select-1"'';
+    python_module = ''${pkgs.fd}/bin/fd -t f -e py | ${pkgs.gnused}/bin/sed -e 's|\.py$||' -e 's|/|.|g' --- --fzf-overrides "--no-select-1"'';
+  };
+in
 {
   config = {
     dot.languages.python = {
@@ -13,10 +19,7 @@
 
     dot.programs.navi.cheats.python.sections = [
       {
-        variables = {
-          python_file = ''${pkgs.fd}/bin/fd -t f -e py --- --fzf-overrides "--no-select-1"'';
-          python_module = ''${pkgs.fd}/bin/fd -t f -e py | ${pkgs.gnused}/bin/sed -e 's|\.py$||' -e 's|/|.|g' --- --fzf-overrides "--no-select-1"'';
-        };
+        variables = pythonVariables;
         entries = [
           {
             description = "Run python script";
@@ -30,10 +33,7 @@
       }
       {
         tags = [ "uv" ];
-        variables = {
-          python_file = ''${pkgs.fd}/bin/fd -t f -e py --- --fzf-overrides "--no-select-1"'';
-          python_module = ''${pkgs.fd}/bin/fd -t f -e py | ${pkgs.gnused}/bin/sed -e 's|\.py$||' -e 's|/|.|g' --- --fzf-overrides "--no-select-1"'';
-        };
+        variables = pythonVariables;
         entries = [
           {
             description = "Initialize new project";

@@ -1,11 +1,13 @@
 import { randomUUID } from "node:crypto";
 import {
 	closeSync,
+	fsyncSync,
 	mkdirSync,
 	openSync,
 	readFileSync,
 	renameSync,
 	rmSync,
+	statSync,
 	writeFileSync,
 } from "node:fs";
 import { dirname, join } from "node:path";
@@ -26,7 +28,12 @@ export function readModelSets(path: string): ModelSet[] {
 		if ((error as NodeJS.ErrnoException).code === "ENOENT") return [];
 		throw error;
 	}
-	const value: unknown = JSON.parse(text);
+	let value: unknown;
+	try {
+		value = JSON.parse(text);
+	} catch (error) {
+		throw new Error(`Invalid model sets file: ${path}`, { cause: error });
+	}
 	if (
 		!Array.isArray(value) ||
 		!value.every((item: unknown) => {
@@ -49,6 +56,54 @@ export function readModelSets(path: string): ModelSet[] {
 	return value as ModelSet[];
 }
 
+const STALE_LOCK_MS = 30_000;
+
+function processAlive(pid: number): boolean {
+	try {
+		process.kill(pid, 0);
+		return true;
+	} catch (error) {
+		return (error as NodeJS.ErrnoException).code !== "ESRCH";
+	}
+}
+
+interface LockIdentity {
+	dev: number;
+	ino: number;
+	mtimeMs: number;
+	owner: string | undefined;
+}
+
+function lockIdentity(lock: string): LockIdentity | undefined {
+	try {
+		const stat = statSync(lock);
+		let owner: string | undefined;
+		try {
+			owner = readFileSync(join(lock, "owner"), "utf8");
+		} catch {}
+		return { dev: stat.dev, ino: stat.ino, mtimeMs: stat.mtimeMs, owner };
+	} catch {
+		return undefined;
+	}
+}
+
+function sameLock(identity: LockIdentity, lock: string): boolean {
+	const current = lockIdentity(lock);
+	return (
+		current !== undefined &&
+		current.dev === identity.dev &&
+		current.ino === identity.ino &&
+		current.mtimeMs === identity.mtimeMs &&
+		current.owner === identity.owner
+	);
+}
+
+function identityIsStale(identity: LockIdentity): boolean {
+	if (Date.now() - identity.mtimeMs > STALE_LOCK_MS) return true;
+	const pid = Number(identity.owner);
+	return Number.isInteger(pid) && pid > 0 && !processAlive(pid);
+}
+
 // Hold one cross-process lock around read/modify/write, including the rename.
 function withModelSetsLock<T>(path: string, action: () => T): T {
 	mkdirSync(dirname(path), { recursive: true });
@@ -61,6 +116,33 @@ function withModelSetsLock<T>(path: string, action: () => T): T {
 			break;
 		} catch (error) {
 			if ((error as NodeJS.ErrnoException).code !== "EEXIST") throw error;
+		}
+		const stale = lockIdentity(lock);
+		if (stale && identityIsStale(stale)) {
+			const claimed = `${lock}.stale.${process.pid}.${randomUUID()}`;
+			try {
+				renameSync(lock, claimed);
+			} catch (renameError) {
+				if (Date.now() >= deadline) throw renameError;
+				Atomics.wait(wait, 0, 0, 10);
+				continue;
+			}
+			if (sameLock(stale, claimed)) {
+				rmSync(claimed, { recursive: true, force: true });
+				continue;
+			}
+			// The stale lock was replaced after it was checked. Restore the
+			// replacement and retry instead of deleting another owner's lock.
+			try {
+				renameSync(claimed, lock);
+			} catch (restoreError) {
+				throw new Error(
+					`Could not restore replaced model-sets lock (${lock})`,
+					{
+						cause: restoreError,
+					},
+				);
+			}
 		}
 		if (Date.now() >= deadline)
 			throw new Error(
@@ -82,6 +164,7 @@ function writeUnlocked(path: string, sets: ModelSet[]): void {
 	try {
 		try {
 			writeFileSync(file, `${JSON.stringify(sets, null, 2)}\n`);
+			fsyncSync(file);
 		} finally {
 			closeSync(file);
 		}

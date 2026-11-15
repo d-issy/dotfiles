@@ -2,14 +2,16 @@ name: Lint
 
 permissions:
   contents: read
-  pull-requests: read
 
 on:
-  - pull_request
+  pull_request:
+  push:
+    branches:
+      - main
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
   CLICOLOR: 1
@@ -18,6 +20,10 @@ jobs:
   changes:
     name: Detect lint changes
     runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read
     outputs:
       fmt: ${{ steps.filter.outputs.fmt }}
       nix: ${{ steps.filter.outputs.nix }}
@@ -32,25 +38,30 @@ jobs:
         with:
           filters: |
             fmt:
+              - '.github/workflows/lint.yml'
               - 'treefmt.toml'
               - '.oxfmtrc.json'
               - 'stylua.toml'
               - '**/*.nix'
               - '**/*.ts'
+              - '**/*.mts'
               - '**/*.json'
               - '**/*.sh'
               - '**/*.lua'
               - '**/*.toml'
             nix:
+              - '.github/workflows/lint.yml'
               - 'flake.lock'
               - '**/*.nix'
             node:
+              - '.github/workflows/lint.yml'
               - 'package.json'
               - 'pnpm-lock.yaml'
               - 'pnpm-workspace.yaml'
               - 'tsconfig.json'
               - '.oxlintrc.json'
               - '**/*.ts'
+              - '**/*.mts'
             actions:
               - '.github/workflows/**'
               - '.github/actions/**'
@@ -58,6 +69,7 @@ jobs:
   treefmt:
     name: treefmt
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     needs:
       - changes
     if: ${{ needs.changes.outputs.fmt == 'true' }}
@@ -78,6 +90,7 @@ jobs:
   deadnix:
     name: deadnix
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     needs:
       - changes
     if: ${{ needs.changes.outputs.nix == 'true' }}
@@ -98,6 +111,7 @@ jobs:
   statix:
     name: statix
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     needs:
       - changes
     if: ${{ needs.changes.outputs.nix == 'true' }}
@@ -118,6 +132,7 @@ jobs:
   oxlint:
     name: oxlint
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     needs:
       - changes
     if: ${{ needs.changes.outputs.node == 'true' }}
@@ -138,6 +153,7 @@ jobs:
   typecheck:
     name: typecheck
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     needs:
       - changes
     if: ${{ needs.changes.outputs.node == 'true' }}
@@ -148,7 +164,7 @@ jobs:
       - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: lts/*
+          node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm typecheck
@@ -156,6 +172,7 @@ jobs:
   actionlint:
     name: actionlint
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     needs:
       - changes
     if: ${{ needs.changes.outputs.actions == 'true' }}
@@ -176,6 +193,7 @@ jobs:
   zizmor:
     name: zizmor
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     needs:
       - changes
     if: ${{ needs.changes.outputs.actions == 'true' }}
@@ -196,6 +214,7 @@ jobs:
   all-lint-passed:
     name: All Lint Passed
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     needs:
       - changes
       - treefmt

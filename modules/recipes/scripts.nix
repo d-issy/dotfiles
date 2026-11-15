@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ config, ... }:
 
 {
   home.shellAliases = {
@@ -68,7 +68,7 @@
     {
       tags = [ "worktree" ];
       variables = {
-        pull_number = "${pkgs.gh}/bin/gh pr list --- --column 1 --delimiter '\\t'";
+        pull_number = "${config.programs.gh.package}/bin/gh pr list --- --column 1 --delimiter '\\t'";
       };
       entries = [
         {

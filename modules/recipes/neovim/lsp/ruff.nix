@@ -3,7 +3,7 @@ _:
 {
   programs.nixvim.lsp.servers.ruff = {
     enable = true;
-    config.initOptions.settings = {
+    config.init_options.settings = {
       organizeImports = true;
       showSyntaxErrors = true;
     };

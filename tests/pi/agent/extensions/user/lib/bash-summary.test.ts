@@ -64,6 +64,10 @@ describe("bashOperations", () => {
 	it.each([
 		["pnpm test 2>&1 | head", ["pnpm test", "read"]],
 		["git status 2>/dev/null; pnpm lint", ["git", "pnpm lint"]],
+		["pnpm test &>/dev/null", ["pnpm"]],
+		["pnpm test &>>/dev/null; pnpm lint", ["pnpm", "pnpm lint"]],
+		["cat a &> out", ["write"]],
+		["pnpm test |& wc -l", ["pnpm test"]],
 		["find . -exec cat {} +", ["find"]],
 		['cat "$1"; pnpm test "$@"', ["read", "pnpm test"]],
 		["python3 - <<PY\nprint('private body')", ["python"]],

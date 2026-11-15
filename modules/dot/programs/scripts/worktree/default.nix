@@ -56,11 +56,20 @@ in
       defaultText = lib.literalExpression "config.dot.programs.scripts.shellIntegration.nushell.enable";
       description = "Whether to install the worktree cd wrapper for nushell.";
     };
+
+    shellIntegration.zsh.enable = lib.mkOption {
+      type = lib.types.bool;
+      default = config.programs.zsh.enable;
+      defaultText = lib.literalExpression "config.programs.zsh.enable";
+      description = "Whether to install the worktree cd wrapper for zsh.";
+    };
   };
 
   config = lib.mkIf (config.dot.programs.scripts.enable && cfg.enable) {
     home.packages = [ worktree ];
 
     programs.nushell.extraConfig = lib.mkIf cfg.shellIntegration.nushell.enable shellIntegration.nushell;
+
+    programs.zsh.initContent = lib.mkIf cfg.shellIntegration.zsh.enable shellIntegration.zsh;
   };
 }

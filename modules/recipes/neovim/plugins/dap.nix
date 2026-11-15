@@ -26,7 +26,6 @@ in
     };
 
     keymaps = [
-      (keymap [ "n" "v" ] "<leader>d" "" "+debug")
       (nmap "<leader>db" (raw ''function() require("dap").toggle_breakpoint() end'') "Toggle Breakpoint")
       (nmap "<leader>dB"
         (raw ''function() require("dap").set_breakpoint(vim.fn.input("Breakpoint condition: ")) end'')

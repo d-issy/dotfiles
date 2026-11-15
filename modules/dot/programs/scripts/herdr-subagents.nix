@@ -207,6 +207,10 @@ let
       start_agents() {
         [ "$#" -gt 0 ] || die "start requires at least one NAME=PRESET argument"
         [ "$#" -le 10 ] || die "at most 10 subagents are supported"
+        # Claim the pane atomically so concurrent starts cannot both pass the manifest check.
+        mkdir -m 700 -- "$manifest.lock" 2>/dev/null \
+          || die "another start is in progress for the current pane (remove $manifest.lock if it is stale)"
+        trap 'rmdir -- "$manifest.lock" 2>/dev/null || true' EXIT
         [ ! -e "$manifest" ] && [ ! -L "$manifest" ] \
           || die "a subagent manifest already exists; run cleanup first"
 

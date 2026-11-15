@@ -1,4 +1,3 @@
-import { bashOperationDetails } from "./bash-summary";
 import {
 	AssistantMessageComponent,
 	type Theme,
@@ -9,6 +8,8 @@ import {
 	Container,
 	truncateToWidth,
 } from "@earendil-works/pi-tui";
+import { bashOperationDetails } from "./bash-summary";
+import { isRecord } from "./record";
 
 type ToolOperation = { name: string; command?: string };
 type CompletedTool = ToolOperation & {
@@ -19,30 +20,35 @@ type CompletedTool = ToolOperation & {
 // Use executed calls, not script text: loops, variables and parallel calls
 // must reflect what actually ran. Truncated bash arguments use a generic run label.
 function codemodeCalls(details: unknown): ToolOperation[] | undefined {
-	if (!details || typeof details !== "object" || !("calls" in details)) return;
-	if (!Array.isArray(details.calls) || details.calls.length === 0) return;
+	if (!isRecord(details) || !Array.isArray(details.calls)) return;
+	const items: unknown[] = details.calls;
+	if (items.length === 0) return;
 	const calls: ToolOperation[] = [];
-	for (const call of details.calls) {
-		if (!call || typeof call.name !== "string" || call.status !== "ok") return;
-		let command: string | undefined;
-		if (call.name === "bash") {
-			try {
-				const args: unknown = JSON.parse(call.args);
-				if (
-					!args ||
-					typeof args !== "object" ||
-					!("command" in args) ||
-					typeof args.command !== "string"
-				)
-					return;
-				command = args.command;
-			} catch {
-				command = "bash";
-			}
-		}
-		calls.push({ name: call.name, command });
+	for (const call of items) {
+		if (
+			!isRecord(call) ||
+			typeof call.name !== "string" ||
+			call.status !== "ok"
+		)
+			return;
+		calls.push({
+			name: call.name,
+			command: call.name === "bash" ? bashCommand(call.args) : undefined,
+		});
 	}
 	return calls;
+}
+
+// Unreadable or incomplete arguments still ran bash; use a generic run label.
+function bashCommand(args: unknown): string {
+	try {
+		const parsed: unknown = JSON.parse(String(args));
+		return isRecord(parsed) && typeof parsed.command === "string"
+			? parsed.command
+			: "bash";
+	} catch {
+		return "bash";
+	}
 }
 type SummaryTheme = Pick<Theme, "fg">;
 
@@ -294,8 +300,8 @@ export function installToolSummary(getTheme: () => SummaryTheme): () => void {
 		}, 3000);
 		timers.add(timer);
 	}
-	function keepBashVisible(component: Component): boolean {
-		return (deadlines.get(component) ?? 0) > Date.now();
+	function keepBashVisible(component: Component, now: number): boolean {
+		return (deadlines.get(component) ?? 0) > now;
 	}
 	ToolExecutionComponent.prototype.updateResult = updateResult;
 
@@ -306,7 +312,11 @@ export function installToolSummary(getTheme: () => SummaryTheme): () => void {
 		) {
 			return originalRender.call(this, width);
 		}
-		return renderSummary(this, width, getTheme(), keepBashVisible);
+		// Read the clock once so every check in this render agrees.
+		const now = Date.now();
+		return renderSummary(this, width, getTheme(), (component) =>
+			keepBashVisible(component, now),
+		);
 	}
 
 	Container.prototype.render = render;

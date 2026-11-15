@@ -3,6 +3,7 @@ import type {
 	ExtensionContext,
 	SessionEntry,
 } from "@earendil-works/pi-coding-agent";
+import { visibleWidth } from "@earendil-works/pi-tui";
 import { describe, it } from "vitest";
 import { supportsFast } from "#pi-user/features/fast";
 import { createStatusBarFooter } from "#pi-user/lib/status/footer";
@@ -104,5 +105,63 @@ describe("createStatusBarFooter", () => {
 			plain(footer.render(120).join("\n")),
 			/^\(anthropic\) claude-sonnet-4 high · main /u,
 		);
+	});
+});
+
+function renderNarrow(width: number, cost = 0.021): string {
+	const ctx = {
+		model: {
+			provider: "anthropic",
+			id: "claude-opus-5",
+			reasoning: true,
+			contextWindow: 0,
+		},
+		thinkingLevel: "high",
+		getContextUsage: () => undefined,
+		sessionManager: {
+			getEntries: () => [
+				{
+					...assistant(12_444, 202_000),
+					message: {
+						...(assistant(12_444, 202_000) as unknown as { message: object })
+							.message,
+						usage: {
+							input: 12_444,
+							output: 5_000,
+							cacheRead: 202_000,
+							cacheWrite: 0,
+							cost: { total: cost },
+						},
+					},
+				},
+			],
+		},
+	} as unknown as ExtensionContext;
+	const footer = createStatusBarFooter(ctx, () => undefined)(
+		{ requestRender: () => undefined } as never,
+		{ fg: (_color: string, text: string) => text } as never,
+		{
+			onBranchChange: () => () => undefined,
+			getGitBranch: () => "feature/very-long-branch-name",
+		} as never,
+	);
+	const lines = footer.render(width);
+	assert.equal(lines.length, 1);
+	return plain(lines[0]!);
+}
+
+describe("createStatusBarFooter at narrow widths", () => {
+	for (const width of [30, 50]) {
+		it(`keeps the branch end and the usage summary at width ${width}`, () => {
+			const output = renderNarrow(width);
+			assert.ok(visibleWidth(output) <= width, output);
+			assert.match(output, /\$0\.021$/u);
+			// Middle truncation keeps both ends of the identity, including the branch.
+			assert.match(output, /^\(a.*….*name +CH/u);
+		});
+	}
+
+	it("shows tiny non-zero costs instead of $0.000", () => {
+		assert.match(renderNarrow(120, 0.0002), /<\$0\.001$/u);
 	});
 });

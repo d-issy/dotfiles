@@ -17,10 +17,10 @@ in
       nullable = true;
     };
 
-    pipx = dot.mkEnablablePackageOption "pipx" "pipx";
-    pipenv = dot.mkEnablablePackageOption "Pipenv" "pipenv";
-    poetry = dot.mkEnablablePackageOption "Poetry" "poetry";
-    uv = dot.mkEnablablePackageOption "uv" "uv";
+    pipx = dot.mkEnableablePackageOption "pipx" "pipx";
+    pipenv = dot.mkEnableablePackageOption "Pipenv" "pipenv";
+    poetry = dot.mkEnableablePackageOption "Poetry" "poetry";
+    uv = dot.mkEnableablePackageOption "uv" "uv";
   };
 
   config = lib.mkIf cfg.enable {

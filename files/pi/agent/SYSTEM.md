@@ -36,7 +36,7 @@
     Make the smallest changes needed to achieve the requested outcome.
     Keep code outside the requested scope unchanged unless a change is necessary for correctness.
     Confirm with the user before making a material decision about scope, behavior, or architecture.
-    Perform Git operations only with explicit user instruction.
+    Perform state-changing Git operations (commit, push, reset, and the like) only with explicit user instruction.
   </operating_boundaries>
 </constraints>
 

@@ -1,6 +1,7 @@
 {
   config,
   lib,
+  pkgs,
   dot,
   ...
 }:
@@ -12,17 +13,16 @@ in
   options.dot.programs.aws = {
     enable = lib.mkEnableOption "AWS CLI tools";
 
-    package = lib.mkOption {
-      type = lib.types.nullOr lib.types.package;
+    package = lib.mkPackageOption pkgs "awscli2" {
+      nullable = true;
       default = null;
-      description = "AWS CLI package to install. When null, programs.awscli.package is not set.";
-      example = lib.literalExpression "pkgs.awscli2";
+      extraDescription = "When null, programs.awscli.package is not set.";
     };
 
     plugins = {
-      awsVault = dot.mkEnablablePackageOption "aws-vault" "aws-vault";
-      saml2aws = dot.mkEnablablePackageOption "saml2aws" "saml2aws";
-      ssmSessionManager = dot.mkEnablablePackageOption "Session Manager Plugin" "ssm-session-manager-plugin";
+      awsVault = dot.mkEnableablePackageOption "aws-vault" "aws-vault";
+      saml2aws = dot.mkEnableablePackageOption "saml2aws" "saml2aws";
+      ssmSessionManager = dot.mkEnableablePackageOption "Session Manager Plugin" "ssm-session-manager-plugin";
     };
   };
 

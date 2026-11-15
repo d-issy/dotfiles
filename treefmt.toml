@@ -8,7 +8,7 @@ includes = ["*.nix"]
 [formatter.oxfmt]
 command = "oxfmt"
 options = ["--no-error-on-unmatched-pattern"]
-includes = ["*.ts", "*.json"]
+includes = ["*.ts", "*.mts"]
 
 [formatter.sh]
 command = "shfmt"

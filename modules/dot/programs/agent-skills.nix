@@ -24,15 +24,12 @@ let
       ---
       name: ${builtins.toJSON skillName}
       description: ${builtins.toJSON skill.description}
-      ${
-        lib.optionalString (agentName != "codex") ''
-          disable-model-invocation: ${lib.boolToString (!skill.invocation.model)}
-          ${lib.optionalString (
-            agentName == "claude"
-          ) "user-invocable: ${lib.boolToString skill.invocation.user}"}
-        ''
-      }---
-      ${builtins.readFile (dot.files + "/agent-skills/${skillName}/SKILL.md")}
+      disable-model-invocation: ${lib.boolToString (!skill.invocation.model)}
+      ${lib.optionalString (
+        agentName == "claude"
+      ) "user-invocable: ${lib.boolToString skill.invocation.user}"}
+      ---
+      ${dot.readFile "agent-skills/${skillName}/SKILL.md"}
     '';
 
   mkOpenAIYaml =

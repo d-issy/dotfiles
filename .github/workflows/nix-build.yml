@@ -2,14 +2,16 @@ name: Nix Build
 
 permissions:
   contents: read
-  pull-requests: read
 
 on:
-  - pull_request
+  pull_request:
+  push:
+    branches:
+      - main
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
   CLICOLOR: 1
@@ -18,6 +20,10 @@ jobs:
   changes:
     name: Detect Nix changes
     runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read
     outputs:
       nix: ${{ steps.filter.outputs.nix }}
     steps:
@@ -33,11 +39,16 @@ jobs:
               - '**/*.nix'
               - 'files/**'
               - 'tests/**'
+              - 'treefmt.toml'
+              - '.oxlintrc.json'
+              - '.oxfmtrc.json'
+              - 'stylua.toml'
               - '.github/workflows/nix-build.yml'
 
   nix-flake-check:
     name: Nix flake check (${{ matrix.config }})
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
     needs:
       - changes
     if: ${{ needs.changes.outputs.nix == 'true' }}
@@ -57,11 +68,16 @@ jobs:
         with:
           extra_nix_config: |
             experimental-features = nix-command flakes
+      - uses: nix-community/cache-nix-action@7df957e333c1e5da7721f60227dbba6d06080569 # v7.0.2
+        with:
+          primary-key: nix-flake-check-${{ runner.os }}-${{ hashFiles('flake.lock') }}
+          restore-prefixes-first-match: nix-flake-check-${{ runner.os }}-
       - run: nix flake check
 
   all-nix-build-passed:
     name: All Nix Build Passed
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     needs:
       - changes
       - nix-flake-check

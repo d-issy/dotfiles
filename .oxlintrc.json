@@ -15,6 +15,7 @@
   },
   "rules": {
     "typescript/no-explicit-any": "error",
+    "typescript/no-non-null-assertion": "error",
     "typescript/explicit-function-return-type": [
       "error",
       {
@@ -24,7 +25,7 @@
         "allowIIFEs": true
       }
     ],
-    "eslint/require-unicode-regexp": "warn",
+    "eslint/require-unicode-regexp": "error",
     "no-unused-vars": [
       "error",
       {
@@ -41,6 +42,12 @@
     "import/extensions": ["error", "never"],
     "sort-imports": ["error", { "ignoreDeclarationSort": true }]
   },
+  "overrides": [
+    {
+      "files": ["tests/**"],
+      "rules": { "typescript/no-non-null-assertion": "off" }
+    }
+  ],
   "env": {
     "builtin": true
   }

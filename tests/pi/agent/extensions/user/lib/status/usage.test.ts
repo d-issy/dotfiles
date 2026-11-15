@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import type { SessionEntry } from "@earendil-works/pi-coding-agent";
-import { describe, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import { getUsageTotals } from "#pi-user/lib/status/usage";
 
 describe("getUsageTotals", () => {
@@ -95,11 +95,8 @@ describe("getUsageTotals", () => {
 		assert.equal(totals.output, 5_020);
 		assert.equal(totals.cacheRead, 202_000);
 		assert.equal(totals.cacheWrite, 50);
-		assert.ok(Math.abs(totals.cost - 0.051) < Number.EPSILON);
-		assert.ok(
-			Math.abs((totals.latestCacheHitRate ?? 0) - 94.19708641883196) <
-				Number.EPSILON,
-		);
+		expect(totals.cost).toBeCloseTo(0.051, 10);
+		expect(totals.latestCacheHitRate).toBeCloseTo(94.19708641883196, 10);
 	});
 
 	it("includes usage from compaction and branch summaries", () => {

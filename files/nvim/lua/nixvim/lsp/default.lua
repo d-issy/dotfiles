@@ -62,7 +62,10 @@ vim.api.nvim_create_autocmd("LspAttach", {
       end
 
       if next(chars) then
+        local group = vim.api.nvim_create_augroup(("lsp-signature-%d-%d"):format(args.buf, client.id), { clear = true })
+
         vim.api.nvim_create_autocmd("InsertCharPre", {
+          group = group,
           buf = args.buf,
           callback = function()
             local ch = vim.v.char
@@ -75,6 +78,7 @@ vim.api.nvim_create_autocmd("LspAttach", {
         })
 
         vim.api.nvim_create_autocmd("TextChangedI", {
+          group = group,
           buf = args.buf,
           callback = function()
             if not sig_win() then
@@ -90,6 +94,12 @@ vim.api.nvim_create_autocmd("LspAttach", {
         })
       end
     end
+  end,
+})
+
+vim.api.nvim_create_autocmd("LspDetach", {
+  callback = function(args)
+    pcall(vim.api.nvim_del_augroup_by_name, ("lsp-signature-%d-%d"):format(args.buf, args.data.client_id))
   end,
 })
 

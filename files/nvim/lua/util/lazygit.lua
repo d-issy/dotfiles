@@ -5,14 +5,13 @@ local M = {}
 --- @param args? string[]
 function M.open(args)
   local cmd = vim.list_extend({ "lazygit" }, args or {})
-  require("util.terminal").run(cmd)
-  vim.cmd "checktime"
-end
-
---- lazygit file history.
-function M.file_history()
-  local path = vim.api.nvim_buf_get_name(vim.api.nvim_get_current_buf())
-  M.open { "-f", vim.fn.trim(path) }
+  require("util.terminal").run(cmd, {
+    on_exit = function()
+      vim.schedule(function()
+        vim.cmd "checktime"
+      end)
+    end,
+  })
 end
 
 --- lazygit commit log.

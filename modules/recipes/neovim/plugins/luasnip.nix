@@ -52,7 +52,7 @@ in
             require("luasnip").jump(-1)
           end
         end
-      '') "Snippet Change Choice")
+      '') "Snippet Change Choice or Jump Back")
     ];
   };
 }

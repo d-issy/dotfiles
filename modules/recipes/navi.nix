@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ config, lib, ... }:
 
 {
   config.dot.programs.navi = {
@@ -27,7 +27,7 @@
         overrides = "--no-exact --tiebreak chunk,begin,length";
         overrides_var = "--no-exact";
       };
-      shell.command = "${pkgs.zsh}/bin/zsh";
+      shell.command = lib.getExe config.programs.zsh.package;
     };
   };
 }

@@ -57,7 +57,7 @@ in
     idiomaticVersionFiles = lib.mapAttrs mkIdiomaticVersionFileOptions idiomaticVersionFileTools;
 
     settings = lib.mkOption {
-      type = lib.types.attrs;
+      inherit (tomlFormat) type;
       default = { };
       description = "Additional mise settings written under settings in mise/config.toml.";
     };

@@ -40,4 +40,4 @@ Use publishing skills for staging, commits, pushing, and creation mechanics wher
 
 ## Pull Request State
 
-- Create the pull request as a draft unless the user explicitly requests auto-merge. Enable auto-merge only when explicitly requested, and mark the pull request ready for review when required to enable it.
+- Create the pull request as a draft unless the user explicitly requests auto-merge or a non-draft (ready-for-review) pull request. Enable auto-merge only when explicitly requested, and mark the pull request ready for review when required to enable it.

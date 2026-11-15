@@ -1,7 +1,6 @@
 {
   config,
   lib,
-  pkgs,
   ...
 }:
 
@@ -26,7 +25,7 @@ in
     command = lib.mkOption {
       type = lib.types.str;
       description = "Fuzzy finder command used by dot modules.";
-      example = "${pkgs.fzf}/bin/fzf";
+      example = lib.literalExpression "lib.getExe pkgs.fzf";
     };
   };
 

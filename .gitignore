@@ -1,3 +1,6 @@
 node_modules/
 coverage/
 .direnv/
+result
+result-*
+.pnpm-store/

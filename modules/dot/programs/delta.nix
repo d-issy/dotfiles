@@ -21,13 +21,13 @@ in
     home.packages = [ cfg.package ];
 
     programs.git.settings = {
-      interactive.diffFilter = "delta --color-only";
+      interactive.diffFilter = "${lib.getExe cfg.package} --color-only";
       diff.colorMoved = "default";
       delta = {
         diff-so-fancy = true;
         line-numbers = true;
       };
-      alias.delta = "!f() { git diff \"$@\" | delta --side-by-side; }; f";
+      alias.delta = "!f() { git diff \"$@\" | ${lib.getExe cfg.package} --side-by-side; }; f";
     };
 
     programs.lazygit.settings =
@@ -35,7 +35,7 @@ in
         {
           git.diffRenderers = [
             {
-              command = "delta --paging=never";
+              command = "${lib.getExe cfg.package} --paging=never";
             }
           ];
         };

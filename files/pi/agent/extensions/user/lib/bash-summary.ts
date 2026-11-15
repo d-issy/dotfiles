@@ -95,7 +95,8 @@ const commandDictionary: Record<string, DisplayRule> = {
 // Inspect options, not script text or filenames that happen to contain "-i".
 function sedLabel(args: string[]): string {
 	for (let i = 0; i < args.length; i++) {
-		const arg = args[i]!;
+		const arg = args[i];
+		if (arg === undefined) break;
 		if (arg === "--") break;
 		if (arg === "--in-place" || arg.startsWith("--in-place=")) return "edit";
 		if (arg === "--expression" || arg === "--file") {
@@ -150,7 +151,8 @@ function commands(source: string): Command[] | undefined {
 		quoted = false;
 	};
 	for (let i = 0; i < source.length; i++) {
-		const char = source[i]!;
+		const char = source[i];
+		if (char === undefined) break;
 		if (char === "\n" && !quote && heredocs.length) {
 			finishCommand();
 			let cursor = i + 1;
@@ -256,8 +258,10 @@ function commands(source: string): Command[] | undefined {
 						/^<<(-?)[ \t]*(?:'([^'\n]+)'|"([^"\n]+)"|([A-Za-z_][A-Za-z0-9_]*))(?=[\s;|&]|$)/u,
 					);
 				if (!match) return;
+				const delimiter = match[2] ?? match[3] ?? match[4];
+				if (delimiter === undefined) return;
 				heredocs.push({
-					delimiter: (match[2] ?? match[3] ?? match[4])!,
+					delimiter,
 					stripTabs: match[1] === "-",
 				});
 				i += match[0].length - 1;
@@ -278,10 +282,24 @@ function commands(source: string): Command[] | undefined {
 			finishCommand();
 			continue;
 		}
+		// &> and &>> redirect both streams; they are not a background separator.
+		if (char === "&" && source[i + 1] === ">") {
+			finishWord();
+			let operator = ">";
+			i++;
+			if (source[i + 1] === ">") {
+				operator = ">>";
+				i++;
+			}
+			redirects.push(operator);
+			continue;
+		}
 		if (";|&\n".includes(char)) {
 			const pipe = char === "|" && source[i + 1] !== "|";
 			finishCommand(pipe);
 			if ((char === "|" || char === "&") && source[i + 1] === char) i++;
+			// |& pipes both streams.
+			else if (pipe && source[i + 1] === "&") i++;
 			continue;
 		}
 		if (/\s/u.test(char)) {
@@ -388,8 +406,8 @@ function classify(
 		if (display.length >= depth) break;
 		// Only skip declared options; unknown ones stop deeper classification.
 		while (words[index]?.startsWith("-")) {
-			const option = words[index++]!;
-			const key = option.split("=")[0]!;
+			const option = words[index++] ?? "";
+			const key = option.split("=")[0] ?? option;
 			const kind =
 				rule.options && Object.hasOwn(rule.options, key)
 					? rule.options[key]
@@ -457,7 +475,6 @@ function fallbackOperation(source: string): BashOperation {
 /** Counts describe submitted commands, not proof that each shell branch ran. */
 export function bashOperationDetails(command: string): BashOperation[] {
 	const parsed = commands(command);
-	const fallback = fallbackOperation(command);
 	return parsed
 		? parsed.flatMap((entry) => {
 				let labeled = false;
@@ -467,12 +484,15 @@ export function bashOperationDetails(command: string): BashOperation[] {
 				if (operation === undefined) return [];
 				return [
 					{
-						name: operation === "complex command" ? fallback.name : operation,
+						name:
+							operation === "complex command"
+								? fallbackOperation(command).name
+								: operation,
 						labeled,
 					},
 				];
 			})
-		: [fallback];
+		: [fallbackOperation(command)];
 }
 
 export function bashOperations(command: string): string[] {

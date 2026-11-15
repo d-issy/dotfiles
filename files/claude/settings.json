@@ -12,7 +12,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "tmux-notice on claude-wait"
+            "command": "tmux-notice on claude-wait >/dev/null 2>&1 || true"
           }
         ]
       }

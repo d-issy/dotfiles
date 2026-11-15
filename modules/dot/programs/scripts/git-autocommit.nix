@@ -7,6 +7,7 @@
 
 let
   cfg = config.dot.programs.scripts.gitAutoCommit;
+  diffPathspecs = lib.escapeShellArgs (import ./llm-diff-pathspecs.nix);
 
   piArgs = [
     "--print"
@@ -131,7 +132,9 @@ let
           if [[ -n "$instruction" ]]; then
             printf '\nAdditional instruction: %s\n' "$instruction"
           fi
-        } | run_pi_from_stdin | tr -d '`"' | tr -d "'"
+        } | run_pi_from_stdin | sed '/^[[:space:]]*```/d; /^[[:space:]]*$/d' | sed -n '1p' \
+          | tr -d '`"' | tr -d "'" \
+          | sed -E 's/^[[:space:]]+//; s/[[:space:]]+$//; s/[[:space:]]+/-/g; s/^-+//; s/-+$//'
       }
 
       # Edit text with default editor
@@ -252,10 +255,32 @@ let
               ;;
             *)
               echo -e "''${BLUE}Generating branch name...''${RESET}"
-              local branch_name
+              local branch_name new_branch
               branch_name=$(generate_branch_name)
 
               while true; do
+                if ! git check-ref-format --branch "$branch_name" &>/dev/null; then
+                  echo -e "''${RED}Error: invalid branch name: ''${branch_name}''${RESET}"
+                  echo -e "''${YELLOW}Choose e(dit) or r(egenerate) to get a valid name''${RESET}"
+                  read -r -p "[e(dit)/r(egenerate)/other to cancel] " response </dev/tty
+                  case "$response" in
+                    [Rr]*)
+                      read -r -p "Instruction (Enter to skip): " instruction </dev/tty
+                      branch_name=$(generate_branch_name "$instruction")
+                      ;;
+                    [Ee]*)
+                      new_branch=$(edit_with_editor "$branch_name" | tr -d '\n')
+                      if [[ -n "$new_branch" ]]; then
+                        branch_name="$new_branch"
+                      fi
+                      ;;
+                    *)
+                      echo -e "''${YELLOW}Cancelled''${RESET}"
+                      exit 1
+                      ;;
+                  esac
+                  continue
+                fi
                 echo -e "''${BLUE}Suggested branch:''${RESET}"
                 echo -e "  ''${GREEN}''${branch_name}''${RESET}"
                 echo ""
@@ -275,7 +300,6 @@ let
                     branch_name=$(generate_branch_name "$instruction")
                     ;;
                   [Ee]*)
-                    local new_branch
                     new_branch=$(edit_with_editor "$branch_name")
                     new_branch=$(echo "$new_branch" | tr -d '\n')
                     if [[ -n "$new_branch" ]]; then
@@ -294,7 +318,11 @@ let
         fi
 
         local staged_diff
-        staged_diff=$(git diff --staged)
+        # Only the text sent to the LLM is filtered and capped; the commit still contains everything staged.
+        staged_diff=$(
+          git diff --staged -- ${diffPathspecs} \
+            | head -c 204800 || true
+        )
 
         echo -e "''${BLUE}Generating commit message...''${RESET}"
         local commit_message

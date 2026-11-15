@@ -14,16 +14,13 @@ export default defineConfig({
 			"tests/pi/agent/extensions/**/*.test.ts",
 			"tests/agent-sessions/**/*.test.ts",
 		],
-		passWithNoTests: true,
 		coverage: {
 			provider: "v8",
 			reporter: ["text", "json-summary", "html"],
-			include: ["files/pi/agent/extensions/user/lib/**/*.ts"],
+			include: ["files/pi/agent/extensions/user/**/*.ts"],
 			exclude: [
 				"tests/pi/agent/extensions/**/*.test.ts",
-				"tests/pi/agent/extensions/**/test-support/**",
 				"files/pi/agent/extensions/**/index.ts",
-				"files/pi/agent/extensions/**/types.ts",
 			],
 		},
 	},

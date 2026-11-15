@@ -1,3 +1,9 @@
+local luasnip = require "luasnip"
+
+for _, ft in ipairs { "typescriptreact", "javascript", "javascriptreact" } do
+  luasnip.filetype_extend(ft, { "typescript" })
+end
+
 vim.api.nvim_create_autocmd("InsertLeave", {
   pattern = "*",
   callback = function()

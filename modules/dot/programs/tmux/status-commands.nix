@@ -31,23 +31,22 @@ let
   '';
 
   anyNoticeShellFunctions = ''
-    first_session_notification_indicator_color_by_session() {
-      local session_id="$1"
+    # One list-panes call fills these lookups for the whole script run.
+    declare -A session_notice_color=()
+    declare -A window_has_notice=()
+
+    load_notice_panes() {
       local pane_session_id
+      local pane_window_id
       local notice_name
       local session_notification_indicator_color
 
-      while IFS=$'\037' read -r pane_session_id notice_name session_notification_indicator_color; do
-        [[ "$pane_session_id" == "$session_id" && -n "$notice_name" ]] || continue
-        if [[ -n "$session_notification_indicator_color" ]]; then
-          printf '%s' "$session_notification_indicator_color"
-        else
-          printf '%s' "${cfg.status.sessionList.colors.noticeBright}"
-        fi
-        return 0
-      done < <(${cfg.package}/bin/tmux list-panes -a -F '#{session_id}${fieldSep}#{@tmux_notice_name}${fieldSep}#{@tmux_notice_session_notification_indicator_color}' 2>/dev/null || true)
-
-      return 1
+      while IFS=$'\037' read -r pane_session_id pane_window_id notice_name session_notification_indicator_color; do
+        [[ -n "$notice_name" ]] || continue
+        window_has_notice[$pane_window_id]=1
+        [[ -z "''${session_notice_color[$pane_session_id]+set}" ]] || continue
+        session_notice_color[$pane_session_id]="''${session_notification_indicator_color:-${cfg.status.sessionList.colors.noticeBright}}"
+      done < <(${cfg.package}/bin/tmux list-panes -a -F '#{session_id}${fieldSep}#{window_id}${fieldSep}#{@tmux_notice_name}${fieldSep}#{@tmux_notice_session_notification_indicator_color}' 2>/dev/null || true)
     }
 
     any_notice_in_window() {
@@ -79,7 +78,7 @@ in
     pane_label=''${3-}
     [ -n "$target_pane" ] || exit 0
 
-    frame=$(( $(${pkgs.coreutils}/bin/date +%s%3N) / 1000 ))
+    printf -v frame '%(%s)T' -1
 
     ${paneNoticeShellFunctions}
 
@@ -120,9 +119,11 @@ in
     current_session_id=''${1-}
     client_width=''${2:-0}
     session_windows=''${3:-1}
-    frame=$(( $(${pkgs.coreutils}/bin/date +%s%3N) / 1000 ))
+    printf -v frame '%(%s)T' -1
 
     ${anyNoticeShellFunctions}
+
+    load_notice_panes
 
     output=""
     session_list_width=0
@@ -135,7 +136,8 @@ in
       fi
 
       icon=""
-      if session_notification_indicator_color=$(first_session_notification_indicator_color_by_session "$session_id"); then
+      if [[ -n "''${session_notice_color[$session_id]+set}" ]]; then
+        session_notification_indicator_color="''${session_notice_color[$session_id]}"
         icon=$(blink_icon "$frame")
       fi
 
@@ -154,7 +156,7 @@ in
         if [[ "$window_name" != "Window" ]]; then
           window_width=$(( window_width + ''${#window_name} + 1 ))
         fi
-        if any_notice_in_window "$window_id"; then
+        if [[ -n "''${window_has_notice[$window_id]+set}" ]]; then
           window_width=$(( window_width + 1 ))
         fi
         window_list_width=$(( window_list_width + window_width ))
@@ -186,7 +188,7 @@ in
     target_window=''${1-}
     [ -n "$target_window" ] || exit 0
 
-    frame=$(( $(${pkgs.coreutils}/bin/date +%s%3N) / 1000 ))
+    printf -v frame '%(%s)T' -1
 
     ${anyNoticeShellFunctions}
 

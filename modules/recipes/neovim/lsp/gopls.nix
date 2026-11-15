@@ -10,7 +10,6 @@ _:
       deepCompletion = true;
       codelenses = {
         generate = true;
-        gc_details = true;
         test = true;
         tidy = true;
         upgrade_dependency = true;

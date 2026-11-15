@@ -14,7 +14,7 @@ _:
           nerdFontsVersion = "3";
           sidePanelWidth = 0.30;
           expandFocusedSidePanel = true;
-          commitLogSize = 2;
+          commandLogSize = 2;
           showUntrackedFiles = true;
           theme = {
             authorColors = {

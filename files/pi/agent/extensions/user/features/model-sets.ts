@@ -19,11 +19,6 @@ import {
 	readModelSets,
 	updateModelSets,
 } from "../lib/model-set-store";
-export {
-	type ModelSet,
-	readModelSets,
-	writeModelSets,
-} from "../lib/model-set-store";
 
 function speedLabel(preset: ModelSet): string {
 	return preset.ultrafast ? " ultrafast" : preset.fast ? " fast" : "";
@@ -201,10 +196,11 @@ async function showPicker(
 				},
 				handleInput(data: string): void {
 					try {
-						if (deleting) {
+						const pendingDelete = deleting;
+						if (pendingDelete) {
 							if (matchesKey(data, "enter")) {
 								sets = updateModelSets(path, (latest) =>
-									latest.filter((p) => !sameModelSet(p, deleting!)),
+									latest.filter((p) => !sameModelSet(p, pendingDelete)),
 								);
 								deleting = undefined;
 								message = "Deleted";

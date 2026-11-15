@@ -9,5 +9,5 @@
   "arrowParens": "always",
   "bracketSameLine": false,
   "bracketSpacing": true,
-  "ignorePatterns": ["*", "!*/", "!*.ts"]
+  "ignorePatterns": ["*", "!*/", "!*.ts", "!*.mts"]
 }

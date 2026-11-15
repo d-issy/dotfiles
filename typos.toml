@@ -5,6 +5,9 @@ extend-exclude = [
   ".pnpm-store/",
   "node_modules/",
   ".oxlintrc.json",
+  "flake.lock",
+  "pnpm-lock.yaml",
+  "coverage/",
 ]
 ignore-hidden = false
 

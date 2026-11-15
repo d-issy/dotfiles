@@ -4,7 +4,10 @@ _:
   programs.nixvim.plugins = {
     mini-surround = {
       enable = true;
-      lazyLoad.settings.event = [ "BufReadPre" ];
+      lazyLoad.settings.event = [
+        "BufReadPre"
+        "BufNewFile"
+      ];
       settings.mappings = {
         add = "gsa";
         delete = "gsd";
@@ -18,7 +21,10 @@ _:
 
     mini-align = {
       enable = true;
-      lazyLoad.settings.event = [ "BufReadPre" ];
+      lazyLoad.settings.event = [
+        "BufReadPre"
+        "BufNewFile"
+      ];
       settings = { };
     };
 
@@ -30,7 +36,10 @@ _:
 
     mini-hipatterns = {
       enable = true;
-      lazyLoad.settings.event = [ "BufReadPost" ];
+      lazyLoad.settings.event = [
+        "BufReadPost"
+        "BufNewFile"
+      ];
       settings.highlighters.hex_color.__raw = ''
         require("mini.hipatterns").gen_highlighter.hex_color()
       '';

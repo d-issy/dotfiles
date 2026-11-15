@@ -8,6 +8,9 @@
 
 let
   cfg = config.dot.programs.codex;
+  tomlFormat = pkgs.formats.toml { };
+  jsonFormat = pkgs.formats.json { };
+  command = lib.escapeShellArg cfg.command;
 
   flattenSettings =
     path: settings:
@@ -32,19 +35,19 @@ let
     text = ''
       case "''${1-}" in
         "" | exec | e | review | resume | archive | delete | unarchive | fork | mcp | sandbox)
-          exec ${cfg.command} ${configArgs} "$@"
+          exec ${command} ${configArgs} "$@"
           ;;
         debug)
           if [[ "''${2-}" == "prompt-input" ]]; then
-            exec ${cfg.command} ${configArgs} "$@"
+            exec ${command} ${configArgs} "$@"
           fi
-          exec ${cfg.command} "$@"
+          exec ${command} "$@"
           ;;
         -h | --help | -V | --version | login | logout | plugin | mcp-server | app-server | remote-control | app | completion | update | doctor | apply | cloud | exec-server | features | help)
-          exec ${cfg.command} "$@"
+          exec ${command} "$@"
           ;;
         *)
-          exec ${cfg.command} ${configArgs} "$@"
+          exec ${command} ${configArgs} "$@"
           ;;
       esac
     '';
@@ -61,7 +64,7 @@ in
     };
 
     settings = lib.mkOption {
-      type = lib.types.attrs;
+      inherit (tomlFormat) type;
       default = { };
       description = "Codex settings passed as command-line configuration overrides.";
       example = {
@@ -70,7 +73,7 @@ in
     };
 
     hooks = lib.mkOption {
-      type = lib.types.attrs;
+      inherit (jsonFormat) type;
       default = { };
       description = "Codex hooks merged into .codex/hooks.json.";
     };
