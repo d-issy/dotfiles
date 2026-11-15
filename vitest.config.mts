@@ -10,10 +10,29 @@ export default defineConfig({
 		},
 	},
 	test: {
-		include: [
-			"tests/pi/agent/extensions/**/*.test.ts",
-			"tests/agent-sessions/**/*.test.ts",
-			"tests/command-library/**/*.test.ts",
+		// Project names match the path filters in .github/workflows/test.yml.
+		projects: [
+			{
+				extends: true,
+				test: {
+					name: "pi",
+					include: ["tests/pi/agent/extensions/**/*.test.ts"],
+				},
+			},
+			{
+				extends: true,
+				test: {
+					name: "agent-sessions",
+					include: ["tests/agent-sessions/**/*.test.ts"],
+				},
+			},
+			{
+				extends: true,
+				test: {
+					name: "command-library",
+					include: ["tests/command-library/**/*.test.ts"],
+				},
+			},
 		],
 		coverage: {
 			provider: "v8",
