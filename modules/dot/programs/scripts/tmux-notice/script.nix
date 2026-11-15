@@ -1,6 +1,7 @@
 {
   configFile,
   lib,
+  pkgs,
   ...
 }:
 
@@ -219,7 +220,7 @@
 
   notice_config() {
     local name="$1"
-    jq -c --arg name "$name" '.notices[$name] // .fallback' "$config_file"
+    ${pkgs.jq}/bin/jq -c --arg name "$name" '.notices[$name] // .fallback' "$config_file"
   }
 
   pad_right() {
@@ -266,7 +267,7 @@
         strip_width="''${#strip_patterns}"
       fi
     done < <(
-      jq -r '
+      ${pkgs.jq}/bin/jq -r '
         def icon_label:
           if test("^ +$") then "(blank)" elif . == "" then "(empty)" else . end;
         def animation($notice):
@@ -305,7 +306,7 @@
     local notice_json="$1"
     local current_title="$2"
     local name="$3"
-    jq -nr \
+    ${pkgs.jq}/bin/jq -nr \
       --argjson notice "$notice_json" \
       --arg current "$current_title" \
       --arg name "$name" '
@@ -360,7 +361,7 @@
     current_title=$(get_pane_title "$pane")
     title=$(notice_title "$notice_json" "$current_title" "$name")
     IFS=$'\037' read -r first_icon icons session_notification_indicator_color pane_title_enabled pane_title_template pane_title_restore < <(
-      jq -r '
+      ${pkgs.jq}/bin/jq -r '
         [
           (if ((.icons // []) | length) > 0 then .icons[0] else "•" end),
           (if ((.icons // []) | length) > 0 then .icons | join("|") else "•" end),

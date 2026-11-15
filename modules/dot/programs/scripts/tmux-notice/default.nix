@@ -70,7 +70,7 @@ let
   );
 
   tmuxNoticeScript = import ./script.nix {
-    inherit configFile lib;
+    inherit configFile lib pkgs;
   };
 
   tmuxNotice = pkgs.writeShellApplication {
