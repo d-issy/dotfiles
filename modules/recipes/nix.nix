@@ -36,6 +36,16 @@
       ];
     }
     {
+      tags = [ "nix agent-sessions" ];
+      entries = [
+        {
+          description = "watch Claude Code and Codex sessions live";
+          alias = "agent-sessions";
+          command = "nix run .#agent-sessions";
+        }
+      ];
+    }
+    {
       tags = [ "nix gc" ];
       entries = [
         {
