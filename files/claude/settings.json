@@ -34,13 +34,9 @@
     ],
     "deny": [
       "Read(.env)",
-      "Read(**/.env)",
       "Edit(.env)",
-      "Edit(**/.env)",
       "Read(.env.*)",
-      "Read(**/.env.*)",
       "Edit(.env.*)",
-      "Edit(**/.env.*)",
       "Read(.envrc)",
       "Edit(.envrc)",
       "Bash(sudo *)"
@@ -50,13 +46,7 @@
       "Bash(rm * /*)",
       "Bash(rm ../*)",
       "Bash(rm * ../*)",
-      "Bash(rm -rf ~*)",
-      "Bash(rm * ~*)",
-      "Bash(rmdir *)",
-      "Bash(git push --force*)",
-      "Bash(git push * --force*)",
-      "Bash(git reset --hard*)",
-      "Bash(git clean *)"
+      "Bash(rmdir *)"
     ]
   },
   "outputStyle": "default",
