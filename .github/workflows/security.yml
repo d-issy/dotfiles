@@ -36,9 +36,15 @@ jobs:
       - run: pnpm audit --audit-level low
 
   codeql:
-    name: CodeQL (JavaScript / TypeScript)
+    name: CodeQL (${{ matrix.language }})
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        language:
+          - actions
+          - javascript-typescript
     permissions:
       contents: read
       security-events: write
@@ -48,12 +54,12 @@ jobs:
           persist-credentials: false
       - uses: github/codeql-action/init@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
         with:
-          languages: javascript-typescript
+          languages: ${{ matrix.language }}
           build-mode: none
           queries: security-extended
       - uses: github/codeql-action/analyze@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
         with:
-          category: /language:javascript-typescript
+          category: /language:${{ matrix.language }}
 
   zizmor:
     name: zizmor
