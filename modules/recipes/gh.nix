@@ -19,17 +19,37 @@
       ];
     };
 
-    dot.programs.navi.cheats.gh.sections = [
+    dot.programs.commandLibrary.groups.gh.sections = [
       {
         tags = [
           "gh"
           "github"
         ];
         variables = {
-          subcommand = "${pkgs.coreutils}/bin/printf '%s\\n' auth browse codespace gist issue org pr project release repo";
+          subcommand.values = [
+            "auth"
+            "browse"
+            "codespace"
+            "gist"
+            "issue"
+            "org"
+            "pr"
+            "project"
+            "release"
+            "repo"
+          ];
           base_branch = "${config.programs.git.package}/bin/git branch --format='%(refname:short)'";
-          pull_number = "${config.programs.gh.package}/bin/gh pr list --- --column 1 --delimiter '\\t'";
-          pull_numbers = "${config.programs.gh.package}/bin/gh pr list --- --column 1 --delimiter '\\t' --multi";
+          pull_number = {
+            command = "${config.programs.gh.package}/bin/gh pr list";
+            column = 1;
+            delimiter = "\t";
+          };
+          pull_numbers = {
+            command = "${config.programs.gh.package}/bin/gh pr list";
+            column = 1;
+            delimiter = "\t";
+            multi = true;
+          };
         };
         entries = [
           {

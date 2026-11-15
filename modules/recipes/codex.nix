@@ -1,6 +1,8 @@
 _:
 
 {
+  home.shellAliases.codexu = "codex --config model_reasoning_effort=ultra";
+
   dot.home.file.".codex/AGENTS.md".source = "codex/AGENTS.md";
 
   dot.programs.codex = {

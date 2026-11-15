@@ -1,8 +1,9 @@
 { pkgs, ... }:
 
 {
-  config.dot.programs.navi.cheats.go.sections = [
+  config.dot.programs.commandLibrary.groups.go.sections = [
     {
+      when.commands = [ "go" ];
       variables."main-file" = "${pkgs.ripgrep}/bin/rg -l '^package main$' -g '*.go'";
       entries = [
         {

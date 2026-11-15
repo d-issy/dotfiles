@@ -10,7 +10,7 @@
     ./herdr.nix
     ./mise.nix
     ./mycli.nix
-    ./navi.nix
+    ./command-library.nix
     ./pgcli.nix
     ./scripts
     ./tmux

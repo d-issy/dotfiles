@@ -1,21 +1,12 @@
-{ lib, ... }:
+_:
 
 let
-  fzfNoSelect = "--fzf-overrides '--no-select-1'";
-  dockerColumn =
-    command: column:
-    lib.concatStringsSep " " [
-      command
-      "--- --headers 1"
-      "--column ${toString column}"
-      fzfNoSelect
-    ];
-  dockerMultiColumn =
-    command: column:
-    lib.concatStringsSep " " [
-      (dockerColumn command column)
-      "--multi --expand"
-    ];
+  dockerColumn = command: column: {
+    inherit command column;
+    headers = 1;
+    selectOne = false;
+  };
+  dockerMultiColumn = command: column: dockerColumn command column // { multi = true; };
 in
 {
   config = {
@@ -26,8 +17,9 @@ in
       dcd = "docker compose down";
     };
 
-    dot.programs.navi.cheats.docker.sections = [
+    dot.programs.commandLibrary.groups.docker.sections = [
       {
+        when.commands = [ "docker" ];
         variables = {
           image_id = dockerColumn "docker images" 3;
           image_ids = dockerMultiColumn "docker images" 3;

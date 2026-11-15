@@ -45,6 +45,7 @@
     ./bat.nix
     ./bottom.nix
     ./carapace.nix
+    ./command-library.nix
     ./claude.nix
     ./codex.nix
     ./delta.nix
@@ -64,10 +65,10 @@
     ./make.nix
     ./mise.nix
     ./mycli.nix
-    ./navi.nix
     ./neovim
     ./nix.nix
     ./javascript.nix
+    ./just.nix
     ./nushell.nix
     ./openspec.nix
     ./pgcli.nix

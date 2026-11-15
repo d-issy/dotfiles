@@ -25,7 +25,8 @@ jobs:
       contents: read
       pull-requests: read
     outputs:
-      node: ${{ steps.filter.outputs.node }}
+      # JSON list of the Vitest projects whose files changed.
+      projects: ${{ steps.filter.outputs.changes }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -33,23 +34,38 @@ jobs:
       - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
         id: filter
         with:
+          # Filter names are Vitest project names (see vitest.config.mts).
           filters: |
-            node:
-              - 'package.json'
-              - 'pnpm-lock.yaml'
-              - 'pnpm-workspace.yaml'
-              - 'tsconfig.json'
-              - 'vitest.config.mts'
-              - '**/*.ts'
-              - '.github/workflows/test.yml'
+            pi:
+              - &shared
+                - 'package.json'
+                - 'pnpm-lock.yaml'
+                - 'pnpm-workspace.yaml'
+                - 'tsconfig.json'
+                - 'vitest.config.mts'
+                - '.github/workflows/test.yml'
+              - 'files/pi/**/*.ts'
+              - 'tests/pi/**/*.ts'
+            agent-sessions:
+              - *shared
+              - 'apps/agent-sessions/**/*.ts'
+              - 'tests/agent-sessions/**/*.ts'
+            command-library:
+              - *shared
+              - 'apps/command-library/**/*.ts'
+              - 'tests/command-library/**/*.ts'
 
   test:
-    name: pnpm test
+    name: pnpm test (${{ matrix.project }})
     runs-on: ubuntu-latest
     timeout-minutes: 15
     needs:
       - changes
-    if: ${{ needs.changes.outputs.node == 'true' }}
+    if: ${{ needs.changes.outputs.projects != '[]' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        project: ${{ fromJSON(needs.changes.outputs.projects) }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -60,7 +76,9 @@ jobs:
           node-version: 26
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm test
+      - run: pnpm test --project "$PROJECT"
+        env:
+          PROJECT: ${{ matrix.project }}
 
   all-test-passed:
     name: All Test Passed
