@@ -1,10 +1,11 @@
-use crate::library::{Variable, regex};
-use regex::{Captures, Regex};
+use crate::config::Variable;
+use crate::error::Result;
+use crate::library::regex;
+use regex::Captures;
 use serde_json::Value;
 use std::collections::HashSet;
 
 pub struct Candidates {
-    /// Lines shown as a fixed fzf header (e.g. a table heading).
     pub headers: Vec<String>,
     pub values: Vec<String>,
 }
@@ -52,7 +53,7 @@ pub fn json_values(data: &Value, path: &str) -> Vec<String> {
     current.into_iter().filter_map(display).collect()
 }
 
-fn split(output: &str, variable: &Variable) -> Result<Vec<String>, String> {
+fn split(output: &str, variable: &Variable) -> Result<Vec<String>> {
     if let Some(path) = &variable.json {
         return Ok(serde_json::from_str::<Value>(output)
             .map(|data| json_values(&data, path))
@@ -66,67 +67,54 @@ fn split(output: &str, variable: &Variable) -> Result<Vec<String>, String> {
         .collect())
 }
 
-/// Expands `$$`, `$&`, `` $` ``, `$'`, `$1`..`$99` like a JavaScript replacement string.
-fn expand(template: &str, captures: &Captures, haystack: &str) -> String {
+fn expand_js_replacement(template: &str, captures: &Captures, haystack: &str) -> String {
     let whole = captures.get(0).expect("group 0 always participates");
     let groups = captures.len() - 1;
-    let chars: Vec<char> = template.chars().collect();
+    let is_group = |number: usize| (1..=groups).contains(&number);
+    let group_text = |number: usize| captures.get(number).map_or("", |group| group.as_str());
     let mut out = String::new();
-    let mut index = 0;
-    while index < chars.len() {
-        let c = chars[index];
-        let next = chars.get(index + 1).copied();
+    let mut chars = template.chars().peekable();
+    while let Some(c) = chars.next() {
         if c != '$' {
             out.push(c);
-            index += 1;
             continue;
         }
-        match next {
-            Some('$') => {
-                out.push('$');
-                index += 2;
-            }
-            Some('&') => {
-                out.push_str(whole.as_str());
-                index += 2;
-            }
-            Some('`') => {
-                out.push_str(&haystack[..whole.start()]);
-                index += 2;
-            }
-            Some('\'') => {
-                out.push_str(&haystack[whole.end()..]);
-                index += 2;
-            }
+        match chars.peek().copied() {
+            Some('$') => out.push('$'),
+            Some('&') => out.push_str(whole.as_str()),
+            Some('`') => out.push_str(&haystack[..whole.start()]),
+            Some('\'') => out.push_str(&haystack[whole.end()..]),
             Some(first) if first.is_ascii_digit() => {
-                let one = first.to_digit(10).unwrap_or(0) as usize;
+                let one = first.to_digit(10).map_or(0, |digit| digit as usize);
+                chars.next();
                 let two = chars
-                    .get(index + 2)
-                    .and_then(|c| c.to_digit(10))
+                    .peek()
+                    .and_then(|second| second.to_digit(10))
                     .map(|second| one * 10 + second as usize);
-                let (number, width) = match two {
-                    Some(two) if (1..=groups).contains(&two) => (two, 3),
-                    _ if (1..=groups).contains(&one) => (one, 2),
-                    _ => (0, 0),
-                };
-                if width == 0 {
-                    out.push('$');
-                    index += 1;
-                } else {
-                    out.push_str(captures.get(number).map_or("", |m| m.as_str()));
-                    index += width;
+                match two {
+                    Some(number) if is_group(number) => {
+                        chars.next();
+                        out.push_str(group_text(number));
+                    }
+                    _ if is_group(one) => out.push_str(group_text(one)),
+                    _ => {
+                        out.push('$');
+                        out.push(first);
+                    }
                 }
+                continue;
             }
             _ => {
                 out.push('$');
-                index += 1;
+                continue;
             }
         }
+        chars.next();
     }
     out
 }
 
-fn transform(values: Vec<String>, variable: &Variable) -> Result<Vec<String>, String> {
+fn transform(values: Vec<String>, variable: &Variable) -> Result<Vec<String>> {
     let mut result = values;
     if let Some(pattern) = &variable.r#match {
         let pattern = regex(pattern)?;
@@ -140,13 +128,13 @@ fn transform(values: Vec<String>, variable: &Variable) -> Result<Vec<String>, St
             .collect();
     }
     for replacement in &variable.replace {
-        let pattern: Regex = regex(&replacement.from)?;
+        let pattern = regex(&replacement.from)?;
         result = result
             .iter()
             .map(|value| {
                 pattern
                     .replace_all(value, |captures: &Captures| {
-                        expand(&replacement.to, captures, value)
+                        expand_js_replacement(&replacement.to, captures, value)
                     })
                     .into_owned()
             })
@@ -157,13 +145,12 @@ fn transform(values: Vec<String>, variable: &Variable) -> Result<Vec<String>, St
         result.retain(|value| seen.insert(value.clone()));
     }
     if variable.sort {
-        result.sort_by_cached_key(|value| value.encode_utf16().collect::<Vec<u16>>());
+        result.sort_by_cached_key(|value| value.encode_utf16().collect::<Vec<_>>());
     }
     Ok(result)
 }
 
-/// Turns a variable's static values or command output into fzf candidates.
-pub fn parse_candidates(variable: &Variable, output: &str) -> Result<Candidates, String> {
+pub fn parse_candidates(variable: &Variable, output: &str) -> Result<Candidates> {
     let lines = if variable.values.is_empty() {
         split(output, variable)?
     } else {
@@ -179,7 +166,7 @@ pub fn parse_candidates(variable: &Variable, output: &str) -> Result<Candidates,
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::library::Replacement;
+    use crate::config::Replacement;
     use serde_json::json;
 
     fn variable() -> Variable {

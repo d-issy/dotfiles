@@ -1,114 +1,124 @@
 use crate::candidates::{Candidates, parse_candidates};
-use crate::library::{Item, Variable, extract_column, placeholders, substitute};
+use crate::config::Variable;
+use crate::error::{Error, Result};
+use crate::library::{Item, extract_column, placeholders, substitute};
 use std::collections::HashMap;
 
 pub trait Prompter {
-    /// Runs a variable command and returns its stdout.
     fn run(&mut self, command: &str) -> String;
-    /// Lets the user pick values; returns `None` when cancelled.
     fn choose(
         &mut self,
         name: &str,
         variable: &Variable,
         candidates: &Candidates,
         header: &str,
-    ) -> Result<Option<Vec<String>>, String>;
-    /// Asks for free text; returns `None` when cancelled.
-    fn input(&mut self, name: &str, header: &str) -> Result<Option<String>, String>;
+    ) -> Result<Option<Vec<String>>>;
+    fn input(&mut self, name: &str, header: &str) -> Result<Option<String>>;
 }
 
 enum Stop {
     Cancelled,
-    Failed(String),
+    Failed(Error),
 }
 
-impl From<String> for Stop {
-    fn from(message: String) -> Self {
-        Self::Failed(message)
+impl From<Error> for Stop {
+    fn from(error: Error) -> Self {
+        Self::Failed(error)
     }
 }
 
-fn choose_value(
-    name: &str,
-    variable: &Variable,
-    candidates: &Candidates,
-    header: &str,
-    prompter: &mut dyn Prompter,
-) -> Result<String, Stop> {
-    if candidates.values.is_empty() {
-        return prompter.input(name, header)?.ok_or(Stop::Cancelled);
-    }
-    let selected = if variable.select_one && candidates.values.len() == 1 {
-        candidates.values.clone()
-    } else {
-        prompter
-            .choose(name, variable, candidates, header)?
-            .unwrap_or_default()
-    };
-    if selected.is_empty() {
-        return Err(Stop::Cancelled);
-    }
-    let columns: Result<Vec<String>, String> = selected
-        .iter()
-        .map(|line| extract_column(line, variable.column, variable.delimiter.as_deref()))
-        .collect();
-    Ok(columns?.join(" "))
+struct Resolver<'a, 'p> {
+    item: Item<'a>,
+    values: HashMap<String, String>,
+    prompter: &'p mut dyn Prompter,
 }
 
-fn resolve(
-    item: &Item,
-    name: &str,
-    stack: &[String],
-    values: &mut HashMap<String, String>,
-    prompter: &mut dyn Prompter,
-) -> Result<(), Stop> {
-    if values.contains_key(name) {
-        return Ok(());
+impl Resolver<'_, '_> {
+    fn header(&self) -> String {
+        substitute(&self.item.entry.command, &self.values)
     }
-    let command = &item.entry.command;
-    let Some(variable) = item.section.variables.get(name) else {
-        let header = substitute(command, values);
-        let value = prompter.input(name, &header)?.ok_or(Stop::Cancelled)?;
-        values.insert(name.to_string(), value);
-        return Ok(());
-    };
-    let mut next_stack = stack.to_vec();
-    next_stack.push(name.to_string());
-    for dependency in placeholders(variable.command.as_deref().unwrap_or("")) {
-        if !next_stack.contains(&dependency) {
-            resolve(item, &dependency, &next_stack, values, prompter)?;
+
+    fn ask(&mut self, name: &str) -> std::result::Result<String, Stop> {
+        let header = self.header();
+        self.prompter.input(name, &header)?.ok_or(Stop::Cancelled)
+    }
+
+    fn pick(
+        &mut self,
+        name: &str,
+        variable: &Variable,
+        candidates: &Candidates,
+    ) -> std::result::Result<String, Stop> {
+        if candidates.values.is_empty() {
+            return self.ask(name);
         }
+        let selected = if variable.select_one && candidates.values.len() == 1 {
+            candidates.values.clone()
+        } else {
+            let header = self.header();
+            self.prompter
+                .choose(name, variable, candidates, &header)?
+                .unwrap_or_default()
+        };
+        if selected.is_empty() {
+            return Err(Stop::Cancelled);
+        }
+        let columns = selected
+            .iter()
+            .map(|line| extract_column(line, variable.column, variable.delimiter.as_deref()))
+            .collect::<Result<Vec<_>>>()?;
+        Ok(columns.join(" "))
     }
-    let output = match &variable.command {
-        None => String::new(),
-        Some(variable_command) => prompter.run(&substitute(variable_command, values)),
-    };
-    let candidates = parse_candidates(variable, &output)?;
-    let header = substitute(command, values);
-    let value = choose_value(name, variable, &candidates, &header, prompter)?;
-    values.insert(name.to_string(), value);
-    Ok(())
+
+    fn resolve(&mut self, name: &str, stack: &[String]) -> std::result::Result<(), Stop> {
+        if self.values.contains_key(name) {
+            return Ok(());
+        }
+        let Some(variable) = self.item.section.variables.get(name) else {
+            let value = self.ask(name)?;
+            self.values.insert(name.to_string(), value);
+            return Ok(());
+        };
+        let mut stack = stack.to_vec();
+        stack.push(name.to_string());
+        for dependency in placeholders(variable.command.as_deref().unwrap_or("")) {
+            if !stack.contains(&dependency) {
+                self.resolve(&dependency, &stack)?;
+            }
+        }
+        let output = variable
+            .command
+            .as_ref()
+            .map(|command| self.prompter.run(&substitute(command, &self.values)))
+            .unwrap_or_default();
+        let candidates = parse_candidates(variable, &output)?;
+        let value = self.pick(name, variable, &candidates)?;
+        self.values.insert(name.to_string(), value);
+        Ok(())
+    }
 }
 
-/// Fills every <placeholder> in the entry command, resolving placeholders
-/// referenced by variable commands first. Returns `Ok(None)` when the user cancels.
-pub fn resolve_command(item: &Item, prompter: &mut dyn Prompter) -> Result<Option<String>, String> {
+pub fn resolve_command(item: &Item, prompter: &mut dyn Prompter) -> Result<Option<String>> {
     let command = &item.entry.command;
-    let mut values = HashMap::new();
+    let mut resolver = Resolver {
+        item: *item,
+        values: HashMap::new(),
+        prompter,
+    };
     for name in placeholders(command) {
-        match resolve(item, &name, &[], &mut values, prompter) {
+        match resolver.resolve(&name, &[]) {
             Ok(()) => {}
             Err(Stop::Cancelled) => return Ok(None),
-            Err(Stop::Failed(message)) => return Err(message),
+            Err(Stop::Failed(error)) => return Err(error),
         }
     }
-    Ok(Some(substitute(command, &values)))
+    Ok(Some(resolver.header()))
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::library::{Entry, Section};
+    use crate::config::{Entry, Section};
 
     #[derive(Default)]
     struct Fake {
@@ -130,11 +140,11 @@ mod tests {
             _: &Variable,
             _: &Candidates,
             _: &str,
-        ) -> Result<Option<Vec<String>>, String> {
+        ) -> Result<Option<Vec<String>>> {
             self.asked.push(name.to_string());
             Ok(self.choices.get(name).cloned())
         }
-        fn input(&mut self, name: &str, _: &str) -> Result<Option<String>, String> {
+        fn input(&mut self, name: &str, _: &str) -> Result<Option<String>> {
             self.asked.push(name.to_string());
             Ok(self.texts.get(name).cloned())
         }
