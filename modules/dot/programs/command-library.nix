@@ -206,7 +206,7 @@ let
     exec ${lib.getExe app} --config ${configFile} "$@"
   '';
 
-  bin = "${package}/bin/dot-command-library";
+  bin = "${config.home.profileDirectory}/bin/dot-command-library";
 in
 {
   options.dot.programs.commandLibrary = {

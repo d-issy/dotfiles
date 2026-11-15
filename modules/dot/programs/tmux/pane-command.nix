@@ -6,7 +6,7 @@ let
 in
 {
   # Print a pane's foreground command by argv[0] (kernel comm can be a version-named binary).
-  command = pkgs.writeShellScript "tmux-pane-cmd" ''
+  command = pkgs.writeShellScriptBin "tmux-pane-cmd" ''
     tty=''${1#/dev/}
     [ -n "$tty" ] || exit 0
     fpgid=$(${ps} -t "$tty" -o tpgid= 2>/dev/null | ${pkgs.gawk}/bin/awk 'NR==1{gsub(/ /,"");print;exit}')
