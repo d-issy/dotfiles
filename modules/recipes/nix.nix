@@ -9,7 +9,7 @@ in
     packages = [ (import ../../apps/agent-sessions { inherit pkgs; }) ];
     shellAliases = {
       # Follow the active profile even when direnv keeps an older devShell on PATH.
-      agent-session = "${config.home.profileDirectory}/bin/dot-agent-sessions";
+      agent-session = "${config.home.profileDirectory}/bin/agent-session";
       as = "agent-session";
     };
   };

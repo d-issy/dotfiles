@@ -78,7 +78,7 @@
           homeConfigurationName = homeConfigurationNames.${system};
         in
         pkgs.writeShellApplication {
-          name = "dot-apply";
+          name = "apply";
           runtimeInputs = [ home-manager.packages.${system}.default ];
           text = ''
             exec home-manager switch --flake "${self}#${homeConfigurationName}" "$@"
@@ -88,7 +88,7 @@
       mkGcApp =
         system: pkgs:
         pkgs.writeShellApplication {
-          name = "dot-gc";
+          name = "gc";
           runtimeInputs = [ home-manager.packages.${system}.default ];
           text = ''
             home-manager expire-generations '-7 days'
@@ -99,7 +99,7 @@
       mkGenerationsApp =
         system: pkgs:
         pkgs.writeShellApplication {
-          name = "dot-generations";
+          name = "generations";
           runtimeInputs = [ home-manager.packages.${system}.default ];
           text = ''
             exec home-manager generations "$@"
@@ -254,25 +254,25 @@
         apps = {
           apply = {
             type = "app";
-            program = "${applyApp}/bin/dot-apply";
+            program = "${applyApp}/bin/apply";
             meta.description = "Apply the configuration for this host";
           };
 
           gc = {
             type = "app";
-            program = "${gcApp}/bin/dot-gc";
+            program = "${gcApp}/bin/gc";
             meta.description = "Expire old generations and garbage-collect the Nix store";
           };
 
           generations = {
             type = "app";
-            program = "${generationsApp}/bin/dot-generations";
+            program = "${generationsApp}/bin/generations";
             meta.description = "List Home Manager generations";
           };
 
           agent-sessions = {
             type = "app";
-            program = "${agentSessionsApp}/bin/dot-agent-sessions";
+            program = "${agentSessionsApp}/bin/agent-session";
             meta.description = "Watch Claude Code and Codex sessions live";
           };
         };

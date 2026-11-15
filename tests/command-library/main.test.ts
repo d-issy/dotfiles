@@ -52,7 +52,7 @@ afterEach(() => {
 async function complete(query: string): Promise<void> {
 	process.argv = [
 		"node",
-		"dot-command-library",
+		"command-library",
 		"--config",
 		"test.json",
 		"--query",

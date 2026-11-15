@@ -9,10 +9,10 @@ import {
 import { formatAge, formatDuration, oneLine, parseDuration } from "./text";
 import { Tui } from "./tui";
 
-const USAGE = `dot-agent-sessions - watch Claude Code and Codex sessions live
+const USAGE = `agent-session - watch Claude Code and Codex sessions live
 
 Usage:
-  dot-agent-sessions [--window DURATION] [--show-idle] [--list]
+  agent-session [--window DURATION] [--show-idle] [--list]
 
 Options:
   -w, --window DURATION  Include Codex sessions updated within DURATION
@@ -27,7 +27,7 @@ subagents stay for 10 minutes. Select a session and press enter to follow its
 log in real time (updated every 300ms).`;
 
 function fail(message: string): never {
-	process.stderr.write(`dot-agent-sessions: ${message}\n${USAGE}\n`);
+	process.stderr.write(`agent-session: ${message}\n${USAGE}\n`);
 	process.exit(2);
 }
 
