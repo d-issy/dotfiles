@@ -192,7 +192,7 @@ let
     }) config.home.shellAliases;
   };
 
-  configFile = jsonFormat.generate "dot-command-library.json" {
+  configFile = jsonFormat.generate "command-library.json" {
     fzf = {
       command = lib.getExe cfg.fzfPackage;
       inherit (cfg.fzf) options variableOptions;
@@ -202,11 +202,11 @@ let
 
   app = import ../../../apps/command-library { inherit pkgs; };
 
-  package = pkgs.writeShellScriptBin "dot-command-library" ''
+  package = pkgs.writeShellScriptBin "command-library" ''
     exec ${lib.getExe app} --config ${configFile} "$@"
   '';
 
-  bin = "${config.home.profileDirectory}/bin/dot-command-library";
+  bin = "${config.home.profileDirectory}/bin/command-library";
 in
 {
   options.dot.programs.commandLibrary = {

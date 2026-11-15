@@ -5,7 +5,7 @@ let
   nodejs = pkgs.nodejs_26;
 in
 pkgs.stdenvNoCC.mkDerivation {
-  pname = "dot-agent-sessions";
+  pname = "agent-session";
   version = "0.1.0";
   src = ./src;
 
@@ -16,20 +16,20 @@ pkgs.stdenvNoCC.mkDerivation {
 
   buildPhase = ''
     runHook preBuild
-    esbuild main.ts --bundle --platform=node --format=esm --target=node${pkgs.lib.versions.major nodejs.version} --outfile=dot-agent-sessions.mjs
+    esbuild main.ts --bundle --platform=node --format=esm --target=node${pkgs.lib.versions.major nodejs.version} --outfile=agent-session.mjs
     runHook postBuild
   '';
 
   installPhase = ''
     runHook preInstall
-    install -Dm644 dot-agent-sessions.mjs "$out/lib/dot-agent-sessions/dot-agent-sessions.mjs"
-    makeWrapper ${nodejs}/bin/node "$out/bin/dot-agent-sessions" \
-      --add-flags "$out/lib/dot-agent-sessions/dot-agent-sessions.mjs"
+    install -Dm644 agent-session.mjs "$out/lib/agent-session/agent-session.mjs"
+    makeWrapper ${nodejs}/bin/node "$out/bin/agent-session" \
+      --add-flags "$out/lib/agent-session/agent-session.mjs"
     runHook postInstall
   '';
 
   meta = {
     description = "Watch Claude Code and Codex sessions live";
-    mainProgram = "dot-agent-sessions";
+    mainProgram = "agent-session";
   };
 }
