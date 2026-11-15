@@ -4,19 +4,15 @@ let
   gh = pkgs.writeShellScriptBin "gh" ''
     printf '%s\n' "$TEST_PR_BRANCH"
   '';
-  worktreeScript = pkgs.writeText "worktree-under-test.sh" (
-    import ../../modules/dot/programs/scripts/worktree/script.nix {
-      cfg = {
-        model = null;
-        thinking = null;
-      };
-      fuzzyFinderCommand = "unused-fuzzy-finder";
-      inherit (pkgs) lib;
-      pkgs = pkgs // {
-        inherit gh;
-      };
-    }
-  );
+  worktree = import ../../modules/dot/programs/scripts/worktree/package.nix {
+    cfg = {
+      model = null;
+      thinking = null;
+    };
+    fuzzyFinderCommand = "unused-fuzzy-finder";
+    inherit (pkgs) lib;
+    inherit pkgs gh;
+  };
 in
 pkgs.runCommand "worktree-regressions"
   {
@@ -26,7 +22,7 @@ pkgs.runCommand "worktree-regressions"
       git
       gnused
     ];
-    WORKTREE_SCRIPT = worktreeScript;
+    WORKTREE_BIN = "${worktree}/bin/worktree";
   }
   ''
     bash ${./worktree.sh}

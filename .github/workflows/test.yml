@@ -73,6 +73,9 @@ jobs:
             herdr-subagents:
               - *rust-shared
               - 'apps/herdr-subagents/**'
+            worktree:
+              - *rust-shared
+              - 'apps/worktree/**'
 
   test:
     name: pnpm test (${{ matrix.project }})

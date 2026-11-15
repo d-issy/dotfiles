@@ -93,6 +93,9 @@ jobs:
             herdr-subagents:
               - *rust-shared
               - 'apps/herdr-subagents/**'
+            worktree:
+              - *rust-shared
+              - 'apps/worktree/**'
 
   treefmt:
     name: treefmt

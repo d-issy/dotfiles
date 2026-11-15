@@ -9,24 +9,13 @@ let
   cfg = config.dot.programs.scripts.worktree;
   fuzzyFinderCommand = config.dot.options.fuzzyFinder.command;
 
-  worktreeScript = import ./script.nix {
+  worktree = import ./package.nix {
     inherit
       cfg
       fuzzyFinderCommand
       lib
       pkgs
       ;
-  };
-
-  worktree = pkgs.writeShellApplication {
-    name = "worktree";
-    runtimeInputs = [
-      pkgs.coreutils
-      pkgs.fd
-      pkgs.gawk
-      pkgs.gnused
-    ];
-    text = worktreeScript;
   };
 
   shellIntegration = import ./shell-integration.nix {

@@ -6,6 +6,7 @@ members = [
   "apps/command-library",
   "apps/git-autocommit",
   "apps/herdr-subagents",
+  "apps/worktree",
 ]
 
 [workspace.package]
