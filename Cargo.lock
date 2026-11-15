@@ -3,6 +3,16 @@
 version = 4
 
 [[package]]
+name = "agent-sessions"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "rustix",
+ "serde_json",
+ "signal-hook",
+]
+
+[[package]]
 name = "aho-corasick"
 version = "1.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"

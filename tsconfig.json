@@ -17,8 +17,6 @@
   "include": [
     "vitest.config.mts",
     "files/pi/agent/extensions/**/*.ts",
-    "tests/pi/agent/extensions/**/*.ts",
-    "apps/agent-sessions/src/**/*.ts",
-    "tests/agent-sessions/**/*.ts"
+    "tests/pi/agent/extensions/**/*.ts"
   ]
 }

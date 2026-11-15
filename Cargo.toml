@@ -1,6 +1,7 @@
 [workspace]
 resolver = "3"
 members = [
+  "apps/agent-sessions",
   "apps/claude-statusline",
   "apps/command-library",
   "apps/git-autocommit",

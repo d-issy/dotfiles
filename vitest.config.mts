@@ -19,13 +19,6 @@ export default defineConfig({
 					include: ["tests/pi/agent/extensions/**/*.test.ts"],
 				},
 			},
-			{
-				extends: true,
-				test: {
-					name: "agent-sessions",
-					include: ["tests/agent-sessions/**/*.test.ts"],
-				},
-			},
 		],
 		coverage: {
 			provider: "v8",
