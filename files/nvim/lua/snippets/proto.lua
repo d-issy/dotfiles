@@ -70,7 +70,7 @@ return {
   S.fmt("s", "string {} = {};"),
   S.fmt("i", "int64 {} = {};"),
   S.fmt("in", "int32 {} = {};"),
-  S.fmt("map", "map<{}, {}> {} = {};"),
+  S.fmt("m", "map<{}, {}> {} = {};"),
   S.fmt("t", "google.protobuf.Timestamp {} = {};"),
   S.fmt(
     "e",

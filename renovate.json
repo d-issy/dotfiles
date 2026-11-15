@@ -19,10 +19,6 @@
   },
   "packageRules": [
     {
-      "matchUpdateTypes": ["major"],
-      "automerge": false
-    },
-    {
       "matchManagers": [
         "nix"
       ],

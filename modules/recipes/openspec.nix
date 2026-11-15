@@ -6,7 +6,7 @@
   dot.programs.navi.cheats.openspec.sections = [
     {
       tags = [ "openspec" ];
-      variables.change = "openspec list --json | ${pkgs.jq}/bin/jq -r '.changes[].name'";
+      variables.change = "openspec list --json | jq -r '.changes[].name' | fzf --height 40% --reverse";
       entries = [
         {
           description = "OpenSpec status";

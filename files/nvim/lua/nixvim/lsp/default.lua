@@ -24,6 +24,10 @@ vim.api.nvim_create_autocmd("LspAttach", {
       vim.lsp.completion.enable(true, client.id, args.buf, { autotrigger = true })
     end
 
+    if client:supports_method(vim.lsp.protocol.Methods.textDocument_inlineCompletion, args.buf) then
+      vim.lsp.inline_completion.enable(true, { bufnr = args.buf })
+    end
+
     if client:supports_method(vim.lsp.protocol.Methods.textDocument_signatureHelp) then
       local provider = client.server_capabilities.signatureHelpProvider or {}
       local chars = {}
@@ -125,8 +129,11 @@ vim.keymap.set("i", "<Tab>", function()
   if vim.fn.pumvisible() == 1 then
     return "<C-n>"
   end
+  if vim.lsp.inline_completion.get() then
+    return ""
+  end
   return "<Tab>"
-end, { expr = true, desc = "Next completion item" })
+end, { expr = true, desc = "Next completion item or accept inline completion" })
 
 vim.keymap.set("i", "<S-Tab>", function()
   if vim.fn.pumvisible() == 1 then

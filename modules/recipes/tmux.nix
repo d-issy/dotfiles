@@ -18,7 +18,7 @@ in
     defaultCommand = lib.getExe config.programs.nushell.package;
 
     baseIndex = 1;
-    historyLimit = 100000;
+    historyLimit = 9999999;
     keyMode = "vi";
     mouse = true;
     prefix = "C-q";

@@ -25,9 +25,13 @@ in
       inlayHints.enable = true;
 
       keymaps = [
+        (lspKeymap "[d" (raw "function() vim.diagnostic.jump({ count = -1 }) end") "LSP Prev Diagnostic")
+        (lspKeymap "]d" (raw "function() vim.diagnostic.jump({ count = 1 }) end") "LSP Next Diagnostic")
         (lspKeymap "K" (raw ''function() vim.lsp.buf.hover({ border = "rounded" }) end'') "LSP Hover")
         (lspKeymap "<leader>cc" (raw "vim.lsp.codelens.run") "Run Codelens")
-        (lspKeymap "<leader>cC" (raw "function() vim.lsp.codelens.enable(true) end") "Enable Codelens")
+        (lspKeymap "<leader>cC" (raw "function() vim.lsp.codelens.enable(true) end")
+          "Run Codelens (Refresh)"
+        )
       ];
     };
 

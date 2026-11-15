@@ -14,11 +14,6 @@ let
     options = defaultOptions desc;
   };
 
-  lspKeymap = key: action: desc: {
-    inherit key action;
-    options = defaultOptions desc;
-  };
-
   snacks = expr: raw ''function() require("snacks").${expr} end'';
 in
 {
@@ -153,17 +148,6 @@ in
       luaConfig.post = dot.readFile "nvim/lua/nixvim/plugins/snacks.lua";
     };
 
-    lsp.keymaps = [
-      (lspKeymap "gd" (snacks "picker.lsp_definitions()") "LSP Definitions")
-      (lspKeymap "gr" (snacks "picker.lsp_references()") "LSP References")
-      (lspKeymap "gi" (snacks "picker.lsp_implementations()") "LSP Implementation")
-      (lspKeymap "gI" (snacks "picker.lsp_type_definitions()") "LSP Type Definition")
-      (lspKeymap "<leader>cs" (snacks "picker.lsp_symbols()") "LSP Symbols")
-      (lspKeymap "<leader>cS" (snacks "picker.lsp_workspace_symbols()") "LSP Symbols (Workspace)")
-      (lspKeymap "<leader>ca" (raw "function() vim.lsp.buf.code_action() end") "LSP Code Action")
-      (lspKeymap "<leader>cr" (raw "function() vim.lsp.buf.rename() end") "LSP Rename")
-    ];
-
     keymaps = [
       (keymap "n" "<leader><space>" (snacks "picker.smart()") "Smart Search")
       (keymap "n" "<leader>'" (snacks "picker.marks()") "Marks")
@@ -172,17 +156,25 @@ in
       (keymap "n" "<leader>/" (snacks "picker.grep()") "Grep")
       (keymap "n" "<leader>fa" (snacks "picker.pickers()") "Actions")
       (keymap "n" "<leader>ff" (snacks "picker.files()") "Files")
-      (keymap "n" "<leader>fh" (snacks "picker.help()") "Help")
+      (keymap "n" "<leader>fh" (snacks "picker.help()") "Actions")
       (keymap "n" "<leader>fl" (snacks "picker.lines()") "Lines")
       (keymap "n" "<leader>fu" (snacks "picker.undo()") "Undo")
       (keymap "n" "<leader>fs" (snacks "picker.spelling()") "Spell")
       (keymap "n" "<leader>z" (snacks "zen.zoom()") "Zoom")
       (keymap "n" "<leader>ga" (snacks "picker.gh_actions()") "GitHub Actions")
       (keymap "n" "<leader>gs" (snacks "picker.git_status()") "Git Status")
+      (keymap "n" "gd" (snacks "picker.lsp_definitions()") "LSP Definitions")
       (keymap "n" "gG" (snacks "picker.lsp_declarations()") "LSP Declarations")
+      (keymap "n" "gr" (snacks "picker.lsp_references()") "LSP References")
+      (keymap "n" "gi" (snacks "picker.lsp_implementations()") "LSP Implementation")
+      (keymap "n" "gI" (snacks "picker.lsp_type_definitions()") "LSP Type Definition")
+      (keymap "n" "<leader>cs" (snacks "picker.lsp_symbols()") "LSP Symbols")
       (keymap "n" "<leader>cd" (snacks "picker.diagnostics_buffer()") "Diagnostic")
       (keymap "n" "<leader>cD" (snacks "picker.diagnostics()") "Diagnostic (Workspace)")
+      (keymap "n" "<leader>cS" (snacks "picker.lsp_workspace_symbols()") "LSP Symbols (Workspace)")
       (keymap "n" "<leader>cR" (snacks "rename.rename_file()") "File Rename")
+      (keymap "n" "<leader>ca" (raw "function() vim.lsp.buf.code_action() end") "LSP Code Action")
+      (keymap "n" "<leader>cr" (raw "function() vim.lsp.buf.rename() end") "LSP Rename")
       (keymap "n" "<leader>ft" (snacks "picker.todo_comments()") "Todo")
       (keymap "n" "<leader>fT"
         (snacks ''picker.todo_comments({ keywords = { "TODO", "FIX", "FIXME" } })'')

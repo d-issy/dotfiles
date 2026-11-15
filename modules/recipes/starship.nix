@@ -31,6 +31,10 @@
 
       # basic
       character.vimcmd_symbol = "[N](green)";
+      fill = {
+        symbol = "-";
+        disabled = false;
+      };
       directory = {
         truncation_length = 5;
         truncation_symbol = "*";
@@ -41,6 +45,11 @@
       };
       memory_usage = {
         format = "[mem=$ram_pct]($style) ";
+        disabled = false;
+      };
+      time = {
+        format = "[$time]($style) ";
+        time_format = "%R";
         disabled = false;
       };
       cmd_duration = {

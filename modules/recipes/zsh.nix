@@ -4,7 +4,6 @@
   programs.zsh = {
     enable = true;
     dotDir = config.home.homeDirectory;
-    completionInit = "autoload -U compinit && compinit -C";
 
     envExtra = ''
       # macOS updates can remove Nix initialization from /etc/zshrc.

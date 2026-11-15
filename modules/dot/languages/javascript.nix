@@ -33,13 +33,18 @@ in
         ++ lib.optional cfg.deno.enable cfg.deno.package;
       sessionVariables =
         lib.optionalAttrs cfg.npm.enable {
-          NPM_CONFIG_PREFIX = npmPrefix;
+          NPM_CONFIG_USERCONFIG = "${config.home.homeDirectory}/.npmrc";
         }
         // lib.optionalAttrs cfg.pnpm.enable {
           PNPM_HOME = pnpmHome;
         };
       sessionPath =
         lib.optional cfg.npm.enable "${npmPrefix}/bin" ++ lib.optional cfg.pnpm.enable "${pnpmHome}/bin";
+      file.".npmrc" = lib.mkIf cfg.npm.enable {
+        text = ''
+          prefix=${npmPrefix}
+        '';
+      };
     };
   };
 }

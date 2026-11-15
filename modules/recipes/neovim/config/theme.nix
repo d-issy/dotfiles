@@ -50,6 +50,9 @@ in
       CursorLine = {
         bg = palette.surface0;
       };
+      NCursorLine = {
+        link = "CursorLine";
+      };
       StatusLine = {
         fg = palette.surface2;
         bg = palette.surface2;
@@ -201,7 +204,6 @@ in
       };
       DiagnosticUnderlineWarn = {
         fg = palette.yellow;
-        underline = true;
       };
       DiagnosticUnderlineInfo = {
         underline = true;
@@ -215,6 +217,32 @@ in
       };
       DiagnosticDeprecated = {
         underline = true;
+      };
+
+      BlinkCmpDoc = {
+        fg = palette.base;
+      };
+      BlinkCmpDocBorder = {
+        fg = palette.overlay0;
+      };
+      BlinkCmpGhostText = {
+        fg = palette.overlay2;
+      };
+
+      BlinkCmpLabel = {
+        fg = palette.text;
+        bg = palette.none;
+      };
+      BlinkCmpLabelDeprecated = {
+        link = "DiagnosticDeprecated";
+      };
+
+      BlinkCmpMenu = {
+        bg = palette.none;
+      };
+
+      BlinkCmpKind = {
+        bg = palette.none;
       };
 
       ComplHint = {
