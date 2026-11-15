@@ -35,7 +35,6 @@ in
                   "--output text"
                 ];
                 column = 2;
-                selectOne = false;
               };
             };
             entries = [

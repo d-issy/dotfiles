@@ -138,19 +138,25 @@ export function findAlias(list: Item[], query: string): Item | undefined {
 export interface Channel {
 	name: string | null;
 	items: Item[];
+	query: string;
 }
 
 // Narrows to the sections whose tags start with the first word of the
 // command line (e.g. "docker ..." -> docker), or keeps every item.
+// A matched channel is removed from the query used to search commands.
 export function channel(list: Item[], query: string): Channel {
 	const word = query.trim().split(/\s+/u)[0] ?? "";
-	if (word === "") return { name: null, items: list };
+	if (word === "") return { name: null, items: list, query };
 	const matches = list.filter((item) =>
 		item.section.tags.some((tag) => tag.split(/\s+/u)[0] === word),
 	);
 	return matches.length === 0
-		? { name: null, items: list }
-		: { name: word, items: matches };
+		? { name: null, items: list, query }
+		: {
+				name: word,
+				items: matches,
+				query: query.trim().slice(word.length).trim(),
+			};
 }
 
 export function placeholders(command: string): string[] {
@@ -225,7 +231,8 @@ export function formatHeader(list: Item[], channelName: string | null): string {
 	return channelName === null ? columns : `channel: ${channelName}\n${columns}`;
 }
 
-// Each line is "<index><US><display>" so fzf can hide the index with --with-nth.
+// Separate the command from the display columns so fzf can search only commands.
+// The index is hidden by --with-nth and preserved in fzf's output.
 export function formatLines(list: Item[]): string[] {
 	const tags = list.map(tagText);
 	const { tag: tagWidth, description: descriptionWidth } = widths(list);
@@ -240,6 +247,7 @@ export function formatLines(list: Item[]): string[] {
 			FIELD_SEPARATOR,
 			`${CYAN}${pad(tags[index] ?? "", tagWidth)}${RESET}  `,
 			`${description}  `,
+			FIELD_SEPARATOR,
 			oneLine(entry.command),
 		].join("");
 	});
@@ -256,4 +264,6 @@ export const FZF_LINE_OPTIONS = [
 	FIELD_SEPARATOR,
 	"--with-nth",
 	"2..",
+	"--nth",
+	"2",
 ];

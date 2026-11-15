@@ -102,6 +102,7 @@ describe("aliases and channels", () => {
 	it("narrows to the channel matching the first word", () => {
 		const docker = channel(list, "docker lo");
 		expect(docker.name).toBe("docker");
+		expect(docker.query).toBe("lo");
 		expect(docker.items.map((item) => item.entry.command)).toEqual([
 			"docker ps",
 		]);
@@ -111,12 +112,18 @@ describe("aliases and channels", () => {
 		const unknown = channel(list, "unknown");
 		expect(unknown.name).toBeNull();
 		expect(unknown.items).toHaveLength(list.length);
+		expect(unknown.query).toBe("unknown");
+	});
+
+	it("clears channel-only queries and preserves the remaining command query", () => {
+		expect(channel(list, " nix ").query).toBe("");
+		expect(channel(list, " nix   run .#apply ").query).toBe("run .#apply");
 	});
 
 	it("aligns the header with the entry columns", () => {
 		const header = formatHeader(list, null);
 		const plain = formatLines(list)
-			.map((line) => line.split("\u001F")[1] ?? "")
+			.map((line) => line.split("\u001F").slice(1).join(""))
 			// oxlint-disable-next-line no-control-regex
 			.map((line) => line.replace(/\u001B\[[0-9;]*m/gu, ""));
 		expect(plain[0]?.indexOf("codex-statusline")).toBe(
@@ -130,6 +137,9 @@ describe("aliases and channels", () => {
 		expect(lines).toHaveLength(list.length);
 		expect(parseSelection(lines[2] ?? "")).toBe(2);
 		expect(lines[1]).toContain("codexu");
+		expect(lines[1]?.split("\u001F")[2]).toBe(
+			"codex --config model_reasoning_effort=ultra",
+		);
 	});
 });
 

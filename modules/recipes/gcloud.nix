@@ -19,13 +19,11 @@ in
             command = "${gcloud} config configurations list";
             headers = 1;
             column = 1;
-            selectOne = false;
           };
           "project-id" = {
             command = "${gcloud} projects list";
             headers = 1;
             column = 1;
-            selectOne = false;
           };
         };
         entries = [
