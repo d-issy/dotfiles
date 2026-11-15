@@ -1,0 +1,12 @@
+[package]
+name = "claude-statusline"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+chrono = { version = "0.4", default-features = false, features = ["clock"] }
+serde_json = "1"
