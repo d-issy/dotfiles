@@ -86,20 +86,22 @@ function fzf(
 function selectItem(config: Config, list: Item[], args: Args): Item | null {
 	let candidates = list;
 	let channelName: string | null = null;
+	let query = args.query;
 	if (args.expand) {
 		const alias = findAlias(list, args.query);
 		if (alias !== undefined) return alias;
-		({ name: channelName, items: candidates } = channel(list, args.query));
+		({ name: channelName, items: candidates, query } = channel(list, query));
 	}
 	const { code, stdout } = fzf(
 		config,
 		[
 			...config.fzf.options,
 			...FZF_LINE_OPTIONS,
+			channelName !== null && query === "" ? "--no-select-1" : "--select-1",
 			"--header",
 			formatHeader(candidates, channelName),
 			"--query",
-			args.query,
+			query,
 		],
 		formatLines(candidates).join("\n"),
 	);

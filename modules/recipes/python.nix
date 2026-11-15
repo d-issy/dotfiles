@@ -4,7 +4,6 @@ let
   pythonVariables = {
     python_file = {
       command = "${pkgs.fd}/bin/fd -t f -e py";
-      selectOne = false;
     };
     python_module = {
       command = "${pkgs.fd}/bin/fd -t f -e py";
@@ -15,7 +14,6 @@ let
           to = ".";
         }
       ];
-      selectOne = false;
     };
   };
 in

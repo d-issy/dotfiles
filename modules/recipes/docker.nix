@@ -4,7 +4,6 @@ let
   dockerColumn = command: column: {
     inherit command column;
     headers = 1;
-    selectOne = false;
   };
   dockerMultiColumn = command: column: dockerColumn command column // { multi = true; };
 in
