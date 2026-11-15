@@ -12,7 +12,7 @@ pkgs.stdenvNoCC.mkDerivation {
 
   buildPhase = ''
     runHook preBuild
-    esbuild main.ts --bundle --platform=node --format=esm --target=node22 --outfile=dot-command-library.mjs
+    esbuild main.ts --bundle --platform=node --format=esm --target=node${pkgs.lib.versions.major pkgs.nodejs.version} --outfile=dot-command-library.mjs
     runHook postBuild
   '';
 
