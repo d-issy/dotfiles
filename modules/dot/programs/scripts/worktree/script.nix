@@ -13,6 +13,7 @@ let
     args+=(--thinking ${lib.escapeShellArg cfg.thinking})
   '';
   fuzzyFinder = lib.escapeShellArg fuzzyFinderCommand;
+  diffPathspecs = lib.escapeShellArgs (import ../llm-diff-pathspecs.nix);
 in
 ''
   if [[ -n "''${WORKTREE_CALLER_PWD:-}" ]]; then
@@ -418,12 +419,14 @@ in
     [[ "$local_oid" == "$head_oid" ]]
   }
 
-  # True when the branch has never moved since creation (single reflog entry),
-  # so a tip that is an ancestor of the base is not evidence of a merge.
+  # A branch created by `create` with no commits of its own is not merged.
+  # Store its original tip in config so protection survives reflog expiry.
   branch_never_moved() {
-  	local count
-  	count="$(${pkgs.git}/bin/git reflog show --format=%H "refs/heads/$1" 2>/dev/null | ${pkgs.coreutils}/bin/wc -l || true)"
-  	[[ "''${count//[[:space:]]/}" == 1 ]]
+    local branch="$1" base tip
+    base="$(${pkgs.git}/bin/git config --get "branch.$branch.worktreeBase" 2>/dev/null || true)"
+    [[ -n "$base" ]] || return 1
+    tip="$(${pkgs.git}/bin/git rev-parse --verify "refs/heads/$branch^{commit}" 2>/dev/null || true)"
+    [[ "$tip" == "$base" ]]
   }
 
   list_prune_branches() (
@@ -435,7 +438,7 @@ in
   		[[ -n "$branch" ]] || continue
   		(
   			if ${pkgs.git}/bin/git merge-base --is-ancestor "$branch" "$base" 2>/dev/null; then
-  				if ! branch_never_moved "$branch" || branch_upstream_gone "$branch"; then
+                if ! branch_never_moved "$branch"; then
   					printf '%s\n' "$branch"
   				fi
   			elif branch_upstream_gone "$branch"; then
@@ -529,10 +532,7 @@ in
   # Print a git diff for LLM naming only: secret/noise paths excluded, size capped.
   naming_diff() {
   	local out
-  	out="$(${pkgs.git}/bin/git diff "$@" -- . \
-  		':(exclude,glob)**/.env*' ':(exclude,glob)**/*.pem' ':(exclude,glob)**/*.key' \
-  		':(exclude,glob)**/*.lock' ':(exclude,glob)**/package-lock.json' \
-  		':(exclude,glob)**/pnpm-lock.yaml' ':(exclude,glob)**/flake.lock' 2>/dev/null || true)"
+    out="$(${pkgs.git}/bin/git diff "$@" -- ${diffPathspecs} 2>/dev/null || true)"
   	printf '%s\n' "''${out:0:204800}"
   }
 
@@ -852,6 +852,7 @@ in
   	local base="$1" branch="$2" window="$3" target="$4"
   	validate_new_branch_and_path "$branch" "$target"
   	${pkgs.git}/bin/git worktree add -b "$branch" "$target" "$base"
+    ${pkgs.git}/bin/git config "branch.$branch.worktreeBase" "$(${pkgs.git}/bin/git rev-parse --verify "refs/heads/$branch^{commit}")"
   	set_saved_window_for_branch "$branch" "$window"
   	open_path "$target" "$window"
   }
@@ -1010,6 +1011,7 @@ in
   		validate_new_branch_and_path "$branch" "$target"
 
   		${pkgs.git}/bin/git worktree add -b "$branch" "$target" "$base"
+        ${pkgs.git}/bin/git config "branch.$branch.worktreeBase" "$(${pkgs.git}/bin/git rev-parse --verify "refs/heads/$branch^{commit}")"
   		set_saved_window_for_branch "$branch" "$window"
 
   		state="$(state_dir_for_target "$target")"
@@ -1337,6 +1339,12 @@ in
   	esac
   }
 
+  branch_unique_commits() {
+    local branch="$1"
+    ${pkgs.git}/bin/git log --oneline "refs/heads/$branch" --not \
+        --exclude="$branch" --branches --remotes
+  }
+
   confirm_delete_record() {
   	local record="$1" keep_branch="$2" branch window _managed path response
   	IFS=$'\t' read -r branch window _managed path <<<"$record"
@@ -1350,18 +1358,10 @@ in
   		printf '%sWorktree has local changes. They will be discarded.%s\n\n' "$YELLOW" "$RESET" >/dev/tty
   	fi
   	if [[ "$keep_branch" == false ]]; then
-  		local exclude=() unique base upstream
-  		base="$(default_base_ref)"
-  		if ${pkgs.git}/bin/git rev-parse --verify --quiet "$base^{commit}" >/dev/null; then
-  			exclude+=("$base")
-  		fi
-  		upstream="$(${pkgs.git}/bin/git rev-parse --verify --quiet "$branch@{upstream}" 2>/dev/null || true)"
-  		if [[ -n "$upstream" ]]; then
-  			exclude+=("$upstream")
-  		fi
-  		unique="$(${pkgs.git}/bin/git log --oneline "refs/heads/$branch" --not "''${exclude[@]}" 2>/dev/null || true)"
+        local unique
+        unique="$(branch_unique_commits "$branch")"
   		if [[ -n "$unique" ]]; then
-  			printf '%sBranch has commits not found in the base or upstream. They will be lost:%s\n%s\n\n' "$YELLOW" "$RESET" "$unique" >/dev/tty
+            printf '%sBranch has commits not reachable from any other branch or remote. They will be lost:%s\n%s\n\n' "$YELLOW" "$RESET" "$unique" >/dev/tty
   		fi
   	fi
   	printf '%sBranch:%s %s\n' "$BLUE" "$RESET" "$branch" >/dev/tty

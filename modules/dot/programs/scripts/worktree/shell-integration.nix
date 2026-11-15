@@ -38,20 +38,23 @@
       cd_file="$(${pkgs.coreutils}/bin/mktemp)" || return 1
       caller_pwd="$PWD"
 
-      cd "''${caller_pwd:h}" || return 1
-      WORKTREE_CD_FILE="$cd_file" WORKTREE_CALLER_PWD="$caller_pwd" ${worktreeBin} "$@"
-      exit_code=$?
-      if [[ -e "$cd_file" ]]; then
-        target="$(<"$cd_file")"
-        if [[ -n "$target" ]]; then
-          cd "$target"
+      {
+        cd "''${caller_pwd:h}" || return 1
+        WORKTREE_CD_FILE="$cd_file" WORKTREE_CALLER_PWD="$caller_pwd" ${worktreeBin} "$@"
+        exit_code=$?
+      } always {
+        if [[ -e "$cd_file" ]]; then
+          target="$(<"$cd_file")"
+          if [[ -n "$target" ]]; then
+            cd "$target"
+          elif [[ -d "$caller_pwd" ]]; then
+            cd "$caller_pwd"
+          fi
+          ${pkgs.coreutils}/bin/rm -f "$cd_file"
         elif [[ -d "$caller_pwd" ]]; then
           cd "$caller_pwd"
         fi
-        ${pkgs.coreutils}/bin/rm -f "$cd_file"
-      elif [[ -d "$caller_pwd" ]]; then
-        cd "$caller_pwd"
-      fi
+      }
       return $exit_code
     }
   '';

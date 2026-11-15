@@ -32,6 +32,23 @@ vi.mock("node:crypto", async (original) => {
 	};
 });
 
+const lockRace = vi.hoisted(() => ({
+	beforeRename: undefined as ((source: string) => void) | undefined,
+}));
+vi.mock("node:fs", async (original) => {
+	const actual = await original<typeof import("node:fs")>();
+	return {
+		...actual,
+		renameSync: (
+			source: import("node:fs").PathLike,
+			target: import("node:fs").PathLike,
+		) => {
+			lockRace.beforeRename?.(String(source));
+			actual.renameSync(source, target);
+		},
+	};
+});
+
 const directories: string[] = [];
 function location(): string {
 	const directory = mkdtempSync(join(tmpdir(), "pi-model-store-"));
@@ -39,6 +56,8 @@ function location(): string {
 	return join(directory, "model-sets.json");
 }
 afterEach(() => {
+	vi.restoreAllMocks();
+	lockRace.beforeRename = undefined;
 	fixedUuid.value = undefined;
 	for (const directory of directories.splice(0))
 		rmSync(directory, { recursive: true, force: true });
@@ -164,5 +183,37 @@ process.stdin.destroy();
 		utimesSync(lock, old, old);
 		writeModelSets(path, []);
 		expect(existsSync(lock)).toBe(false);
+	});
+
+	it("preserves a live lock replacing the stale directory just before recovery renames it", () => {
+		const path = location();
+		const lock = `${path}.lock`;
+		mkdirSync(lock);
+		writeFileSync(join(lock, "owner"), String(process.pid));
+		const old = new Date(Date.now() - 120_000);
+		utimesSync(lock, old, old);
+
+		const now = Date.now();
+		const clock = vi.spyOn(Date, "now").mockReturnValue(now);
+		let liveInode: number | undefined;
+		lockRace.beforeRename = (source) => {
+			if (source !== lock || liveInode !== undefined) return;
+			// Another waiter releases the stale lock and takes a fresh one
+			// after this waiter judged it stale, but before its rename.
+			rmSync(lock, { recursive: true });
+			mkdirSync(lock);
+			writeFileSync(join(lock, "owner"), String(process.pid));
+			liveInode = lstatSync(lock).ino;
+			clock.mockReturnValue(now + 5001);
+		};
+		const update = vi.fn(() => []);
+
+		expect(() => updateModelSets(path, update)).toThrow(/Model sets are busy/u);
+
+		expect(liveInode).toBeDefined();
+		expect(lstatSync(lock).ino).toBe(liveInode);
+		expect(readFileSync(join(lock, "owner"), "utf8")).toBe(String(process.pid));
+		expect(update).not.toHaveBeenCalled();
+		expect(existsSync(path)).toBe(false);
 	});
 });

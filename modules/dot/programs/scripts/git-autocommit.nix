@@ -7,6 +7,7 @@
 
 let
   cfg = config.dot.programs.scripts.gitAutoCommit;
+  diffPathspecs = lib.escapeShellArgs (import ./llm-diff-pathspecs.nix);
 
   piArgs = [
     "--print"
@@ -131,7 +132,9 @@ let
           if [[ -n "$instruction" ]]; then
             printf '\nAdditional instruction: %s\n' "$instruction"
           fi
-        } | run_pi_from_stdin | head -n 1 | tr -d '`"' | tr -d "'" | sed -E 's/[[:space:]]+/-/g'
+        } | run_pi_from_stdin | sed '/^[[:space:]]*```/d; /^[[:space:]]*$/d' | sed -n '1p' \
+          | tr -d '`"' | tr -d "'" \
+          | sed -E 's/^[[:space:]]+//; s/[[:space:]]+$//; s/[[:space:]]+/-/g; s/^-+//; s/-+$//'
       }
 
       # Edit text with default editor
@@ -317,10 +320,7 @@ let
         local staged_diff
         # Only the text sent to the LLM is filtered and capped; the commit still contains everything staged.
         staged_diff=$(
-          git diff --staged -- . \
-            ':(exclude,glob)**/.env*' ':(exclude,glob)**/*.pem' ':(exclude,glob)**/*.key' \
-            ':(exclude,glob)**/*.lock' ':(exclude,glob)**/package-lock.json' \
-            ':(exclude,glob)**/pnpm-lock.yaml' ':(exclude,glob)**/go.sum' \
+          git diff --staged -- ${diffPathspecs} \
             | head -c 204800 || true
         )
 
