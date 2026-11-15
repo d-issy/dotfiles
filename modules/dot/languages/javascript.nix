@@ -14,7 +14,7 @@ in
   options.dot.languages.javascript = {
     enable = lib.mkEnableOption "JavaScript/TypeScript development";
 
-    node = dot.mkEnableablePackageOption "Node.js" "nodejs_24";
+    node = dot.mkEnableablePackageOption "Node.js" "nodejs_26";
 
     npm.enable = lib.mkEnableOption "npm";
     yarn = dot.mkEnableablePackageOption "Yarn" "yarn";
