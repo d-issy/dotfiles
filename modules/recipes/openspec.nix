@@ -3,7 +3,7 @@
 {
   home.packages = [ pkgs.openspec ];
 
-  dot.programs.navi.cheats.openspec.sections = [
+  dot.programs.commandLibrary.groups.openspec.sections = [
     {
       tags = [ "openspec" ];
       variables.change = "openspec list --json | jq -r '.changes[].name' | fzf --height 40% --reverse";

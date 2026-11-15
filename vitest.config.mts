@@ -13,6 +13,7 @@ export default defineConfig({
 		include: [
 			"tests/pi/agent/extensions/**/*.test.ts",
 			"tests/agent-sessions/**/*.test.ts",
+			"tests/command-library/**/*.test.ts",
 		],
 		coverage: {
 			provider: "v8",

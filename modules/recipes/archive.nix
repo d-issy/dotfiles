@@ -1,7 +1,7 @@
 { pkgs, ... }:
 
 {
-  config.dot.programs.navi.cheats.archive.sections = [
+  config.dot.programs.commandLibrary.groups.archive.sections = [
     {
       tags = [
         "tar"

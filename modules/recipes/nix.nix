@@ -1,7 +1,14 @@
+{ config, ... }:
+
+let
+  # Entries that run this repository's flake apps.
+  dotfiles.paths = [ "${config.dot.programs.ghq.root}/github.com/d-issy/dotfiles" ];
+in
 {
-  config.dot.programs.navi.cheats.nix.sections = [
+  config.dot.programs.commandLibrary.groups.nix.sections = [
     {
       tags = [ "nix apply" ];
+      when = dotfiles;
       entries = [
         {
           description = "apply home-manager configuration for this machine";
@@ -28,6 +35,7 @@
     }
     {
       tags = [ "nix generations" ];
+      when = dotfiles;
       entries = [
         {
           description = "list home-manager generations";
@@ -37,6 +45,7 @@
     }
     {
       tags = [ "nix agent-sessions" ];
+      when = dotfiles;
       entries = [
         {
           description = "watch Claude Code and Codex sessions live";
@@ -47,6 +56,7 @@
     }
     {
       tags = [ "nix gc" ];
+      when = dotfiles;
       entries = [
         {
           description = "expire old generations and garbage collect";

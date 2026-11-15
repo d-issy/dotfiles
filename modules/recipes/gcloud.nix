@@ -12,12 +12,21 @@ in
   config = {
     dot.programs.gcloud.enable = false;
 
-    dot.programs.navi.cheats.gcloud.sections = lib.mkIf config.dot.programs.gcloud.enable [
+    dot.programs.commandLibrary.groups.gcloud.sections = lib.mkIf config.dot.programs.gcloud.enable [
       {
         variables = {
-          "configuration-name" =
-            "${gcloud} config configurations list --- --headers 1 --column 1 --fzf-overrides '--no-select-1'";
-          "project-id" = "${gcloud} projects list --- --headers 1 --column 1 --fzf-overrides '--no-select-1'";
+          "configuration-name" = {
+            command = "${gcloud} config configurations list";
+            headers = 1;
+            column = 1;
+            selectOne = false;
+          };
+          "project-id" = {
+            command = "${gcloud} projects list";
+            headers = 1;
+            column = 1;
+            selectOne = false;
+          };
         };
         entries = [
           {
