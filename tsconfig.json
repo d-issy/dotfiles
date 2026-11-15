@@ -3,7 +3,7 @@
     "target": "ES2022",
     "module": "ESNext",
     "moduleResolution": "Bundler",
-    "lib": ["ES2022"],
+    "lib": ["ES2023"],
     "strict": true,
     "noEmit": true,
     "skipLibCheck": true,
@@ -17,6 +17,8 @@
   "include": [
     "vitest.config.mts",
     "files/pi/agent/extensions/**/*.ts",
-    "tests/pi/agent/extensions/**/*.ts"
+    "tests/pi/agent/extensions/**/*.ts",
+    "apps/agent-sessions/src/**/*.ts",
+    "tests/agent-sessions/**/*.ts"
   ]
 }

@@ -10,7 +10,10 @@ export default defineConfig({
 		},
 	},
 	test: {
-		include: ["tests/pi/agent/extensions/**/*.test.ts"],
+		include: [
+			"tests/pi/agent/extensions/**/*.test.ts",
+			"tests/agent-sessions/**/*.test.ts",
+		],
 		coverage: {
 			provider: "v8",
 			reporter: ["text", "json-summary", "html"],
