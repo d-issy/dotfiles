@@ -1,5 +1,9 @@
 { pkgs }:
 
+let
+  # Node.js LTS, matching node-version in the GitHub Actions workflows.
+  nodejs = pkgs.nodejs_26;
+in
 pkgs.stdenvNoCC.mkDerivation {
   pname = "dot-command-library";
   version = "0.1.0";
@@ -12,14 +16,14 @@ pkgs.stdenvNoCC.mkDerivation {
 
   buildPhase = ''
     runHook preBuild
-    esbuild main.ts --bundle --platform=node --format=esm --target=node${pkgs.lib.versions.major pkgs.nodejs.version} --outfile=dot-command-library.mjs
+    esbuild main.ts --bundle --platform=node --format=esm --target=node${pkgs.lib.versions.major nodejs.version} --outfile=dot-command-library.mjs
     runHook postBuild
   '';
 
   installPhase = ''
     runHook preInstall
     install -Dm644 dot-command-library.mjs "$out/lib/dot-command-library/dot-command-library.mjs"
-    makeWrapper ${pkgs.nodejs}/bin/node "$out/bin/dot-command-library" \
+    makeWrapper ${nodejs}/bin/node "$out/bin/dot-command-library" \
       --add-flags "$out/lib/dot-command-library/dot-command-library.mjs"
     runHook postInstall
   '';
