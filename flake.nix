@@ -67,7 +67,7 @@
           ++ linter
           ++ lsp
           ++ (with pkgs; [
-            nodejs_24
+            nodejs
             pnpm
           ]);
       };
