@@ -1,5 +1,3 @@
-# Per-crate Rust checks for every member of the Cargo workspace:
-# `rust-clippy-<crate>` and `rust-test-<crate>`.
 { pkgs }:
 
 let
@@ -7,7 +5,6 @@ let
 
   crates = map baseNameOf (fromTOML (builtins.readFile ../Cargo.toml)).workspace.members;
 
-  # Programs the tests of a crate run.
   checkInputs = {
     worktree = [ pkgs.git ];
   };

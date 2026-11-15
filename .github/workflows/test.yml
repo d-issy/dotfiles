@@ -27,7 +27,6 @@ jobs:
     outputs:
       # JSON list of the Vitest projects whose files changed.
       projects: ${{ steps.filter.outputs.changes }}
-      # JSON list of the Cargo workspace members whose files changed.
       crates: ${{ steps.rust.outputs.changes }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -51,7 +50,6 @@ jobs:
       - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
         id: rust
         with:
-          # Filter names are Cargo workspace members (see Cargo.toml).
           filters: |
             agent-sessions:
               - &rust-shared

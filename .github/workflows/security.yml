@@ -51,8 +51,6 @@ jobs:
         with:
           primary-key: nix-cargo-audit-${{ runner.os }}-${{ hashFiles('**/flake.lock', 'Cargo.lock') }}
           restore-prefixes-first-match: nix-cargo-audit-${{ runner.os }}-
-      # Audit Cargo.lock against the RustSec advisory database, including
-      # unmaintained, unsound, and yanked crates.
       - run: nix develop -c cargo audit --deny warnings
 
   codeql:

@@ -1,4 +1,3 @@
-# Builds one binary crate from the Cargo workspace rooted at the repository.
 { pkgs }:
 
 {

@@ -28,7 +28,6 @@ jobs:
       fmt: ${{ steps.filter.outputs.fmt }}
       nix: ${{ steps.filter.outputs.nix }}
       node: ${{ steps.filter.outputs.node }}
-      # JSON list of the Cargo workspace members whose files changed.
       crates: ${{ steps.rust.outputs.changes }}
       actions: ${{ steps.filter.outputs.actions }}
     steps:
@@ -71,7 +70,6 @@ jobs:
       - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
         id: rust
         with:
-          # Filter names are Cargo workspace members (see Cargo.toml).
           filters: |
             agent-sessions:
               - &rust-shared
