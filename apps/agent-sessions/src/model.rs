@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use serde_json::{Map, Value};
 
 pub type JsonObject = Map<String, Value>;
@@ -49,7 +51,7 @@ pub struct Session {
     /// Milliseconds since the epoch (may be fractional, like `mtimeMs`).
     pub updated_at: f64,
     pub started_at: Option<f64>,
-    pub log_path: String,
+    pub log_path: Option<PathBuf>,
     pub parent_key: Option<String>,
     pub model: Option<String>,
     pub last: Option<String>,
@@ -98,8 +100,7 @@ impl LogEntry {
         }
     }
 
-    /// The title when it is set and non-empty (JavaScript truthiness).
-    pub fn title(&self) -> Option<&str> {
+    pub fn non_empty_title(&self) -> Option<&str> {
         self.title.as_deref().filter(|title| !title.is_empty())
     }
 }

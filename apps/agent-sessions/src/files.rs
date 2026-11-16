@@ -4,11 +4,11 @@ use std::io::{self, Read, Seek, SeekFrom};
 use std::path::{Path, PathBuf};
 use std::time::UNIX_EPOCH;
 
-use crate::json::parse_json_line;
-use crate::types::{JsonObject, SessionStatus};
+use crate::json::parse_object_line;
+use crate::model::{JsonObject, SessionStatus};
 
-/// Modification time in milliseconds since the epoch, like `mtimeMs`.
-pub fn mtime(path: &Path) -> Option<f64> {
+/// Modification time in (fractional) milliseconds since the epoch, like Node's `mtimeMs`.
+pub fn modified_ms(path: &Path) -> Option<f64> {
     let modified = fs::metadata(path).ok()?.modified().ok()?;
     Some(match modified.duration_since(UNIX_EPOCH) {
         Ok(after) => after.as_secs_f64() * 1000.0,
@@ -16,7 +16,8 @@ pub fn mtime(path: &Path) -> Option<f64> {
     })
 }
 
-/// Directory entries sorted by name, as Node's `readdirSync` returns them.
+/// Entry names sorted by byte order, as Node's `readdirSync` returns them;
+/// empty when the directory cannot be read.
 pub fn list_dir(path: &Path) -> Vec<String> {
     let Ok(entries) = fs::read_dir(path) else {
         return Vec::new();
@@ -32,6 +33,10 @@ pub fn list_dir(path: &Path) -> Vec<String> {
         .collect()
 }
 
+pub fn child_paths(path: &Path) -> impl Iterator<Item = PathBuf> {
+    list_dir(path).into_iter().map(move |name| path.join(name))
+}
+
 fn read_range(path: &Path, start: u64, length: u64) -> io::Result<Vec<u8>> {
     let mut file = File::open(path)?;
     file.seek(SeekFrom::Start(start))?;
@@ -40,21 +45,23 @@ fn read_range(path: &Path, start: u64, length: u64) -> io::Result<Vec<u8>> {
     Ok(buffer)
 }
 
-/// Parse the first JSONL record, reading at most 4 MiB.
+pub fn read_json_file(path: &Path) -> Option<JsonObject> {
+    parse_object_line(&String::from_utf8_lossy(&fs::read(path).ok()?))
+}
+
 pub fn read_first_record(path: &Path) -> Option<JsonObject> {
     let buffer = read_range(path, 0, 4 * 1024 * 1024).ok()?;
-    let end = buffer
-        .iter()
-        .position(|&byte| byte == b'\n')
-        .unwrap_or(buffer.len());
-    parse_json_line(&String::from_utf8_lossy(&buffer[..end]))
+    let first_line = buffer
+        .split(|&byte| byte == b'\n')
+        .next()
+        .unwrap_or_default();
+    parse_object_line(&String::from_utf8_lossy(first_line))
 }
 
 fn split_records(text: &str) -> Vec<JsonObject> {
-    text.split('\n').filter_map(parse_json_line).collect()
+    text.split('\n').filter_map(parse_object_line).collect()
 }
 
-/// Incrementally follows a JSONL file that is appended to.
 pub struct JsonlTail {
     path: PathBuf,
     initial_bytes: u64,
@@ -84,10 +91,11 @@ impl JsonlTail {
                 self.offset = Some(offset);
                 self.partial.clear();
                 if offset > 0 {
-                    // Drop the record cut by the initial window.
                     let text = self.read(offset, size);
-                    let start = text.find('\n').map_or(0, |index| index + 1);
-                    return split_records(&text[start..]);
+                    let after_cut_record = text
+                        .split_once('\n')
+                        .map_or(text.as_str(), |(_, rest)| rest);
+                    return split_records(after_cut_record);
                 }
                 offset
             }
@@ -102,14 +110,15 @@ impl JsonlTail {
         // A file that vanished between stat and open reads as empty.
         let chunk = read_range(&self.path, offset, size - offset).unwrap_or_default();
         self.offset = Some(offset + chunk.len() as u64);
-        // Keep bytes after the last newline so split multi-byte characters survive.
+        // Bytes after the last newline wait for the rest of their line, so a
+        // multi-byte character split across reads survives.
         let mut buffer = std::mem::take(&mut self.partial);
         buffer.extend_from_slice(&chunk);
         let end = buffer
             .iter()
             .rposition(|&byte| byte == b'\n')
             .map_or(0, |index| index + 1);
-        // Copy so the leftover bytes do not keep the whole read buffer alive.
+        // A copy, so the leftover bytes do not keep the whole read buffer alive.
         self.partial = buffer[end..].to_vec();
         String::from_utf8_lossy(&buffer[..end]).into_owned()
     }
@@ -152,7 +161,6 @@ impl SummaryTracker {
         summary.clone()
     }
 
-    /// Drop state for files not summarized since the previous call.
     pub fn prune(&mut self) {
         let seen = std::mem::take(&mut self.seen);
         self.entries.retain(|path, _| seen.contains(path));
@@ -160,91 +168,54 @@ impl SummaryTracker {
 }
 
 #[cfg(test)]
-pub mod tests {
+mod tests {
     use super::*;
+    use crate::test_support::{TempDir, append, objects};
     use serde_json::json;
-    use std::io::Write;
-    use std::sync::atomic::{AtomicUsize, Ordering};
-
-    /// A fresh temporary directory removed on drop.
-    pub struct TempDir(pub PathBuf);
-
-    impl TempDir {
-        pub fn new() -> Self {
-            static COUNTER: AtomicUsize = AtomicUsize::new(0);
-            let path = std::env::temp_dir().join(format!(
-                "agent-sessions-{}-{}",
-                std::process::id(),
-                COUNTER.fetch_add(1, Ordering::Relaxed)
-            ));
-            let _ = fs::remove_dir_all(&path);
-            fs::create_dir_all(&path).unwrap();
-            Self(path)
-        }
-    }
-
-    impl Drop for TempDir {
-        fn drop(&mut self) {
-            let _ = fs::remove_dir_all(&self.0);
-        }
-    }
-
-    pub fn append(path: &Path, bytes: &[u8]) {
-        let mut file = fs::OpenOptions::new().append(true).open(path).unwrap();
-        file.write_all(bytes).unwrap();
-    }
-
-    fn records(values: &[serde_json::Value]) -> Vec<JsonObject> {
-        values
-            .iter()
-            .map(|value| value.as_object().unwrap().clone())
-            .collect()
-    }
 
     #[test]
     fn follows_appended_records_and_buffers_partial_lines() {
         let dir = TempDir::new();
-        let path = dir.0.join("log.jsonl");
+        let path = dir.path().join("log.jsonl");
         fs::write(&path, "{\"n\":1}\n{\"n\":").unwrap();
         let mut tail = JsonlTail::new(&path, 1024);
-        assert_eq!(tail.poll(), records(&[json!({"n": 1})]));
+        assert_eq!(tail.poll(), objects(&[json!({"n": 1})]));
         assert_eq!(tail.poll(), vec![]);
         append(&path, b"2}\n{\"n\":3}\n");
-        assert_eq!(tail.poll(), records(&[json!({"n": 2}), json!({"n": 3})]));
+        assert_eq!(tail.poll(), objects(&[json!({"n": 2}), json!({"n": 3})]));
     }
 
     #[test]
     fn does_not_retain_the_read_buffer_for_a_pending_partial_line() {
         let dir = TempDir::new();
-        let path = dir.0.join("log.jsonl");
+        let path = dir.path().join("log.jsonl");
         fs::write(&path, format!("{}{{\"n\":", "{\"n\":1}\n".repeat(100_000))).unwrap();
         let mut tail = JsonlTail::new(&path, u64::MAX);
         assert_eq!(tail.poll().len(), 100_000);
         assert_eq!(tail.partial, b"{\"n\":");
-        // The file is ~800 KB; the copied remainder must not keep it alive.
         assert!(tail.partial.capacity() < 256 * 1024);
     }
 
     #[test]
     fn skips_the_record_cut_by_the_initial_window() {
         let dir = TempDir::new();
-        let path = dir.0.join("log.jsonl");
+        let path = dir.path().join("log.jsonl");
         fs::write(&path, "{\"long\":\"xxxxxxxxxxxxxxxx\"}\n{\"n\":1}\n").unwrap();
         assert_eq!(
             JsonlTail::new(&path, 12).poll(),
-            records(&[json!({"n": 1})])
+            objects(&[json!({"n": 1})])
         );
     }
 
     #[test]
     fn keeps_multi_byte_characters_split_across_reads() {
         let dir = TempDir::new();
-        let path = dir.0.join("log.jsonl");
+        let path = dir.path().join("log.jsonl");
         let bytes = "{\"t\":\"日\"}\n".as_bytes();
         fs::write(&path, &bytes[..7]).unwrap();
         let mut tail = JsonlTail::new(&path, 1024);
         assert_eq!(tail.poll(), vec![]);
         append(&path, &bytes[7..]);
-        assert_eq!(tail.poll(), records(&[json!({"t": "日"})]));
+        assert_eq!(tail.poll(), objects(&[json!({"t": "日"})]));
     }
 }

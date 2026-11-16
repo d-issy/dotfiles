@@ -4,64 +4,54 @@ use std::path::PathBuf;
 
 use crate::claude::{ClaudeDiscovery, parse_claude_record};
 use crate::codex::{CodexDiscovery, parse_codex_record};
-use crate::text::locale_compare;
-use crate::types::{Agent, JsonObject, LogEntry, Session, SessionStatus};
+use crate::js;
+use crate::model::{Agent, JsonObject, LogEntry, Session, SessionStatus};
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct SessionRow {
+    pub session: Session,
+    pub depth: usize,
+    /// Tree guide drawn before the title, e.g. "├─ " or "│  └─ ".
+    pub tree: String,
+}
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Row {
-    Project {
-        cwd: String,
-        sessions: usize,
-    },
-    Session {
-        session: Box<Session>,
-        depth: usize,
-        /// Tree guide drawn before the row, e.g. "├─ " or "│  └─ ".
-        tree: String,
-    },
+    Project { cwd: String, sessions: usize },
+    Session(Box<SessionRow>),
 }
 
-/// A session row borrowed from the row list.
-pub struct SessionRow<'a> {
-    pub session: &'a Session,
-    pub depth: usize,
-    pub tree: &'a str,
-}
-
-/// Stable order: oldest start first so rows do not jump on every update.
-fn by_start(a: &Session, b: &Session) -> Ordering {
-    let diff = a.started_at.unwrap_or(a.updated_at) - b.started_at.unwrap_or(b.updated_at);
-    if diff < 0.0 {
-        Ordering::Less
-    } else if diff > 0.0 {
-        Ordering::Greater
-    } else {
-        locale_compare(&a.key, &b.key)
+impl Row {
+    pub fn as_session(&self) -> Option<&SessionRow> {
+        match self {
+            Self::Session(row) => Some(row),
+            Self::Project { .. } => None,
+        }
     }
+}
+
+/// Oldest start first, so rows do not jump on every update.
+fn by_start(a: &Session, b: &Session) -> Ordering {
+    let start = |session: &Session| session.started_at.unwrap_or(session.updated_at);
+    start(a)
+        .partial_cmp(&start(b))
+        .filter(|order| order.is_ne())
+        .unwrap_or_else(|| js::locale_compare(&a.key, &b.key))
 }
 
 fn by_project(a: &str, b: &str) -> Ordering {
-    locale_compare(project_basename(a), project_basename(b)).then_with(|| locale_compare(a, b))
+    js::locale_compare(js::basename(a), js::basename(b)).then_with(|| js::locale_compare(a, b))
 }
 
-/// Node's `path.basename` for POSIX paths.
-pub fn project_basename(path: &str) -> &str {
-    let trimmed = path.trim_end_matches('/');
-    match trimmed.rfind('/') {
-        Some(index) => &trimmed[index + 1..],
-        None => trimmed,
-    }
-}
-
-struct Builder<'a> {
+struct TreeBuilder<'a> {
     children: HashMap<&'a str, Vec<&'a Session>>,
     seen: HashSet<&'a str>,
     rows: Vec<Row>,
 }
 
-impl<'a> Builder<'a> {
-    fn visit_all(&mut self, list: &[&'a Session], depth: usize, guide: &str) {
-        let mut pending: Vec<&'a Session> = list
+impl<'a> TreeBuilder<'a> {
+    fn visit(&mut self, siblings: &[&'a Session], depth: usize, guide: &str) {
+        let mut pending: Vec<&'a Session> = siblings
             .iter()
             .copied()
             .filter(|session| !self.seen.contains(session.key.as_str()))
@@ -69,30 +59,26 @@ impl<'a> Builder<'a> {
         pending.sort_by(|a, b| by_start(a, b));
         let count = pending.len();
         for (index, session) in pending.into_iter().enumerate() {
-            if !self.seen.insert(session.key.as_str()) {
+            if !self.seen.insert(&session.key) {
                 continue;
             }
             let last = index + 1 == count;
-            self.rows.push(Row::Session {
-                session: Box::new(session.clone()),
+            self.rows.push(Row::Session(Box::new(SessionRow {
+                session: session.clone(),
                 depth,
                 tree: format!("{guide}{}", if last { "└─ " } else { "├─ " }),
-            });
+            })));
             let children = self
                 .children
                 .get(session.key.as_str())
                 .cloned()
                 .unwrap_or_default();
-            self.visit_all(
-                &children,
-                depth + 1,
-                &format!("{guide}{}", if last { "   " } else { "│  " }),
-            );
+            let child_guide = format!("{guide}{}", if last { "   " } else { "│  " });
+            self.visit(&children, depth + 1, &child_guide);
         }
     }
 }
 
-/// Group sessions by project, each project followed by its session tree.
 pub fn to_rows(sessions: &[Session]) -> Vec<Row> {
     let keys: HashSet<&str> = sessions
         .iter()
@@ -108,13 +94,13 @@ pub fn to_rows(sessions: &[Session]) -> Vec<Row> {
                 children.entry(parent).or_default().push(session);
             }
             _ => match projects.iter_mut().find(|(cwd, _)| *cwd == session.cwd) {
-                Some((_, list)) => list.push(session),
+                Some((_, roots)) => roots.push(session),
                 None => projects.push((&session.cwd, vec![session])),
             },
         }
     }
     projects.sort_by(|a, b| by_project(a.0, b.0));
-    let mut builder = Builder {
+    let mut builder = TreeBuilder {
         children,
         seen: HashSet::new(),
         rows: Vec::new(),
@@ -124,36 +110,19 @@ pub fn to_rows(sessions: &[Session]) -> Vec<Row> {
             cwd: cwd.to_string(),
             sessions: roots.len(),
         });
-        builder.visit_all(&roots, 0, "");
+        builder.visit(&roots, 0, "");
     }
     builder.rows
 }
 
-/// Indices of the session rows.
-pub fn session_rows(rows: &[Row]) -> Vec<usize> {
+pub fn session_indices(rows: &[Row]) -> Vec<usize> {
     rows.iter()
         .enumerate()
-        .filter(|(_, row)| matches!(row, Row::Session { .. }))
+        .filter(|(_, row)| row.as_session().is_some())
         .map(|(index, _)| index)
         .collect()
 }
 
-pub fn session_row(row: &Row) -> Option<SessionRow<'_>> {
-    match row {
-        Row::Session {
-            session,
-            depth,
-            tree,
-        } => Some(SessionRow {
-            session,
-            depth: *depth,
-            tree,
-        }),
-        Row::Project { .. } => None,
-    }
-}
-
-/// Hide idle sessions, including subagents whose main session is hidden.
 pub fn filter_sessions(sessions: Vec<Session>, show_idle: bool) -> Vec<Session> {
     sessions
         .into_iter()
@@ -168,30 +137,24 @@ pub fn parse_record(session: &Session, record: &JsonObject) -> Vec<LogEntry> {
     }
 }
 
-/// Elapsed run time: active sessions count up to now, finished ones stop at
-/// their last log write.
+/// Active sessions count up to now; finished ones stop at their last log write.
 pub fn session_runtime(session: &Session, now: f64) -> Option<f64> {
     let started_at = session.started_at?;
-    let active = matches!(
-        session.status,
-        SessionStatus::Running | SessionStatus::Waiting
-    );
-    Some(((if active { now } else { session.updated_at }) - started_at).max(0.0))
+    let end = match session.status {
+        SessionStatus::Running | SessionStatus::Waiting => now,
+        _ => session.updated_at,
+    };
+    Some((end - started_at).max(0.0))
 }
 
-fn home_dir() -> PathBuf {
+pub fn home_dir() -> PathBuf {
     std::env::home_dir().unwrap_or_default()
-}
-
-pub fn home_string() -> String {
-    home_dir().to_string_lossy().into_owned()
 }
 
 fn env_or_home(name: &str, default: &str) -> PathBuf {
     std::env::var_os(name).map_or_else(|| home_dir().join(default), PathBuf::from)
 }
 
-/// Discovery state that persists across refreshes (summaries and caches).
 pub struct Discovery {
     claude_home: PathBuf,
     codex_home: PathBuf,
@@ -200,7 +163,7 @@ pub struct Discovery {
 }
 
 impl Discovery {
-    pub fn new() -> Self {
+    pub fn from_env() -> Self {
         Self {
             claude_home: env_or_home("CLAUDE_CONFIG_DIR", ".claude"),
             codex_home: env_or_home("CODEX_HOME", ".codex"),
@@ -236,16 +199,15 @@ mod tests {
             status: SessionStatus::Idle,
             updated_at,
             started_at: None,
-            log_path: String::new(),
+            log_path: None,
             parent_key: parent_key.map(Into::into),
             model: None,
             last: None,
         }
     }
 
-    fn with_status(mut session: Session, status: SessionStatus) -> Session {
-        session.status = status;
-        session
+    fn with_status(session: Session, status: SessionStatus) -> Session {
+        Session { status, ..session }
     }
 
     fn keys(sessions: &[Session]) -> Vec<&str> {
@@ -255,11 +217,8 @@ mod tests {
             .collect()
     }
 
-    fn session_list(rows: &[Row]) -> Vec<SessionRow<'_>> {
-        session_rows(rows)
-            .into_iter()
-            .filter_map(|index| session_row(&rows[index]))
-            .collect()
+    fn session_rows(rows: &[Row]) -> Vec<&SessionRow> {
+        rows.iter().filter_map(Row::as_session).collect()
     }
 
     #[test]
@@ -305,7 +264,7 @@ mod tests {
             ),
         ];
         let rows = to_rows(&filter_sessions(sessions, false));
-        let list: Vec<(&str, usize)> = session_list(&rows)
+        let list: Vec<(&str, usize)> = session_rows(&rows)
             .iter()
             .map(|row| (row.session.key.as_str(), row.depth))
             .collect();
@@ -323,10 +282,10 @@ mod tests {
 
     #[test]
     fn groups_by_project_and_orders_sessions_by_start_time() {
-        let at = |mut session: Session, cwd: &str, started_at: Option<f64>| {
-            session.cwd = cwd.into();
-            session.started_at = started_at;
-            session
+        let at = |session: Session, cwd: &str, started_at: Option<f64>| Session {
+            cwd: cwd.into(),
+            started_at,
+            ..session
         };
         let rows = to_rows(&[
             at(session("b2", 9.0, None), "/w/beta", Some(2.0)),
@@ -339,7 +298,7 @@ mod tests {
             .iter()
             .map(|row| match row {
                 Row::Project { cwd, sessions } => format!("{cwd} ({sessions})"),
-                Row::Session { session, tree, .. } => format!("{tree}{}", session.key),
+                Row::Session(row) => format!("{}{}", row.tree, row.session.key),
             })
             .collect();
         assert_eq!(
@@ -354,8 +313,9 @@ mod tests {
                 "└─ b2",
             ]
         );
-        let depths: Vec<usize> = session_list(&rows).iter().map(|row| row.depth).collect();
+        let depths: Vec<usize> = session_rows(&rows).iter().map(|row| row.depth).collect();
         assert_eq!(depths, [0, 0, 0, 1, 0]);
+        assert_eq!(session_indices(&rows), [1, 2, 4, 5, 6]);
     }
 
     #[test]

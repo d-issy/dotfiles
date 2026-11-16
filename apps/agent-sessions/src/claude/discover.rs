@@ -1,0 +1,370 @@
+use std::collections::HashMap;
+use std::fs;
+use std::path::{Path, PathBuf};
+
+use rustix::io::Errno;
+use rustix::process::{Pid, test_kill_process};
+use serde_json::Value;
+
+use super::parse::{
+    claude_model, claude_title, claude_turn_status, parse_claude_record, registry_status,
+};
+use crate::files::{
+    LogSummary, SummaryTracker, list_dir, modified_ms, read_first_record, read_json_file,
+};
+use crate::json::Fields;
+use crate::model::{Agent, JsonObject, Session, SessionStatus};
+use crate::text::{last_summary, one_line};
+
+/// Finished subagents stay listed briefly so their final output is visible.
+const FINISHED_SUBAGENT_MS: f64 = 10.0 * 60_000.0;
+
+/// The `starttime` field of `/proc/<pid>/stat`, counted after the
+/// parenthesized command name because that name may contain spaces.
+fn proc_start_time(stat: &str) -> Option<&str> {
+    let after_command = stat.rsplit_once(')').map_or(stat, |(_, rest)| rest);
+    let mut chars = after_command.chars();
+    chars.next();
+    chars.as_str().split(' ').nth(19)
+}
+
+/// `process.kill(pid, 0)` only accepts 32-bit integer pids.
+fn registry_pid(entry: &JsonObject) -> Option<i32> {
+    let pid = entry.get("pid").and_then(Value::as_f64)?;
+    if pid <= 0.0 || pid.fract() != 0.0 || pid > f64::from(i32::MAX) {
+        return None;
+    }
+    Some(pid as i32)
+}
+
+fn is_alive(entry: &JsonObject) -> bool {
+    let Some(pid) = registry_pid(entry) else {
+        return false;
+    };
+    let Some(target) = Pid::from_raw(pid) else {
+        return false;
+    };
+    if let Err(error) = test_kill_process(target)
+        && error != Errno::PERM
+    {
+        return false;
+    }
+    // A recorded start time guards against PID reuse.
+    let Some(expected) = entry.str("procStart") else {
+        return true;
+    };
+    match fs::read(format!("/proc/{pid}/stat")) {
+        Ok(stat) => proc_start_time(&String::from_utf8_lossy(&stat)) == Some(expected),
+        Err(_) => true,
+    }
+}
+
+fn encode_project_dir(cwd: &str) -> String {
+    cwd.chars()
+        .map(|char| {
+            if char.is_ascii_alphanumeric() {
+                char
+            } else {
+                '-'
+            }
+        })
+        .collect()
+}
+
+fn find_transcript(home: &Path, cwd: &str, id: &str) -> Option<PathBuf> {
+    let projects = home.join("projects");
+    let file_name = format!("{id}.jsonl");
+    let direct = projects.join(encode_project_dir(cwd)).join(&file_name);
+    if modified_ms(&direct).is_some() {
+        return Some(direct);
+    }
+    list_dir(&projects)
+        .into_iter()
+        .map(|dir| projects.join(dir).join(&file_name))
+        .find(|candidate| modified_ms(candidate).is_some())
+}
+
+fn reduce(summary: &mut LogSummary, record: &JsonObject) {
+    let records = std::slice::from_ref(record);
+    if let Some(title) = claude_title(records) {
+        summary.title = Some(title);
+    }
+    if let Some(model) = claude_model(records) {
+        summary.model = Some(model);
+    }
+    if let Some(last) = last_summary(&parse_claude_record(record)) {
+        summary.last = Some(last);
+    }
+    if let Some(status) = claude_turn_status(records) {
+        summary.status = Some(status);
+    }
+}
+
+pub struct ClaudeDiscovery {
+    tracker: SummaryTracker,
+    start_times: HashMap<PathBuf, f64>,
+}
+
+impl ClaudeDiscovery {
+    pub fn new() -> Self {
+        Self {
+            tracker: SummaryTracker::new(reduce),
+            start_times: HashMap::new(),
+        }
+    }
+
+    pub fn discover(&mut self, home: &Path, now: f64) -> Vec<Session> {
+        let registry = home.join("sessions");
+        let mut sessions = Vec::new();
+        for name in list_dir(&registry) {
+            if !name.ends_with(".json") {
+                continue;
+            }
+            let Some(entry) = read_json_file(&registry.join(&name)) else {
+                continue;
+            };
+            let Some(session) = self.registry_session(home, &entry) else {
+                continue;
+            };
+            let subagents = match &session.log_path {
+                Some(transcript) => self.subagent_sessions(transcript, &session, now),
+                None => Vec::new(),
+            };
+            sessions.push(session);
+            sessions.extend(subagents);
+        }
+        self.tracker.prune();
+        sessions
+    }
+
+    fn registry_session(&mut self, home: &Path, entry: &JsonObject) -> Option<Session> {
+        if !is_alive(entry) {
+            return None;
+        }
+        let id = entry.non_empty_str("sessionId")?.to_string();
+        let cwd = entry.str("cwd").unwrap_or("").to_string();
+        let log_path = find_transcript(home, &cwd, &id);
+        let summary = log_path
+            .as_deref()
+            .map(|path| self.tracker.summarize(path))
+            .unwrap_or_default();
+        Some(Session {
+            key: format!("claude:{id}"),
+            agent: Agent::Claude,
+            title: summary
+                .title
+                .unwrap_or_else(|| one_line(entry.str("name").unwrap_or(&id))),
+            cwd,
+            status: registry_status(entry.str("status")),
+            started_at: entry.time("startedAt"),
+            updated_at: log_path
+                .as_deref()
+                .and_then(modified_ms)
+                .or_else(|| entry.time("updatedAt"))
+                .unwrap_or(0.0),
+            log_path,
+            parent_key: None,
+            model: summary.model,
+            last: summary.last,
+            id,
+        })
+    }
+
+    fn subagent_sessions(&mut self, transcript: &Path, parent: &Session, now: f64) -> Vec<Session> {
+        let transcript = transcript.to_string_lossy();
+        let dir =
+            Path::new(transcript.strip_suffix(".jsonl").unwrap_or(&transcript)).join("subagents");
+        list_dir(&dir)
+            .into_iter()
+            .filter_map(|name| {
+                let id = name.strip_suffix(".jsonl")?;
+                self.subagent_session(&dir, id, parent, now)
+            })
+            .collect()
+    }
+
+    fn subagent_session(
+        &mut self,
+        dir: &Path,
+        id: &str,
+        parent: &Session,
+        now: f64,
+    ) -> Option<Session> {
+        let path = dir.join(format!("{id}.jsonl"));
+        let updated_at = modified_ms(&path).unwrap_or(0.0);
+        let meta = read_json_file(&dir.join(format!("{id}.meta.json"))).unwrap_or_default();
+        let finished = meta.is_true("finished");
+        if finished && now - updated_at > FINISHED_SUBAGENT_MS {
+            return None;
+        }
+        let description = meta.str("description").unwrap_or(id);
+        let title = match meta.non_empty_str("agentType") {
+            Some(kind) => one_line(&format!("{kind}: {description}")),
+            None => one_line(description),
+        };
+        let summary = self.tracker.summarize(&path);
+        Some(Session {
+            key: format!("claude:{}:{id}", parent.id),
+            agent: Agent::Claude,
+            id: id.to_string(),
+            title,
+            cwd: parent.cwd.clone(),
+            status: if finished {
+                SessionStatus::Ended
+            } else {
+                summary.status.unwrap_or(SessionStatus::Running)
+            },
+            updated_at,
+            started_at: self.first_timestamp(&path),
+            log_path: Some(path),
+            parent_key: Some(parent.key.clone()),
+            model: summary.model,
+            last: summary.last,
+        })
+    }
+
+    /// A subagent transcript starts with its prompt, so the first timestamp is
+    /// its start. Only successful reads are cached: the first line may still
+    /// be mid-write.
+    fn first_timestamp(&mut self, path: &Path) -> Option<f64> {
+        if let Some(cached) = self.start_times.get(path) {
+            return Some(*cached);
+        }
+        let time = read_first_record(path)?.time("timestamp")?;
+        self.start_times.insert(path.to_path_buf(), time);
+        Some(time)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::super::parse::tests::turn;
+    use super::*;
+    use crate::test_support::{TempDir, append, jsonl};
+    use serde_json::json;
+
+    #[test]
+    fn encodes_project_directories_like_claude_code() {
+        assert_eq!(
+            encode_project_dir("/home/u/code/github.com/a/b.c"),
+            "-home-u-code-github-com-a-b-c"
+        );
+    }
+
+    #[test]
+    fn reads_the_process_start_time_even_when_the_command_has_spaces() {
+        let fields: Vec<String> = (3..33).map(|field| field.to_string()).collect();
+        assert_eq!(
+            proc_start_time(&format!("123 (a b) {}", fields.join(" "))),
+            Some("22")
+        );
+    }
+
+    #[test]
+    fn shows_idle_subagents_as_idle() {
+        let home = TempDir::new();
+        let pid = std::process::id();
+        fs::create_dir_all(home.path().join("sessions")).unwrap();
+        fs::write(
+            home.path().join("sessions/1.json"),
+            json!({"pid": pid, "sessionId": "main", "cwd": "/w/p", "status": "busy"}).to_string(),
+        )
+        .unwrap();
+        let project = home.path().join("projects/-w-p");
+        let subagents = project.join("main/subagents");
+        fs::create_dir_all(&subagents).unwrap();
+        // The main transcript's own last turn ended, but the registry says busy.
+        fs::write(
+            project.join("main.jsonl"),
+            jsonl(&[turn("user", None), turn("assistant", Some("end_turn"))]),
+        )
+        .unwrap();
+        let agents = [
+            (
+                "agent-idle",
+                vec![
+                    turn("user", None),
+                    turn("assistant", Some("end_turn")),
+                    turn("attachment", None),
+                ],
+                json!({"agentType": "teammate", "description": "idle"}),
+            ),
+            (
+                "agent-working",
+                vec![
+                    turn("assistant", Some("tool_use")),
+                    turn("user", None),
+                    turn("api-request", None),
+                ],
+                json!({"agentType": "teammate", "description": "working"}),
+            ),
+            (
+                "agent-resumed",
+                vec![
+                    turn("assistant", Some("end_turn")),
+                    turn("attachment", None),
+                    turn("user", None),
+                ],
+                json!({"agentType": "teammate", "description": "resumed"}),
+            ),
+            (
+                "agent-finished",
+                vec![turn("user", None), turn("assistant", Some("end_turn"))],
+                json!({"description": "finished", "finished": true}),
+            ),
+        ];
+        for (name, records, meta) in &agents {
+            fs::write(subagents.join(format!("{name}.jsonl")), jsonl(records)).unwrap();
+            fs::write(
+                subagents.join(format!("{name}.meta.json")),
+                meta.to_string(),
+            )
+            .unwrap();
+        }
+        let now = crate::sessions::now_ms();
+        let mut discovery = ClaudeDiscovery::new();
+        let status = |sessions: &[Session], id: &str| {
+            sessions
+                .iter()
+                .find(|session| session.id == id)
+                .map(|session| session.status)
+        };
+        let sessions = discovery.discover(home.path(), now);
+        assert_eq!(status(&sessions, "main"), Some(SessionStatus::Running));
+        assert_eq!(status(&sessions, "agent-idle"), Some(SessionStatus::Idle));
+        assert_eq!(
+            status(&sessions, "agent-working"),
+            Some(SessionStatus::Running)
+        );
+        assert_eq!(
+            status(&sessions, "agent-resumed"),
+            Some(SessionStatus::Running)
+        );
+        assert_eq!(
+            status(&sessions, "agent-finished"),
+            Some(SessionStatus::Ended)
+        );
+
+        append(
+            &subagents.join("agent-idle.jsonl"),
+            jsonl(&[turn("user", None)]).as_bytes(),
+        );
+        append(
+            &subagents.join("agent-working.jsonl"),
+            jsonl(&[
+                turn("assistant", Some("end_turn")),
+                turn("attachment", None),
+            ])
+            .as_bytes(),
+        );
+        let sessions = discovery.discover(home.path(), now);
+        assert_eq!(
+            status(&sessions, "agent-idle"),
+            Some(SessionStatus::Running)
+        );
+        assert_eq!(
+            status(&sessions, "agent-working"),
+            Some(SessionStatus::Idle)
+        );
+    }
+}
