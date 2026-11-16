@@ -65,7 +65,8 @@ impl PiDiscovery {
                 let id = header.non_empty_str("id")?;
                 let summary = self.tracker.summarize(&path);
                 Some(Session {
-                    key: format!("pi:{id}"),
+                    // Custom IDs can be reused across projects (or log files).
+                    key: format!("pi:{}", path.display()),
                     agent: Agent::Pi,
                     id: id.to_string(),
                     title: summary.title.unwrap_or_else(|| id.to_string()),
@@ -119,7 +120,7 @@ mod tests {
         let mut discover = |window| discovery.discover(home.path(), now_ms(), window);
         let session = discover(3_600_000.0).pop().unwrap();
         assert_eq!(session.agent, Agent::Pi);
-        assert_eq!(session.key, "pi:abc");
+        assert_eq!(session.key, format!("pi:{}", path.display()));
         assert_eq!(session.cwd, "/w/project");
         assert_eq!(session.title, "abc");
         assert_eq!(session.status, SessionStatus::Running);
@@ -143,6 +144,32 @@ mod tests {
         assert_eq!(session.model.as_deref(), Some("model-b"));
         assert_eq!(session.last.as_deref(), Some("done"));
         assert!(discover(-1.0).is_empty());
+    }
+
+    #[test]
+    fn keeps_sessions_with_the_same_custom_id_in_the_tree() {
+        let root = TempDir::new();
+        for project in ["alpha", "beta"] {
+            let dir = root.path().join(project);
+            fs::create_dir_all(&dir).unwrap();
+            fs::write(
+                dir.join("session.jsonl"),
+                line(json!({"type": "session", "id": "shared", "cwd": format!("/w/{project}")})),
+            )
+            .unwrap();
+        }
+        let mut discovery = PiDiscovery::new();
+        let sessions = discovery.discover(root.path(), now_ms(), 3_600_000.0);
+        assert_eq!(sessions.len(), 2);
+        assert!(sessions.iter().all(|session| session.id == "shared"));
+        assert_ne!(sessions[0].key, sessions[1].key);
+        let rows = crate::sessions::to_rows(&sessions);
+        assert_eq!(crate::sessions::session_indices(&rows).len(), 2);
+        // Keys must also stay stable across refreshes.
+        assert_eq!(
+            sessions,
+            discovery.discover(root.path(), now_ms(), 3_600_000.0)
+        );
     }
 
     #[test]

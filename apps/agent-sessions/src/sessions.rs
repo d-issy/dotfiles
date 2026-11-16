@@ -1,6 +1,7 @@
 use std::cmp::Ordering;
 use std::collections::{HashMap, HashSet};
-use std::path::PathBuf;
+use std::ffi::OsStr;
+use std::path::{Path, PathBuf};
 
 use crate::claude::{ClaudeDiscovery, parse_claude_record};
 use crate::codex::{CodexDiscovery, parse_codex_record};
@@ -157,6 +158,23 @@ fn env_or_home(name: &str, default: &str) -> PathBuf {
     std::env::var_os(name).map_or_else(|| home_dir().join(default), PathBuf::from)
 }
 
+fn pi_sessions_dir(agent_dir: Option<&OsStr>, session_dir: Option<&OsStr>, home: &Path) -> PathBuf {
+    let expand = |value: &OsStr| {
+        let path = Path::new(value);
+        // Match pi: expand only "~" and "~/…", not "~user".
+        path.strip_prefix("~")
+            .map_or_else(|_| path.to_path_buf(), |rest| home.join(rest))
+    };
+    session_dir.map_or_else(
+        || {
+            agent_dir
+                .map_or_else(|| home.join(".pi/agent"), expand)
+                .join("sessions")
+        },
+        expand,
+    )
+}
+
 pub struct Discovery {
     claude_home: PathBuf,
     codex_home: PathBuf,
@@ -171,9 +189,10 @@ impl Discovery {
         Self {
             claude_home: env_or_home("CLAUDE_CONFIG_DIR", ".claude"),
             codex_home: env_or_home("CODEX_HOME", ".codex"),
-            pi_sessions: std::env::var_os("PI_CODING_AGENT_SESSION_DIR").map_or_else(
-                || env_or_home("PI_CODING_AGENT_DIR", ".pi/agent").join("sessions"),
-                PathBuf::from,
+            pi_sessions: pi_sessions_dir(
+                std::env::var_os("PI_CODING_AGENT_DIR").as_deref(),
+                std::env::var_os("PI_CODING_AGENT_SESSION_DIR").as_deref(),
+                &home_dir(),
             ),
             claude: ClaudeDiscovery::new(),
             codex: CodexDiscovery::new(),
@@ -229,6 +248,62 @@ mod tests {
 
     fn session_rows(rows: &[Row]) -> Vec<&SessionRow> {
         rows.iter().filter_map(Row::as_session).collect()
+    }
+
+    #[test]
+    fn resolves_pi_session_paths_with_tilde_expansion_and_precedence() {
+        let home = Path::new("/home/test");
+        for (agent, sessions, expected) in [
+            (None, None, "/home/test/.pi/agent/sessions"),
+            (
+                Some("~/custom-agent"),
+                None,
+                "/home/test/custom-agent/sessions",
+            ),
+            (Some("~"), None, "/home/test/sessions"),
+            (Some("/absolute/agent"), None, "/absolute/agent/sessions"),
+            (Some("relative/agent"), None, "relative/agent/sessions"),
+            (Some("~user/agent"), None, "~user/agent/sessions"),
+            (
+                Some("~/ignored"),
+                Some("~/custom-sessions"),
+                "/home/test/custom-sessions",
+            ),
+            (None, Some("~"), "/home/test"),
+            (None, Some("/absolute/sessions"), "/absolute/sessions"),
+            (None, Some("relative/sessions"), "relative/sessions"),
+        ] {
+            assert_eq!(
+                pi_sessions_dir(agent.map(OsStr::new), sessions.map(OsStr::new), home),
+                PathBuf::from(expected),
+            );
+        }
+    }
+
+    #[test]
+    fn discovers_pi_logs_from_tilde_and_absolute_custom_paths() {
+        use crate::test_support::TempDir;
+        let home = TempDir::new();
+        let root = home.path().join("custom/sessions");
+        std::fs::create_dir_all(&root).unwrap();
+        std::fs::write(
+            root.join("session.jsonl"),
+            concat!(r#"{"type":"session","id":"abc","cwd":"/w"}"#, "\n"),
+        )
+        .unwrap();
+        let mut discovery = PiDiscovery::new();
+        let absolute = discovery.discover(&root, now_ms(), 3_600_000.0);
+        assert_eq!(absolute.len(), 1);
+        for (agent, sessions) in [
+            (Some(OsStr::new("~/custom")), None),
+            (None, Some(OsStr::new("~/custom/sessions"))),
+        ] {
+            let resolved = pi_sessions_dir(agent, sessions, home.path());
+            assert_eq!(
+                discovery.discover(&resolved, now_ms(), 3_600_000.0),
+                absolute
+            );
+        }
     }
 
     #[test]
