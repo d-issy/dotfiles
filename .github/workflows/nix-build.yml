@@ -49,7 +49,7 @@ jobs:
               - '.github/workflows/nix-build.yml'
 
   nix-flake-check:
-    name: Nix flake check (${{ matrix.config }})
+    name: Nix flake check
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
     needs:

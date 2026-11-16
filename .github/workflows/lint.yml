@@ -202,7 +202,7 @@ jobs:
       - run: pnpm typecheck
 
   clippy:
-    name: clippy (${{ matrix.crate }})
+    name: clippy
     runs-on: ubuntu-latest
     timeout-minutes: 30
     needs:

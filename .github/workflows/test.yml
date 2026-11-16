@@ -79,7 +79,7 @@ jobs:
               - 'apps/worktree/**'
 
   test:
-    name: pnpm test (${{ matrix.project }})
+    name: pnpm test
     runs-on: ubuntu-latest
     timeout-minutes: 15
     needs:
@@ -104,7 +104,7 @@ jobs:
           PROJECT: ${{ matrix.project }}
 
   cargo-test:
-    name: cargo test (${{ matrix.crate }})
+    name: cargo test
     runs-on: ubuntu-latest
     timeout-minutes: 30
     needs:
