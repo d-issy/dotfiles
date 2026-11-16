@@ -2,10 +2,7 @@
 
 use std::io;
 
-/// `$(...)` drops every trailing newline.
-pub fn strip_trailing_newlines(text: &str) -> &str {
-    text.trim_end_matches('\n')
-}
+pub use dot::shell::strip_trailing_newlines;
 
 /// An `io::Error` the way coreutils prints it, without Rust's "(os error N)".
 pub fn os_error_text(err: &io::Error) -> String {

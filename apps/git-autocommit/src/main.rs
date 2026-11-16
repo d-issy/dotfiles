@@ -1,7 +1,6 @@
 mod app;
 mod bash;
 mod cli;
-mod color;
 mod config;
 mod editor;
 mod error;
@@ -13,7 +12,7 @@ mod tty;
 
 use app::App;
 use cli::{Command, HELP, VERSION};
-use color::Color;
+use dot::color::Color;
 use error::Result;
 use std::io::Write;
 

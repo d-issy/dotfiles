@@ -16,7 +16,7 @@ pub enum Error {
     },
     InvalidJson {
         origin: String,
-        source: serde_json::Error,
+        source: dot::json::Error,
     },
 }
 

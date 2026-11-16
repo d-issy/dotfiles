@@ -1,6 +1,6 @@
 use crate::config::Entry;
 use crate::library::Item;
-use regex::Regex;
+use dot::regex::Regex;
 use std::sync::LazyLock;
 
 pub const FIELD_SEPARATOR: char = '\u{1F}';
@@ -43,7 +43,10 @@ fn column_width(values: impl Iterator<Item = usize>, max: usize) -> usize {
 }
 
 fn one_line(text: &str) -> String {
-    LINE_BREAK.replace_all(text, " ; ").trim().to_string()
+    LINE_BREAK
+        .replace_all_literal(text, " ; ")
+        .trim()
+        .to_string()
 }
 
 fn describe(entry: &Entry) -> String {
@@ -145,8 +148,7 @@ mod tests {
     fn strip_ansi(text: &str) -> String {
         Regex::new("\u{1B}\\[[0-9;]*m")
             .unwrap()
-            .replace_all(text, "")
-            .into_owned()
+            .replace_all_literal(text, "")
     }
 
     #[test]

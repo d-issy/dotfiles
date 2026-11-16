@@ -4,6 +4,7 @@ members = [
   "apps/agent-sessions",
   "apps/claude-statusline",
   "apps/command-library",
+  "apps/dot",
   "apps/git-autocommit",
   "apps/herdr-subagents",
   "apps/tmux-notice",
@@ -14,6 +15,9 @@ members = [
 version = "0.1.0"
 edition = "2024"
 publish = false
+
+[workspace.dependencies]
+dot = { path = "apps/dot" }
 
 [workspace.lints.rust]
 unsafe_code = "forbid"

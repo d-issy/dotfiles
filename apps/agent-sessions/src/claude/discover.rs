@@ -2,9 +2,8 @@ use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use rustix::io::Errno;
-use rustix::process::{Pid, test_kill_process};
-use serde_json::Value;
+use dot::json::Value;
+use dot::process::process_exists;
 
 use super::parse::{
     claude_model, claude_title, claude_turn_status, parse_claude_record, registry_status,
@@ -41,12 +40,7 @@ fn is_alive(entry: &JsonObject) -> bool {
     let Some(pid) = registry_pid(entry) else {
         return false;
     };
-    let Some(target) = Pid::from_raw(pid) else {
-        return false;
-    };
-    if let Err(error) = test_kill_process(target)
-        && error != Errno::PERM
-    {
+    if !process_exists(pid) {
         return false;
     }
     // A recorded start time guards against PID reuse.
@@ -241,7 +235,7 @@ mod tests {
     use super::super::parse::tests::turn;
     use super::*;
     use crate::test_support::{TempDir, append, jsonl};
-    use serde_json::json;
+    use dot::json::json;
 
     #[test]
     fn encodes_project_directories_like_claude_code() {

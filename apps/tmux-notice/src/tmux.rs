@@ -1,3 +1,4 @@
+use dot::shell::strip_trailing_newlines;
 use std::process::{Command, Stdio};
 
 pub fn output(args: &[&str]) -> String {
@@ -12,7 +13,7 @@ pub fn output(args: &[&str]) -> String {
 
 /// Shell command-substitution semantics: trailing newlines are dropped.
 pub fn capture(args: &[&str]) -> String {
-    output(args).trim_end_matches('\n').to_string()
+    strip_trailing_newlines(&output(args)).to_string()
 }
 
 pub fn quiet(args: &[&str]) {

@@ -1,11 +1,11 @@
 use crate::error::Error;
-use regex::Regex;
-use serde::Deserialize;
+use dot::config::Object;
+use dot::json::{self, Decode, Value};
+use dot::regex::Regex;
 use std::collections::BTreeMap;
 use std::fmt;
 
-#[derive(Deserialize, Default, Clone, Copy, PartialEq, Eq, Debug)]
-#[serde(rename_all = "lowercase")]
+#[derive(Default, Clone, Copy, PartialEq, Eq, Debug)]
 pub enum TitleMode {
     #[default]
     Current,
@@ -25,8 +25,6 @@ impl fmt::Display for TitleMode {
     }
 }
 
-#[derive(Deserialize)]
-#[serde(default, rename_all = "camelCase")]
 pub struct PaneTitle {
     pub enable: bool,
     pub template: String,
@@ -50,8 +48,7 @@ impl PaneTitle {
     }
 }
 
-#[derive(Deserialize, Default)]
-#[serde(default, rename_all = "camelCase")]
+#[derive(Default)]
 pub struct Notice {
     pub icons: Vec<String>,
     pub title: Option<String>,
@@ -84,7 +81,7 @@ impl Notice {
                 source,
             })?;
             // First match only, like jq's `sub`.
-            out = re.replace(&out, regex::NoExpand("")).into_owned();
+            out = re.replace_literal(&out, "");
         }
         Ok(out)
     }
@@ -107,8 +104,7 @@ impl Notice {
     }
 }
 
-#[derive(Deserialize, Default)]
-#[serde(default)]
+#[derive(Default)]
 pub struct Config {
     pub fallback: Notice,
     pub notices: BTreeMap<String, Notice>,
@@ -121,11 +117,64 @@ impl Config {
             path: path.clone(),
             source,
         })?;
-        serde_json::from_str(&text).map_err(|source| Error::ConfigParse { path, source })
+        json::from_str(&text).map_err(|source| Error::ConfigParse { path, source })
     }
 
     pub fn notice(&self, name: &str) -> &Notice {
         self.notices.get(name).unwrap_or(&self.fallback)
+    }
+}
+
+impl Decode for TitleMode {
+    fn decode(value: Value) -> Result<Self, json::Error> {
+        match String::decode(value)?.as_str() {
+            "current" => Ok(Self::Current),
+            "name" => Ok(Self::Name),
+            "notice" => Ok(Self::Notice),
+            "none" => Ok(Self::None),
+            other => Err(json::Error::new(format!("unknown title mode `{other}`"))),
+        }
+    }
+}
+
+impl Decode for PaneTitle {
+    fn decode(value: Value) -> Result<Self, json::Error> {
+        let mut object = Object::new(value)?;
+        let defaults = Self::default();
+        Ok(Self {
+            enable: object.field_or("enable", defaults.enable)?,
+            template: object.field_or("template", defaults.template)?,
+        })
+    }
+}
+
+impl Decode for Notice {
+    fn decode(value: Value) -> Result<Self, json::Error> {
+        let mut object = Object::new(value)?;
+        let defaults = Self::default();
+        Ok(Self {
+            icons: object.field_or("icons", defaults.icons)?,
+            title: object.field_or("title", defaults.title)?,
+            session_notification_indicator_color: object.field_or(
+                "sessionNotificationIndicatorColor",
+                defaults.session_notification_indicator_color,
+            )?,
+            title_mode: object.field_or("titleMode", defaults.title_mode)?,
+            title_strip_patterns: object
+                .field_or("titleStripPatterns", defaults.title_strip_patterns)?,
+            pane_title: object.field_or("paneTitle", defaults.pane_title)?,
+        })
+    }
+}
+
+impl Decode for Config {
+    fn decode(value: Value) -> Result<Self, json::Error> {
+        let mut object = Object::new(value)?;
+        let defaults = Self::default();
+        Ok(Self {
+            fallback: object.field_or("fallback", defaults.fallback)?,
+            notices: object.field_or("notices", defaults.notices)?,
+        })
     }
 }
 
@@ -134,7 +183,7 @@ mod tests {
     use super::*;
 
     fn notice(json: &str) -> Notice {
-        serde_json::from_str(json).unwrap()
+        json::from_str(json).unwrap()
     }
 
     #[test]
@@ -186,5 +235,34 @@ mod tests {
         assert_eq!(n.first_icon(), "•");
         assert_eq!(n.joined_icons(), "•");
         assert_eq!(notice("{}").first_icon(), "•");
+    }
+}
+
+#[cfg(test)]
+mod decode_tests {
+    use super::*;
+
+    #[test]
+    fn preserves_notice_defaults_and_optional_nulls() {
+        let notice: Notice =
+            json::from_str(r#"{"title":null,"paneTitle":{"enable":true},"unknown":1}"#).unwrap();
+        assert_eq!(notice.title, None);
+        assert_eq!(notice.title_mode, TitleMode::Current);
+        assert!(notice.pane_title.enable);
+        assert_eq!(notice.pane_title.template, "{icon} {title}");
+        assert!(json::from_str::<Config>("{}").unwrap().notices.is_empty());
+    }
+
+    #[test]
+    fn rejects_wrong_types_and_invalid_title_modes() {
+        for invalid in [
+            "null",
+            r#"{"icons":null}"#,
+            r#"{"titleMode":"Current"}"#,
+            r#"{"titleMode":null}"#,
+            r#"{"paneTitle":{"enable":1}}"#,
+        ] {
+            assert!(json::from_str::<Notice>(invalid).is_err(), "{invalid}");
+        }
     }
 }

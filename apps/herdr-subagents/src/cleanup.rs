@@ -2,7 +2,7 @@ use crate::error::Result;
 use crate::herdr::trim_newlines;
 use crate::json::{self, raw_or};
 use crate::session::Session;
-use serde_json::{Value, json};
+use dot::json::{Value, json};
 use std::fmt;
 
 enum PreserveReason {

@@ -1,4 +1,4 @@
-use serde_json::Value;
+use dot::json::Value;
 
 use crate::js;
 use crate::json::{Fields, text_content};
@@ -210,7 +210,7 @@ pub fn codex_status(records: &[JsonObject]) -> Option<SessionStatus> {
 mod tests {
     use super::*;
     use crate::test_support::object;
-    use serde_json::json;
+    use dot::json::json;
 
     const TIMESTAMP: &str = "2026-11-15T13:13:06.042Z";
 

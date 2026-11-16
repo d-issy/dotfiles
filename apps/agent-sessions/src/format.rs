@@ -1,5 +1,3 @@
-use chrono::{Local, TimeZone, Timelike};
-
 use crate::js;
 
 struct Elapsed {
@@ -69,19 +67,7 @@ pub fn format_duration(ms: f64) -> String {
 
 /// Local `HH:MM:SS`, or `NaN:NaN:NaN` outside the JavaScript `Date` range.
 pub fn format_clock(time: f64) -> String {
-    let millis = time.trunc();
-    if !millis.is_finite() || millis.abs() > 8.64e15 {
-        return "NaN:NaN:NaN".into();
-    }
-    match Local.timestamp_millis_opt(millis as i64).earliest() {
-        Some(date) => format!(
-            "{:02}:{:02}:{:02}",
-            date.hour(),
-            date.minute(),
-            date.second()
-        ),
-        None => "NaN:NaN:NaN".into(),
-    }
+    dot::time::local_clock(time).unwrap_or_else(|| "NaN:NaN:NaN".into())
 }
 
 /// Parse durations like `30m`, `2h`, or `1d` into milliseconds; bare numbers

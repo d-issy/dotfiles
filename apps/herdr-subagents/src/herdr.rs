@@ -27,9 +27,7 @@ pub fn exit_code(status: ExitStatus) -> i32 {
         .unwrap_or(1)
 }
 
-pub fn trim_newlines(text: &str) -> &str {
-    text.trim_end_matches('\n')
-}
+pub use dot::shell::strip_trailing_newlines as trim_newlines;
 
 /// Runs a program like `$(...)` does: stderr passes through, stdout is returned without trailing newlines.
 pub fn capture_stdout<S: AsRef<OsStr>>(program: &str, args: &[S]) -> Result<String> {

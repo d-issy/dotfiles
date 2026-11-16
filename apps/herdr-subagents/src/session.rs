@@ -5,8 +5,7 @@ use crate::fsutil::{
 use crate::herdr::Herdr;
 use crate::json;
 use crate::manifest::Manifest;
-use serde_json::Value;
-use sha2::{Digest, Sha256};
+use dot::json::Value;
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -29,9 +28,7 @@ fn required_env(name: &str) -> Result<String> {
 }
 
 fn sha256_prefix(text: &str) -> String {
-    let digest = Sha256::digest(text.as_bytes());
-    let head: [u8; 8] = std::array::from_fn(|index| digest[index]);
-    format!("{:016x}", u64::from_be_bytes(head))
+    dot::hash::sha256_hex(text.as_bytes())[..16].to_string()
 }
 
 fn logical_cwd() -> String {

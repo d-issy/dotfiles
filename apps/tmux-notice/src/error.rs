@@ -26,11 +26,11 @@ pub enum Error {
     },
     ConfigParse {
         path: String,
-        source: serde_json::Error,
+        source: dot::json::Error,
     },
     InvalidPattern {
         pattern: String,
-        source: regex::Error,
+        source: dot::regex::Error,
     },
 }
 

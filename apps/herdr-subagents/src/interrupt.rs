@@ -1,6 +1,5 @@
 use crate::herdr::Herdr;
-use signal_hook::consts::{SIGINT, SIGTERM};
-use signal_hook::iterator::Signals;
+use dot::signal::{Signal, Signals};
 use std::fs;
 use std::path::PathBuf;
 use std::process;
@@ -51,14 +50,18 @@ impl Rollback {
 }
 
 pub fn install_handlers(rollback: Rollback, herdr: Herdr, lock: PathBuf) {
-    let Ok(mut signals) = Signals::new([SIGINT, SIGTERM]) else {
+    let Ok(mut signals) = Signals::new([Signal::Interrupt, Signal::Terminate]) else {
         return;
     };
     thread::spawn(move || {
-        if let Some(signal) = signals.forever().next() {
+        if let Some(signal) = signals.next() {
             rollback.run_if_armed(&herdr);
             let _ = fs::remove_dir(&lock);
-            process::exit(if signal == SIGINT { 130 } else { 143 });
+            process::exit(if signal == Signal::Interrupt {
+                130
+            } else {
+                143
+            });
         }
     });
 }

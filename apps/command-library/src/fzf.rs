@@ -2,7 +2,7 @@ use crate::candidates::Candidates;
 use crate::config::{Config, Variable};
 use crate::error::{Error, Result};
 use crate::resolve::Prompter;
-use std::io::Write;
+use dot::process::wait_with_input;
 use std::process::{Command, Stdio};
 
 pub const EXIT_CANCELLED: u8 = 130;
@@ -33,24 +33,14 @@ impl Picker for Fzf<'_> {
     fn pick(&mut self, args: &[String], input: &str) -> Result<Output> {
         let command = &self.config.fzf.command;
         let failure = |error: std::io::Error| Error::failure(format!("{command}: {error}"));
-        let mut child = Command::new(command)
+        let child = Command::new(command)
             .args(args)
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .stderr(Stdio::inherit())
             .spawn()
             .map_err(failure)?;
-        let mut stdin = child
-            .stdin
-            .take()
-            .ok_or_else(|| Error::failure("fzf stdin is unavailable"))?;
-        let data = input.to_string();
-        let writer = std::thread::spawn(move || {
-            // fzf may exit before reading everything; a broken pipe is fine.
-            let _ = stdin.write_all(data.as_bytes());
-        });
-        let output = child.wait_with_output().map_err(failure)?;
-        let _ = writer.join();
+        let output = wait_with_input(child, input.as_bytes()).map_err(failure)?;
         Ok(Output {
             code: output.status.code().unwrap_or(i32::from(EXIT_CANCELLED)),
             stdout: String::from_utf8_lossy(&output.stdout).into_owned(),

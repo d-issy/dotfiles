@@ -1,7 +1,7 @@
 use crate::error::{Error, JQ_RUNTIME_ERROR, Result};
 use crate::json;
 use crate::session::Session;
-use serde_json::{Map, Value, json};
+use dot::json::{Map, Value, json};
 
 pub struct Manifest(Value);
 

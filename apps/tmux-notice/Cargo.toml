@@ -8,11 +8,4 @@ publish.workspace = true
 workspace = true
 
 [dependencies]
-regex = { version = "1", default-features = false, features = [
-  "std",
-  "unicode-perl",
-  "unicode-case",
-  "unicode-gencat",
-] }
-serde = { version = "1", features = ["derive"] }
-serde_json = "1"
+dot.workspace = true

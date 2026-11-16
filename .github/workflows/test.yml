@@ -58,6 +58,7 @@ jobs:
                 - 'Cargo.toml'
                 - 'Cargo.lock'
                 - 'apps/rust-*.nix'
+                - 'apps/dot/**'
               - 'apps/agent-sessions/**'
             claude-statusline:
               - *rust-shared
@@ -65,6 +66,8 @@ jobs:
             command-library:
               - *rust-shared
               - 'apps/command-library/**'
+            dot:
+              - *rust-shared
             git-autocommit:
               - *rust-shared
               - 'apps/git-autocommit/**'

@@ -2,10 +2,9 @@ use crate::error::{Error, JQ_RUNTIME_ERROR, Result, die};
 use crate::herdr::capture_stdout;
 use crate::json;
 use crate::version;
-use serde_json::Value;
+use dot::json::Value;
+use dot::process::is_on_path;
 use std::fmt;
-use std::fs;
-use std::os::unix::fs::PermissionsExt;
 use std::str::FromStr;
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -130,16 +129,6 @@ pub struct Catalogs {
     cursor: Option<String>,
 }
 
-fn command_exists(name: &str) -> bool {
-    let Some(path) = std::env::var_os("PATH") else {
-        return false;
-    };
-    std::env::split_paths(&path).any(|directory| {
-        fs::metadata(directory.join(name))
-            .is_ok_and(|meta| meta.is_file() && meta.permissions().mode() & 0o111 != 0)
-    })
-}
-
 fn load_catalog(program: &str, args: &[&str], failure: &str) -> Result<String> {
     capture_stdout(program, args).or_else(|_| die(failure))
 }
@@ -157,7 +146,7 @@ fn is_cursor_composer(name: &str) -> bool {
 
 impl Catalogs {
     fn latest_codex_model(&mut self, family: &str) -> Result<String> {
-        if !command_exists("codex") {
+        if !is_on_path("codex") {
             return die(format!("codex is required for the {family} preset"));
         }
         if self.codex.is_none() {
@@ -184,7 +173,7 @@ impl Catalogs {
     }
 
     fn latest_cursor_model(&mut self, family: &str, matches: fn(&str) -> bool) -> Result<String> {
-        if !command_exists("cursor-agent") {
+        if !is_on_path("cursor-agent") {
             return die(format!("cursor-agent is required for the {family} preset"));
         }
         if self.cursor.is_none() {

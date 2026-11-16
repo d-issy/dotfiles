@@ -171,7 +171,7 @@ impl SummaryTracker {
 mod tests {
     use super::*;
     use crate::test_support::{TempDir, append, objects};
-    use serde_json::json;
+    use dot::json::json;
 
     #[test]
     fn follows_appended_records_and_buffers_partial_lines() {

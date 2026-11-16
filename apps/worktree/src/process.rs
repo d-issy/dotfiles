@@ -1,4 +1,5 @@
-use std::io::{self, Write};
+use dot::process::wait_with_input;
+use std::io;
 use std::os::unix::process::ExitStatusExt;
 use std::process::{Command, ExitStatus, Stdio};
 
@@ -127,17 +128,7 @@ impl CommandExt for Command {
         self.stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .stderr(Stdio::piped());
-        let mut child = self.spawn()?;
-        let stdin = child.stdin.take();
-        let output = std::thread::scope(|scope| {
-            scope.spawn(move || {
-                if let Some(mut stdin) = stdin {
-                    // The reader may exit without draining stdin.
-                    let _ = stdin.write_all(input);
-                }
-            });
-            child.wait_with_output()
-        })?;
+        let output = wait_with_input(self.spawn()?, input)?;
         Ok(Piped {
             code: exit_code(output.status),
             stdout: output.stdout,
@@ -148,22 +139,14 @@ impl CommandExt for Command {
 
 pub fn fuzzy_select(mut command: Command, lines: &str) -> String {
     command.stdin(Stdio::piped()).stdout(Stdio::piped());
-    let mut child = match command.spawn() {
+    let child = match command.spawn() {
         Ok(child) => child,
         Err(err) => {
             report_spawn_failure(&command, &err);
             return String::new();
         }
     };
-    let stdin = child.stdin.take();
-    let output = std::thread::scope(|scope| {
-        scope.spawn(move || {
-            if let Some(mut stdin) = stdin {
-                let _ = stdin.write_all(lines.as_bytes());
-            }
-        });
-        child.wait_with_output()
-    });
+    let output = wait_with_input(child, lines.as_bytes());
     output
         .map(|output| strip_trailing_newlines(&String::from_utf8_lossy(&output.stdout)).to_string())
         .unwrap_or_default()

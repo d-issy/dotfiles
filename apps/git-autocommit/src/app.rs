@@ -1,28 +1,16 @@
 use crate::bash::say;
-use crate::color::Color;
 use crate::config::Config;
 use crate::error::{Error, Result};
 use crate::staged::StagedEntry;
 use crate::tty::{Answer, Tty};
 use crate::{editor, git, pi, prompt};
-use std::env;
-use std::fs;
-use std::os::unix::fs::PermissionsExt;
+use dot::color::Color;
+use dot::process::is_on_path;
 
 pub struct App {
     config: Config,
     direct: bool,
     tty: Tty,
-}
-
-fn pi_is_installed() -> bool {
-    env::var_os("PATH").is_some_and(|path| {
-        env::split_paths(&path).any(|dir| {
-            let candidate = dir.join("pi");
-            candidate.is_file()
-                && fs::metadata(&candidate).is_ok_and(|m| m.permissions().mode() & 0o111 != 0)
-        })
-    })
 }
 
 impl App {
@@ -38,7 +26,7 @@ impl App {
         if !git::is_inside_work_tree() {
             return Err(Error::NotInRepository);
         }
-        if !pi_is_installed() {
+        if !is_on_path("pi") {
             return Err(Error::PiNotFound);
         }
 

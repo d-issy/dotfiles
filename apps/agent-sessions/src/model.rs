@@ -1,8 +1,8 @@
 use std::path::PathBuf;
 
-use serde_json::{Map, Value};
+use dot::json::Map;
 
-pub type JsonObject = Map<String, Value>;
+pub type JsonObject = Map;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Agent {
