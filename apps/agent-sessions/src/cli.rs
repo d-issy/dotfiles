@@ -1,13 +1,13 @@
 use crate::error::Error;
 use crate::format::parse_duration;
 
-pub const USAGE: &str = "agent-session - watch Claude Code and Codex sessions live
+pub const USAGE: &str = "agent-session - watch Claude Code, Codex, and pi sessions live
 
 Usage:
   agent-session [--window DURATION] [--show-idle] [--list]
 
 Options:
-  -w, --window DURATION  Include Codex sessions updated within DURATION
+  -w, --window DURATION  Include Codex/pi sessions updated within DURATION
                          (e.g. 30m, 2h, 1d). Default: 2h.
   -l, --list             Print the session list once and exit.
   -i, --show-idle        Include idle sessions (hidden by default).
@@ -16,7 +16,7 @@ Options:
 The list refreshes every 2 seconds. Press i to toggle idle sessions;
 running subagents and sessions waiting for input stay visible. Finished Claude
 subagents stay for 10 minutes. Select a session and press enter to follow its
-log in real time (updated every 300ms).";
+log in real time (updated every 300ms). Pi status is inferred from saved\nmessages; in-progress streaming is not written to its session log.";
 
 #[derive(Debug, PartialEq)]
 pub struct Options {

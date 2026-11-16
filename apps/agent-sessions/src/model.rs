@@ -8,6 +8,7 @@ pub type JsonObject = Map;
 pub enum Agent {
     Claude,
     Codex,
+    Pi,
 }
 
 impl Agent {
@@ -15,6 +16,7 @@ impl Agent {
         match self {
             Self::Claude => "claude",
             Self::Codex => "codex",
+            Self::Pi => "pi",
         }
     }
 }
