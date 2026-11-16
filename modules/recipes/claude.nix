@@ -6,10 +6,6 @@
   ...
 }:
 let
-  claudeStatusline = import ../../apps/rust-app.nix { inherit pkgs; } {
-    pname = "claude-statusline";
-    description = "Claude Code status line";
-  };
   settings = lib.importJSON (dot.files + "/claude/settings.json");
   claudeDir = dot.files + "/claude";
   claudeFilesFiltered = builtins.filterSource (
@@ -19,7 +15,7 @@ in
 {
   config = {
     home = {
-      packages = [ claudeStatusline ];
+      packages = [ pkgs.dotApps.claude-statusline ];
 
       shellAliases = {
         cla = "claude --permission-mode auto";

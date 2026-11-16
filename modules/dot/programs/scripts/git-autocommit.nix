@@ -34,11 +34,7 @@ let
     diff_pathspecs = import ./llm-diff-pathspecs.nix;
   };
 
-  app = import ../../../../apps/rust-app.nix { inherit pkgs; } {
-    pname = "git-autocommit";
-    description = "AI-powered commit message generator using Pi CLI";
-    mainProgram = "git-auto-commit";
-  };
+  app = pkgs.dotApps.git-autocommit;
 
   gitAutoCommit = pkgs.writeShellScriptBin "git-auto-commit" ''
     export PATH=${lib.makeBinPath [ pkgs.git ]}:"$PATH"

@@ -8,7 +8,7 @@
 }:
 
 let
-  app = import ../../../../../apps/worktree { inherit pkgs; };
+  app = pkgs.dotApps.worktree;
 
   configFile = (pkgs.formats.json { }).generate "worktree.json" {
     inherit (cfg) model thinking;

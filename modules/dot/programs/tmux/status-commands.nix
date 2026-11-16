@@ -4,8 +4,8 @@ let
   cfg = config.dot.programs.tmux;
   wrap =
     name: env:
-    import ../../../../apps/tmux-notice/wrap.nix {
-      inherit pkgs name env;
+    pkgs.dotApps.wrapTmuxNotice {
+      inherit name env;
       tmux = cfg.package;
     };
   colors = cfg.status.sessionList.colors;

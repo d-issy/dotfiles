@@ -200,7 +200,7 @@ let
     sections = sections ++ shellAliasSections;
   };
 
-  app = import ../../../apps/command-library { inherit pkgs; };
+  app = pkgs.dotApps.command-library;
 
   package = pkgs.writeShellScriptBin "command-library" ''
     exec ${lib.getExe app} --config ${configFile} "$@"

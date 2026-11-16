@@ -69,8 +69,7 @@ let
     }
   );
 
-  tmuxNotice = import ../../../../../apps/tmux-notice/wrap.nix {
-    inherit pkgs;
+  tmuxNotice = pkgs.dotApps.wrapTmuxNotice {
     name = "tmux-notice";
     tmux = cfg.tmuxPackage;
     env.TMUX_NOTICE_CONFIG = configFile;

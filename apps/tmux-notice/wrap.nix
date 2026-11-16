@@ -1,8 +1,7 @@
-# Installs the multi-call tmux-notice binary under `name`. The binary dispatches
-# on argv[0]; the wrapper pins tmux on PATH and passes Nix-provided settings as
-# environment variables.
+# The binary is multi-call: it dispatches on argv[0], which --argv0 sets.
+{ pkgs, unwrapped }:
+
 {
-  pkgs,
   name,
   tmux,
   env ? { },
@@ -10,7 +9,6 @@
 
 let
   inherit (pkgs) lib;
-  unwrapped = import ./package.nix { inherit pkgs; };
 in
 pkgs.runCommand name
   {

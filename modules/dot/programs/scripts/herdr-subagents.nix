@@ -8,10 +8,7 @@
 let
   cfg = config.dot.programs.scripts.herdrSubagents;
 
-  unwrapped = import ../../../../apps/rust-app.nix { inherit pkgs; } {
-    pname = "herdr-subagents";
-    description = "Herdr subagent layout manager";
-  };
+  unwrapped = pkgs.dotApps.herdr-subagents;
 
   herdrSubagents =
     pkgs.runCommand cfg.commandName

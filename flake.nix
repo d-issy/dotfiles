@@ -38,6 +38,11 @@
         system:
         import nixpkgs {
           inherit system;
+          overlays = [
+            (final: _: {
+              dotApps = import ./apps { pkgs = final; };
+            })
+          ];
         };
 
       mkToolPackages = pkgs: rec {
@@ -253,7 +258,7 @@
         applyApp = mkApplyApp system pkgs;
         gcApp = mkGcApp system pkgs;
         generationsApp = mkGenerationsApp system pkgs;
-        agentSessionsApp = import ./apps/agent-sessions { inherit pkgs; };
+        agentSessionsApp = pkgs.dotApps.agent-sessions;
         rustChecks = import ./apps/rust-checks.nix { inherit pkgs; };
       in
       {
