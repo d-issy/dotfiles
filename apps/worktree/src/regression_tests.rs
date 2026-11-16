@@ -4,11 +4,10 @@
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
-use crate::common::{Ctx, TempDir};
+use crate::commands::prune::remove_worktree;
 use crate::config::Config;
-use crate::delete::branch_unique_commits;
-use crate::prune::{list_prune_branches, remove_prune_worktree};
-use crate::repo::{add_worktree_branch, default_base_ref};
+use crate::context::Context;
+use crate::temp::TempDir;
 
 fn git(dir: &Path, args: &[&str]) -> String {
     let output = Command::new("git")
@@ -30,6 +29,10 @@ fn git(dir: &Path, args: &[&str]) -> String {
     String::from_utf8_lossy(&output.stdout)
         .trim_end()
         .to_string()
+}
+
+fn ctx(dir: &Path) -> Context {
+    Context::new(dir.to_path_buf(), Config::default())
 }
 
 struct Fixture {
@@ -55,10 +58,6 @@ impl Fixture {
         }
     }
 
-    fn ctx(&self, dir: &Path) -> Ctx {
-        Ctx::new(dir.to_path_buf(), Config::default())
-    }
-
     fn path(&self, name: &str) -> String {
         self.base.join(name).to_string_lossy().into_owned()
     }
@@ -79,10 +78,10 @@ fn prune_never_bypasses_a_worktree_lock() {
             &locked,
         ],
     );
-    let ctx = fx.ctx(&fx.repo);
+    let ctx = ctx(&fx.repo);
     for force in [false, true] {
         let mut log = Vec::new();
-        assert!(!remove_prune_worktree(&ctx, &locked, force, &mut log));
+        assert!(!remove_worktree(&ctx, &locked, force, &mut log));
         assert!(Path::new(&locked).join("file").exists());
     }
 }
@@ -93,11 +92,11 @@ fn prune_removes_dirty_worktrees_only_with_force() {
     let dirty = fx.path("dirty");
     git(&fx.repo, &["worktree", "add", "-qb", "dirty", &dirty]);
     std::fs::write(Path::new(&dirty).join("file"), "one\nchange\n").expect("edit");
-    let ctx = fx.ctx(&fx.repo);
+    let ctx = ctx(&fx.repo);
     let mut log = Vec::new();
-    assert!(!remove_prune_worktree(&ctx, &dirty, false, &mut log));
+    assert!(!remove_worktree(&ctx, &dirty, false, &mut log));
     assert!(Path::new(&dirty).join("file").exists());
-    assert!(remove_prune_worktree(&ctx, &dirty, true, &mut log));
+    assert!(remove_worktree(&ctx, &dirty, true, &mut log));
     assert!(!Path::new(&dirty).exists());
 }
 
@@ -105,8 +104,8 @@ fn prune_removes_dirty_worktrees_only_with_force() {
 fn created_branches_record_their_base_and_stay_protected() {
     let fx = Fixture::new();
     let fresh = fx.path("fresh");
-    let ctx = fx.ctx(&fx.repo);
-    assert!(add_worktree_branch(&ctx, "fresh", &fresh, "HEAD").is_ok());
+    let ctx = ctx(&fx.repo);
+    assert!(ctx.add_worktree_branch("fresh", &fresh, "HEAD").is_ok());
     assert_eq!(
         git(&fx.repo, &["rev-parse", "fresh"]),
         git(&fx.repo, &["config", "branch.fresh.worktreeBase"])
@@ -119,13 +118,13 @@ fn created_branches_record_their_base_and_stay_protected() {
         &fx.repo,
         &["reflog", "expire", "--expire=now", "refs/heads/fresh"],
     );
-    assert!(!list_prune_branches(&ctx, "HEAD").contains(&"fresh".to_string()));
+    assert!(!ctx.merged_branches("HEAD").contains(&"fresh".to_string()));
     git(
         Path::new(&fresh),
         &["commit", "-q", "--allow-empty", "-m", "fresh work"],
     );
     git(&fx.repo, &["merge", "-q", "--no-edit", "fresh"]);
-    assert!(list_prune_branches(&ctx, "HEAD").contains(&"fresh".to_string()));
+    assert!(ctx.merged_branches("HEAD").contains(&"fresh".to_string()));
 }
 
 #[test]
@@ -138,9 +137,12 @@ fn delete_warning_lists_commits_only_this_branch_reaches() {
         &target,
         &["commit", "-q", "--allow-empty", "-m", "unique work at risk"],
     );
-    let ctx = fx.ctx(&target);
-    assert_eq!(default_base_ref(&ctx), "HEAD");
-    let unique = || branch_unique_commits(&ctx, "delete-me").unwrap_or_else(|_| panic!("git log"));
+    let ctx = ctx(&target);
+    assert_eq!(ctx.default_base_ref(), "HEAD");
+    let unique = || {
+        ctx.branch_unique_commits("delete-me")
+            .unwrap_or_else(|_| panic!("git log"))
+    };
     assert_eq!(unique(), git(&target, &["log", "-1", "--oneline"]));
     git(&target, &["branch", "saved-copy"]);
     assert_eq!(unique(), "");

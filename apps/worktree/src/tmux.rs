@@ -1,147 +1,150 @@
-//! tmux windows and the cd directive used outside tmux.
-
+use std::path::Path;
 use std::process::Stdio;
 
-use crate::common::{
-    Ctx, Res, capture_quiet, checked, checked_capture, is_inside_tmux, read_tab_fields, run,
-    run_no_stdout, write_line,
-};
-use crate::repo::managed_repo_root;
+use crate::context::{Context, inside_tmux};
+use crate::error::Result;
+use crate::process::CommandExt;
+use crate::shell::bash_read_tab_fields;
+use crate::state::write_line;
 
-/// `tmux list-windows -F <format> 2>/dev/null` read with `IFS=$'\t' read -r`.
-fn list_windows(ctx: &Ctx, format: &str, fields: usize) -> Vec<Vec<String>> {
-    if !is_inside_tmux() {
-        return Vec::new();
+impl Context {
+    fn list_windows<const N: usize>(&self, format: &str) -> Vec<[String; N]> {
+        if !inside_tmux() {
+            return Vec::new();
+        }
+        self.tmux(["list-windows", "-F", format])
+            .discard_stderr()
+            .stdout_text()
+            .lines()
+            .map(bash_read_tab_fields::<N>)
+            .collect()
     }
-    let output = capture_quiet(&mut ctx.tmux(["list-windows", "-F", format])).1;
-    output
-        .lines()
-        .map(|line| read_tab_fields(line, fields))
-        .collect()
-}
 
-/// A window whose `@worktree_path` or pane path is `path`.
-pub fn window_for_path(ctx: &Ctx, path: &str) -> Option<String> {
-    list_windows(
-        ctx,
-        "#{window_id}\t#{@worktree_path}\t#{pane_current_path}",
-        3,
-    )
-    .into_iter()
-    .find(|row| row[1] == path || row[2] == path)
-    .map(|row| row[0].clone())
-}
-
-/// A window whose `@worktree_path` is `path`.
-pub fn window_for_option_path(ctx: &Ctx, path: &str) -> Option<String> {
-    list_windows(ctx, "#{window_id}\t#{@worktree_path}", 2)
-        .into_iter()
-        .find(|row| row[1] == path)
-        .map(|row| row[0].clone())
-}
-
-pub fn window_name_for_path(ctx: &Ctx, path: &str) -> Option<String> {
-    list_windows(ctx, "#{window_name}\t#{@worktree_path}", 2)
-        .into_iter()
-        .find(|row| row[1] == path)
-        .map(|row| row[0].clone())
-}
-
-fn current_window_id(ctx: &Ctx) -> Option<String> {
-    if !is_inside_tmux() {
-        return None;
+    /// A window whose `@worktree_path` or pane path is `path`.
+    fn window_for_path(&self, path: &str) -> Option<String> {
+        self.list_windows::<3>("#{window_id}\t#{@worktree_path}\t#{pane_current_path}")
+            .into_iter()
+            .find(|[_, option, pane]| option == path || pane == path)
+            .map(|[id, ..]| id)
     }
-    match capture_quiet(&mut ctx.tmux(["display-message", "-p", "#{window_id}"])) {
-        (0, id) => Some(id),
-        _ => None,
+
+    fn window_for_option_path(&self, path: &str) -> Option<String> {
+        self.list_windows::<2>("#{window_id}\t#{@worktree_path}")
+            .into_iter()
+            .find(|[_, option]| option == path)
+            .map(|[id, _]| id)
+    }
+
+    pub fn window_name_for_path(&self, path: &str) -> Option<String> {
+        self.list_windows::<2>("#{window_name}\t#{@worktree_path}")
+            .into_iter()
+            .find(|[_, option]| option == path)
+            .map(|[name, _]| name)
+    }
+
+    fn current_window_id(&self) -> Option<String> {
+        if !inside_tmux() {
+            return None;
+        }
+        let captured = self
+            .tmux(["display-message", "-p", "#{window_id}"])
+            .discard_stderr()
+            .capture();
+        captured.success().then_some(captured.stdout)
+    }
+
+    fn pin_window_options(&self, target: Option<&str>, path: &str) {
+        for (option, value) in [
+            ("automatic-rename", "off"),
+            ("allow-rename", "off"),
+            ("@worktree_path", path),
+        ] {
+            let mut command = self.tmux(["set-window-option"]);
+            if let Some(id) = target {
+                command.args(["-t", id]);
+            }
+            command.args([option, value]).run_without_stdout();
+        }
+    }
+
+    /// Select or open a tmux window for `path`; outside tmux, emit a cd directive.
+    pub fn open_path(&self, path: &str, window: &str) -> Result<()> {
+        if !inside_tmux() {
+            return write_cd_directive(path);
+        }
+        if self.is_main_checkout_path(path) {
+            return match self.window_for_path(path) {
+                Some(id) => self.tmux(["select-window", "-t", &id]).checked(),
+                None => self
+                    .tmux(["new-window", "-c", path])
+                    .stdout(Stdio::null())
+                    .checked(),
+            };
+        }
+        let id = match self.window_for_path(path) {
+            Some(id) => {
+                self.tmux(["select-window", "-t", &id]).checked()?;
+                id
+            }
+            None => self
+                .tmux([
+                    "new-window",
+                    "-P",
+                    "-F",
+                    "#{window_id}",
+                    "-n",
+                    window,
+                    "-c",
+                    path,
+                ])
+                .checked_stdout()?,
+        };
+        self.tmux(["rename-window", "-t", &id, window])
+            .run_without_stdout();
+        self.pin_window_options(Some(&id), path);
+        Ok(())
+    }
+
+    /// Close the window of a deleted worktree, moving away first when it is current.
+    pub fn close_window_for_deleted_path(&self, path: &str, destination: &str) {
+        if !inside_tmux() {
+            return;
+        }
+        let Some(id) = self
+            .window_for_option_path(path)
+            .filter(|id| !id.is_empty())
+        else {
+            return;
+        };
+        if self.current_window_id().as_deref() == Some(id.as_str()) {
+            match self.window_for_option_path(destination) {
+                Some(destination_id) => {
+                    self.tmux(["select-window", "-t", &destination_id]).run();
+                }
+                None => {
+                    self.tmux(["select-window", "-t", "!"])
+                        .discard_stderr()
+                        .run();
+                }
+            }
+        }
+        self.tmux(["kill-window", "-t", &id]).discard_stderr().run();
+    }
+
+    pub fn rename_current_window(&self, window: &str, path: &str) -> Result<()> {
+        self.tmux(["rename-window", window]).checked()?;
+        self.pin_window_options(None, path);
+        Ok(())
     }
 }
 
-/// Ask the shell wrapper to cd, or tell the user where to go.
-pub fn write_cd_directive(path: &str) -> Res<()> {
+/// Tell the shell wrapper (through `WORKTREE_CD_FILE`) or the user where to go.
+pub fn write_cd_directive(path: &str) -> Result<()> {
     match std::env::var("WORKTREE_CD_FILE") {
-        Ok(file) if !file.is_empty() => write_line(std::path::Path::new(&file), path),
+        Ok(file) if !file.is_empty() => write_line(Path::new(&file), path),
         _ => {
             println!("Switch to: {path}");
             Ok(())
         }
     }
-}
-
-pub fn is_main_checkout_path(ctx: &Ctx, path: &str) -> bool {
-    ctx.canonical(path) == ctx.canonical(&managed_repo_root(ctx))
-}
-
-/// Select or open a tmux window for `path`, or emit a cd directive outside tmux.
-pub fn open_path(ctx: &Ctx, path: &str, window: &str) -> Res<()> {
-    if !is_inside_tmux() {
-        return write_cd_directive(path);
-    }
-    if is_main_checkout_path(ctx, path) {
-        return match window_for_path(ctx, path) {
-            Some(id) => checked(&mut ctx.tmux(["select-window", "-t", &id])),
-            None => checked(ctx.tmux(["new-window", "-c", path]).stdout(Stdio::null())),
-        };
-    }
-    let id = match window_for_path(ctx, path) {
-        Some(id) => {
-            checked(&mut ctx.tmux(["select-window", "-t", &id]))?;
-            id
-        }
-        None => checked_capture(&mut ctx.tmux([
-            "new-window",
-            "-P",
-            "-F",
-            "#{window_id}",
-            "-n",
-            window,
-            "-c",
-            path,
-        ]))?,
-    };
-    run_no_stdout(&mut ctx.tmux(["rename-window", "-t", &id, window]));
-    for option in [
-        ["automatic-rename", "off"],
-        ["allow-rename", "off"],
-        ["@worktree_path", path],
-    ] {
-        run_no_stdout(&mut ctx.tmux(["set-window-option", "-t", &id, option[0], option[1]]));
-    }
-    Ok(())
-}
-
-/// Close the tmux window of a deleted worktree, moving away first when it is current.
-pub fn close_window_for_deleted_path(ctx: &Ctx, path: &str, destination: &str) {
-    if !is_inside_tmux() {
-        return;
-    }
-    let Some(id) = window_for_option_path(ctx, path).filter(|id| !id.is_empty()) else {
-        return;
-    };
-    let current = current_window_id(ctx).unwrap_or_default();
-    if id == current {
-        match window_for_option_path(ctx, destination) {
-            Some(destination_id) => {
-                run(&mut ctx.tmux(["select-window", "-t", &destination_id]));
-            }
-            None => {
-                run(ctx.tmux(["select-window", "-t", "!"]).stderr(Stdio::null()));
-            }
-        }
-    }
-    run(ctx.tmux(["kill-window", "-t", &id]).stderr(Stdio::null()));
-}
-
-/// The rename flow targets the current window without `-t`; the window name
-/// change is fatal there while the options are best effort.
-pub fn rename_current_window(ctx: &Ctx, window: &str, path: &str) -> Res<()> {
-    checked(&mut ctx.tmux(["rename-window", window]))?;
-    for option in [
-        ["automatic-rename", "off"],
-        ["allow-rename", "off"],
-        ["@worktree_path", path],
-    ] {
-        run_no_stdout(&mut ctx.tmux(["set-window-option", option[0], option[1]]));
-    }
-    Ok(())
 }

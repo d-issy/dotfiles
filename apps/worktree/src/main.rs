@@ -1,72 +1,83 @@
-//! worktree - personal git worktree helper.
-
-mod common;
+mod cleanup;
+mod commands;
 mod config;
-mod create;
-mod delete;
+mod context;
+mod error;
 mod help;
-mod list;
-mod naming;
-mod prune;
+mod merged;
+mod names;
+mod pi;
+mod process;
 #[cfg(test)]
 mod regression_tests;
-mod rename;
 mod repo;
-mod status;
-mod switch;
+mod shell;
+mod state;
+mod table;
+mod temp;
 mod tmux;
+mod tty;
+mod ui;
+mod windows;
+mod worktrees;
 
 use std::path::PathBuf;
 use std::process::ExitCode;
 
-use common::{Ctx, Fail, Res, die, error_line};
 use config::Config;
+use context::Context;
+use error::{Error, Result};
 
 const VERSION: &str = "0.1.0";
 
 fn main() -> ExitCode {
-    let mut args: Vec<String> = std::env::args().skip(1).collect();
-    let mut cfg = Config::default();
-    if args.first().map(String::as_str) == Some("--config") && args.len() >= 2 {
-        match Config::load(&args[1]) {
-            Ok(loaded) => cfg = loaded,
-            Err(message) => {
-                eprintln!("{}", error_line(&message));
-                return ExitCode::FAILURE;
-            }
+    match try_main() {
+        Ok(()) => ExitCode::SUCCESS,
+        Err(err) => {
+            err.report();
+            ExitCode::from(err.exit_code())
         }
-        args.drain(..2);
-    }
-
-    let cwd = match std::env::var("WORKTREE_CALLER_PWD") {
-        Ok(caller) if !caller.is_empty() => {
-            let path = PathBuf::from(&caller);
-            if !path.is_dir() {
-                eprintln!("worktree: cd: {caller}: No such file or directory");
-                return ExitCode::FAILURE;
-            }
-            std::env::current_dir().map_or(path.clone(), |current| current.join(&path))
-        }
-        _ => std::env::current_dir().unwrap_or_else(|_| PathBuf::from(".")),
-    };
-    let ctx = Ctx::new(cwd, cfg);
-
-    match dispatch(&ctx, &args) {
-        Ok(()) | Err(Fail::Exit(0)) => ExitCode::SUCCESS,
-        Err(Fail::Die(message)) => {
-            eprintln!("{}", error_line(&message));
-            ExitCode::FAILURE
-        }
-        Err(Fail::Exit(code)) => ExitCode::from(u8::try_from(code & 0xff).unwrap_or(1)),
     }
 }
 
-fn dispatch(ctx: &Ctx, args: &[String]) -> Res<()> {
-    let Some(command) = args.first() else {
+fn try_main() -> Result<()> {
+    let mut args: Vec<String> = std::env::args().skip(1).collect();
+    let mut config = Config::default();
+    if let [flag, path, ..] = args.as_slice()
+        && flag == "--config"
+    {
+        config = Config::load(path).map_err(Error::Fatal)?;
+        args.drain(..2);
+    }
+    let ctx = Context::new(starting_directory()?, config);
+    dispatch(&ctx, &args)
+}
+
+/// `WORKTREE_CALLER_PWD`, set by the shell wrapper, which runs the command
+/// from a parent directory so the caller's directory can be removed.
+fn starting_directory() -> Result<PathBuf> {
+    match std::env::var("WORKTREE_CALLER_PWD") {
+        Ok(caller) if !caller.is_empty() => {
+            let path = PathBuf::from(&caller);
+            if !path.is_dir() {
+                return Err(Error::Message(format!(
+                    "worktree: cd: {caller}: No such file or directory"
+                )));
+            }
+            Ok(
+                std::env::current_dir()
+                    .map_or_else(|_| path.clone(), |current| current.join(&path)),
+            )
+        }
+        _ => Ok(std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."))),
+    }
+}
+
+fn dispatch(ctx: &Context, args: &[String]) -> Result<()> {
+    let Some((command, rest)) = args.split_first() else {
         print!("{}", help::MAIN);
         return Ok(());
     };
-    let rest = &args[1..];
     match command.as_str() {
         "-h" | "--help" => {
             print!("{}", help::MAIN);
@@ -76,13 +87,13 @@ fn dispatch(ctx: &Ctx, args: &[String]) -> Res<()> {
             println!("worktree {VERSION}");
             Ok(())
         }
-        "create" => create::run_command(ctx, rest),
-        "list" => list::run_command(ctx, rest),
-        "status" => status::run_command(ctx, rest),
-        "switch" => switch::run_command(ctx, rest),
-        "rename" => rename::run_command(ctx, rest),
-        "prune" => prune::run_command(ctx, rest),
-        "delete" => delete::run_command(ctx, rest),
-        other => die(format!("Unknown command: {other}")),
+        "create" => commands::create::run(ctx, rest),
+        "list" => commands::list::run(ctx, rest),
+        "status" => commands::status::run(ctx, rest),
+        "switch" => commands::switch::run(ctx, rest),
+        "rename" => commands::rename::run(ctx, rest),
+        "prune" => commands::prune::run(ctx, rest),
+        "delete" => commands::delete::run(ctx, rest),
+        other => Err(Error::fatal(format!("Unknown command: {other}"))),
     }
 }

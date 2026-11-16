@@ -1,6 +1,4 @@
-//! Help texts, printed verbatim.
-
-pub const MAIN: &str = r#"worktree - personal git worktree helper
+pub const MAIN: &str = r"worktree - personal git worktree helper
 
 Usage:
   worktree create [--base <ref>]
@@ -28,9 +26,9 @@ Commands:
 Options:
   -h, --help    Show help
   -v, --version Show version
-"#;
+";
 
-pub const CREATE: &str = r#"Usage:
+pub const CREATE: &str = r"Usage:
   worktree create [--base <ref>]
   worktree create --finish
 
@@ -52,9 +50,9 @@ Options:
                 then upstream, then HEAD.
   --finish      Finish a pending staged-change create operation.
   -h, --help    Show this help.
-"#;
+";
 
-pub const LIST: &str = r#"Usage:
+pub const LIST: &str = r"Usage:
   worktree list
 
 Lists git worktrees in a table.
@@ -67,16 +65,16 @@ Columns:
   Path     Worktree directory.
 
 The default branch worktree is shown first. Others are sorted by branch name.
-"#;
+";
 
-pub const STATUS: &str = r#"Usage:
+pub const STATUS: &str = r"Usage:
   worktree status
 
 Shows pending `worktree create` state and basic PR worktree information for
 the current worktree.
-"#;
+";
 
-pub const SWITCH: &str = r#"Usage:
+pub const SWITCH: &str = r"Usage:
   worktree switch [<query>]
   worktree switch --pr [<number>]
 
@@ -87,9 +85,9 @@ Options:
   --pr [number]  Open or switch to a GitHub PR worktree. If number is omitted,
                  choose a PR with the fuzzy finder.
   -h, --help     Show this help.
-"#;
+";
 
-pub const RENAME: &str = r#"Usage:
+pub const RENAME: &str = r"Usage:
   worktree rename
   worktree rename <new-branch>
 
@@ -97,9 +95,9 @@ Renames the current local branch, worktree directory, and tmux window.
 
 Without <new-branch>, uses Pi to generate branch/window names from current
 changes and asks for confirmation.
-"#;
+";
 
-pub const PRUNE: &str = r#"Usage:
+pub const PRUNE: &str = r"Usage:
   worktree prune
   worktree prune -f
   worktree prune --force
@@ -128,9 +126,9 @@ Options:
   -f, --force  Also delete dirty merged worktrees.
   -y, --yes    Skip the confirmation prompt (for scripts).
   -h, --help   Show this help.
-"#;
+";
 
-pub const DELETE: &str = r#"Usage:
+pub const DELETE: &str = r"Usage:
   worktree delete [--keep-branch]
   worktree delete [--keep-branch] --current
   worktree delete [--keep-branch] .
@@ -156,4 +154,4 @@ Safety:
   - Local changes require confirmation and are discarded only on y.
   - Force-deletes the local branch with git branch -D unless --keep-branch is used.
   - Never deletes remote branches or GitHub PRs.
-"#;
+";

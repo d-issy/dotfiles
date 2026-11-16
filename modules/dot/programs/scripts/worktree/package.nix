@@ -1,4 +1,3 @@
-# The worktree command: the Rust binary wrapped with its Nix-generated config.
 {
   cfg,
   fuzzyFinderCommand,
