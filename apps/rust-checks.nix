@@ -6,6 +6,7 @@ let
   crates = map baseNameOf (fromTOML (builtins.readFile ../Cargo.toml)).workspace.members;
 
   checkInputs = {
+    tm-switcher = [ pkgs.bash ];
     worktree = [ pkgs.git ];
   };
 

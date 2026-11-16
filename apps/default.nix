@@ -31,6 +31,12 @@ rec {
     description = "Herdr subagent layout manager";
   };
 
+  tm-switcher = rustApp {
+    pname = "tm-switcher";
+    description = "Select tmux sessions and repositories";
+    nativeCheckInputs = [ pkgs.bash ];
+  };
+
   tmux-notice = rustApp {
     pname = "tmux-notice";
     description = "tmux pane notice helper and status commands";
