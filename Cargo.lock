@@ -504,6 +504,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "tm-switcher"
+version = "0.1.0"
+dependencies = [
+ "dot",
+]
+
+[[package]]
 name = "tmux-notice"
 version = "0.1.0"
 dependencies = [

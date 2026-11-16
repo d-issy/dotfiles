@@ -93,6 +93,9 @@ jobs:
             herdr-switcher:
               - *rust-shared
               - 'apps/herdr-switcher/**'
+            tm-switcher:
+              - *rust-shared
+              - 'apps/tm-switcher/**'
             tmux-notice:
               - *rust-shared
               - 'apps/tmux-notice/**'

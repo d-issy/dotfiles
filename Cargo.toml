@@ -9,6 +9,7 @@ members = [
   "apps/herdr-subagents",
   "apps/herdr-switcher",
   "apps/tmux-notice",
+  "apps/tm-switcher",
   "apps/worktree",
 ]
 

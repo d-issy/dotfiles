@@ -7,6 +7,7 @@ let
 
   checkInputs = {
     herdr-switcher = [ pkgs.bash ];
+    tm-switcher = [ pkgs.bash ];
     worktree = [ pkgs.git ];
   };
 
