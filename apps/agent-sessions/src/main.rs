@@ -7,6 +7,7 @@ mod format;
 mod js;
 mod json;
 mod model;
+mod pi;
 mod render;
 mod sessions;
 #[cfg(test)]

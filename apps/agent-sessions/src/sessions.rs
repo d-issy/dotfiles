@@ -6,6 +6,7 @@ use crate::claude::{ClaudeDiscovery, parse_claude_record};
 use crate::codex::{CodexDiscovery, parse_codex_record};
 use crate::js;
 use crate::model::{Agent, JsonObject, LogEntry, Session, SessionStatus};
+use crate::pi::{PiDiscovery, parse_pi_record};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct SessionRow {
@@ -134,6 +135,7 @@ pub fn parse_record(session: &Session, record: &JsonObject) -> Vec<LogEntry> {
     match session.agent {
         Agent::Claude => parse_claude_record(record),
         Agent::Codex => parse_codex_record(record),
+        Agent::Pi => parse_pi_record(record),
     }
 }
 
@@ -158,8 +160,10 @@ fn env_or_home(name: &str, default: &str) -> PathBuf {
 pub struct Discovery {
     claude_home: PathBuf,
     codex_home: PathBuf,
+    pi_sessions: PathBuf,
     claude: ClaudeDiscovery,
     codex: CodexDiscovery,
+    pi: PiDiscovery,
 }
 
 impl Discovery {
@@ -167,14 +171,20 @@ impl Discovery {
         Self {
             claude_home: env_or_home("CLAUDE_CONFIG_DIR", ".claude"),
             codex_home: env_or_home("CODEX_HOME", ".codex"),
+            pi_sessions: std::env::var_os("PI_CODING_AGENT_SESSION_DIR").map_or_else(
+                || env_or_home("PI_CODING_AGENT_DIR", ".pi/agent").join("sessions"),
+                PathBuf::from,
+            ),
             claude: ClaudeDiscovery::new(),
             codex: CodexDiscovery::new(),
+            pi: PiDiscovery::new(),
         }
     }
 
     pub fn discover(&mut self, window_ms: f64, now: f64) -> Vec<Session> {
         let mut sessions = self.claude.discover(&self.claude_home, now);
         sessions.extend(self.codex.discover(&self.codex_home, now, window_ms));
+        sessions.extend(self.pi.discover(&self.pi_sessions, now, window_ms));
         sessions
     }
 }

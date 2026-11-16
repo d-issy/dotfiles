@@ -36,6 +36,7 @@ impl Agent {
         match self {
             Self::Claude => Rgb(208, 135, 112),
             Self::Codex => Rgb(136, 192, 208),
+            Self::Pi => Rgb(180, 142, 173),
         }
     }
 }
@@ -222,7 +223,7 @@ pub fn render_empty(window_ms: f64, hidden_idle: usize) -> Vec<String> {
         format!("  {hidden_idle} idle session{plural} hidden. Press i to show.")
     } else {
         format!(
-            "  No live Claude sessions or Codex sessions active in the last {}.",
+            "  No live Claude sessions or Codex/pi sessions active in the last {}.",
             format_age(window_ms)
         )
     };
