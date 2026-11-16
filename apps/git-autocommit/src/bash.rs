@@ -8,9 +8,7 @@ pub fn is_space(c: char) -> bool {
     matches!(c, ' ' | '\t' | '\n' | '\x0b' | '\x0c' | '\r')
 }
 
-pub fn strip_command_substitution_newlines(s: &str) -> &str {
-    s.trim_end_matches('\n')
-}
+pub use dot::shell::strip_trailing_newlines as strip_command_substitution_newlines;
 
 pub fn say(s: &str) {
     let mut out = io::stdout();
@@ -89,11 +87,5 @@ mod tests {
         assert_eq!(echo_e("\\033[0m"), b"\x1b[0m\n");
         assert_eq!(echo_e("\\x41\\q"), b"A\\q\n");
         assert_eq!(echo_e("plain"), b"plain\n");
-    }
-
-    #[test]
-    fn strips_only_trailing_newlines() {
-        assert_eq!(strip_command_substitution_newlines("a\n\n"), "a");
-        assert_eq!(strip_command_substitution_newlines(" a \n"), " a ");
     }
 }

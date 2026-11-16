@@ -27,7 +27,7 @@ pub fn ensure_private_directory(directory: &Path) -> Result<()> {
     // Never trust pre-existing paths under a shared temporary directory.
     let owned_directory = fs::symlink_metadata(directory)
         .ok()
-        .filter(|meta| meta.is_dir() && meta.uid() == rustix::process::geteuid().as_raw());
+        .filter(|meta| meta.is_dir() && meta.uid() == dot::process::effective_uid());
     let Some(meta) = owned_directory else {
         return die(format!(
             "state directory must be owned by the current user and not be a symlink: {}",

@@ -1,7 +1,7 @@
+use dot::process::is_on_path;
 use std::io::Write;
-use std::os::unix::fs::PermissionsExt;
 
-use serde_json::Value;
+use dot::json::Value;
 
 use crate::context::Context;
 use crate::error::{Error, Result};
@@ -82,7 +82,7 @@ impl Context {
 
     /// Pi's answer; on failure its stderr is shown and the answer is empty.
     fn ask_pi(&self, prompt: &str) -> String {
-        if !on_path("pi") {
+        if !is_on_path("pi") {
             Error::fatal("pi CLI not found").report();
             return String::new();
         }
@@ -168,20 +168,11 @@ impl Context {
     }
 }
 
-fn on_path(program: &str) -> bool {
-    std::env::var_os("PATH").is_some_and(|paths| {
-        std::env::split_paths(&paths).any(|dir| {
-            std::fs::metadata(dir.join(program))
-                .is_ok_and(|meta| meta.is_file() && meta.permissions().mode() & 0o111 != 0)
-        })
-    })
-}
-
 /// What `jq -r '.<key>'` prints for each JSON value in `text`, up to the first
 /// error; the shell version ignored jq's exit status and kept the output.
 pub fn jq_raw_field(text: &str, key: &str) -> String {
     let mut lines = Vec::new();
-    for value in serde_json::Deserializer::from_str(text).into_iter::<Value>() {
+    for value in dot::json::stream(text) {
         let field = match value {
             Ok(Value::Object(mut map)) => map.remove(key).unwrap_or_default(),
             Ok(Value::Null) => Value::Null,
@@ -189,7 +180,7 @@ pub fn jq_raw_field(text: &str, key: &str) -> String {
         };
         lines.push(match field {
             Value::String(text) => text,
-            other => serde_json::to_string_pretty(&other).unwrap_or_default(),
+            other => dot::json::to_string_pretty_sorted(&other).unwrap_or_default(),
         });
     }
     strip_trailing_newlines(&lines.join("\n")).to_string()

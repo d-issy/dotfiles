@@ -1,6 +1,6 @@
 use std::fmt::Write;
 
-use serde_json::{Map, Value};
+use dot::json::{Map, Value};
 
 /// `Number.prototype.toString()`.
 pub fn number_to_string(value: f64) -> String {
@@ -55,7 +55,7 @@ fn array_index(key: &str) -> Option<u32> {
 
 /// Entries in JavaScript property order: array indices ascending, then the
 /// remaining keys in insertion order.
-pub fn property_order(map: &Map<String, Value>) -> Vec<(&String, &Value)> {
+pub fn property_order(map: &Map) -> Vec<(&String, &Value)> {
     let mut indexed: Vec<_> = map
         .iter()
         .filter_map(|entry| array_index(entry.0).map(|index| (index, entry)))
@@ -132,7 +132,7 @@ pub fn stringify(value: &Value) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use serde_json::json;
+    use dot::json::json;
 
     #[test]
     fn formats_numbers_like_javascript() {
@@ -147,7 +147,7 @@ mod tests {
     #[test]
     fn stringifies_like_javascript() {
         let value: Value =
-            serde_json::from_str(r#"{"b":1.0,"2":"x\u0001","a":[true,null],"1":{}}"#).unwrap();
+            dot::json::from_str(r#"{"b":1.0,"2":"x\u0001","a":[true,null],"1":{}}"#).unwrap();
         assert_eq!(
             stringify(&value),
             r#"{"1":{},"2":"x\u0001","b":1,"a":[true,null]}"#

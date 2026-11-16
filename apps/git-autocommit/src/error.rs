@@ -1,5 +1,5 @@
 use crate::bash;
-use crate::color::Color;
+use dot::color::Color;
 use std::fmt;
 use std::io::{self, Write};
 

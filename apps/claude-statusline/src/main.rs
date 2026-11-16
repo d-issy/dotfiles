@@ -1,5 +1,5 @@
-use chrono::{Datelike, Local, TimeZone, Timelike};
-use serde_json::Value;
+use dot::json::Value;
+use dot::time::Zone;
 use std::io::Read;
 use std::process::{Command, Stdio};
 
@@ -52,14 +52,14 @@ fn format_tokens(n: i64) -> String {
     }
 }
 
-fn fmt_reset<Tz: TimeZone>(reset: i64, now: i64, tz: &Tz) -> Option<String> {
-    let at = tz.timestamp_opt(reset, 0).single()?;
-    let today = tz.timestamp_opt(now, 0).single()?;
-    let clock = format!("{:02}:{:02}", at.hour(), at.minute());
-    if at.date_naive() == today.date_naive() {
+fn fmt_reset(reset: i64, now: i64, zone: Zone) -> Option<String> {
+    let at = zone.at_seconds(reset)?;
+    let today = zone.at_seconds(now)?;
+    let clock = format!("{:02}:{:02}", at.hour, at.minute);
+    if at.date == today.date {
         Some(clock)
     } else {
-        let weekday = WEEKDAYS[at.weekday().num_days_from_sunday() as usize];
+        let weekday = WEEKDAYS[at.weekday_sunday as usize];
         Some(format!("{weekday} {clock}"))
     }
 }
@@ -71,14 +71,14 @@ struct UsageLimit {
 }
 
 impl UsageLimit {
-    fn render<Tz: TimeZone>(&self, now: i64, tz: &Tz) -> Option<String> {
+    fn render(&self, now: i64, zone: Zone) -> Option<String> {
         let used = self.used?;
         let level = Level::from_thresholds(used, 50, 80);
         let color = level.color();
         let label = self.label;
         let mut seg = format!("{DIM}{label}{RESET}{color}{used}%{RESET}");
         if level != Level::Ok
-            && let Some(at) = self.reset.and_then(|r| fmt_reset(r, now, tz))
+            && let Some(at) = self.reset.and_then(|r| fmt_reset(r, now, zone))
         {
             seg.push_str(&format!(" {color}{at}{RESET}"));
         }
@@ -100,13 +100,6 @@ fn field<'a>(v: &'a Value, path: &[&str]) -> Option<&'a Value> {
     path.iter()
         .try_fold(v, |cur, key| cur.get(key))
         .filter(|v| !matches!(v, Value::Null | Value::Bool(false)))
-}
-
-fn text(v: &Value) -> String {
-    match v {
-        Value::String(s) => s.clone(),
-        other => other.to_string(),
-    }
 }
 
 fn floor_int(v: Option<&Value>) -> Option<i64> {
@@ -150,8 +143,9 @@ impl Status {
             reset: epoch(field(v, &["rate_limits", key, "resets_at"])),
         };
         Self {
-            model: field(v, &["model", "display_name"]).map_or("Unknown".to_string(), text),
-            effort: field(v, &["effort", "level"]).map_or(String::new(), text),
+            model: field(v, &["model", "display_name"])
+                .map_or("Unknown".to_string(), dot::json::raw_sorted),
+            effort: field(v, &["effort", "level"]).map_or(String::new(), dot::json::raw_sorted),
             context_size: floor_int(field(v, &["context_window", "context_window_size"]))
                 .unwrap_or(DEFAULT_CONTEXT_SIZE),
             context_used: usage("input_tokens")
@@ -163,7 +157,7 @@ impl Status {
     }
 
     fn parse(input: &str) -> Self {
-        serde_json::from_str(input)
+        dot::json::from_str(input)
             .ok()
             .map_or_else(Self::empty, |v| Self::from_json(&v))
     }
@@ -176,7 +170,7 @@ impl Status {
         }
     }
 
-    fn render<Tz: TimeZone>(&self, branch: &str, now: i64, tz: &Tz) -> String {
+    fn render(&self, branch: &str, now: i64, zone: Zone) -> String {
         let mut out = self.model.replacen(" context)", ")", 1);
         if !self.effort.is_empty() {
             out.push_str(&format!("{DIM}:{RESET}{}", self.effort));
@@ -199,7 +193,7 @@ impl Status {
 
         let limits: Vec<String> = [&self.five_hour, &self.seven_day]
             .into_iter()
-            .filter_map(|limit| limit.render(now, tz))
+            .filter_map(|limit| limit.render(now, zone))
             .collect();
         if !limits.is_empty() {
             out.push_str(&format!(" {DIM}|{RESET} {}", limits.join(" ")));
@@ -208,8 +202,8 @@ impl Status {
     }
 }
 
-fn render<Tz: TimeZone>(input: &str, branch: &str, now: i64, tz: &Tz) -> String {
-    Status::parse(input).render(branch, now, tz)
+fn render(input: &str, branch: &str, now: i64, zone: Zone) -> String {
+    Status::parse(input).render(branch, now, zone)
 }
 
 fn git_branch() -> String {
@@ -218,9 +212,7 @@ fn git_branch() -> String {
         .stderr(Stdio::null())
         .output()
         .map(|o| {
-            String::from_utf8_lossy(&o.stdout)
-                .trim_end_matches('\n')
-                .to_string()
+            dot::shell::strip_trailing_newlines(&String::from_utf8_lossy(&o.stdout)).to_string()
         })
         .unwrap_or_default()
 }
@@ -228,17 +220,21 @@ fn git_branch() -> String {
 fn main() {
     let mut raw = Vec::new();
     let _ = std::io::stdin().read_to_end(&mut raw);
-    let now = chrono::Utc::now().timestamp();
+    let now = dot::time::now_seconds();
     println!(
         "{}",
-        render(&String::from_utf8_lossy(&raw), &git_branch(), now, &Local)
+        render(
+            &String::from_utf8_lossy(&raw),
+            &git_branch(),
+            now,
+            Zone::Local
+        )
     );
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use chrono::Utc;
 
     const GOLDEN_FULL: &str = "Opus 5 (1M)\x1b[2m:\x1b[0mhigh \x1b[2m|\x1b[0m \x1b[36mmain\x1b[0m \x1b[2m|\x1b[0m \x1b[33m751K\x1b[0m\x1b[2m/1M\x1b[0m \x1b[33m(75.1%)\x1b[0m \x1b[2m|\x1b[0m \x1b[2m5h \x1b[0m\x1b[33m62%\x1b[0m \x1b[33m23:13\x1b[0m \x1b[2m7d \x1b[0m\x1b[31m92%\x1b[0m \x1b[31m日 13:20\x1b[0m";
     const GOLDEN_MINIMAL: &str = "Unknown \x1b[2m|\x1b[0m \x1b[36mmain\x1b[0m";
@@ -261,15 +257,28 @@ mod tests {
     #[test]
     fn reset_today_and_other_day() {
         let now = 1_700_000_000; // 2023-11-14 22:13:20 UTC (Tue)
-        assert_eq!(fmt_reset(now + 600, now, &Utc).as_deref(), Some("22:23"));
         assert_eq!(
-            fmt_reset(now + 86_400, now, &Utc).as_deref(),
+            fmt_reset(now + 600, now, Zone::Utc).as_deref(),
+            Some("22:23")
+        );
+        assert_eq!(
+            fmt_reset(now + 86_400, now, Zone::Utc).as_deref(),
             Some("水 22:13")
         );
         assert_eq!(
-            fmt_reset(now + 4 * 86_400, now, &Utc).as_deref(),
+            fmt_reset(now + 4 * 86_400, now, Zone::Utc).as_deref(),
             Some("土 22:13")
         );
+    }
+
+    #[test]
+    fn reset_labels_change_at_utc_midnight() {
+        assert_eq!(fmt_reset(86_399, 0, Zone::Utc).as_deref(), Some("23:59"));
+        assert_eq!(
+            fmt_reset(86_400, 86_399, Zone::Utc).as_deref(),
+            Some("金 00:00")
+        );
+        assert_eq!(fmt_reset(i64::MAX, 0, Zone::Utc), None);
     }
 
     #[test]
@@ -281,7 +290,7 @@ mod tests {
                 used: Some(50),
                 reset: Some(now + 60)
             }
-            .render(now, &Utc)
+            .render(now, Zone::Utc)
             .unwrap_or_default(),
             format!("{DIM}5h {RESET}{GREEN}50%{RESET}")
         );
@@ -291,7 +300,7 @@ mod tests {
                 used: Some(51),
                 reset: Some(now + 60)
             }
-            .render(now, &Utc)
+            .render(now, Zone::Utc)
             .unwrap_or_default(),
             format!("{DIM}5h {RESET}{YELLOW}51%{RESET} {YELLOW}22:14{RESET}")
         );
@@ -301,7 +310,7 @@ mod tests {
                 used: Some(81),
                 reset: None
             }
-            .render(now, &Utc)
+            .render(now, Zone::Utc)
             .unwrap_or_default(),
             format!("{DIM}7d {RESET}{RED}81%{RESET}")
         );
@@ -311,7 +320,7 @@ mod tests {
                 used: None,
                 reset: None
             }
-            .render(now, &Utc)
+            .render(now, Zone::Utc)
             .unwrap_or_default(),
             ""
         );
@@ -320,11 +329,14 @@ mod tests {
     #[test]
     fn golden_full() {
         let input = r#"{"model":{"display_name":"Opus 5 (1M context)"},"effort":{"level":"high"},"context_window":{"context_window_size":1000000,"current_usage":{"input_tokens":1200,"cache_creation_input_tokens":300000,"cache_read_input_tokens":450000}},"rate_limits":{"five_hour":{"used_percentage":62.4,"resets_at":1700003600},"seven_day":{"used_percentage":91.6,"resets_at":1700400000}}}"#;
-        assert_eq!(render(input, "main", 1_700_000_000, &Utc), GOLDEN_FULL);
+        assert_eq!(render(input, "main", 1_700_000_000, Zone::Utc), GOLDEN_FULL);
     }
 
     #[test]
     fn golden_minimal() {
-        assert_eq!(render("{}", "main", 1_700_000_000, &Utc), GOLDEN_MINIMAL);
+        assert_eq!(
+            render("{}", "main", 1_700_000_000, Zone::Utc),
+            GOLDEN_MINIMAL
+        );
     }
 }

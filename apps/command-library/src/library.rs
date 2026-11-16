@@ -1,6 +1,6 @@
 use crate::config::{Config, Entry, Section};
 use crate::error::{Error, Result};
-use regex::{Captures, Regex};
+use dot::regex::{Captures, Regex};
 use std::collections::HashMap;
 use std::iter;
 use std::sync::LazyLock;
@@ -145,13 +145,11 @@ pub fn placeholders(command: &str) -> Vec<String> {
 }
 
 pub fn substitute(command: &str, values: &HashMap<String, String>) -> String {
-    PLACEHOLDER
-        .replace_all(command, |captures: &Captures| {
-            values
-                .get(&captures[1])
-                .map_or_else(|| captures[0].to_string(), Clone::clone)
-        })
-        .into_owned()
+    PLACEHOLDER.replace_all(command, |captures: &Captures| {
+        values
+            .get(&captures[1])
+            .map_or_else(|| captures[0].to_string(), Clone::clone)
+    })
 }
 
 pub fn extract_column(

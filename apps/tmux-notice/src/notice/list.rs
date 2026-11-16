@@ -148,7 +148,7 @@ mod tests {
 
     #[test]
     fn list_output() {
-        let config: Config = serde_json::from_str(
+        let config: Config = dot::json::from_str(
             r#"{
               "fallback": {"icons": ["•"], "titleMode": "name"},
               "notices": {

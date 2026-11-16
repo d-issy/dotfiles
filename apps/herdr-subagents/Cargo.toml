@@ -8,7 +8,4 @@ publish.workspace = true
 workspace = true
 
 [dependencies]
-rustix = { version = "1", features = ["process"] }
-serde_json = { version = "1", features = ["preserve_order"] }
-sha2 = "0.11"
-signal-hook = "0.4"
+dot.workspace = true

@@ -7,7 +7,7 @@ use crate::manifest::Manifest;
 use crate::preset::{Catalogs, Launch, Preset};
 use crate::session::Session;
 use crate::status;
-use serde_json::{Value, json};
+use dot::json::{Value, json};
 use std::fmt;
 use std::fs;
 use std::path::PathBuf;
@@ -246,8 +246,8 @@ fn start_with_retry(herdr: &Herdr, agent: &Agent, pane: &str) -> bool {
         if output.success {
             return true;
         }
-        let error_code = serde_json::from_str::<Value>(output.stdout.trim())
-            .or_else(|_| serde_json::from_str::<Value>(output.combined().trim()))
+        let error_code = dot::json::from_str::<Value>(output.stdout.trim())
+            .or_else(|_| dot::json::from_str::<Value>(output.combined().trim()))
             .map(|value| raw_or(value.pointer("/error/code"), ""))
             .unwrap_or_default();
         last_output = output.combined();

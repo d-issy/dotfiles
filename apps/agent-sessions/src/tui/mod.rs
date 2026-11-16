@@ -8,8 +8,7 @@ use std::sync::mpsc::{self, Receiver, RecvTimeoutError};
 use std::thread;
 use std::time::{Duration, Instant};
 
-use signal_hook::consts::{SIGHUP, SIGINT, SIGTERM, SIGWINCH};
-use signal_hook::iterator::Signals;
+use dot::signal::{Signal, Signals};
 
 use crate::format::format_age;
 use crate::model::{Session, SessionStatus};
@@ -45,10 +44,15 @@ fn spawn_event_sources() -> io::Result<Receiver<Event>> {
             }
         }
     });
-    let mut signals = Signals::new([SIGINT, SIGTERM, SIGHUP, SIGWINCH])?;
+    let signals = Signals::new([
+        Signal::Interrupt,
+        Signal::Terminate,
+        Signal::Hangup,
+        Signal::Resize,
+    ])?;
     thread::spawn(move || {
-        for signal in signals.forever() {
-            let event = if signal == SIGWINCH {
+        for signal in signals {
+            let event = if signal == Signal::Resize {
                 Event::Resize
             } else {
                 Event::Terminate

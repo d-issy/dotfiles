@@ -1,7 +1,7 @@
 use crate::error::Result;
 use crate::json;
 use crate::session::Session;
-use serde_json::{Value, json};
+use dot::json::{Value, json};
 
 pub fn show(session: &Session) -> Result<()> {
     let mut manifest = session.require_manifest()?;

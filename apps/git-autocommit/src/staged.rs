@@ -1,4 +1,4 @@
-use crate::color::Color;
+use dot::color::Color;
 use std::fmt;
 
 /// One `git diff --name-status` line. Renames keep both paths in `path`.

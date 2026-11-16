@@ -1,8 +1,8 @@
 use crate::config::Variable;
 use crate::error::Result;
 use crate::library::regex;
-use regex::Captures;
-use serde_json::Value;
+use dot::json::Value;
+use dot::regex::Captures;
 use std::collections::HashSet;
 
 pub struct Candidates {
@@ -55,7 +55,7 @@ pub fn json_values(data: &Value, path: &str) -> Vec<String> {
 
 fn split(output: &str, variable: &Variable) -> Result<Vec<String>> {
     if let Some(path) = &variable.json {
-        return Ok(serde_json::from_str::<Value>(output)
+        return Ok(dot::json::from_str::<Value>(output)
             .map(|data| json_values(&data, path))
             .unwrap_or_default());
     }
@@ -132,11 +132,9 @@ fn transform(values: Vec<String>, variable: &Variable) -> Result<Vec<String>> {
         result = result
             .iter()
             .map(|value| {
-                pattern
-                    .replace_all(value, |captures: &Captures| {
-                        expand_js_replacement(&replacement.to, captures, value)
-                    })
-                    .into_owned()
+                pattern.replace_all(value, |captures: &Captures| {
+                    expand_js_replacement(&replacement.to, captures, value)
+                })
             })
             .collect();
     }
@@ -167,7 +165,7 @@ pub fn parse_candidates(variable: &Variable, output: &str) -> Result<Candidates>
 mod tests {
     use super::*;
     use crate::config::Replacement;
-    use serde_json::json;
+    use dot::json::json;
 
     fn variable() -> Variable {
         Variable {

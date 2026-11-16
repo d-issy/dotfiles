@@ -1,6 +1,6 @@
 use std::sync::LazyLock;
 
-use serde_json::{Map, Value};
+use dot::json::{Map, Value};
 
 use crate::js;
 use crate::model::JsonObject;
@@ -55,7 +55,7 @@ pub fn parse_object_line(line: &str) -> Option<JsonObject> {
     if js::trim(line).is_empty() {
         return None;
     }
-    match serde_json::from_str(line) {
+    match dot::json::from_str(line) {
         Ok(Value::Object(map)) => Some(map),
         _ => None,
     }

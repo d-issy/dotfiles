@@ -153,7 +153,7 @@ mod tests {
     use super::*;
     use crate::sessions::now_ms;
     use crate::test_support::{TempDir, append};
-    use serde_json::{Value, json};
+    use dot::json::{Value, json};
 
     fn line(value: Value) -> String {
         format!("{value}\n")
