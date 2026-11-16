@@ -21,7 +21,7 @@ in
       entries = [
         {
           description = "apply home-manager configuration for this machine";
-          command = "nix run .#apply -- --max-jobs auto --cores 1";
+          command = "nix run .#apply";
         }
       ];
     }
