@@ -94,6 +94,9 @@ jobs:
             herdr-subagents:
               - *rust-shared
               - 'apps/herdr-subagents/**'
+            herdr-switcher:
+              - *rust-shared
+              - 'apps/herdr-switcher/**'
             tmux-notice:
               - *rust-shared
               - 'apps/tmux-notice/**'
