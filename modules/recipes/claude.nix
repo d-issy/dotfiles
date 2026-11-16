@@ -1,6 +1,7 @@
 {
   config,
   lib,
+  pkgs,
   dot,
   ...
 }:
@@ -14,6 +15,8 @@ in
 {
   config = {
     home = {
+      packages = [ pkgs.dotApps.claude-statusline ];
+
       shellAliases = {
         cla = "claude --permission-mode auto";
         clc = "claude --continue";

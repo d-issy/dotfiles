@@ -38,12 +38,18 @@
         system:
         import nixpkgs {
           inherit system;
+          overlays = [
+            (final: _: {
+              dotApps = import ./apps { pkgs = final; };
+            })
+          ];
         };
 
       mkToolPackages = pkgs: rec {
         formatter = with pkgs; [
           nixfmt
           oxfmt
+          rustfmt
           shfmt
           stylua
           taplo
@@ -67,6 +73,10 @@
           ++ linter
           ++ lsp
           ++ (with pkgs; [
+            cargo
+            cargo-audit
+            clippy
+            rustc
             nodejs_26
             pnpm
           ]);
@@ -248,7 +258,8 @@
         applyApp = mkApplyApp system pkgs;
         gcApp = mkGcApp system pkgs;
         generationsApp = mkGenerationsApp system pkgs;
-        agentSessionsApp = import ./apps/agent-sessions { inherit pkgs; };
+        agentSessionsApp = pkgs.dotApps.agent-sessions;
+        rustChecks = import ./apps/rust-checks.nix { inherit pkgs; };
       in
       {
         apps = {
@@ -279,6 +290,7 @@
 
         checks =
           mkLintChecks pkgs
+          // rustChecks
           // {
             home-manager = self.homeConfigurations.${homeConfigurationNames.${system}}.activationPackage;
             worktree-regressions = import ./tests/shell { inherit pkgs; };

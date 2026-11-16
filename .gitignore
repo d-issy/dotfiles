@@ -4,3 +4,4 @@ coverage/
 result
 result-*
 .pnpm-store/
+target/

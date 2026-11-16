@@ -69,17 +69,10 @@ let
     }
   );
 
-  tmuxNoticeScript = import ./script.nix {
-    inherit configFile lib pkgs;
-  };
-
-  tmuxNotice = pkgs.writeShellApplication {
+  tmuxNotice = pkgs.dotApps.wrapTmuxNotice {
     name = "tmux-notice";
-    runtimeInputs = [
-      pkgs.jq
-      cfg.tmuxPackage
-    ];
-    text = tmuxNoticeScript;
+    tmux = cfg.tmuxPackage;
+    env.TMUX_NOTICE_CONFIG = configFile;
   };
 in
 {
