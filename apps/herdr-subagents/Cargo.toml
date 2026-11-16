@@ -11,4 +11,4 @@ workspace = true
 rustix = { version = "1", features = ["process"] }
 serde_json = { version = "1", features = ["preserve_order"] }
 sha2 = "0.10"
-signal-hook = "0.3"
+signal-hook = "0.4"
