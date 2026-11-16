@@ -6,7 +6,11 @@
     stateVersion = "26.05";
 
     sessionVariables = {
-      NIX_CONFIG = "extra-experimental-features = nix-command flakes";
+      NIX_CONFIG = ''
+        extra-experimental-features = nix-command flakes
+        max-jobs = auto
+        cores = 1
+      '';
     };
 
     sessionPath = [
