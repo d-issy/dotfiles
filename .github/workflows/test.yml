@@ -82,54 +82,63 @@ jobs:
               - 'apps/worktree/**'
 
   test:
-    name: pnpm test (${{ matrix.project }})
+    name: pnpm test
     runs-on: ubuntu-latest
     timeout-minutes: 15
     needs:
       - changes
-    if: ${{ needs.changes.outputs.projects != '[]' }}
     strategy:
       fail-fast: false
       matrix:
-        project: ${{ fromJSON(needs.changes.outputs.projects) }}
+        # A no-op target keeps the job name readable when no projects changed.
+        project: ${{ fromJSON(needs.changes.outputs.projects != '[]' && needs.changes.outputs.projects || '["skip"]') }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: ${{ matrix.project != 'skip' }}
         with:
           persist-credentials: false
       - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+        if: ${{ matrix.project != 'skip' }}
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        if: ${{ matrix.project != 'skip' }}
         with:
           node-version: 26
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+        if: ${{ matrix.project != 'skip' }}
       - run: pnpm test --project "$PROJECT"
+        if: ${{ matrix.project != 'skip' }}
         env:
           PROJECT: ${{ matrix.project }}
 
   cargo-test:
-    name: cargo test (${{ matrix.crate }})
+    name: cargo test
     runs-on: ubuntu-latest
     timeout-minutes: 30
     needs:
       - changes
-    if: ${{ needs.changes.outputs.crates != '[]' }}
     strategy:
       fail-fast: false
       matrix:
-        crate: ${{ fromJSON(needs.changes.outputs.crates) }}
+        # A no-op target keeps the job name readable when no crates changed.
+        crate: ${{ fromJSON(needs.changes.outputs.crates != '[]' && needs.changes.outputs.crates || '["skip"]') }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: ${{ matrix.crate != 'skip' }}
         with:
           persist-credentials: false
       - uses: cachix/install-nix-action@75c75c31ebece974e48ebc36b4ad125bd97bd97b # v31.11.3
+        if: ${{ matrix.crate != 'skip' }}
         with:
           extra_nix_config: |
             experimental-features = nix-command flakes
       - uses: nix-community/cache-nix-action@7df957e333c1e5da7721f60227dbba6d06080569 # v7.0.2
+        if: ${{ matrix.crate != 'skip' }}
         with:
           primary-key: nix-cargo-test-${{ runner.os }}-${{ hashFiles('**/flake.lock', 'Cargo.lock') }}
           restore-prefixes-first-match: nix-cargo-test-${{ runner.os }}-
       - run: nix build -L ".#checks.x86_64-linux.rust-test-$CRATE"
+        if: ${{ matrix.crate != 'skip' }}
         env:
           CRATE: ${{ matrix.crate }}
 

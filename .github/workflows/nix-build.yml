@@ -49,33 +49,33 @@ jobs:
               - '.github/workflows/nix-build.yml'
 
   nix-flake-check:
-    name: Nix flake check (${{ matrix.config }})
-    runs-on: ${{ matrix.os }}
+    name: Nix flake check
+    runs-on: ${{ matrix.config == 'macos' && 'macos-latest' || 'ubuntu-latest' }}
     timeout-minutes: 60
     needs:
       - changes
-    if: ${{ needs.changes.outputs.nix == 'true' }}
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - config: linux
-            os: ubuntu-latest
-          - config: macos
-            os: macos-latest
+        # Use one cheap no-op target when no Nix inputs changed.
+        config: ${{ fromJSON(needs.changes.outputs.nix == 'true' && '["linux", "macos"]' || '["skip"]') }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: ${{ matrix.config != 'skip' }}
         with:
           persist-credentials: false
       - uses: cachix/install-nix-action@75c75c31ebece974e48ebc36b4ad125bd97bd97b # v31.11.3
+        if: ${{ matrix.config != 'skip' }}
         with:
           extra_nix_config: |
             experimental-features = nix-command flakes
       - uses: nix-community/cache-nix-action@7df957e333c1e5da7721f60227dbba6d06080569 # v7.0.2
+        if: ${{ matrix.config != 'skip' }}
         with:
           primary-key: nix-flake-check-${{ runner.os }}-${{ hashFiles('flake.lock', 'Cargo.lock') }}
           restore-prefixes-first-match: nix-flake-check-${{ runner.os }}-
       - run: nix flake check
+        if: ${{ matrix.config != 'skip' }}
 
   all-nix-build-passed:
     name: All Nix Build Passed
