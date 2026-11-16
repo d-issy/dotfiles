@@ -90,6 +90,9 @@ jobs:
             herdr-subagents:
               - *rust-shared
               - 'apps/herdr-subagents/**'
+            herdr-switcher:
+              - *rust-shared
+              - 'apps/herdr-switcher/**'
             tm-switcher:
               - *rust-shared
               - 'apps/tm-switcher/**'

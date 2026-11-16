@@ -31,6 +31,17 @@ rec {
     description = "Herdr subagent layout manager";
   };
 
+  herdr-switcher = rustApp {
+    pname = "herdr-switcher";
+    description = "Select Herdr workspaces and repositories";
+    nativeCheckInputs = [ pkgs.bash ];
+  };
+
+  wrapHerdrSwitcher = import ./herdr-switcher/wrap.nix {
+    inherit pkgs;
+    unwrapped = herdr-switcher;
+  };
+
   tm-switcher = rustApp {
     pname = "tm-switcher";
     description = "Select tmux sessions and repositories";
