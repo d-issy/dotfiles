@@ -1,7 +1,39 @@
-use chrono::{
-    DateTime, Datelike, Days, Local, NaiveDate, NaiveDateTime, NaiveTime, Offset, TimeZone,
-    Timelike, Utc,
-};
+use std::{cell::RefCell, ops::RangeInclusive, time::Instant};
+
+use tz::{DateTime, TimeZone, TimeZoneRef, UtcDateTime, datetime::FoundDateTimeKind};
+
+// Keep the calendar bounds used by the existing timestamp parser and formatter.
+const CALENDAR_YEARS: RangeInclusive<i32> = -262_143..=262_142;
+
+fn utc_date(seconds: i64) -> Option<UtcDateTime> {
+    let date = UtcDateTime::from_timespec(seconds, 0).ok()?;
+    CALENDAR_YEARS.contains(&date.year()).then_some(date)
+}
+
+fn with_local_zone<T>(f: impl FnOnce(TimeZoneRef<'_>) -> T) -> T {
+    thread_local! {
+        static ZONE: RefCell<Option<(Instant, TimeZone)>> = const { RefCell::new(None) };
+    }
+    ZONE.with(|cache| {
+        let mut cache = cache.borrow_mut();
+        // Match the old clock's polling interval without rereading zoneinfo for each row.
+        if cache
+            .as_ref()
+            .is_some_and(|(loaded, _)| loaded.elapsed().as_secs() >= 1)
+        {
+            *cache = None;
+        }
+        let (_, zone) = cache.get_or_insert_with(|| {
+            let zone = std::env::var("TZ")
+                .ok()
+                .and_then(|name| TimeZone::from_posix_tz(&name).ok())
+                .or_else(|| TimeZone::local().ok())
+                .unwrap_or_else(TimeZone::utc);
+            (Instant::now(), zone)
+        });
+        f(zone.as_ref())
+    })
+}
 
 /// Time zone used when projecting an instant into calendar fields.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -26,42 +58,40 @@ pub struct DateParts {
     pub second: u32,
 }
 
-fn date_parts<Tz: TimeZone>(date: DateTime<Tz>) -> DateParts {
+fn date_parts(date: DateTime) -> DateParts {
     DateParts {
         date: Date {
             year: date.year(),
-            month: date.month(),
-            day: date.day(),
+            month: u32::from(date.month()),
+            day: u32::from(date.month_day()),
         },
-        weekday_sunday: date.weekday().num_days_from_sunday(),
-        hour: date.hour(),
-        minute: date.minute(),
-        second: date.second(),
+        weekday_sunday: u32::from(date.week_day()),
+        hour: u32::from(date.hour()),
+        minute: u32::from(date.minute()),
+        second: u32::from(date.second()),
     }
 }
 
 impl Zone {
     pub fn at_seconds(self, seconds: i64) -> Option<DateParts> {
+        let utc = utc_date(seconds)?;
+        let project = |zone: TimeZoneRef<'_>| utc.project(zone).ok().map(date_parts);
         match self {
-            Self::Local => Local.timestamp_opt(seconds, 0).single().map(date_parts),
-            Self::Utc => Utc.timestamp_opt(seconds, 0).single().map(date_parts),
+            Self::Local => with_local_zone(project),
+            Self::Utc => project(TimeZoneRef::utc()),
         }
     }
 
     pub fn at_millis(self, millis: i64) -> Option<DateParts> {
-        match self {
-            Self::Local => Local
-                .timestamp_millis_opt(millis)
-                .earliest()
-                .map(date_parts),
-            Self::Utc => Utc.timestamp_millis_opt(millis).earliest().map(date_parts),
-        }
+        self.at_seconds(millis.div_euclid(1000))
     }
 }
 
 /// Current Unix time in seconds.
 pub fn now_seconds() -> i64 {
-    Utc::now().timestamp()
+    UtcDateTime::now()
+        .expect("system time is out of range")
+        .unix_time()
 }
 
 /// Local `HH:MM:SS`, truncating fractional milliseconds like JavaScript's `Date`.
@@ -173,12 +203,30 @@ fn utc_offset(scanner: &mut Scanner) -> Option<UtcOffset> {
     }
 }
 
-fn local_offset_millis(naive: &NaiveDateTime) -> i64 {
-    let offset = match Local.from_local_datetime(naive).earliest() {
-        Some(local) => local.offset().fix(),
-        None => Local.offset_from_utc_datetime(naive).fix(),
-    };
-    i64::from(offset.local_minus_utc()) * 1000
+fn local_offset_seconds(naive: UtcDateTime, zone: TimeZoneRef<'_>) -> Option<i32> {
+    let candidates = DateTime::find(
+        naive.year(),
+        naive.month(),
+        naive.month_day(),
+        naive.hour(),
+        naive.minute(),
+        naive.second(),
+        0,
+        zone,
+    )
+    .ok()?;
+    // In a repeated hour choose the first valid instant. In a skipped hour
+    // keep using the offset at the wall time interpreted as UTC.
+    for candidate in candidates.into_inner() {
+        if let FoundDateTimeKind::Normal(date) = candidate {
+            return Some(date.local_time_type().ut_offset());
+        }
+    }
+    Some(
+        zone.find_local_time_type(naive.unix_time())
+            .ok()?
+            .ut_offset(),
+    )
 }
 
 /// `Date.parse` for the ISO 8601 forms V8 accepts. Date-only strings are UTC
@@ -189,18 +237,18 @@ pub fn parse_iso_millis(text: &str) -> Option<f64> {
     let year = year(&mut scanner)?;
     let (mut month, mut day) = (1, 1);
     if scanner.eat(b'-') {
-        month = scanner.digits(2)?;
+        month = scanner.digits(2)? as u8;
         if scanner.eat(b'-') {
             day = scanner.digits(2)?;
         }
     }
-    if !(1..=12).contains(&month) || !(1..=31).contains(&day) {
+    if !CALENDAR_YEARS.contains(&year) || !(1..=31).contains(&day) {
         return None;
     }
-    let date =
-        NaiveDate::from_ymd_opt(year, month, 1)?.checked_add_days(Days::new(u64::from(day - 1)))?;
+    let month_start = UtcDateTime::new(year, month, 1, 0, 0, 0, 0).ok()?;
+    let midnight = month_start.unix_time() + i64::from(day - 1) * 86_400;
     if scanner.at_end() {
-        return Some(date.and_time(NaiveTime::MIN).and_utc().timestamp_millis() as f64);
+        return Some((utc_date(midnight)?.unix_time() * 1000) as f64);
     }
     scanner.eat_any(b"Tt ")?;
     let hour = scanner.digits(2)?;
@@ -223,21 +271,18 @@ pub fn parse_iso_millis(text: &str) -> Option<f64> {
     if !scanner.at_end() {
         return None;
     }
-    let (date, hour) = match hour {
-        24 if minute == 0 && second == 0 && millis == 0 => (date.succ_opt()?, 0),
-        24 => return None,
-        _ => (date, hour),
+    if minute > 59 || second > 59 || hour > 24 || (hour == 24 && minute + second + millis != 0) {
+        return None;
+    }
+    let seconds = midnight + i64::from(hour * 3600 + minute * 60 + second);
+    let naive = utc_date(seconds)?;
+    let offset_seconds = match offset {
+        UtcOffset::Minutes(minutes) => minutes * 60,
+        UtcOffset::LocalTime => {
+            i64::from(with_local_zone(|zone| local_offset_seconds(naive, zone))?)
+        }
     };
-    let naive = NaiveDateTime::new(
-        date,
-        NaiveTime::from_hms_milli_opt(hour, minute, second, millis)?,
-    );
-    let utc = naive.and_utc().timestamp_millis();
-    let millis = match offset {
-        UtcOffset::Minutes(minutes) => utc - minutes * 60_000,
-        UtcOffset::LocalTime => utc - local_offset_millis(&naive),
-    };
-    Some(millis as f64)
+    Some(((seconds - offset_seconds) * 1000 + i64::from(millis)) as f64)
 }
 
 #[cfg(test)]
@@ -302,6 +347,21 @@ mod tests {
     }
 
     #[test]
+    fn local_offsets_preserve_gap_and_repeated_hour_handling() {
+        let zone = TimeZone::from_posix_tz("EST5EDT,M3.2.0,M11.1.0").unwrap();
+        let skipped = UtcDateTime::new(2026, 3, 8, 2, 30, 0, 0).unwrap();
+        let repeated = UtcDateTime::new(2026, 11, 1, 1, 30, 0, 0).unwrap();
+        assert_eq!(
+            local_offset_seconds(skipped, zone.as_ref()),
+            Some(-5 * 3600)
+        );
+        assert_eq!(
+            local_offset_seconds(repeated, zone.as_ref()),
+            Some(-4 * 3600)
+        );
+    }
+
+    #[test]
     fn parses_iso_timestamps() {
         // Expected values come from Node's Date.parse.
         for (text, expected) in [
@@ -312,6 +372,7 @@ mod tests {
             ("2025-01-02", Some(1_735_776_000_000.0)),
             ("2026", Some(1_767_225_600_000.0)),
             ("+002026-11-15T00:00:00Z", Some(1_794_700_800_000.0)),
+            ("+010000-01-01T00:00:00Z", Some(253_402_300_800_000.0)),
             ("2025-02-31", Some(1_740_960_000_000.0)),
             ("2025-01-01T24:00:00Z", Some(1_735_776_000_000.0)),
             ("2025-02-32", None),
