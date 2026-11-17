@@ -97,7 +97,7 @@ describe("gateway speed modes", () => {
 		},
 	);
 
-	it.each(["gpt-6-luna", "gpt-5.6-luna", "grok-4.7", "grok-4.6"])(
+	it.each(["gpt-6-luna", "gpt-5.6-luna", "grok-4.7"])(
 		"forwards Priority for OpenCode Go %s",
 		(id) => {
 			const model = fastModel("opencode-go", id);
@@ -113,15 +113,28 @@ describe("gateway speed modes", () => {
 	);
 
 	it("covers all audited gateway families without enabling unknown models or batch variants", () => {
-		assert.equal(OPENROUTER_FAST_MODEL_IDS.size, 50);
+		assert.equal(OPENROUTER_FAST_MODEL_IDS.size, 55);
 		for (const id of [
+			"openai/gpt-6.2-astra",
+			"openai/gpt-6.2-astra-pro",
+			"openai/gpt-6.2-sol",
+			"openai/gpt-6.2-sol-pro",
+			"openai/gpt-6.1-terra",
+			"openai/gpt-6.1-terra-pro",
 			"openai/gpt-6.1-sol-pro",
+			"anthropic/claude-fable-5.2",
 			"anthropic/claude-opus-5.5",
 			"google/gemini-4-argon",
+			"google/gemini-4-carbon",
+			"google/gemini-4-hydrogen",
 			"google/gemini-3.8-flash",
+			"google/gemini-2.5-flash-lite",
 			"x-ai/grok-4.7",
+			"x-ai/grok-4.6",
+			"deepseek/deepseek-v4.1-flash-1017",
 			"deepseek/deepseek-v4.1-flash",
 			"z-ai/glm-5.3",
+			"moonshotai/kimi-k3.1-pro",
 			"moonshotai/kimi-k3",
 		])
 			assert.equal(supportsFast({ provider: "openrouter", id }), true);
@@ -131,10 +144,14 @@ describe("gateway speed modes", () => {
 			"anthropic/claude-opus-4.7",
 		])
 			assert.equal(supportsFast({ provider: "openrouter", id }), false);
-		assert.equal(
-			supportsUltrafast({ provider: "openrouter", id: "openai/gpt-6.1-sol" }),
-			true,
-		);
+		for (const id of [
+			"openai/gpt-6.2-astra",
+			"openai/gpt-6.2-astra-pro",
+			"openai/gpt-6.2-sol",
+			"openai/gpt-6.2-sol-pro",
+			"openai/gpt-6.1-sol",
+		])
+			assert.equal(supportsUltrafast({ provider: "openrouter", id }), true);
 		assert.equal(
 			supportsFast({ provider: "opencode-go", id: "gpt-6-astra" }),
 			false,
@@ -176,6 +193,8 @@ describe("gateway speed modes", () => {
 
 describe("OpenAI provider migration", () => {
 	it.each([
+		"gpt-6.2-astra",
+		"gpt-6.2-sol",
 		"gpt-6.1-terra",
 		"gpt-6.1-sol",
 		"gpt-6-astra",
@@ -226,6 +245,8 @@ describe("OpenAI provider migration", () => {
 
 describe("supportsFast", () => {
 	it.each([
+		"gpt-6.2-astra",
+		"gpt-6.2-sol",
 		"gpt-6.1-terra",
 		"gpt-6.1-sol",
 		"gpt-6-astra",
@@ -234,18 +255,33 @@ describe("supportsFast", () => {
 		"gpt-5.6-terra",
 		"gpt-5.6-sol",
 		"gpt-5.6-luna",
-		"gpt-5.5",
-		"gpt-5.4",
 	])("supports %s through ChatGPT", (id) => {
 		assert.equal(supportsFast({ provider: "openai-codex", id }), true);
 	});
 
-	it.each(["claude-opus-5-5", "claude-opus-5", "claude-opus-4-8"])(
+	it.each(["claude-fable-5-2", "claude-opus-5-5", "claude-opus-5"])(
 		"supports %s through Anthropic",
 		(id) => {
 			assert.equal(supportsFast({ provider: "anthropic", id }), true);
 		},
 	);
+
+	it.each([
+		["openai-codex", "gpt-5.5"],
+		["openai-codex", "gpt-5.4"],
+		["opencode-go", "grok-4.6"],
+		["anthropic", "claude-opus-4-8"],
+		["openrouter", "anthropic/claude-opus-4.8"],
+		["openrouter", "google/gemini-3.1-flash-lite-preview"],
+		["openrouter", "google/gemini-2.5-pro"],
+		["openrouter", "google/gemini-2.5-pro-preview"],
+		["openrouter", "google/gemini-2.5-flash"],
+		["openrouter", "google/gemini-2.5-flash-image"],
+	])("does not enable Fast for retired support in %s/%s", (provider, id) => {
+		const model = { provider, id };
+		expect(supportsFast(model)).toBe(false);
+		expect(enableFastPayload({ model: id }, model)).toBeUndefined();
+	});
 
 	it("rejects unsupported models and providers", () => {
 		assert.equal(
@@ -268,7 +304,7 @@ describe("supportsFast", () => {
 });
 
 describe("Ultrafast", () => {
-	it.each(["gpt-6-astra", "gpt-6.1-sol"])(
+	it.each(["gpt-6.2-astra", "gpt-6.2-sol", "gpt-6-astra", "gpt-6.1-sol"])(
 		"supports %s through ChatGPT and sends the Ultrafast tier",
 		(id) => {
 			const model = { provider: "openai-codex", id };
@@ -325,6 +361,36 @@ describe("Ultrafast", () => {
 				),
 				message,
 			);
+		},
+	);
+
+	it.each([
+		["openai", "gpt-6.2-astra"],
+		["openai", "gpt-6.2-sol"],
+		["openai-codex", "gpt-6.2-astra"],
+		["openai-codex", "gpt-6.2-sol"],
+	])(
+		"switches %s/%s from promotional to list pricing at midnight Pacific",
+		(provider, id) => {
+			const model = fastModel(provider, id);
+			const message = assistant(provider, id);
+			const now = vi.spyOn(Date, "now");
+			try {
+				expect(enableFastPayload({ model: id }, model, "ultrafast")).toEqual({
+					model: id,
+					service_tier: "ultrafast",
+				});
+				now.mockReturnValue(Date.parse("2027-03-01T07:59:59Z"));
+				expect(
+					adjustFastCost(message, model, "ultrafast").usage.cost.total,
+				).toBe(11.25);
+				now.mockReturnValue(Date.parse("2027-03-01T08:00:00Z"));
+				expect(
+					adjustFastCost(message, model, "ultrafast").usage.cost.total,
+				).toBe(22.5);
+			} finally {
+				now.mockRestore();
+			}
 		},
 	);
 
@@ -391,7 +457,6 @@ describe("enableFastPayload", () => {
 		"gpt-6.1-sol",
 		"gpt-6-sol",
 		"gpt-6-luna",
-		"gpt-5.5",
 	])("adds the priority service tier to %s payloads", (id) => {
 		const payload = { model: id, stream: true };
 
@@ -402,7 +467,7 @@ describe("enableFastPayload", () => {
 		assert.deepEqual(payload, { model: id, stream: true });
 	});
 
-	it.each(["claude-opus-5-5", "claude-opus-5"])(
+	it.each(["claude-fable-5-2", "claude-opus-5-5", "claude-opus-5"])(
 		"adds fast speed to %s payloads",
 		(id) => {
 			assert.deepEqual(
@@ -415,8 +480,8 @@ describe("enableFastPayload", () => {
 	it("does not modify a request for a different model", () => {
 		assert.equal(
 			enableFastPayload(
-				{ model: "gpt-5.4-mini" },
-				{ provider: "openai-codex", id: "gpt-5.5" },
+				{ model: "gpt-6-luna" },
+				{ provider: "openai-codex", id: "gpt-6.2-sol" },
 			),
 			undefined,
 		);
@@ -424,9 +489,14 @@ describe("enableFastPayload", () => {
 });
 
 describe("adjustFastCost", () => {
-	it.each(["headers-first", "payload-first"])(
-		"pins Anthropic Fast across %s hooks and retries",
-		(order) => {
+	it.each([
+		["headers-first", "claude-opus-5", true],
+		["payload-first", "claude-opus-5", true],
+		["headers-first", "claude-fable-5-2", false],
+		["payload-first", "claude-opus-5-5", false],
+	])(
+		"pins Anthropic Fast across %s hooks and retries for %s",
+		(order, id, requiresBeta) => {
 			type Handler = (
 				event: Record<string, unknown>,
 				ctx: ExtensionContext,
@@ -436,7 +506,7 @@ describe("adjustFastCost", () => {
 				registerCommand: vi.fn(),
 				on: (name: string, handler: Handler) => handlers.set(name, handler),
 			} as unknown as ExtensionAPI);
-			const model = fastModel("anthropic", "claude-opus-5");
+			const model = fastModel("anthropic", id);
 			const ctx = { model } as ExtensionContext;
 			const headers: Record<string, string | null> = {};
 			const runHeaders = (): unknown =>
@@ -456,7 +526,9 @@ describe("adjustFastCost", () => {
 			controller.setMode(undefined, model);
 			if (order === "headers-first") payload = runPayload();
 			else runHeaders();
-			expect(headers["anthropic-beta"]).toContain("fast-mode-2026-02-01");
+			expect(headers["anthropic-beta"]).toBe(
+				requiresBeta ? "fast-mode-2026-02-01" : undefined,
+			);
 			expect(payload).toEqual({ model: model.id, speed: "fast" });
 			runHeaders();
 			expect(runPayload()).toEqual({ model: model.id, speed: "fast" });
@@ -538,12 +610,9 @@ describe("adjustFastCost", () => {
 		}
 	});
 
-	it("applies the Codex Fast multiplier", () => {
-		const message = assistant("openai-codex", "gpt-5.5");
-		const adjusted = adjustFastCost(
-			message,
-			fastModel("openai-codex", "gpt-5.5"),
-		);
+	it("applies the OpenAI API Fast multiplier for GPT-5.5", () => {
+		const message = assistant("openai", "gpt-5.5");
+		const adjusted = adjustFastCost(message, fastModel("openai", "gpt-5.5"));
 
 		assert.deepEqual(adjusted.usage.cost, {
 			input: 2.5,
@@ -582,10 +651,10 @@ describe("adjustFastCost", () => {
 	});
 
 	it("does not adjust a response from a different model", () => {
-		const message = assistant("openai-codex", "gpt-5.4-mini");
+		const message = assistant("openai-codex", "gpt-6-luna");
 
 		assert.equal(
-			adjustFastCost(message, fastModel("openai-codex", "gpt-5.5")),
+			adjustFastCost(message, fastModel("openai-codex", "gpt-6.2-sol")),
 			message,
 		);
 	});

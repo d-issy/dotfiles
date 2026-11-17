@@ -7,11 +7,14 @@ import { type RecordLike, isRecord } from "../lib/record";
 
 const ANTHROPIC_FAST_BETA = "fast-mode-2026-02-01";
 const ANTHROPIC_FAST_MODEL_IDS = new Set([
+	"claude-fable-5-2",
 	"claude-opus-5-5",
 	"claude-opus-5",
-	"claude-opus-4-8",
 ]);
-const OPENAI_FAST_MODEL_IDS = new Set([
+
+const OPENAI_CODEX_FAST_MODEL_IDS = new Set([
+	"gpt-6.2-astra",
+	"gpt-6.2-sol",
 	"gpt-6.1-terra",
 	"gpt-6.1-sol",
 	"gpt-6-astra",
@@ -20,21 +23,36 @@ const OPENAI_FAST_MODEL_IDS = new Set([
 	"gpt-5.6-terra",
 	"gpt-5.6-sol",
 	"gpt-5.6-luna",
+]);
+// GPT-5.5 and GPT-5.4 still support API Fast after retiring from ChatGPT sign-in.
+const OPENAI_FAST_MODEL_IDS = new Set([
+	...OPENAI_CODEX_FAST_MODEL_IDS,
 	"gpt-5.5",
 	"gpt-5.4",
 ]);
+// https://learn.chatgpt.com/api/docs/guides/ultrafast-mode
+// https://learn.chatgpt.com/codex/agent-configuration/speed#ultrafast-mode
+const OPENAI_ULTRAFAST_MODEL_IDS = new Set([
+	"gpt-6.2-astra",
+	"gpt-6.2-sol",
+	"gpt-6.1-sol",
+	"gpt-6-astra",
+]);
 
 // Audited against all 464 OpenRouter models' /endpoints on 2026-09-30.
-// Gemini 4 Argon Priority and GPT-6.1 Sol Ultrafast endpoints verified separately.
+// Rechecked on 2026-11-18 against /endpoints and provider retirement notices.
 // https://openrouter.ai/docs/guides/features/service-tiers
 // Keep only models with explicit /fast, /priority, or /ultrafast endpoints.
 export const OPENROUTER_FAST_MODEL_IDS = new Set([
+	"anthropic/claude-fable-5.2",
 	"anthropic/claude-opus-5.5",
 	"anthropic/claude-opus-5",
-	"anthropic/claude-opus-4.8",
+	"deepseek/deepseek-v4.1-flash-1017",
 	"deepseek/deepseek-v4.1-flash",
 	"deepseek/deepseek-v4-flash-0731",
 	"google/gemini-4-argon",
+	"google/gemini-4-carbon",
+	"google/gemini-4-hydrogen",
 	"google/gemini-3.8-flash",
 	"google/gemini-3.7-flash",
 	"google/gemini-3.6-flash",
@@ -42,14 +60,16 @@ export const OPENROUTER_FAST_MODEL_IDS = new Set([
 	"google/gemini-3.5-flash-lite",
 	"google/gemini-3.1-pro-preview",
 	"google/gemini-3.1-flash-lite",
-	"google/gemini-3.1-flash-lite-preview",
 	"google/gemini-3-flash-preview",
-	"google/gemini-2.5-pro",
-	"google/gemini-2.5-pro-preview",
-	"google/gemini-2.5-flash",
-	"google/gemini-2.5-flash-image",
 	"google/gemini-2.5-flash-lite",
+	"moonshotai/kimi-k3.1-pro",
 	"moonshotai/kimi-k3",
+	"openai/gpt-6.2-astra-pro",
+	"openai/gpt-6.2-astra",
+	"openai/gpt-6.2-sol-pro",
+	"openai/gpt-6.2-sol",
+	"openai/gpt-6.1-terra-pro",
+	"openai/gpt-6.1-terra",
 	"openai/gpt-6.1-sol-pro",
 	"openai/gpt-6.1-sol",
 	"openai/gpt-6-astra-pro",
@@ -81,6 +101,10 @@ export const OPENROUTER_FAST_MODEL_IDS = new Set([
 	"z-ai/glm-5.2",
 ]);
 export const OPENROUTER_ULTRAFAST_MODEL_IDS = new Set([
+	"openai/gpt-6.2-astra-pro",
+	"openai/gpt-6.2-astra",
+	"openai/gpt-6.2-sol-pro",
+	"openai/gpt-6.2-sol",
 	"openai/gpt-6.1-sol-pro",
 	"openai/gpt-6.1-sol",
 	"openai/gpt-6-astra-pro",
@@ -95,23 +119,30 @@ interface SpeedProfile {
 	fastModels: ReadonlySet<string>;
 	ultrafastModels: ReadonlySet<string>;
 	fastMultiplier: (id: string) => number | undefined;
-	ultrafastMultiplier: number | undefined;
+	ultrafastMultiplier: ((id: string) => number) | undefined;
 	fastPayload: RecordLike;
 }
 
 const OPENAI_SPEED_PROFILE: SpeedProfile = {
 	fastModels: OPENAI_FAST_MODEL_IDS,
-	// https://learn.chatgpt.com/api/docs/guides/ultrafast-mode
-	// https://learn.chatgpt.com/codex/agent-configuration/speed#ultrafast-mode
-	ultrafastModels: new Set(["gpt-6.1-sol", "gpt-6-astra"]),
+	ultrafastModels: OPENAI_ULTRAFAST_MODEL_IDS,
 	fastMultiplier: (id) => (id === "gpt-5.5" ? 2.5 : 2),
-	ultrafastMultiplier: 6,
+	// GPT-6.2 Ultrafast is 3x until March 1, 2027 (midnight Pacific), then 6x.
+	// https://learn.chatgpt.com/codex/pricing#speed-multipliers
+	ultrafastMultiplier: (id) =>
+		id.startsWith("gpt-6.2-") &&
+		Date.now() < Date.parse("2027-03-01T00:00:00-08:00")
+			? 3
+			: 6,
 	fastPayload: { service_tier: "priority" },
 };
 
 const SPEED_PROFILES: Readonly<Partial<Record<string, SpeedProfile>>> = {
 	openai: OPENAI_SPEED_PROFILE,
-	"openai-codex": OPENAI_SPEED_PROFILE,
+	"openai-codex": {
+		...OPENAI_SPEED_PROFILE,
+		fastModels: OPENAI_CODEX_FAST_MODEL_IDS,
+	},
 	openrouter: {
 		fastModels: OPENROUTER_FAST_MODEL_IDS,
 		ultrafastModels: OPENROUTER_ULTRAFAST_MODEL_IDS,
@@ -124,7 +155,7 @@ const SPEED_PROFILES: Readonly<Partial<Record<string, SpeedProfile>>> = {
 		// Go forwards Responses request fields unchanged; upstream tier execution
 		// is not guaranteed. Do not assume OpenAI's rates for Go subscription usage.
 		// https://opencode.ai/docs/go/
-		fastModels: new Set(["gpt-6-luna", "gpt-5.6-luna", "grok-4.7", "grok-4.6"]),
+		fastModels: new Set(["gpt-6-luna", "gpt-5.6-luna", "grok-4.7"]),
 		ultrafastModels: new Set(),
 		fastMultiplier: () => undefined,
 		ultrafastMultiplier: undefined,
@@ -148,10 +179,6 @@ function getSpeedProfile(
 		profile?.[mode === "fast" ? "fastModels" : "ultrafastModels"].has(model.id)
 		? profile
 		: undefined;
-}
-
-function supportsAnthropicFast(model: ModelIdentity | undefined): boolean {
-	return model?.provider === "anthropic" && supportsFast(model);
 }
 
 export function supportsFast(model: ModelIdentity | undefined): boolean {
@@ -187,9 +214,10 @@ export function adjustFastCost(
 	// Purchased-credit rates; included subscription usage has a separate multiplier.
 	const profile = getSpeedProfile(model, mode);
 	const multiplier =
-		mode === "ultrafast"
-			? profile?.ultrafastMultiplier
-			: model && profile?.fastMultiplier(model.id);
+		model &&
+		(mode === "ultrafast"
+			? profile?.ultrafastMultiplier?.(model.id)
+			: profile?.fastMultiplier(model.id));
 	if (
 		multiplier === undefined ||
 		message.provider !== model?.provider ||
@@ -350,8 +378,12 @@ export function registerFastFeature(pi: ExtensionAPI): FastController {
 		// Anthropic; other providers may invoke these hooks in the reverse order.
 		captureTurnRequest(ctx.model);
 		const requestMode = activeRequest?.mode;
-		if (requestMode !== "fast" || !supportsAnthropicFast(ctx.model)) return;
-		addAnthropicFastBeta(event.headers);
+		if (
+			requestMode === "fast" &&
+			ctx.model?.provider === "anthropic" &&
+			ctx.model.id === "claude-opus-5"
+		)
+			addAnthropicFastBeta(event.headers);
 	});
 
 	pi.on("message_end", (event) => {
