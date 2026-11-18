@@ -3,11 +3,7 @@ allowBuilds:
   esbuild: false
   koffi: false
   protobufjs: false
-minimumReleaseAgeExclude:
-  - '@earendil-works/pi-agent-core@1.2.0'
-  - '@earendil-works/pi-ai@1.2.0'
-  - '@earendil-works/pi-codemode@1.2.0'
-  - '@earendil-works/pi-coding-agent@1.2.0'
-  - '@earendil-works/pi-mcp@1.2.0'
-  - '@earendil-works/pi-telemetry@1.2.0'
-  - '@earendil-works/pi-tui@1.2.0'
+audit:
+  ignore:
+    # CVE-2026-112366: picomatch is only in the test toolchain, with project-controlled globs.
+    - GHSA-fc5q-39xc-vjpf
