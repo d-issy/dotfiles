@@ -114,6 +114,10 @@ impl ClaudeDiscovery {
         }
     }
 
+    pub fn summarize_log(&mut self, path: &Path) -> LogSummary {
+        self.tracker.summarize(path)
+    }
+
     pub fn discover(&mut self, home: &Path, now: f64) -> Vec<Session> {
         let registry = home.join("sessions");
         let mut sessions = Vec::new();
@@ -147,7 +151,7 @@ impl ClaudeDiscovery {
         let log_path = find_transcript(home, &cwd, &id);
         let summary = log_path
             .as_deref()
-            .map(|path| self.tracker.summarize(path))
+            .map(|path| self.summarize_log(path))
             .unwrap_or_default();
         let registry_state = entry.str("status");
         let status = if registry_state == Some("busy")
@@ -216,7 +220,7 @@ impl ClaudeDiscovery {
             Some(kind) => one_line(&format!("{kind}: {description}")),
             None => one_line(description),
         };
-        let summary = self.tracker.summarize(&path);
+        let summary = self.summarize_log(&path);
         Some(Session {
             key: format!("claude:{}:{id}", parent.id),
             agent: Agent::Claude,

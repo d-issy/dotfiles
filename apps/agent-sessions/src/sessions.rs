@@ -196,6 +196,25 @@ impl Discovery {
         sessions.extend(self.pi.discover(&self.pi_sessions, now, window_ms));
         sessions
     }
+
+    pub fn refresh_open_log(&mut self, session: &mut Session) {
+        let Some(path) = session.log_path.as_deref() else {
+            return;
+        };
+        let summary = match session.agent {
+            Agent::Claude => self.claude.summarize_log(path),
+            Agent::Codex => self.codex.summarize_log(path),
+            Agent::Pi => self.pi.summarize_log(path),
+        };
+        session.turn = summary.turn;
+        if matches!(
+            session.status,
+            SessionStatus::Running | SessionStatus::Waiting
+        ) {
+            // Only a fresh discovery result can confirm that the session is still active.
+            session.status = SessionStatus::Unknown;
+        }
+    }
 }
 
 pub fn now_ms() -> f64 {
@@ -294,6 +313,65 @@ mod tests {
                 discovery.discover(&resolved, now_ms(), 3_600_000.0),
                 absolute
             );
+        }
+    }
+
+    #[test]
+    fn follows_an_open_claude_log_after_the_session_exits() {
+        use crate::test_support::{TempDir, append};
+        use std::fs;
+
+        let home = TempDir::new();
+        let registry = home.path().join("sessions/main.json");
+        let transcript = home.path().join("projects/-w/main.jsonl");
+        fs::create_dir_all(registry.parent().unwrap()).unwrap();
+        fs::create_dir_all(transcript.parent().unwrap()).unwrap();
+        fs::write(
+            &registry,
+            dot::json::json!({
+                "pid": std::process::id(), "sessionId": "main", "cwd": "/w", "status": "busy",
+            })
+            .to_string(),
+        )
+        .unwrap();
+        fs::write(
+            &transcript,
+            concat!(
+                r#"{"type":"user","timestamp":1000,"message":{"content":"hi"}}"#,
+                "\n",
+            ),
+        )
+        .unwrap();
+
+        let mut discovery = Discovery {
+            claude_home: home.path().into(),
+            codex_home: home.path().join("codex"),
+            pi_sessions: home.path().join("pi"),
+            claude: ClaudeDiscovery::new(),
+            codex: CodexDiscovery::new(),
+            pi: PiDiscovery::new(),
+        };
+        let mut open = discovery.discover(60_000.0, 5_000.0).pop().unwrap();
+        assert_eq!(open.turn_elapsed(5_000.0), Some(4_000.0));
+
+        fs::remove_file(registry).unwrap();
+        discovery.refresh_open_log(&mut open);
+        assert!(discovery.discover(60_000.0, 8_000.0).is_empty());
+        assert_eq!(open.turn_elapsed(8_000.0), None);
+
+        append(
+            &transcript,
+            concat!(
+                r#"{"type":"system","subtype":"turn_duration","timestamp":9000,"durationMs":8000}"#,
+                "\n",
+            )
+            .as_bytes(),
+        );
+        for now in [10_000.0, 11_000.0] {
+            discovery.refresh_open_log(&mut open);
+            assert!(discovery.discover(60_000.0, now).is_empty());
+            assert_eq!(open.status, SessionStatus::Unknown);
+            assert_eq!(open.turn_elapsed(now), Some(8_000.0));
         }
     }
 

@@ -94,6 +94,10 @@ impl CodexDiscovery {
         }
     }
 
+    pub fn summarize_log(&mut self, path: &Path) -> LogSummary {
+        self.tracker.summarize(path)
+    }
+
     fn session_meta(&mut self, path: &Path) -> Option<JsonObject> {
         if let Some(cached) = self.metas.get(path) {
             return Some(cached.clone());
@@ -132,7 +136,7 @@ impl CodexDiscovery {
             return None;
         }
         let id = meta.non_empty_str("id")?;
-        let summary = self.tracker.summarize(&path);
+        let summary = self.summarize_log(&path);
         Some(Session {
             key: format!("codex:{id}"),
             agent: Agent::Codex,

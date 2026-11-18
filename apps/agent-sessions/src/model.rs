@@ -91,17 +91,14 @@ impl TurnTiming {
     }
 
     fn elapsed(self, status: SessionStatus, now: f64) -> Option<f64> {
+        let active = matches!(status, SessionStatus::Running | SessionStatus::Waiting);
         let end = match self.end {
             Some(TurnEnd::Duration { elapsed, .. }) => return Some(elapsed),
             Some(TurnEnd::Timestamp(time)) => time?,
             // Claude can still run Stop hooks after writing the final response.
-            Some(TurnEnd::Response(time))
-                if !matches!(status, SessionStatus::Running | SessionStatus::Waiting) =>
-            {
-                time?
-            }
-            None if matches!(status, SessionStatus::Idle | SessionStatus::Ended) => return None,
-            _ => now,
+            Some(TurnEnd::Response(time)) if !active => time?,
+            _ if active => now,
+            _ => return None,
         };
         Some((end - self.started_at?).max(0.0))
     }
@@ -176,5 +173,28 @@ impl LogEntry {
 
     pub fn non_empty_title(&self) -> Option<&str> {
         self.title.as_deref().filter(|title| !title.is_empty())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn only_running_and_waiting_turns_count_up_to_now() {
+        let mut turn = TurnTiming::default();
+        turn.apply(TurnEvent::Start(Some(1_000.0)));
+        for status in [SessionStatus::Running, SessionStatus::Waiting] {
+            assert_eq!(turn.elapsed(status, 4_000.0), Some(3_000.0));
+        }
+        for status in [
+            SessionStatus::Idle,
+            SessionStatus::Ended,
+            SessionStatus::Unknown,
+        ] {
+            assert_eq!(turn.elapsed(status, 4_000.0), None);
+        }
+        turn.apply(TurnEvent::Finish(Some(3_000.0)));
+        assert_eq!(turn.elapsed(SessionStatus::Unknown, 5_000.0), Some(2_000.0));
     }
 }

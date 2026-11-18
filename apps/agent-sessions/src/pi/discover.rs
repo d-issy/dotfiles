@@ -54,6 +54,10 @@ impl PiDiscovery {
         }
     }
 
+    pub fn summarize_log(&mut self, path: &Path) -> LogSummary {
+        self.tracker.summarize(path)
+    }
+
     /// Pi stores logs under one encoded-cwd directory per project.
     /// Also accept files directly in the root for a custom session directory.
     pub fn discover(&mut self, root: &Path, now: f64, window_ms: f64) -> Vec<Session> {
@@ -76,7 +80,7 @@ impl PiDiscovery {
                     return None;
                 }
                 let id = header.non_empty_str("id")?;
-                let summary = self.tracker.summarize(&path);
+                let summary = self.summarize_log(&path);
                 Some(Session {
                     // Custom IDs can be reused across projects (or log files).
                     key: format!("pi:{}", path.display()),
