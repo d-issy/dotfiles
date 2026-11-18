@@ -188,25 +188,28 @@ fn user_turn_event(record: &JsonObject, time: Option<f64>) -> Option<TurnEvent> 
     is_prompt.then_some(TurnEvent::Start(time))
 }
 
+fn assistant_turn_status(message: &JsonObject) -> Option<SessionStatus> {
+    if !matches!(
+        message.str("stop_reason")?,
+        "end_turn" | "stop_sequence" | "refusal"
+    ) {
+        return Some(SessionStatus::Running);
+    }
+    // The finish reason can appear on a thinking block before the final text.
+    let blocks = message.array("content");
+    let has_response = blocks.is_empty()
+        || objects(blocks)
+            .any(|block| !matches!(block.str("type"), Some("thinking" | "redacted_thinking")));
+    has_response.then_some(SessionStatus::Idle)
+}
+
 pub fn claude_turn_event(record: &JsonObject) -> Option<TurnEvent> {
     let time = record.time("timestamp");
     match record.str("type")? {
         "user" => user_turn_event(record, time),
-        "assistant" => {
-            let message = record.object("message");
-            // The finish reason can appear on a thinking block before the final text.
-            let terminal = matches!(
-                message.str("stop_reason"),
-                Some("end_turn" | "stop_sequence" | "refusal")
-            );
-            let blocks = message.array("content");
-            (terminal
-                && (blocks.is_empty()
-                    || objects(blocks).any(|block| {
-                        !matches!(block.str("type"), Some("thinking" | "redacted_thinking"))
-                    })))
-            .then_some(TurnEvent::Response(time))
-        }
+        "assistant" => (assistant_turn_status(record.object("message"))
+            == Some(SessionStatus::Idle))
+        .then_some(TurnEvent::Response(time)),
         "system" => match record.str("subtype")? {
             "turn_duration" => Some(
                 record
@@ -229,19 +232,14 @@ pub fn claude_turn_event(record: &JsonObject) -> Option<TurnEvent> {
     }
 }
 
-/// Subagents have no registry entry, and teammates never get `finished` in
-/// their meta file, so an assistant message that ends the turn is the only
-/// idle signal. Attachments and API bookkeeping records do not change the state.
+/// Infer subagent activity from user messages and assistant responses.
 pub fn claude_turn_status(records: &[JsonObject]) -> Option<SessionStatus> {
     records
         .iter()
         .rev()
         .find_map(|record| match record.str("type") {
             Some("user") => Some(SessionStatus::Running),
-            Some("assistant") => match record.object("message").str("stop_reason")? {
-                "end_turn" | "stop_sequence" | "refusal" => Some(SessionStatus::Idle),
-                _ => Some(SessionStatus::Running),
-            },
+            Some("assistant") => assistant_turn_status(record.object("message")),
             _ => None,
         })
 }

@@ -386,6 +386,67 @@ mod tests {
     }
 
     #[test]
+    fn keeps_a_thinking_subagent_visible_until_its_final_response() {
+        use crate::sessions::filter_sessions;
+
+        let home = TempDir::new();
+        let registry = home.path().join("sessions");
+        let project = home.path().join("projects/-w-p");
+        let subagents = project.join("main/subagents");
+        fs::create_dir_all(&registry).unwrap();
+        fs::create_dir_all(&subagents).unwrap();
+        fs::write(
+            registry.join("1.json"),
+            json!({"pid": std::process::id(), "sessionId": "main", "cwd": "/w/p", "status": "busy"})
+                .to_string(),
+        )
+        .unwrap();
+        fs::write(project.join("main.jsonl"), "").unwrap();
+        let transcript = subagents.join("agent-thinking.jsonl");
+        fs::write(
+            &transcript,
+            jsonl(&[
+                object(json!({
+                    "type": "user", "timestamp": 1_000, "message": {"content": "subagent task"},
+                })),
+                object(json!({
+                    "type": "assistant", "timestamp": 2_000, "message": {
+                        "stop_reason": "end_turn", "content": [
+                            {"type": "thinking", "thinking": "working"}, {"type": "redacted_thinking"},
+                        ],
+                    },
+                })),
+            ]),
+        )
+        .unwrap();
+
+        let mut discovery = ClaudeDiscovery::new();
+        let mut find_subagent = |now, show_idle| {
+            filter_sessions(discovery.discover(home.path(), now), show_idle)
+                .into_iter()
+                .find(|session| session.id == "agent-thinking")
+        };
+        for (now, elapsed) in [(3_000.0, 2_000.0), (4_000.0, 3_000.0)] {
+            let thinking = find_subagent(now, false).expect("thinking subagent stays visible");
+            assert_eq!(thinking.status, SessionStatus::Running);
+            assert_eq!(thinking.turn_elapsed(now), Some(elapsed));
+        }
+
+        append(
+            &transcript,
+            jsonl(&[object(json!({
+                "type": "assistant", "timestamp": 5_000,
+                "message": {"stop_reason": "end_turn", "content": [{"type": "text", "text": "done"}]},
+            }))])
+            .as_bytes(),
+        );
+        assert!(find_subagent(6_000.0, false).is_none());
+        let completed = find_subagent(6_000.0, true).unwrap();
+        assert_eq!(completed.status, SessionStatus::Idle);
+        assert_eq!(completed.turn_elapsed(6_000.0), Some(4_000.0));
+    }
+
+    #[test]
     fn shows_idle_subagents_as_idle() {
         let home = TempDir::new();
         let pid = std::process::id();
