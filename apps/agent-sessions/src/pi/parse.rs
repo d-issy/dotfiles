@@ -1,6 +1,6 @@
 use crate::js;
 use crate::json::{Fields, objects, text_content};
-use crate::model::{EntryKind, JsonObject, LogEntry, SessionStatus};
+use crate::model::{EntryKind, JsonObject, LogEntry, SessionStatus, TurnEvent};
 use crate::text::sanitize;
 
 pub fn pi_status(record: &JsonObject) -> Option<SessionStatus> {
@@ -15,6 +15,23 @@ pub fn pi_status(record: &JsonObject) -> Option<SessionStatus> {
         } else {
             SessionStatus::Idle
         }),
+        _ => None,
+    }
+}
+
+pub fn pi_turn_event(record: &JsonObject) -> Option<TurnEvent> {
+    if record.str("type") != Some("message") {
+        return None;
+    }
+    let message = record.object("message");
+    let time = record.time("timestamp");
+    match message.str("role")? {
+        "user" => Some(TurnEvent::Start(time.or_else(|| message.time("timestamp")))),
+        // The entry is written after the response. The assistant message's own
+        // timestamp marks the beginning of generation.
+        "assistant" if message.str("stopReason") != Some("toolUse") => {
+            Some(TurnEvent::Finish(time))
+        }
         _ => None,
     }
 }
@@ -140,6 +157,7 @@ mod tests {
             ]
         }}));
         assert_eq!(pi_status(&record), Some(SessionStatus::Running));
+        assert_eq!(pi_turn_event(&record), None);
         assert_eq!(
             parse_pi_record(&record),
             [
@@ -152,6 +170,7 @@ mod tests {
             "role": "toolResult", "toolName": "bash", "isError": true,
             "content": [{"type": "text", "text": "\u{1b}[31mfailed\u{1b}[0m"}, {"type": "image", "data": "ignored"}]
         }}));
+        assert_eq!(pi_turn_event(&result), None);
         assert_eq!(
             parse_pi_record(&result),
             [LogEntry::titled(None, EntryKind::Error, "bash", "failed"),]
@@ -161,20 +180,31 @@ mod tests {
     #[test]
     fn infers_status_without_treating_metadata_as_activity() {
         for stop in ["stop", "error", "aborted"] {
-            let record = object(json!({"type": "message", "message": {
-                "role": "assistant", "stopReason": stop, "content": [], "errorMessage": "stopped"
-            }}));
+            let record = object(json!({
+                "type": "message", "timestamp": 5000, "message": {
+                    "role": "assistant", "timestamp": 2000, "stopReason": stop,
+                    "content": [], "errorMessage": "stopped"
+                }
+            }));
             assert_eq!(pi_status(&record), Some(SessionStatus::Idle));
+            assert_eq!(
+                pi_turn_event(&record),
+                Some(TurnEvent::Finish(Some(5000.0)))
+            );
             assert_eq!(parse_pi_record(&record)[0].kind, EntryKind::Error);
         }
-        assert_eq!(
-            pi_status(&object(
-                json!({"type": "message", "message": {"role": "user", "content": "hi"}})
-            )),
-            Some(SessionStatus::Running)
-        );
+        let user = object(json!({"type": "message", "message": {
+            "role": "user", "timestamp": 1000, "content": "hi"
+        }}));
+        assert_eq!(pi_status(&user), Some(SessionStatus::Running));
+        assert_eq!(pi_turn_event(&user), Some(TurnEvent::Start(Some(1000.0))));
+        let assistant = object(json!({"type": "message", "message": {
+            "role": "assistant", "timestamp": 2000, "stopReason": "stop"
+        }}));
+        assert_eq!(pi_turn_event(&assistant), Some(TurnEvent::Finish(None)));
         let custom = object(json!({"type": "custom", "data": {"secret": "ignored"}}));
         assert_eq!(pi_status(&custom), None);
+        assert_eq!(pi_turn_event(&custom), None);
         assert!(parse_pi_record(&custom).is_empty());
     }
 

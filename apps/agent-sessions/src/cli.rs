@@ -13,7 +13,8 @@ Options:
   -i, --show-idle        Include idle sessions (hidden by default).
   -h, --help             Show this help.
 
-The list refreshes every 2 seconds. Press i to toggle idle sessions;
+The list refreshes every second. TIME shows the duration of the current or
+most recent turn. Press i to toggle idle sessions;
 running subagents and sessions waiting for input stay visible. Finished Claude
 subagents stay for 10 minutes. Select a session and press enter to follow its
 log in real time (updated every 300ms). Pi status is inferred from saved\nmessages; in-progress streaming is not written to its session log.";

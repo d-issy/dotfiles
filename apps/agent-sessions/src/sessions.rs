@@ -140,16 +140,6 @@ pub fn parse_record(session: &Session, record: &JsonObject) -> Vec<LogEntry> {
     }
 }
 
-/// Active sessions count up to now; finished ones stop at their last log write.
-pub fn session_runtime(session: &Session, now: f64) -> Option<f64> {
-    let started_at = session.started_at?;
-    let end = match session.status {
-        SessionStatus::Running | SessionStatus::Waiting => now,
-        _ => session.updated_at,
-    };
-    Some((end - started_at).max(0.0))
-}
-
 pub fn home_dir() -> PathBuf {
     std::env::home_dir().unwrap_or_default()
 }
@@ -228,6 +218,7 @@ mod tests {
             status: SessionStatus::Idle,
             updated_at,
             started_at: None,
+            turn: Default::default(),
             log_path: None,
             parent_key: parent_key.map(Into::into),
             model: None,
@@ -401,24 +392,5 @@ mod tests {
         let depths: Vec<usize> = session_rows(&rows).iter().map(|row| row.depth).collect();
         assert_eq!(depths, [0, 0, 0, 1, 0]);
         assert_eq!(session_indices(&rows), [1, 2, 4, 5, 6]);
-    }
-
-    #[test]
-    fn counts_active_sessions_to_now_and_finished_ones_to_the_last_write() {
-        let base = session("s", 5_000.0, None);
-        let started = |status| Session {
-            status,
-            started_at: Some(1_000.0),
-            ..base.clone()
-        };
-        assert_eq!(
-            session_runtime(&started(SessionStatus::Idle), 9_000.0),
-            Some(4_000.0)
-        );
-        assert_eq!(
-            session_runtime(&started(SessionStatus::Running), 9_000.0),
-            Some(8_000.0)
-        );
-        assert_eq!(session_runtime(&base, 9_000.0), None);
     }
 }

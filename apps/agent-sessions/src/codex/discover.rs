@@ -2,10 +2,10 @@ use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use super::parse::{codex_model, codex_status, parse_codex_record};
+use super::parse::{codex_model, codex_turn_event, parse_codex_record};
 use crate::files::{LogSummary, SummaryTracker, child_paths, modified_ms, read_first_record};
 use crate::json::{Fields, parse_object_line};
-use crate::model::{Agent, JsonObject, Session, SessionStatus};
+use crate::model::{Agent, JsonObject, Session, SessionStatus, TurnEvent};
 use crate::text::{last_summary, one_line};
 
 fn thread_names(home: &Path) -> HashMap<String, String> {
@@ -45,8 +45,12 @@ fn rollout_paths(root: &Path) -> Vec<PathBuf> {
 
 fn reduce(summary: &mut LogSummary, record: &JsonObject) {
     let records = std::slice::from_ref(record);
-    if let Some(status) = codex_status(records) {
-        summary.status = Some(status);
+    if let Some(event) = codex_turn_event(record) {
+        summary.status = Some(match event {
+            TurnEvent::Start(_) | TurnEvent::Response(_) => SessionStatus::Running,
+            TurnEvent::Finish(_) | TurnEvent::Duration { .. } => SessionStatus::Idle,
+        });
+        summary.turn.apply(event);
     }
     if let Some(model) = codex_model(records) {
         summary.model = Some(model);
@@ -138,6 +142,7 @@ impl CodexDiscovery {
             status: summary.status.unwrap_or(SessionStatus::Unknown),
             updated_at,
             started_at: meta.time("timestamp"),
+            turn: summary.turn,
             log_path: Some(path),
             parent_key: meta
                 .non_empty_str("parent_thread_id")
@@ -151,6 +156,7 @@ impl CodexDiscovery {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::js::date_parse;
     use crate::sessions::now_ms;
     use crate::test_support::{TempDir, append};
     use dot::json::{Value, json};
@@ -159,8 +165,8 @@ mod tests {
         format!("{value}\n")
     }
 
-    fn event_line(kind: &str) -> String {
-        line(json!({"type": "event_msg", "payload": {"type": kind}}))
+    fn event_line(kind: &str, timestamp: &str) -> String {
+        line(json!({"type": "event_msg", "timestamp": timestamp, "payload": {"type": kind}}))
     }
 
     fn noise(bytes: usize) -> String {
@@ -188,7 +194,7 @@ mod tests {
                     "type": "session_meta",
                     "payload": {"id": "abc", "cwd": "/w/p", "timestamp": "2025-01-02T00:00:00Z"},
                 })) + &line(json!({"type": "turn_context", "payload": {"model": "gpt-a"}}))
-                    + &event_line("task_started"),
+                    + &event_line("task_started", "2025-01-02T00:00:01Z"),
             )
             .unwrap();
             Self {
@@ -238,23 +244,43 @@ mod tests {
     }
 
     #[test]
-    fn keeps_status_and_model_current_across_large_output_bursts() {
+    fn keeps_turn_timing_status_and_model_current_across_large_output_bursts() {
         let mut fixture = Fixture::new();
-        assert_eq!(fixture.find().unwrap().status, SessionStatus::Running);
+        let session = fixture.find().unwrap();
+        let now = date_parse("2025-01-02T00:00:03Z").unwrap();
+        assert_eq!(session.status, SessionStatus::Running);
+        assert_eq!(session.turn_elapsed(now), Some(2_000.0));
         append(
             &fixture.rollout,
-            (event_line("task_complete") + &noise(300 * 1024)).as_bytes(),
+            (event_line("task_complete", "2025-01-02T00:00:06Z") + &noise(300 * 1024)).as_bytes(),
         );
-        assert_eq!(fixture.find().unwrap().status, SessionStatus::Idle);
+        let session = fixture.find().unwrap();
+        let now = date_parse("2025-01-02T00:02:00Z").unwrap();
+        assert_eq!(session.status, SessionStatus::Idle);
+        assert_eq!(session.turn_elapsed(now), Some(5_000.0));
         append(
             &fixture.rollout,
             (line(json!({"type": "turn_context", "payload": {"model": "gpt-b"}}))
-                + &event_line("task_started")
+                + &event_line("task_started", "2025-01-02T00:01:57Z")
                 + &noise(300 * 1024))
                 .as_bytes(),
         );
         let session = fixture.find().unwrap();
         assert_eq!(session.status, SessionStatus::Running);
         assert_eq!(session.model.as_deref(), Some("gpt-b"));
+        assert_eq!(session.turn_elapsed(now), Some(3_000.0));
+        append(
+            &fixture.rollout,
+            line(json!({
+                "type": "event_msg",
+                "timestamp": "2025-01-02T00:02:05Z",
+                "payload": {"type": "turn_aborted", "duration_ms": 7_000},
+            }))
+            .as_bytes(),
+        );
+        let session = fixture.find().unwrap();
+        let now = date_parse("2025-01-02T00:10:00Z").unwrap();
+        assert_eq!(session.status, SessionStatus::Idle);
+        assert_eq!(session.turn_elapsed(now), Some(7_000.0));
     }
 }

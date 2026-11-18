@@ -65,6 +65,10 @@ pub fn format_duration(ms: f64) -> String {
     }
 }
 
+pub fn format_turn_time(elapsed: Option<f64>) -> String {
+    elapsed.map_or_else(|| "-".to_string(), format_duration)
+}
+
 /// Local `HH:MM:SS`, or `NaN:NaN:NaN` outside the JavaScript `Date` range.
 pub fn format_clock(time: f64) -> String {
     dot::time::local_clock(time).unwrap_or_else(|| "NaN:NaN:NaN".into())

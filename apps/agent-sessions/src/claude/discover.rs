@@ -6,13 +6,14 @@ use dot::json::Value;
 use dot::process::process_exists;
 
 use super::parse::{
-    claude_model, claude_title, claude_turn_status, parse_claude_record, registry_status,
+    claude_model, claude_title, claude_turn_event, claude_turn_status, parse_claude_record,
+    registry_status,
 };
 use crate::files::{
     LogSummary, SummaryTracker, list_dir, modified_ms, read_first_record, read_json_file,
 };
 use crate::json::Fields;
-use crate::model::{Agent, JsonObject, Session, SessionStatus};
+use crate::model::{Agent, JsonObject, Session, SessionStatus, TurnEvent};
 use crate::text::{last_summary, one_line};
 
 /// Finished subagents stay listed briefly so their final output is visible.
@@ -92,6 +93,12 @@ fn reduce(summary: &mut LogSummary, record: &JsonObject) {
     if let Some(status) = claude_turn_status(records) {
         summary.status = Some(status);
     }
+    if let Some(event) = claude_turn_event(record) {
+        if matches!(event, TurnEvent::Finish(_) | TurnEvent::Duration { .. }) {
+            summary.status = Some(SessionStatus::Idle);
+        }
+        summary.turn.apply(event);
+    }
 }
 
 pub struct ClaudeDiscovery {
@@ -142,6 +149,18 @@ impl ClaudeDiscovery {
             .as_deref()
             .map(|path| self.tracker.summarize(path))
             .unwrap_or_default();
+        let registry_state = entry.str("status");
+        let status = if registry_state == Some("busy")
+            && summary.status == Some(SessionStatus::Idle)
+            && let Some(finished_at) = summary.turn.finished_at()
+            && entry
+                .time("statusUpdatedAt")
+                .is_some_and(|status_at| status_at < finished_at)
+        {
+            SessionStatus::Idle
+        } else {
+            registry_status(registry_state)
+        };
         Some(Session {
             key: format!("claude:{id}"),
             agent: Agent::Claude,
@@ -149,8 +168,9 @@ impl ClaudeDiscovery {
                 .title
                 .unwrap_or_else(|| one_line(entry.str("name").unwrap_or(&id))),
             cwd,
-            status: registry_status(entry.str("status")),
+            status,
             started_at: entry.time("startedAt"),
+            turn: summary.turn,
             updated_at: log_path
                 .as_deref()
                 .and_then(modified_ms)
@@ -210,6 +230,7 @@ impl ClaudeDiscovery {
             },
             updated_at,
             started_at: self.first_timestamp(&path),
+            turn: summary.turn,
             log_path: Some(path),
             parent_key: Some(parent.key.clone()),
             model: summary.model,
@@ -234,7 +255,7 @@ impl ClaudeDiscovery {
 mod tests {
     use super::super::parse::tests::turn;
     use super::*;
-    use crate::test_support::{TempDir, append, jsonl};
+    use crate::test_support::{TempDir, append, jsonl, object};
     use dot::json::json;
 
     #[test]
@@ -251,6 +272,112 @@ mod tests {
         assert_eq!(
             proc_start_time(&format!("123 (a b) {}", fields.join(" "))),
             Some("22")
+        );
+    }
+
+    #[test]
+    fn times_peer_turns_and_stops_when_claude_becomes_inactive() {
+        let home = TempDir::new();
+        let now = crate::sessions::now_ms();
+        let registry = home.path().join("sessions/1.json");
+        fs::create_dir_all(registry.parent().unwrap()).unwrap();
+        let set_status = |status: &str, at: f64| {
+            fs::write(
+                &registry,
+                json!({
+                    "pid": std::process::id(), "sessionId": "main",
+                    "cwd": "/w/p", "status": status, "statusUpdatedAt": at,
+                })
+                .to_string(),
+            )
+            .unwrap();
+        };
+        set_status("busy", now - 20_000.0);
+        let project = home.path().join("projects/-w-p");
+        let subagents = project.join("main/subagents");
+        fs::create_dir_all(&subagents).unwrap();
+        let transcript = project.join("main.jsonl");
+        let completed_turn = |duration| {
+            object(json!({"type": "system", "subtype": "turn_duration", "durationMs": duration}))
+        };
+        fs::write(&transcript, jsonl(&[completed_turn(5_000)])).unwrap();
+        fs::write(
+            subagents.join("agent-finished.jsonl"),
+            jsonl(&[object(json!({
+                "type": "user", "timestamp": 1_000, "message": {"content": "subagent task"},
+            }))]),
+        )
+        .unwrap();
+        fs::write(
+            subagents.join("agent-finished.meta.json"),
+            json!({"finished": true}).to_string(),
+        )
+        .unwrap();
+
+        let mut discovery = ClaudeDiscovery::new();
+        let mut main_session = |at| {
+            let sessions = discovery.discover(home.path(), at);
+            let finished = sessions.iter().find(|s| s.id == "agent-finished").unwrap();
+            assert_eq!(finished.status, SessionStatus::Ended);
+            assert_eq!(finished.turn_elapsed(at), None);
+            sessions.into_iter().find(|s| s.id == "main").unwrap()
+        };
+
+        assert_eq!(main_session(now).turn_elapsed(now), Some(5_000.0));
+        let peer_turn = |index, at| {
+            object(json!({
+                "type": "user", "isMeta": true, "timestamp": at,
+                "promptSource": "system", "turnOrigin": "peer",
+                "turnPosition": {"turnIndex": index},
+                "message": {"content": "peer message"},
+            }))
+        };
+        append(
+            &transcript,
+            jsonl(&[peer_turn(2, now - 1_000.0)]).as_bytes(),
+        );
+        let active = main_session(now);
+        assert_eq!(active.status, SessionStatus::Running);
+        assert_eq!(active.turn_elapsed(now), Some(1_000.0));
+        assert_eq!(active.turn_elapsed(now + 1_000.0), Some(2_000.0));
+
+        append(
+            &transcript,
+            jsonl(&[object(json!({
+                "type": "assistant", "timestamp": now + 1_000.0,
+                "message": {"stop_reason": "end_turn", "content": [{"type": "text", "text": "ok"}]},
+            }))])
+            .as_bytes(),
+        );
+        let stopping = main_session(now + 2_000.0);
+        assert_eq!(stopping.status, SessionStatus::Running);
+        assert_eq!(stopping.turn_elapsed(now + 2_000.0), Some(3_000.0));
+        append(
+            &transcript,
+            jsonl(&[object(json!({
+                "type": "system", "subtype": "stop_hook_summary",
+                "preventedContinuation": false, "timestamp": now + 3_000.0,
+            }))])
+            .as_bytes(),
+        );
+        let completed = main_session(now + 4_000.0);
+        assert_eq!(completed.status, SessionStatus::Idle);
+        assert_eq!(completed.turn_elapsed(now + 4_000.0), Some(4_000.0));
+
+        append(
+            &transcript,
+            jsonl(&[peer_turn(3, now + 5_000.0)]).as_bytes(),
+        );
+        set_status("idle", now + 6_000.0);
+        let idle = main_session(now + 7_000.0);
+        assert_eq!(idle.status, SessionStatus::Idle);
+        assert_eq!(idle.turn_elapsed(now + 7_000.0), None);
+        assert_eq!(idle.turn_elapsed(now + 8_000.0), None);
+
+        append(&transcript, jsonl(&[completed_turn(3_000)]).as_bytes());
+        assert_eq!(
+            main_session(now + 9_000.0).turn_elapsed(now + 9_000.0),
+            Some(3_000.0)
         );
     }
 

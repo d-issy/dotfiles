@@ -23,7 +23,7 @@ use keys::{Key, KeyDecoder};
 use log_view::{LogView, body_height};
 use terminal::{Size, Terminal};
 
-const REFRESH_INTERVAL: Duration = Duration::from_millis(2000);
+const REFRESH_INTERVAL: Duration = Duration::from_secs(1);
 const LOG_POLL_INTERVAL: Duration = Duration::from_millis(300);
 
 enum Event {

@@ -2,7 +2,7 @@ use dot::json::Value;
 
 use crate::js;
 use crate::json::{Fields, object_or_empty, objects, text_content};
-use crate::model::{EntryKind, JsonObject, LogEntry, SessionStatus};
+use crate::model::{EntryKind, JsonObject, LogEntry, SessionStatus, TurnEvent};
 use crate::text::{one_line, sanitize};
 
 const TOOL_INPUT_KEYS: [&str; 10] = [
@@ -132,6 +132,101 @@ pub fn claude_model(records: &[JsonObject]) -> Option<String> {
             .filter(|model| *model != "<synthetic>")
             .map(str::to_string)
     })
+}
+
+fn is_interruption(text: &str) -> bool {
+    matches!(
+        text,
+        "[Request interrupted by user]" | "[Request interrupted by user for tool use]"
+    )
+}
+
+fn is_prompt_text(text: &str) -> bool {
+    let text = text.trim();
+    !text.is_empty()
+        && ![
+            "<command-name>",
+            "<local-command-",
+            "<system-reminder>",
+            "<task-notification>",
+        ]
+        .iter()
+        .any(|prefix| text.starts_with(prefix))
+}
+
+fn user_turn_event(record: &JsonObject, time: Option<f64>) -> Option<TurnEvent> {
+    let message = record.object("message");
+    let content = message.str("content");
+    let blocks = message.array("content");
+    let texts = objects(blocks).filter_map(|block| block.str("text"));
+    if content.into_iter().chain(texts).any(is_interruption) {
+        return Some(TurnEvent::Finish(time));
+    }
+    if record.is_true("isCompactSummary")
+        || record.is_true("isVisibleInTranscriptOnly")
+        || objects(blocks).any(|block| block.str("type") == Some("tool_result"))
+    {
+        return None;
+    }
+    if record.is_true("isMeta") {
+        // Claude records a peer message that starts its own turn as metadata.
+        let peer_turn = record.str("promptSource") == Some("system")
+            && record.str("turnOrigin") == Some("peer")
+            && record
+                .object("turnPosition")
+                .get("turnIndex")
+                .and_then(Value::as_u64)
+                .is_some();
+        return peer_turn.then_some(TurnEvent::Start(time));
+    }
+    let is_prompt = content.is_some_and(is_prompt_text)
+        || objects(blocks).any(|block| match block.str("type") {
+            Some("text") => block.str("text").is_some_and(is_prompt_text),
+            Some("image" | "document") => true,
+            _ => false,
+        });
+    is_prompt.then_some(TurnEvent::Start(time))
+}
+
+pub fn claude_turn_event(record: &JsonObject) -> Option<TurnEvent> {
+    let time = record.time("timestamp");
+    match record.str("type")? {
+        "user" => user_turn_event(record, time),
+        "assistant" => {
+            let message = record.object("message");
+            // The finish reason can appear on a thinking block before the final text.
+            let terminal = matches!(
+                message.str("stop_reason"),
+                Some("end_turn" | "stop_sequence" | "refusal")
+            );
+            let blocks = message.array("content");
+            (terminal
+                && (blocks.is_empty()
+                    || objects(blocks).any(|block| {
+                        !matches!(block.str("type"), Some("thinking" | "redacted_thinking"))
+                    })))
+            .then_some(TurnEvent::Response(time))
+        }
+        "system" => match record.str("subtype")? {
+            "turn_duration" => Some(
+                record
+                    .get("durationMs")
+                    .and_then(Value::as_f64)
+                    .filter(|duration| duration.is_finite() && *duration >= 0.0)
+                    .map_or(TurnEvent::Finish(time), |elapsed| TurnEvent::Duration {
+                        elapsed,
+                        at: time,
+                    }),
+            ),
+            "stop_hook_summary"
+                if record.get("preventedContinuation").and_then(Value::as_bool) == Some(false) =>
+            {
+                Some(TurnEvent::Finish(time))
+            }
+            _ => None,
+        },
+        _ => None,
+    }
 }
 
 /// Subagents have no registry entry, and teammates never get `finished` in
@@ -327,5 +422,100 @@ pub mod tests {
             Some(SessionStatus::Running)
         );
         assert_eq!(claude_turn_status(&[turn("attachment", None)]), None);
+    }
+
+    #[test]
+    fn times_turns_from_prompts_and_final_responses() {
+        let event = |record| claude_turn_event(&object(record));
+        assert_eq!(
+            event(json!({
+                "type": "user", "timestamp": 1000,
+                "message": {"content": [{"type": "text", "text": "hello"}]},
+            })),
+            Some(TurnEvent::Start(Some(1000.0)))
+        );
+        assert_eq!(
+            event(json!({
+                "type": "user", "timestamp": 2000,
+                "message": {"content": [{"type": "tool_result", "content": "ok"}]},
+            })),
+            None
+        );
+        assert_eq!(
+            event(json!({
+                "type": "user", "timestamp": 2200, "isMeta": true,
+                "message": {"content": "hook result"},
+            })),
+            None
+        );
+        assert_eq!(
+            event(json!({
+                "type": "assistant", "timestamp": 2500,
+                "message": {"stop_reason": "end_turn", "content": [{"type": "thinking"}]},
+            })),
+            None
+        );
+        assert_eq!(
+            event(json!({
+                "type": "assistant", "timestamp": 3000,
+                "message": {"stop_reason": "end_turn", "content": [{"type": "text"}]},
+            })),
+            Some(TurnEvent::Response(Some(3000.0)))
+        );
+        assert_eq!(
+            event(json!({
+                "type": "system", "subtype": "turn_duration", "timestamp": 3100,
+                "durationMs": 2075,
+            })),
+            Some(TurnEvent::Duration {
+                elapsed: 2075.0,
+                at: Some(3100.0),
+            })
+        );
+    }
+
+    #[test]
+    fn finishes_when_stop_hooks_allow_the_turn_to_end() {
+        let summary = |prevented| {
+            claude_turn_event(&object(json!({
+                "type": "system", "subtype": "stop_hook_summary", "timestamp": 1000,
+                "preventedContinuation": prevented,
+            })))
+        };
+        assert_eq!(summary(false), Some(TurnEvent::Finish(Some(1000.0))));
+        assert_eq!(summary(true), None);
+    }
+
+    #[test]
+    fn closes_an_interrupted_turn() {
+        assert_eq!(
+            claude_turn_event(&object(json!({
+                "type": "user", "timestamp": 1000,
+                "message": {"content": [{"type": "text", "text": "[Request interrupted by user]"}]},
+            }))),
+            Some(TurnEvent::Finish(Some(1000.0)))
+        );
+    }
+
+    #[test]
+    fn starts_a_turn_for_a_peer_prompt_marked_as_metadata() {
+        let event = |record| claude_turn_event(&object(record));
+        assert_eq!(
+            event(json!({
+                "type": "user", "timestamp": 1000, "isMeta": true,
+                "promptSource": "system", "turnOrigin": "peer",
+                "turnPosition": {"promptIndex": 131, "turnIndex": 135},
+                "message": {"content": "peer message"},
+            })),
+            Some(TurnEvent::Start(Some(1000.0)))
+        );
+        assert_eq!(
+            event(json!({
+                "type": "user", "timestamp": 1500, "isMeta": true,
+                "turnCompanion": "hook",
+                "message": {"content": "hook result"},
+            })),
+            None
+        );
     }
 }

@@ -1,6 +1,6 @@
 use std::path::{Path, PathBuf};
 
-use super::parse::{parse_pi_record, pi_status};
+use super::parse::{parse_pi_record, pi_status, pi_turn_event};
 use crate::files::{LogSummary, SummaryTracker, child_paths, modified_ms, read_first_record};
 use crate::json::Fields;
 use crate::model::{Agent, JsonObject, Session, SessionStatus};
@@ -24,6 +24,9 @@ fn reduce(summary: &mut LogSummary, record: &JsonObject) {
     }
     if let Some(status) = pi_status(record) {
         summary.status = Some(status);
+    }
+    if let Some(event) = pi_turn_event(record) {
+        summary.turn.apply(event);
     }
     if let Some(last) = last_summary(&parse_pi_record(record)) {
         summary.last = Some(last);
@@ -74,6 +77,7 @@ impl PiDiscovery {
                     status: summary.status.unwrap_or(SessionStatus::Unknown),
                     updated_at,
                     started_at: header.time("timestamp"),
+                    turn: summary.turn,
                     log_path: Some(path),
                     // parentSession is a fork source, not a running subagent.
                     parent_key: None,
