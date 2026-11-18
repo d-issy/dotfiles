@@ -127,6 +127,7 @@ impl JsonlTail {
 #[derive(Clone, Debug, Default)]
 pub struct LogSummary {
     pub title: Option<String>,
+    pub first_user_message: Option<String>,
     pub model: Option<String>,
     pub status: Option<SessionStatus>,
     pub last: Option<String>,

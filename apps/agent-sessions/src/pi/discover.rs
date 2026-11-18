@@ -3,13 +3,16 @@ use std::path::{Path, PathBuf};
 use super::parse::{parse_pi_record, pi_status, pi_turn_event};
 use crate::files::{LogSummary, SummaryTracker, child_paths, modified_ms, read_first_record};
 use crate::json::Fields;
-use crate::model::{Agent, JsonObject, Session, SessionStatus};
-use crate::text::{last_summary, one_line};
+use crate::model::{Agent, EntryKind, JsonObject, Session, SessionStatus};
+use crate::text::{last_summary, one_line, truncate};
 
 fn reduce(summary: &mut LogSummary, record: &JsonObject) {
     match record.str("type") {
         Some("session_info") => {
-            summary.title = record.non_empty_str("name").map(one_line);
+            summary.title = record
+                .str("name")
+                .map(one_line)
+                .filter(|name| !name.is_empty());
         }
         Some("model_change") => {
             summary.model = record.non_empty_str("modelId").map(str::to_string);
@@ -28,7 +31,14 @@ fn reduce(summary: &mut LogSummary, record: &JsonObject) {
     if let Some(event) = pi_turn_event(record) {
         summary.turn.apply(event);
     }
-    if let Some(last) = last_summary(&parse_pi_record(record)) {
+    let entries = parse_pi_record(record);
+    if let Some(last) = last_summary(&entries) {
+        if summary.first_user_message.is_none()
+            && matches!(entries.as_slice(), [entry] if entry.kind == EntryKind::User)
+            && !last.is_empty()
+        {
+            summary.first_user_message = Some(truncate(&last, 120));
+        }
         summary.last = Some(last);
     }
 }
@@ -72,7 +82,10 @@ impl PiDiscovery {
                     key: format!("pi:{}", path.display()),
                     agent: Agent::Pi,
                     id: id.to_string(),
-                    title: summary.title.unwrap_or_else(|| id.to_string()),
+                    title: summary
+                        .title
+                        .or(summary.first_user_message)
+                        .unwrap_or_else(|| id.to_string()),
                     cwd: header.str("cwd").unwrap_or("").to_string(),
                     status: summary.status.unwrap_or(SessionStatus::Unknown),
                     updated_at,
@@ -115,9 +128,12 @@ mod tests {
                 "type": "session", "version": 3, "id": "abc", "cwd": "/w/project",
                 "timestamp": "2025-01-01T00:00:00Z"
             })) + &line(json!({"type": "model_change", "modelId": "model-a"}))
-                + &line(
-                    json!({"type": "message", "message": {"role": "user", "content": "hello"}}),
-                ),
+                + &line(json!({"type": "message", "message": {
+                    "role": "user", "content": " \n "
+                }}))
+                + &line(json!({"type": "message", "message": {
+                    "role": "user", "content": [{"type": "text", "text": "hello\nthere"}]
+                }})),
         )
         .unwrap();
         let mut discovery = PiDiscovery::new();
@@ -126,12 +142,20 @@ mod tests {
         assert_eq!(session.agent, Agent::Pi);
         assert_eq!(session.key, format!("pi:{}", path.display()));
         assert_eq!(session.cwd, "/w/project");
-        assert_eq!(session.title, "abc");
+        assert_eq!(session.title, "hello there");
         assert_eq!(session.status, SessionStatus::Running);
         assert_eq!(session.model.as_deref(), Some("model-a"));
-        assert_eq!(session.last.as_deref(), Some("hello"));
+        assert_eq!(session.last.as_deref(), Some("hello there"));
         assert!(session.started_at.is_some());
         assert_eq!(session.log_path.as_deref(), Some(path.as_path()));
+        append(
+            &path,
+            line(
+                json!({"type": "message", "message": {"role": "user", "content": "later prompt"}}),
+            )
+            .as_bytes(),
+        );
+        assert_eq!(discover(3_600_000.0).pop().unwrap().title, "hello there");
         append(
             &path,
             (line(json!({"type": "session_info", "name": "Named\nsession"}))
@@ -147,6 +171,11 @@ mod tests {
         assert_eq!(session.status, SessionStatus::Idle);
         assert_eq!(session.model.as_deref(), Some("model-b"));
         assert_eq!(session.last.as_deref(), Some("done"));
+        append(
+            &path,
+            line(json!({"type": "session_info", "name": "  "})).as_bytes(),
+        );
+        assert_eq!(discover(3_600_000.0).pop().unwrap().title, "hello there");
         assert!(discover(-1.0).is_empty());
     }
 
