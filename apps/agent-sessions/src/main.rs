@@ -20,9 +20,9 @@ use std::process::ExitCode;
 
 use cli::{Command, Options, USAGE};
 use error::Error;
-use format::{format_age, format_duration};
+use format::{format_age, format_turn_time};
 use render::project_name;
-use sessions::{Discovery, Row, filter_sessions, now_ms, session_runtime, to_rows};
+use sessions::{Discovery, Row, filter_sessions, now_ms, to_rows};
 use text::one_line;
 
 fn print_list(options: &Options) {
@@ -36,7 +36,7 @@ fn print_list(options: &Options) {
             session.agent.as_str(),
             session.status.as_str(),
             session.model.as_deref().unwrap_or("-"),
-            &format_duration(session_runtime(session, now).unwrap_or(0.0)),
+            &format_turn_time(session.turn_elapsed(now)),
             &format_age(now - session.updated_at),
             project_name(&session.cwd),
             &format!("{}{}", row.tree, session.title),

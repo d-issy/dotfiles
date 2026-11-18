@@ -23,7 +23,7 @@ use keys::{Key, KeyDecoder};
 use log_view::{LogView, body_height};
 use terminal::{Size, Terminal};
 
-const REFRESH_INTERVAL: Duration = Duration::from_millis(2000);
+const REFRESH_INTERVAL: Duration = Duration::from_secs(1);
 const LOG_POLL_INTERVAL: Duration = Duration::from_millis(300);
 
 enum Event {
@@ -212,6 +212,10 @@ impl App {
 
     fn refresh(&mut self) {
         let current = self.selected_session().map(|session| session.key.clone());
+        if let Some(log) = &mut self.log {
+            // Read the open transcript before discovery prunes sessions that just exited.
+            self.discovery.refresh_open_log(&mut log.session);
+        }
         let discovered = self.discovery.discover(self.window_ms, now_ms());
         let visible = filter_sessions(discovered.clone(), self.show_idle);
         self.hidden_idle = discovered.len() - visible.len();

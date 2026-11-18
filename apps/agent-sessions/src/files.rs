@@ -5,7 +5,7 @@ use std::path::{Path, PathBuf};
 use std::time::UNIX_EPOCH;
 
 use crate::json::parse_object_line;
-use crate::model::{JsonObject, SessionStatus};
+use crate::model::{JsonObject, SessionStatus, TurnTiming};
 
 /// Modification time in (fractional) milliseconds since the epoch, like Node's `mtimeMs`.
 pub fn modified_ms(path: &Path) -> Option<f64> {
@@ -127,9 +127,11 @@ impl JsonlTail {
 #[derive(Clone, Debug, Default)]
 pub struct LogSummary {
     pub title: Option<String>,
+    pub first_user_message: Option<String>,
     pub model: Option<String>,
     pub status: Option<SessionStatus>,
     pub last: Option<String>,
+    pub turn: TurnTiming,
 }
 
 /// Keeps per-file summaries current by folding every appended record, so a

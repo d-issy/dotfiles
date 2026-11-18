@@ -1,7 +1,7 @@
-use crate::format::{format_age, format_clock, format_duration};
+use crate::format::{format_age, format_clock, format_duration, format_turn_time};
 use crate::js;
 use crate::model::{Agent, EntryKind, LogEntry, Session, SessionStatus};
-use crate::sessions::{SessionRow, home_dir, session_runtime};
+use crate::sessions::{SessionRow, home_dir};
 use crate::text::{pad, truncate, width as display_width, wrap};
 
 const RESET: &str = "\u{1b}[0m";
@@ -102,7 +102,6 @@ const AGENT_WIDTH: usize = 6;
 const STATUS_WIDTH: usize = 7;
 const MODEL_WIDTH: usize = 14;
 const TIME_WIDTH: usize = 6;
-const AGE_WIDTH: usize = 7;
 
 fn tree_width(width: usize) -> usize {
     (width * 38 / 100).clamp(24, 64)
@@ -119,8 +118,6 @@ fn last_width(width: usize) -> Option<usize> {
         + MODEL_WIDTH
         + 1
         + TIME_WIDTH
-        + 1
-        + AGE_WIDTH
         + 1;
     width.checked_sub(fixed).filter(|rest| *rest > 8)
 }
@@ -146,8 +143,6 @@ pub fn render_column_header(width: usize) -> String {
         &pad("MODEL", MODEL_WIDTH),
         " ",
         &js::pad_start("TIME", TIME_WIDTH),
-        " ",
-        &js::pad_start("UPDATED", AGE_WIDTH),
         " ",
         if last_width(width).is_some() {
             "LAST"
@@ -185,8 +180,7 @@ pub fn render_session_row(row: &SessionRow, selected: bool, width: usize, now: f
         &session.title,
         tree_width(width).saturating_sub(display_width(&guide)),
     );
-    let runtime = session_runtime(session, now).map_or_else(|| "-".to_string(), format_duration);
-    let age = format!("{} ago", format_age(now - session.updated_at));
+    let turn_time = format_turn_time(session.turn_elapsed(now));
     [
         if selected { bold("▶ ") } else { "  ".into() },
         dim(&guide),
@@ -206,9 +200,7 @@ pub fn render_session_row(row: &SessionRow, selected: bool, width: usize, now: f
         " ".into(),
         muted(&pad(short_model(session.model.as_deref()), MODEL_WIDTH)),
         " ".into(),
-        muted(&js::pad_start(&runtime, TIME_WIDTH)),
-        " ".into(),
-        dim(&js::pad_start(&age, AGE_WIDTH)),
+        muted(&js::pad_start(&turn_time, TIME_WIDTH)),
         " ".into(),
         last_width(width).map_or_else(String::new, |rest| {
             dim(&truncate(session.last.as_deref().unwrap_or(""), rest))
@@ -231,15 +223,14 @@ pub fn render_empty(window_ms: f64, hidden_idle: usize) -> Vec<String> {
 }
 
 pub fn render_session_header(session: &Session, now: f64) -> String {
-    let runtime =
-        session_runtime(session, now).map(|runtime| format!("time {}", format_duration(runtime)));
-    let details: Vec<String> = std::iter::once(session.cwd.clone())
-        .chain(runtime)
-        .chain(std::iter::once(format!(
-            "updated {} ago",
-            format_age(now - session.updated_at)
-        )))
-        .collect();
+    let turn_time = session
+        .turn_elapsed(now)
+        .map(|elapsed| format!("turn time {}", format_duration(elapsed)));
+    let mut details = session.cwd.clone();
+    if let Some(turn_time) = turn_time {
+        details.push_str(" · ");
+        details.push_str(&turn_time);
+    }
     [
         agent_tag(session.agent),
         " ".into(),
@@ -249,7 +240,7 @@ pub fn render_session_header(session: &Session, now: f64) -> String {
         "  ".into(),
         bold(&session.title),
         "  ".into(),
-        dim(&details.join(" · ")),
+        dim(&details),
     ]
     .concat()
 }

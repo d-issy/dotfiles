@@ -2,7 +2,7 @@ use dot::json::Value;
 
 use crate::js;
 use crate::json::{Fields, text_content};
-use crate::model::{EntryKind, JsonObject, LogEntry, SessionStatus};
+use crate::model::{EntryKind, JsonObject, LogEntry, TurnEvent};
 use crate::text::sanitize;
 
 /// Matches `^-\w*c$`, the flag of a `zsh -lc '<script>'` style invocation.
@@ -193,17 +193,28 @@ pub fn codex_model(records: &[JsonObject]) -> Option<String> {
     })
 }
 
-pub fn codex_status(records: &[JsonObject]) -> Option<SessionStatus> {
-    records.iter().rev().find_map(|record| {
-        if record.str("type") != Some("event_msg") {
-            return None;
+pub fn codex_turn_event(record: &JsonObject) -> Option<TurnEvent> {
+    if record.str("type") != Some("event_msg") {
+        return None;
+    }
+    let payload = record.object("payload");
+    match payload.str("type")? {
+        "task_started" => Some(TurnEvent::Start(record.time("timestamp"))),
+        "task_complete" | "turn_aborted" => {
+            let at = record.time("timestamp");
+            Some(
+                payload
+                    .get("duration_ms")
+                    .and_then(Value::as_f64)
+                    .filter(|elapsed| elapsed.is_finite() && *elapsed >= 0.0)
+                    .map_or(TurnEvent::Finish(at), |elapsed| TurnEvent::Duration {
+                        elapsed,
+                        at,
+                    }),
+            )
         }
-        match record.object("payload").str("type")? {
-            "task_started" => Some(SessionStatus::Running),
-            "task_complete" | "turn_aborted" => Some(SessionStatus::Idle),
-            _ => None,
-        }
-    })
+        _ => None,
+    }
 }
 
 #[cfg(test)]
@@ -264,20 +275,38 @@ mod tests {
     }
 
     #[test]
-    fn derives_the_turn_status_from_lifecycle_events() {
+    fn reads_turn_boundaries_from_lifecycle_events() {
         assert_eq!(
-            codex_status(&[event(json!({"type": "task_started"}))]),
-            Some(SessionStatus::Running)
+            codex_turn_event(&event(json!({"type": "task_started"}))),
+            Some(TurnEvent::Start(time()))
+        );
+        for kind in ["task_complete", "turn_aborted"] {
+            assert_eq!(
+                codex_turn_event(&event(json!({"type": kind}))),
+                Some(TurnEvent::Finish(time()))
+            );
+            assert_eq!(
+                codex_turn_event(&event(json!({"type": kind, "duration_ms": 1234}))),
+                Some(TurnEvent::Duration {
+                    elapsed: 1234.0,
+                    at: time(),
+                })
+            );
+        }
+        assert_eq!(
+            codex_turn_event(&event(json!({"type": "task_complete", "duration_ms": -1}))),
+            Some(TurnEvent::Finish(time()))
         );
         assert_eq!(
-            codex_status(&[
-                event(json!({"type": "task_started"})),
-                event(json!({"type": "token_count"})),
-                event(json!({"type": "task_complete"})),
-            ]),
-            Some(SessionStatus::Idle)
+            codex_turn_event(&event(json!({"type": "token_count"}))),
+            None
         );
-        assert_eq!(codex_status(&[]), None);
+        assert_eq!(
+            codex_turn_event(&object(
+                json!({"type":"event_msg", "payload":{"type":"task_started"}})
+            )),
+            Some(TurnEvent::Start(None))
+        );
     }
 
     #[test]
