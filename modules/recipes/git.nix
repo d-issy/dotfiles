@@ -206,21 +206,72 @@
     ];
   };
 
-  dot.programs.commandLibrary.groups.git.sections = [
-    {
-      variables.branch = "${config.programs.git.package}/bin/git branch --format='%(refname:short)'";
-      entries = [
+  home.shellAliases = {
+    wt = "worktree";
+    wtc = "worktree create";
+    wtcf = "worktree create --finish";
+    wtd = "worktree delete";
+    wtdc = "worktree delete --current";
+    wtl = "worktree list";
+    wtp = "worktree prune";
+    wtr = "worktree rename";
+    wts = "worktree status";
+    wtsw = "worktree switch";
+  };
+
+  dot.programs = {
+    scripts = {
+      enable = true;
+
+      gitAutoCommit = {
+        enable = true;
+        thinking = "low";
+      };
+
+      worktree = {
+        enable = true;
+        thinking = "low";
+      };
+    };
+
+    commandLibrary.groups = {
+      git.sections = [
         {
-          description = "show working tree status";
-          alias = "gs";
-          command = "git status";
-        }
-        {
-          description = "switch branch";
-          alias = "gsw";
-          command = "git switch <branch>";
+          variables.branch = "${config.programs.git.package}/bin/git branch --format='%(refname:short)'";
+          entries = [
+            {
+              description = "show working tree status";
+              alias = "gs";
+              command = "git status";
+            }
+            {
+              description = "switch branch";
+              alias = "gsw";
+              command = "git switch <branch>";
+            }
+          ];
         }
       ];
-    }
-  ];
+
+      worktree.sections = [
+        {
+          tags = [ "worktree" ];
+          variables = {
+            pull_number = {
+              command = "${config.programs.gh.package}/bin/gh pr list";
+              column = 1;
+              delimiter = "\t";
+            };
+          };
+          entries = [
+            {
+              description = "Switch GitHub pull request worktree";
+              alias = "wtpr";
+              command = "worktree switch --pr <pull_number>";
+            }
+          ];
+        }
+      ];
+    };
+  };
 }

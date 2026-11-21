@@ -3,10 +3,14 @@
 {
   dot = {
     programs = {
-      scripts.hr = {
+      scripts = {
         enable = true;
-        commandName = "hr";
-        repoSwitcher.includeParentDirectories = true;
+        herdrSubagents.enable = true;
+        hr = {
+          enable = true;
+          commandName = "hr";
+          repoSwitcher.includeParentDirectories = true;
+        };
       };
 
       herdr = {

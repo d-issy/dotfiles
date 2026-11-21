@@ -22,7 +22,12 @@ let
 in
 {
   options.dot.programs.scripts.tm = {
-    enable = lib.mkEnableOption "personal tm tmux session selector command";
+    enable = lib.mkOption {
+      type = lib.types.bool;
+      default = config.dot.programs.tmux.enable;
+      defaultText = lib.literalExpression "config.dot.programs.tmux.enable";
+      description = "Whether to enable personal tm tmux session selector command.";
+    };
 
     commandName = lib.mkOption {
       type = lib.types.str;
