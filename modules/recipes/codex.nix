@@ -9,6 +9,8 @@ _:
     enable = true;
 
     settings = {
+      approval_policy = "on-request";
+      approvals_reviewer = "auto_review";
       tui.status_line = [
         "model-with-reasoning"
         "context-remaining"
