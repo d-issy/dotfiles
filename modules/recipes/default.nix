@@ -78,9 +78,7 @@
     ./pgcli.nix
     ./pi.nix
     ./python.nix
-    ./scripts.nix
     ./starship.nix
-    ./tm.nix
     ./tmux.nix
     ./visidata.nix
     ./wezterm.nix

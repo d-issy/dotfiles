@@ -77,7 +77,12 @@ let
 in
 {
   options.dot.programs.scripts.tmuxNotice = {
-    enable = lib.mkEnableOption "tmux pane notice command";
+    enable = lib.mkOption {
+      type = lib.types.bool;
+      default = config.dot.programs.tmux.enable;
+      defaultText = lib.literalExpression "config.dot.programs.tmux.enable";
+      description = "Whether to enable tmux pane notice command.";
+    };
 
     tmuxPackage = lib.mkOption {
       type = lib.types.package;

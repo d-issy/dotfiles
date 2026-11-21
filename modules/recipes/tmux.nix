@@ -10,123 +10,167 @@ let
   };
 in
 {
-  config.dot.programs.tmux = {
-    enable = true;
+  config.dot.programs = {
+    tmux = {
+      enable = false;
 
-    terminal = "tmux-256color";
-    shell = lib.getExe config.programs.zsh.package;
-    defaultCommand = lib.getExe config.programs.nushell.package;
+      terminal = "tmux-256color";
+      shell = lib.getExe config.programs.zsh.package;
+      defaultCommand = lib.getExe config.programs.nushell.package;
 
-    baseIndex = 1;
-    historyLimit = 9999999;
-    keyMode = "vi";
-    mouse = true;
-    prefix = "C-q";
+      baseIndex = 1;
+      historyLimit = 9999999;
+      keyMode = "vi";
+      mouse = true;
+      prefix = "C-q";
 
-    plugins = {
-      sensible.enable = true;
-      resurrect.enable = true;
-      catppuccin = {
-        enable = true;
-        flavor = "macchiato";
+      plugins = {
+        sensible.enable = true;
+        resurrect.enable = true;
+        catppuccin = {
+          enable = true;
+          flavor = "macchiato";
+        };
       };
+
+      keyBindings = {
+        paneNavigationAndResize.enable = true;
+        paneResize = {
+          amount = 5;
+          repeatable = true;
+        };
+        popups = {
+          sessionSelector.enable = true;
+        };
+        sessionNavigation.enable = true;
+        windowRename.enable = true;
+        split.enable = true;
+        copyModeVi.enable = true;
+      };
+
+      status = {
+        position = "top";
+        paneForegroundCommand.enable = true;
+        windowNotice.enable = true;
+        sessionList = {
+          enable = true;
+          colors = {
+            active = colors.text;
+            inactive = colors.muted;
+            noticeBright = colors.accent;
+            noticeDim = colors.muted;
+          };
+        };
+      };
+
+      terminalFeatures = {
+        xterm-256color = [
+          "bpaste"
+          "ccolour"
+          "clipboard"
+          "cstyle"
+          "focus"
+          "RGB"
+          "sixel"
+          "title"
+        ];
+        xterm-ghostty = [
+          "256"
+          "bpaste"
+          "ccolour"
+          "clipboard"
+          "hyperlinks"
+          "cstyle"
+          "extkeys"
+          "focus"
+          "ignorefkeys"
+          "margins"
+          "mouse"
+          "osc7"
+          "overline"
+          "rectfill"
+          "RGB"
+          "sixel"
+          "strikethrough"
+          "sync"
+          "title"
+          "usstyle"
+          "progressbar"
+        ];
+      };
+
+      extendedKeys.enable = true;
+      passthrough.enable = true;
+
+      terminalTitle = {
+        enable = true;
+        format = "#T";
+      };
+
+      paneBorder = {
+        enable = true;
+        indicators = "off";
+        lines = "single";
+        style = "fg=${colors.paneBorder}";
+        activeStyle = "fg=${colors.activePaneBorder}";
+        activeStyleWhenSinglePane = "fg=${colors.paneBorder}";
+        title = {
+          enable = true;
+          position = "top";
+          activeStyle = "fg=${colors.accent}";
+          inactiveStyle = "fg=${colors.paneBorder}";
+        };
+      };
+
+      bell.disable = true;
+      renumberWindows.enable = true;
+      automaticRename = {
+        enable = true;
+        format = "Window";
+      };
+
     };
 
-    keyBindings = {
-      paneNavigationAndResize.enable = true;
-      paneResize = {
-        amount = 5;
-        repeatable = true;
-      };
-      popups = {
-        sessionSelector.enable = true;
-      };
-      sessionNavigation.enable = true;
-      windowRename.enable = true;
-      split.enable = true;
-      copyModeVi.enable = true;
-    };
+    scripts = {
+      enable = true;
 
-    status = {
-      position = "top";
-      paneForegroundCommand.enable = true;
-      windowNotice.enable = true;
-      sessionList = {
-        enable = true;
-        colors = {
-          active = colors.text;
-          inactive = colors.muted;
-          noticeBright = colors.accent;
-          noticeDim = colors.muted;
+      tm = {
+        commandName = "tm";
+        repoSwitcher.includeParentDirectories = true;
+      };
+
+      tmuxNotice = {
+        fallback = {
+          icons = [ "•" ];
+          sessionNotificationIndicatorColor = "#ebcb8b"; # yellow
+          titleMode = "name";
+        };
+        notices = {
+          pi-wait = {
+            icons = [
+              "π"
+              " "
+            ];
+            sessionNotificationIndicatorColor = "#8ec07c"; # green
+            titleStripPatterns = [ "^(π| )\\s*" ];
+          };
+          claude-wait = {
+            icons = [
+              "✳"
+              " "
+            ];
+            sessionNotificationIndicatorColor = "#d08770"; # orange
+            titleStripPatterns = [ "^[✻✳]\\s*" ];
+          };
+          codex-wait = {
+            icons = [
+              "{}"
+              "  "
+            ];
+            sessionNotificationIndicatorColor = "#88c0d0"; # cyan
+          };
         };
       };
     };
-
-    terminalFeatures = {
-      xterm-256color = [
-        "bpaste"
-        "ccolour"
-        "clipboard"
-        "cstyle"
-        "focus"
-        "RGB"
-        "sixel"
-        "title"
-      ];
-      xterm-ghostty = [
-        "256"
-        "bpaste"
-        "ccolour"
-        "clipboard"
-        "hyperlinks"
-        "cstyle"
-        "extkeys"
-        "focus"
-        "ignorefkeys"
-        "margins"
-        "mouse"
-        "osc7"
-        "overline"
-        "rectfill"
-        "RGB"
-        "sixel"
-        "strikethrough"
-        "sync"
-        "title"
-        "usstyle"
-        "progressbar"
-      ];
-    };
-
-    extendedKeys.enable = true;
-    passthrough.enable = true;
-
-    terminalTitle = {
-      enable = true;
-      format = "#T";
-    };
-
-    paneBorder = {
-      enable = true;
-      indicators = "off";
-      lines = "single";
-      style = "fg=${colors.paneBorder}";
-      activeStyle = "fg=${colors.activePaneBorder}";
-      activeStyleWhenSinglePane = "fg=${colors.paneBorder}";
-      title = {
-        enable = true;
-        position = "top";
-        activeStyle = "fg=${colors.accent}";
-        inactiveStyle = "fg=${colors.paneBorder}";
-      };
-    };
-
-    bell.disable = true;
-    renumberWindows.enable = true;
-    automaticRename = {
-      enable = true;
-      format = "Window";
-    };
-
   };
 }
