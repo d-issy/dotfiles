@@ -125,10 +125,37 @@ pub fn session_indices(rows: &[Row]) -> Vec<usize> {
         .collect()
 }
 
+/// Hides idle sessions unless `show_idle`, but keeps an idle session whose
+/// subagent is running or waiting: it is waiting on that subagent.
 pub fn filter_sessions(sessions: Vec<Session>, show_idle: bool) -> Vec<Session> {
+    if show_idle {
+        return sessions;
+    }
+    let parents: HashMap<&str, &str> = sessions
+        .iter()
+        .filter_map(|session| Some((session.key.as_str(), session.parent_key.as_deref()?)))
+        .collect();
+    let mut active_ancestors: HashSet<String> = HashSet::new();
+    for session in &sessions {
+        if !matches!(
+            session.status,
+            SessionStatus::Running | SessionStatus::Waiting
+        ) {
+            continue;
+        }
+        let mut key = session.key.as_str();
+        while let Some(&parent) = parents.get(key) {
+            if !active_ancestors.insert(parent.to_string()) {
+                break;
+            }
+            key = parent;
+        }
+    }
     sessions
         .into_iter()
-        .filter(|session| show_idle || session.status != SessionStatus::Idle)
+        .filter(|session| {
+            session.status != SessionStatus::Idle || active_ancestors.contains(&session.key)
+        })
         .collect()
 }
 
@@ -388,10 +415,6 @@ mod tests {
                 session("ended-child", 7.0, Some("missing")),
                 SessionStatus::Ended,
             ),
-            with_status(
-                session("waiting-child", 8.0, Some("idle-main")),
-                SessionStatus::Waiting,
-            ),
         ];
         assert_eq!(
             keys(&filter_sessions(sessions.clone(), false)),
@@ -401,20 +424,29 @@ mod tests {
                 "unknown-main",
                 "ended-main",
                 "ended-child",
-                "waiting-child",
             ]
         );
         assert_eq!(filter_sessions(sessions.clone(), true), sessions);
     }
 
     #[test]
-    fn keeps_descendants_in_the_tree_when_their_idle_main_session_is_hidden() {
+    fn keeps_idle_ancestors_of_running_or_waiting_subagents() {
         let sessions = vec![
             session("main", 1.0, None),
-            with_status(session("child", 2.0, Some("main")), SessionStatus::Running),
+            session("child", 2.0, Some("main")),
             with_status(
                 session("grandchild", 3.0, Some("child")),
+                SessionStatus::Running,
+            ),
+            session("waiting-main", 4.0, None),
+            with_status(
+                session("waiting-child", 5.0, Some("waiting-main")),
                 SessionStatus::Waiting,
+            ),
+            session("ended-main", 6.0, None),
+            with_status(
+                session("ended-child", 7.0, Some("ended-main")),
+                SessionStatus::Ended,
             ),
         ];
         let rows = to_rows(&filter_sessions(sessions, false));
@@ -422,7 +454,26 @@ mod tests {
             .iter()
             .map(|row| (row.session.key.as_str(), row.depth))
             .collect();
-        assert_eq!(list, [("child", 0), ("grandchild", 1)]);
+        assert_eq!(
+            list,
+            [
+                ("main", 0),
+                ("child", 1),
+                ("grandchild", 2),
+                ("waiting-main", 0),
+                ("waiting-child", 1),
+                ("ended-child", 0),
+            ]
+        );
+    }
+
+    #[test]
+    fn survives_a_parent_cycle() {
+        let sessions = vec![
+            session("a", 1.0, Some("b")),
+            with_status(session("b", 2.0, Some("a")), SessionStatus::Running),
+        ];
+        assert_eq!(keys(&filter_sessions(sessions, false)), ["a", "b"]);
     }
 
     #[test]
