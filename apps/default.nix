@@ -34,7 +34,6 @@ rec {
   herdr-switcher = rustApp {
     pname = "herdr-switcher";
     description = "Select Herdr workspaces and repositories";
-    nativeCheckInputs = [ pkgs.bash ];
   };
 
   wrapHerdrSwitcher = import ./herdr-switcher/wrap.nix {
@@ -45,7 +44,6 @@ rec {
   tm-switcher = rustApp {
     pname = "tm-switcher";
     description = "Select tmux sessions and repositories";
-    nativeCheckInputs = [ pkgs.bash ];
   };
 
   tmux-notice = rustApp {
@@ -61,6 +59,5 @@ rec {
   worktree = rustApp {
     pname = "worktree";
     description = "Personal git worktree helper";
-    nativeCheckInputs = [ pkgs.git ];
   };
 }
