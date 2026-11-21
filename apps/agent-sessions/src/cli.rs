@@ -10,14 +10,16 @@ Options:
   -w, --window DURATION  Include Codex/pi sessions updated within DURATION
                          (e.g. 30m, 2h, 1d). Default: 2h.
   -l, --list             Print the session list once and exit.
-  -i, --show-idle        Include idle sessions (hidden by default).
+  -i, --show-idle        Include idle sessions and recently ended subagents.
   -h, --help             Show this help.
 
 The list refreshes every second. TIME shows the duration of the current or
-most recent turn. Press i to toggle idle sessions;
-running subagents and sessions waiting for input stay visible. Finished Claude
-subagents stay for 10 minutes. Select a session and press enter to follow its
-log in real time (updated every 300ms). Pi status is inferred from saved\nmessages; in-progress streaming is not written to its session log.";
+most recent turn. Press i to toggle idle sessions and ended subagents;
+running subagents and sessions waiting for input stay visible. With this toggle
+on, finished Claude subagents are available for 10 minutes. Select a session
+and press enter to follow its log in real time (updated every 300ms).
+Pi status is inferred from saved messages; in-progress streaming is not
+written to its session log.";
 
 #[derive(Debug, PartialEq)]
 pub struct Options {

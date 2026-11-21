@@ -444,6 +444,17 @@ mod tests {
         let completed = find_subagent(6_000.0, true).unwrap();
         assert_eq!(completed.status, SessionStatus::Idle);
         assert_eq!(completed.turn_elapsed(6_000.0), Some(4_000.0));
+
+        fs::write(
+            subagents.join("agent-thinking.meta.json"),
+            json!({"finished": true}).to_string(),
+        )
+        .unwrap();
+        assert!(find_subagent(6_000.0, false).is_none());
+        assert_eq!(
+            find_subagent(6_000.0, true).unwrap().status,
+            SessionStatus::Ended
+        );
     }
 
     #[test]
