@@ -128,7 +128,7 @@ struct App {
     session_indices: Vec<usize>,
     /// Index into `session_indices`.
     selected: usize,
-    hidden_idle: usize,
+    hidden_inactive: usize,
     log: Option<LogView>,
     keys: KeyDecoder,
 }
@@ -142,7 +142,7 @@ impl App {
             rows: Vec::new(),
             session_indices: Vec::new(),
             selected: 0,
-            hidden_idle: 0,
+            hidden_inactive: 0,
             log: None,
             keys: KeyDecoder::default(),
         }
@@ -218,7 +218,7 @@ impl App {
         }
         let discovered = self.discovery.discover(self.window_ms, now_ms());
         let visible = filter_sessions(discovered.clone(), self.show_idle);
-        self.hidden_idle = discovered.len() - visible.len();
+        self.hidden_inactive = discovered.len() - visible.len();
         self.rows = to_rows(&visible);
         self.session_indices = session_indices(&self.rows);
         let kept = self
@@ -324,8 +324,8 @@ impl App {
                 .filter(|row| row.session.status == status)
                 .count()
         };
-        let hidden = if self.hidden_idle > 0 {
-            format!(" · {} idle hidden", self.hidden_idle)
+        let hidden = if self.hidden_inactive > 0 {
+            format!(" · {} inactive hidden", self.hidden_inactive)
         } else {
             String::new()
         };
@@ -343,7 +343,7 @@ impl App {
     fn list_footer(&self, width: usize) -> String {
         dim(&truncate(
             &format!(
-                "↑↓/jk select · enter log · i idle: {} · r refresh · q quit · window {}",
+                "↑↓/jk select · enter log · i inactive: {} · r refresh · q quit · window {}",
                 if self.show_idle { "shown" } else { "hidden" },
                 format_age(self.window_ms)
             ),
@@ -353,7 +353,7 @@ impl App {
 
     fn visible_rows(&self, size: Size, body: usize, now: f64) -> Vec<String> {
         if self.rows.is_empty() {
-            return render_empty(self.window_ms, self.hidden_idle);
+            return render_empty(self.window_ms, self.hidden_inactive);
         }
         let selected = self.session_indices.get(self.selected).copied();
         let cursor = selected.unwrap_or(0);

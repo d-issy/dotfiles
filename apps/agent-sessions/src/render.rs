@@ -209,10 +209,10 @@ pub fn render_session_row(row: &SessionRow, selected: bool, width: usize, now: f
     .concat()
 }
 
-pub fn render_empty(window_ms: f64, hidden_idle: usize) -> Vec<String> {
-    let message = if hidden_idle > 0 {
-        let plural = if hidden_idle == 1 { "" } else { "s" };
-        format!("  {hidden_idle} idle session{plural} hidden. Press i to show.")
+pub fn render_empty(window_ms: f64, hidden_inactive: usize) -> Vec<String> {
+    let message = if hidden_inactive > 0 {
+        let plural = if hidden_inactive == 1 { "" } else { "s" };
+        format!("  {hidden_inactive} inactive session{plural} hidden. Press i to show.")
     } else {
         format!(
             "  No live Claude sessions or Codex/pi sessions active in the last {}.",

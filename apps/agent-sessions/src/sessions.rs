@@ -125,8 +125,8 @@ pub fn session_indices(rows: &[Row]) -> Vec<usize> {
         .collect()
 }
 
-/// Hides idle sessions unless `show_idle`, but keeps an idle session whose
-/// subagent is running or waiting: it is waiting on that subagent.
+/// Hides idle sessions and ended subagents unless `show_idle`, while keeping
+/// the ancestors of running or waiting subagents visible.
 pub fn filter_sessions(sessions: Vec<Session>, show_idle: bool) -> Vec<Session> {
     if show_idle {
         return sessions;
@@ -154,7 +154,9 @@ pub fn filter_sessions(sessions: Vec<Session>, show_idle: bool) -> Vec<Session> 
     sessions
         .into_iter()
         .filter(|session| {
-            session.status != SessionStatus::Idle || active_ancestors.contains(&session.key)
+            let inactive = session.status == SessionStatus::Idle
+                || (session.status == SessionStatus::Ended && session.parent_key.is_some());
+            !inactive || active_ancestors.contains(&session.key)
         })
         .collect()
 }
@@ -403,7 +405,7 @@ mod tests {
     }
 
     #[test]
-    fn hides_idle_sessions_by_default_and_can_show_them() {
+    fn hides_idle_sessions_and_ended_subagents_by_default_and_can_show_them() {
         let sessions = vec![
             session("idle-main", 1.0, None),
             with_status(session("running-main", 2.0, None), SessionStatus::Running),
@@ -418,13 +420,7 @@ mod tests {
         ];
         assert_eq!(
             keys(&filter_sessions(sessions.clone(), false)),
-            [
-                "running-main",
-                "waiting-main",
-                "unknown-main",
-                "ended-main",
-                "ended-child",
-            ]
+            ["running-main", "waiting-main", "unknown-main", "ended-main"]
         );
         assert_eq!(filter_sessions(sessions.clone(), true), sessions);
     }
@@ -462,7 +458,6 @@ mod tests {
                 ("grandchild", 2),
                 ("waiting-main", 0),
                 ("waiting-child", 1),
-                ("ended-child", 0),
             ]
         );
     }
