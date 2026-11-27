@@ -105,7 +105,7 @@ impl LogView {
             size.width.saturating_sub(12),
         );
         let mut lines = vec![
-            render_session_header(&self.session, now),
+            render_session_header(&self.session, now, size.width),
             dim(&"─".repeat(size.width)),
         ];
         lines.extend(visible.iter().cloned());

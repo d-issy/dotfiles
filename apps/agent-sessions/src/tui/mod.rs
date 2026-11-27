@@ -13,7 +13,8 @@ use dot::signal::{Signal, Signals};
 use crate::format::format_age;
 use crate::model::{Session, SessionStatus};
 use crate::render::{
-    bold, dim, render_column_header, render_empty, render_project_row, render_session_row,
+    ListLayout, bold, dim, render_column_header, render_empty, render_project_row,
+    render_session_row,
 };
 use crate::sessions::{
     Discovery, Row, SessionRow, filter_sessions, now_ms, session_indices, to_rows,
@@ -351,7 +352,7 @@ impl App {
         ))
     }
 
-    fn visible_rows(&self, size: Size, body: usize, now: f64) -> Vec<String> {
+    fn visible_rows(&self, size: Size, body: usize, now: f64, layout: ListLayout) -> Vec<String> {
         if self.rows.is_empty() {
             return render_empty(self.window_ms, self.hidden_inactive);
         }
@@ -364,21 +365,17 @@ impl App {
         (start..end)
             .map(|index| match &self.rows[index] {
                 Row::Project { cwd, sessions } => render_project_row(cwd, *sessions, size.width),
-                Row::Session(row) => {
-                    render_session_row(row, Some(index) == selected, size.width, now)
-                }
+                Row::Session(row) => render_session_row(row, Some(index) == selected, layout, now),
             })
             .collect()
     }
 
     fn list_lines(&self, size: Size, now: f64) -> Vec<String> {
         let body = size.height.saturating_sub(3);
-        let rows = self.visible_rows(size, body, now);
+        let layout = ListLayout::new(size.width, &self.rows);
+        let rows = self.visible_rows(size, body, now, layout);
         let filler = body.saturating_sub(rows.len());
-        let mut lines = vec![
-            self.list_header(size.width),
-            render_column_header(size.width),
-        ];
+        let mut lines = vec![self.list_header(size.width), render_column_header(layout)];
         lines.extend(rows);
         lines.extend(std::iter::repeat_n(String::new(), filler));
         lines.push(self.list_footer(size.width));
