@@ -129,13 +129,22 @@ pub struct LogSummary {
     pub title: Option<String>,
     pub first_user_message: Option<String>,
     pub model: Option<String>,
+    pub thinking: Option<String>,
     pub status: Option<SessionStatus>,
     pub last: Option<String>,
     pub turn: TurnTiming,
 }
 
+impl LogSummary {
+    pub fn set_thinking(&mut self, level: Option<&str>) {
+        self.thinking = level
+            .map(crate::text::one_line)
+            .filter(|level| !level.is_empty());
+    }
+}
+
 /// Keeps per-file summaries current by folding every appended record, so a
-/// large burst of output can never hide a status or model change.
+/// large burst of output can never hide a status, model, or thinking change.
 pub struct SummaryTracker {
     reduce: fn(&mut LogSummary, &JsonObject),
     entries: HashMap<PathBuf, (JsonlTail, LogSummary)>,

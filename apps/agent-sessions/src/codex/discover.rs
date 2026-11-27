@@ -55,6 +55,20 @@ fn reduce(summary: &mut LogSummary, record: &JsonObject) {
     if let Some(model) = codex_model(records) {
         summary.model = Some(model);
     }
+    let payload = record.object("payload");
+    match record.str("type") {
+        Some("turn_context") => {
+            summary.set_thinking(payload.non_empty_str("effort"));
+        }
+        Some("event_msg") if payload.str("type") == Some("thread_settings_applied") => {
+            summary.set_thinking(
+                payload
+                    .object("thread_settings")
+                    .non_empty_str("reasoning_effort"),
+            );
+        }
+        _ => {}
+    }
     if let Some(last) = last_summary(&parse_codex_record(record)) {
         summary.last = Some(last);
     }
@@ -152,6 +166,7 @@ impl CodexDiscovery {
                 .non_empty_str("parent_thread_id")
                 .map(|parent| format!("codex:{parent}")),
             model: summary.model,
+            thinking: summary.thinking,
             last: summary.last,
         })
     }
@@ -232,6 +247,45 @@ mod tests {
         let session = Fixture::new().find().unwrap();
         assert_eq!(session.status, SessionStatus::Running);
         assert_eq!(session.model.as_deref(), Some("gpt-a"));
+    }
+
+    #[test]
+    fn follows_thinking_from_thread_settings_and_turn_context() {
+        let mut fixture = Fixture::new();
+        assert_eq!(fixture.find().unwrap().thinking, None);
+        for (record, expected) in [
+            (
+                json!({
+                    "type": "event_msg",
+                    "payload": {
+                        "type": "thread_settings_applied",
+                        "thread_settings": {"model": "gpt-a", "reasoning_effort": "high"},
+                    },
+                }),
+                Some("high"),
+            ),
+            (
+                json!({
+                    "type": "turn_context",
+                    "payload": {"model": "gpt-a", "effort": "ultra"},
+                }),
+                Some("ultra"),
+            ),
+            (
+                json!({"type": "event_msg", "payload": {"type": "token_count"}}),
+                Some("ultra"),
+            ),
+            (
+                json!({
+                    "type": "turn_context",
+                    "payload": {"model": "gpt-b"},
+                }),
+                None,
+            ),
+        ] {
+            append(&fixture.rollout, line(record).as_bytes());
+            assert_eq!(fixture.find().unwrap().thinking.as_deref(), expected);
+        }
     }
 
     #[test]

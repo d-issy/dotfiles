@@ -86,6 +86,7 @@ fn reduce(summary: &mut LogSummary, record: &JsonObject) {
     }
     if let Some(model) = claude_model(records) {
         summary.model = Some(model);
+        summary.set_thinking(record.non_empty_str("effort"));
     }
     if let Some(last) = last_summary(&parse_claude_record(record)) {
         summary.last = Some(last);
@@ -183,6 +184,7 @@ impl ClaudeDiscovery {
             log_path,
             parent_key: None,
             model: summary.model,
+            thinking: summary.thinking,
             last: summary.last,
             id,
         })
@@ -238,6 +240,7 @@ impl ClaudeDiscovery {
             log_path: Some(path),
             parent_key: Some(parent.key.clone()),
             model: summary.model,
+            thinking: summary.thinking,
             last: summary.last,
         })
     }
@@ -277,6 +280,36 @@ mod tests {
             proc_start_time(&format!("123 (a b) {}", fields.join(" "))),
             Some("22")
         );
+    }
+
+    #[test]
+    fn tracks_the_effort_of_the_latest_claude_response() {
+        let mut summary = LogSummary::default();
+        for (record, expected) in [
+            (
+                json!({"type": "assistant", "message": {"model": "claude-opus"}}),
+                None,
+            ),
+            (
+                json!({"type": "assistant", "message": {"model": "claude-opus"}, "effort": "high"}),
+                Some("high"),
+            ),
+            (
+                json!({"type": "assistant", "message": {"model": "<synthetic>"}}),
+                Some("high"),
+            ),
+            (
+                json!({"type": "assistant", "message": {"model": "claude-opus"}, "effort": "low"}),
+                Some("low"),
+            ),
+            (
+                json!({"type": "assistant", "message": {"model": "claude-haiku"}}),
+                None,
+            ),
+        ] {
+            reduce(&mut summary, &object(record));
+            assert_eq!(summary.thinking.as_deref(), expected);
+        }
     }
 
     #[test]

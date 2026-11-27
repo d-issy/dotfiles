@@ -17,6 +17,11 @@ fn reduce(summary: &mut LogSummary, record: &JsonObject) {
         Some("model_change") => {
             summary.model = record.non_empty_str("modelId").map(str::to_string);
         }
+        Some("thinking_level_change") => {
+            if let Some(level) = record.non_empty_str("thinkingLevel") {
+                summary.set_thinking(Some(level));
+            }
+        }
         Some("message") => {
             let message = record.object("message");
             if let Some(model) = message.non_empty_str("model") {
@@ -99,6 +104,7 @@ impl PiDiscovery {
                     // parentSession is a fork source, not a running subagent.
                     parent_key: None,
                     model: summary.model,
+                    thinking: summary.thinking,
                     last: summary.last,
                 })
             })
@@ -132,6 +138,7 @@ mod tests {
                 "type": "session", "version": 3, "id": "abc", "cwd": "/w/project",
                 "timestamp": "2025-01-01T00:00:00Z"
             })) + &line(json!({"type": "model_change", "modelId": "model-a"}))
+                + &line(json!({"type": "thinking_level_change", "thinkingLevel": "medium"}))
                 + &line(json!({"type": "message", "message": {
                     "role": "user", "content": " \n "
                 }}))
@@ -149,6 +156,7 @@ mod tests {
         assert_eq!(session.title, "hello there");
         assert_eq!(session.status, SessionStatus::Running);
         assert_eq!(session.model.as_deref(), Some("model-a"));
+        assert_eq!(session.thinking.as_deref(), Some("medium"));
         assert_eq!(session.last.as_deref(), Some("hello there"));
         assert!(session.started_at.is_some());
         assert_eq!(session.log_path.as_deref(), Some(path.as_path()));
@@ -163,6 +171,7 @@ mod tests {
         append(
             &path,
             (line(json!({"type": "session_info", "name": "Named\nsession"}))
+                + &line(json!({"type": "thinking_level_change", "thinkingLevel": "off"}))
                 + &line(json!({"type": "message", "message": {
                     "role": "assistant", "model": "model-b", "stopReason": "stop",
                     "content": [{"type": "text", "text": "done"}]
@@ -174,6 +183,7 @@ mod tests {
         assert_eq!(session.title, "Named session");
         assert_eq!(session.status, SessionStatus::Idle);
         assert_eq!(session.model.as_deref(), Some("model-b"));
+        assert_eq!(session.thinking.as_deref(), Some("off"));
         assert_eq!(session.last.as_deref(), Some("done"));
         append(
             &path,
@@ -227,6 +237,7 @@ mod tests {
         let sessions = discovery.discover(home.path(), now_ms(), 3_600_000.0);
         assert_eq!(sessions.len(), 1);
         assert_eq!(sessions[0].status, SessionStatus::Unknown);
+        assert_eq!(sessions[0].thinking, None);
         assert!(
             discovery
                 .discover(&home.path().join("missing"), now_ms(), 3_600_000.0)

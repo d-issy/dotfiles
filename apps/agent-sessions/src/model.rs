@@ -119,6 +119,7 @@ pub struct Session {
     pub log_path: Option<PathBuf>,
     pub parent_key: Option<String>,
     pub model: Option<String>,
+    pub thinking: Option<String>,
     pub last: Option<String>,
 }
 

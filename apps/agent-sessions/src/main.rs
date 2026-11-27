@@ -41,6 +41,7 @@ fn print_list(options: &Options) {
             project_name(&session.cwd),
             &format!("{}{}", row.tree, session.title),
             &js::slice_utf16(&one_line(session.last.as_deref().unwrap_or("")), 120),
+            session.thinking.as_deref().unwrap_or("-"),
         ];
         if writeln!(out, "{}", columns.join("\t")).is_err() {
             return;

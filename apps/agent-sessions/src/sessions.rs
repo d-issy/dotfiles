@@ -236,6 +236,8 @@ impl Discovery {
             Agent::Pi => self.pi.summarize_log(path),
         };
         session.turn = summary.turn;
+        session.model = summary.model;
+        session.thinking = summary.thinking;
         if matches!(
             session.status,
             SessionStatus::Running | SessionStatus::Waiting
@@ -270,6 +272,7 @@ mod tests {
             log_path: None,
             parent_key: parent_key.map(Into::into),
             model: None,
+            thinking: None,
             last: None,
         }
     }
@@ -366,6 +369,8 @@ mod tests {
         fs::write(
             &transcript,
             concat!(
+                r#"{"type":"assistant","timestamp":500,"message":{"model":"claude-haiku","content":[]}}"#,
+                "\n",
                 r#"{"type":"user","timestamp":1000,"message":{"content":"hi"}}"#,
                 "\n",
             ),
@@ -382,6 +387,8 @@ mod tests {
         };
         let mut open = discovery.discover(60_000.0, 5_000.0).pop().unwrap();
         assert_eq!(open.turn_elapsed(5_000.0), Some(4_000.0));
+        assert_eq!(open.model.as_deref(), Some("claude-haiku"));
+        assert_eq!(open.thinking, None);
 
         fs::remove_file(registry).unwrap();
         discovery.refresh_open_log(&mut open);
@@ -391,6 +398,8 @@ mod tests {
         append(
             &transcript,
             concat!(
+                r#"{"type":"assistant","timestamp":8000,"effort":"high","message":{"model":"claude-opus","content":[]}}"#,
+                "\n",
                 r#"{"type":"system","subtype":"turn_duration","timestamp":9000,"durationMs":8000}"#,
                 "\n",
             )
@@ -401,6 +410,8 @@ mod tests {
             assert!(discovery.discover(60_000.0, now).is_empty());
             assert_eq!(open.status, SessionStatus::Unknown);
             assert_eq!(open.turn_elapsed(now), Some(8_000.0));
+            assert_eq!(open.model.as_deref(), Some("claude-opus"));
+            assert_eq!(open.thinking.as_deref(), Some("high"));
         }
     }
 

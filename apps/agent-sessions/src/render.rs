@@ -1,7 +1,7 @@
 use crate::format::{format_age, format_clock, format_duration, format_turn_time};
 use crate::js;
 use crate::model::{Agent, EntryKind, LogEntry, Session, SessionStatus};
-use crate::sessions::{SessionRow, home_dir};
+use crate::sessions::{Row, SessionRow, home_dir};
 use crate::text::{pad, truncate, width as display_width, wrap};
 
 const RESET: &str = "\u{1b}[0m";
@@ -100,26 +100,67 @@ fn short_model(model: Option<&str>) -> &str {
 
 const AGENT_WIDTH: usize = 6;
 const STATUS_WIDTH: usize = 7;
-const MODEL_WIDTH: usize = 14;
+const MODEL_HEADER: &str = "MODEL";
+const MAX_MODEL_WIDTH: usize = 14;
+const EFFORT_WIDTH: usize = "minimal".len();
 const TIME_WIDTH: usize = 6;
+const SESSION_HEADER: &str = "PROJECT / SESSION";
+const BASE_LIST_WIDTH: usize = 2 + AGENT_WIDTH + STATUS_WIDTH + TIME_WIDTH + 4;
+const EFFORT_COLUMN_WIDTH: usize = 1 + EFFORT_WIDTH;
 
-fn tree_width(width: usize) -> usize {
-    (width * 38 / 100).clamp(24, 64)
+#[derive(Clone, Copy)]
+pub struct ListLayout {
+    width: usize,
+    model_width: usize,
+    effort_width: usize,
 }
 
-fn last_width(width: usize) -> Option<usize> {
-    let fixed = 2
-        + tree_width(width)
-        + 1
-        + AGENT_WIDTH
-        + 1
-        + STATUS_WIDTH
-        + 1
-        + MODEL_WIDTH
-        + 1
-        + TIME_WIDTH
-        + 1;
-    width.checked_sub(fixed).filter(|rest| *rest > 8)
+impl ListLayout {
+    pub fn new(width: usize, rows: &[Row]) -> Self {
+        let widest_model = rows
+            .iter()
+            .filter_map(Row::as_session)
+            .map(|row| display_width(short_model(row.session.model.as_deref())))
+            .max()
+            .unwrap_or(0);
+        let model_and_effort = width.saturating_sub(BASE_LIST_WIDTH + SESSION_HEADER.len());
+        let effort_width = if model_and_effort >= MODEL_HEADER.len() + EFFORT_COLUMN_WIDTH {
+            EFFORT_COLUMN_WIDTH
+        } else {
+            0
+        };
+        let max_model_width =
+            (model_and_effort - effort_width).clamp(MODEL_HEADER.len(), MAX_MODEL_WIDTH);
+        Self {
+            width,
+            model_width: widest_model.clamp(MODEL_HEADER.len(), max_model_width),
+            effort_width,
+        }
+    }
+
+    fn fixed_width(self) -> usize {
+        BASE_LIST_WIDTH + self.model_width + self.effort_width
+    }
+
+    fn tree_width(self) -> usize {
+        let available = self.width.saturating_sub(self.fixed_width());
+        (self.width * 30 / 100)
+            .clamp(SESSION_HEADER.len(), 40)
+            .min(available)
+    }
+
+    fn last_width(self) -> Option<usize> {
+        let fixed = self.fixed_width() + self.tree_width() + 1;
+        self.width.checked_sub(fixed).filter(|rest| *rest >= 8)
+    }
+
+    fn effort_column(self, label: &str) -> String {
+        if self.effort_width == 0 {
+            String::new()
+        } else {
+            format!(" {}", pad(label, EFFORT_WIDTH))
+        }
+    }
 }
 
 fn home_relative(path: &str) -> String {
@@ -131,21 +172,21 @@ fn home_relative(path: &str) -> String {
     }
 }
 
-pub fn render_column_header(width: usize) -> String {
+pub fn render_column_header(layout: ListLayout) -> String {
     dim(&[
         "  ",
-        &pad("PROJECT / SESSION", tree_width(width)),
+        &pad(SESSION_HEADER, layout.tree_width()),
         " ",
         &pad("AGENT", AGENT_WIDTH),
         " ",
         &pad("STATUS", STATUS_WIDTH),
         " ",
-        &pad("MODEL", MODEL_WIDTH),
+        &pad(MODEL_HEADER, layout.model_width),
+        &layout.effort_column("EFFORT"),
         " ",
         &js::pad_start("TIME", TIME_WIDTH),
-        " ",
-        if last_width(width).is_some() {
-            "LAST"
+        if layout.last_width().is_some() {
+            " LAST"
         } else {
             ""
         },
@@ -165,7 +206,12 @@ pub fn render_project_row(cwd: &str, sessions: usize, width: usize) -> String {
     )
 }
 
-pub fn render_session_row(row: &SessionRow, selected: bool, width: usize, now: f64) -> String {
+pub fn render_session_row(
+    row: &SessionRow,
+    selected: bool,
+    layout: ListLayout,
+    now: f64,
+) -> String {
     let session = &row.session;
     let is_child = row.depth > 0;
     let muted = |text: &str| -> String {
@@ -175,10 +221,10 @@ pub fn render_session_row(row: &SessionRow, selected: bool, width: usize, now: f
             text.to_string()
         }
     };
-    let guide = truncate(&row.tree, tree_width(width));
+    let guide = truncate(&row.tree, layout.tree_width());
     let title = pad(
         &session.title,
-        tree_width(width).saturating_sub(display_width(&guide)),
+        layout.tree_width().saturating_sub(display_width(&guide)),
     );
     let turn_time = format_turn_time(session.turn_elapsed(now));
     [
@@ -198,12 +244,18 @@ pub fn render_session_row(row: &SessionRow, selected: bool, width: usize, now: f
         " ".into(),
         status_tag(session.status),
         " ".into(),
-        muted(&pad(short_model(session.model.as_deref()), MODEL_WIDTH)),
+        muted(&pad(
+            short_model(session.model.as_deref()),
+            layout.model_width,
+        )),
+        muted(&layout.effort_column(session.thinking.as_deref().unwrap_or("-"))),
         " ".into(),
         muted(&js::pad_start(&turn_time, TIME_WIDTH)),
-        " ".into(),
-        last_width(width).map_or_else(String::new, |rest| {
-            dim(&truncate(session.last.as_deref().unwrap_or(""), rest))
+        layout.last_width().map_or_else(String::new, |rest| {
+            format!(
+                " {}",
+                dim(&truncate(session.last.as_deref().unwrap_or(""), rest))
+            )
         }),
     ]
     .concat()
@@ -222,7 +274,37 @@ pub fn render_empty(window_ms: f64, hidden_inactive: usize) -> Vec<String> {
     vec![String::new(), dim(&message)]
 }
 
-pub fn render_session_header(session: &Session, now: f64) -> String {
+pub fn render_session_header(session: &Session, now: f64, width: usize) -> String {
+    let effort = format!("effort {}", session.thinking.as_deref().unwrap_or("-"));
+    let prefix_width = AGENT_WIDTH + STATUS_WIDTH + 2;
+    let metadata_width = prefix_width + display_width(" · ") + display_width(&effort);
+    if width <= metadata_width {
+        return dim(&truncate(&effort, width));
+    }
+    let model_name = short_model(session.model.as_deref());
+    let available = width - metadata_width;
+    let title_width = display_width(&session.title)
+        .min(8)
+        .min(available.saturating_sub(2 + display_width(model_name).min(4)));
+    let reserved_title_width = if title_width == 0 { 0 } else { 2 + title_width };
+    let model = truncate(model_name, available - reserved_title_width);
+    let mut header = format!(
+        "{} {} {model}{}",
+        agent_tag(session.agent),
+        status_tag(session.status),
+        dim(&format!(" · {effort}")),
+    );
+    let mut remaining = width - metadata_width - display_width(&model);
+    let title = truncate(&session.title, remaining.saturating_sub(2));
+    if !title.is_empty() {
+        header.push_str("  ");
+        header.push_str(&bold(&title));
+        remaining -= 2 + display_width(&title);
+    }
+    let detail_width = remaining.saturating_sub(2);
+    if detail_width == 0 {
+        return header;
+    }
     let turn_time = session
         .turn_elapsed(now)
         .map(|elapsed| format!("turn time {}", format_duration(elapsed)));
@@ -231,18 +313,9 @@ pub fn render_session_header(session: &Session, now: f64) -> String {
         details.push_str(" · ");
         details.push_str(&turn_time);
     }
-    [
-        agent_tag(session.agent),
-        " ".into(),
-        status_tag(session.status),
-        " ".into(),
-        short_model(session.model.as_deref()).into(),
-        "  ".into(),
-        bold(&session.title),
-        "  ".into(),
-        dim(&details),
-    ]
-    .concat()
+    header.push_str("  ");
+    header.push_str(&dim(&truncate(&details, detail_width)));
+    header
 }
 
 const PREFIX_WIDTH: usize = 16;
@@ -314,6 +387,85 @@ pub fn render_entries(entries: &[LogEntry], width: usize, continued: bool) -> Ve
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn model_row(model: &str) -> Row {
+        Row::Session(Box::new(SessionRow {
+            session: Session {
+                key: "claude:test".into(),
+                agent: Agent::Claude,
+                id: "test".into(),
+                title: "Test".into(),
+                cwd: "/tmp".into(),
+                status: SessionStatus::Running,
+                updated_at: 0.0,
+                started_at: None,
+                turn: Default::default(),
+                log_path: None,
+                parent_key: None,
+                model: Some(model.into()),
+                thinking: Some("high".into()),
+                last: None,
+            },
+            depth: 0,
+            tree: "└─ ".into(),
+        }))
+    }
+
+    #[test]
+    fn sizes_model_to_the_displayed_names_and_aligns_effort() {
+        let row = model_row("claude-opus-5-5");
+        let layout = ListLayout::new(80, std::slice::from_ref(&row));
+        assert_eq!(layout.model_width, "opus-5-5".len());
+        let header = render_column_header(layout);
+        let line = render_session_row(row.as_session().unwrap(), false, layout, 0.0);
+        assert!(line.contains("opus-5-5 high"));
+        let header = crate::text::sanitize(&header);
+        let line = crate::text::sanitize(&line);
+        assert_eq!(
+            display_width(header.split_once("EFFORT").unwrap().0),
+            display_width(line.split_once("high").unwrap().0),
+        );
+    }
+
+    #[test]
+    fn fits_effort_and_last_activity_in_an_eighty_column_terminal() {
+        let rows = [model_row("long-model-name-for-this-test")];
+        let wide = ListLayout::new(80, &rows);
+        let header = render_column_header(wide);
+        assert!(header.contains("EFFORT"));
+        assert!(header.contains("LAST"));
+        assert_eq!(wide.effort_column("minimal"), " minimal");
+        assert_eq!(wide.model_width, MAX_MODEL_WIDTH);
+    }
+
+    #[test]
+    fn shortens_model_before_hiding_effort_at_a_fixed_width() {
+        let rows = [
+            model_row("claude-opus"),
+            model_row("long-model-name-for-this-test"),
+        ];
+        assert!(render_column_header(ListLayout::new(60, &rows[..1])).contains("EFFORT"));
+        let layout = ListLayout::new(60, &rows);
+        let line = render_session_row(rows[1].as_session().unwrap(), false, layout, 0.0);
+        assert!(line.contains("long-mode… high"));
+        assert!(render_column_header(layout).contains("EFFORT"));
+        assert_eq!(display_width(&crate::text::sanitize(&line)), 60);
+        assert!(!render_column_header(ListLayout::new(54, &rows)).contains("EFFORT"));
+    }
+
+    #[test]
+    fn keeps_effort_visible_in_narrow_log_headers() {
+        let row = model_row("long-model-name-for-this-test");
+        let session = &row.as_session().unwrap().session;
+        for width in [12, 40, 80] {
+            let line = crate::text::sanitize(&render_session_header(session, 0.0, width));
+            assert!(line.contains("effort high"));
+            assert!(display_width(&line) <= width);
+            assert_eq!(line.contains("long-model-name-for-this-test"), width == 80);
+        }
+        let narrow = crate::text::sanitize(&render_session_header(session, 0.0, 40));
+        assert!(narrow.contains("long… · effort high  Test"));
+    }
 
     #[test]
     fn renders_appended_entries_exactly_as_a_full_re_render() {

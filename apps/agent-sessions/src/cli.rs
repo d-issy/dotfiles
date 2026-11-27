@@ -9,7 +9,8 @@ Usage:
 Options:
   -w, --window DURATION  Include Codex/pi sessions updated within DURATION
                          (e.g. 30m, 2h, 1d). Default: 2h.
-  -l, --list             Print the session list once and exit.
+  -l, --list             Print the tab-separated session list once and exit.
+                         The final field is the recorded reasoning effort, or - if unknown.
   -i, --show-idle        Include idle sessions and recently ended subagents.
   -h, --help             Show this help.
 
